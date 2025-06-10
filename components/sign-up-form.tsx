@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { signUp } from "@/services/auth"
 import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "./ui/use-toast"
 
 const sign_up_schema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters"),
@@ -53,6 +53,7 @@ export default function SignUpForm() {
         toast({
           title: "Success",
           description: "Account created successfully!",
+          variant: "success",
         });
         router.push("/login") // Redirect after successful login
 
@@ -61,6 +62,7 @@ export default function SignUpForm() {
         toast({
           title: "Error",
           description: "Failed to create account. Please try again.",
+          variant: "error",
         });
         console.error("Sign up error:", response.error || "Unknown error");
       }
@@ -68,6 +70,8 @@ export default function SignUpForm() {
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again later.",
+        variant: "error",
+
       });
       console.error("Sign up error:", error);
     }

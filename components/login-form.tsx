@@ -47,7 +47,7 @@ export default function LoginForm() {
         toast({
           title: "Login Failed",
           description: result!.error || "An unexpected error occurred. Please try again.",
-          variant: "destructive",
+          variant: "error",
         })
         return
       }
@@ -59,13 +59,18 @@ export default function LoginForm() {
 
         // Dispatch user details to Redux store
         dispatch(setUser(userInfo.user));
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${userInfo.user.first_name || userInfo.user.email}!`,
+          variant: "success",
+        })
 
         router.push("/dashboard"); // Redirect after successful login
       } else {
         toast({
           title: "Login Failed",
           description: "User data not found. Please try again.",
-          variant: "destructive",
+          variant: "error",
         })
         return
       }
@@ -76,7 +81,7 @@ export default function LoginForm() {
       toast({
         title: "Login Error",
         description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+        variant: "error",
       })
     }
   }

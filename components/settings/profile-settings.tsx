@@ -24,13 +24,13 @@ import {
 } from "@/components/ui/form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PencilIcon, Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState } from "@/lib/store"
 import { getUploadFileUrl } from "@/lib/helpers/fileupload"
 import { updateUser } from "@/services/user"
 import { logout, updateUserData } from "@/lib/slices/authSlice"
 import { useRouter } from "next/navigation"
+import { useToast } from "../ui/use-toast"
 
 const profileFormSchema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters"),
@@ -85,19 +85,20 @@ export default function ProfileSettings() {
         toast({
           title: "Profile updated",
           description: "Your profile has been updated successfully.",
+          variant: "success",
         })
       } else {
         toast({
           title: "Update Failed",
           description: res?.data?.message || "An unexpected error occurred. Please try again.",
-          variant: "destructive",
+          variant: "error",
         })
       }
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
-        variant: "destructive",
+        variant: "error",
       })
     }
   }
@@ -111,12 +112,13 @@ export default function ProfileSettings() {
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
+        variant: "success",
       })
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to log out. Please try again.",
-        variant: "destructive",
+        variant: "error",
       })
     }
   }
@@ -144,13 +146,15 @@ export default function ProfileSettings() {
           toast({
             title: "Profile image updated",
             description: "Your avatar has been changed successfully.",
+            variant: "success",
           })
         }
       } catch (err) {
         toast({
           title: "Error",
           description: "Failed to upload image. Try again.",
-          variant: "destructive",
+          variant: "error",
+
         })
       }
     }
