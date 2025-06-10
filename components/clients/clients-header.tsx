@@ -1,20 +1,19 @@
-import { getCurrentUser } from "@/lib/auth-utils"
+"use client"
+import { RootState } from "@/lib/store"
+import { useSelector } from "react-redux"
+import { getGreeting } from "@/lib/helpers/greeting"
 
-export default async function ClientsHeader() {
-  const user = await getCurrentUser()
+
+export default  function ClientsHeader() {
+  const user = useSelector((state: RootState) => state.auth.user)
 
   // Get greeting based on time of day
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return "Good morning"
-    if (hour < 18) return "Good afternoon"
-    return "Good evening"
-  }
+  
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">
-        {getGreeting()}, {user.name}
+        {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
       </h1>
       <h2 className="text-xl font-semibold">Client</h2>
     </div>

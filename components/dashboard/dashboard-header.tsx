@@ -1,24 +1,18 @@
-import type { User } from "@/types/user"
+"use client"
+import { RootState } from "@/lib/store"
+import { useSelector } from "react-redux"
+import { getGreeting } from "@/lib/helpers/greeting"
 
-interface DashboardHeaderProps {
-  user?: User
-}
+interface DashboardHeaderProps {}
 
-export default function DashboardHeader({ user }: DashboardHeaderProps) {
-  // Get greeting based on time of day
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return "Good morning"
-    if (hour < 18) return "Good afternoon"
-    return "Good evening"
-  }
+export default function DashboardHeader({}: DashboardHeaderProps) {
+  const user = useSelector((state: RootState) => state.auth.user)
 
   return (
-    <header>
-      <h1 className="text-2xl font-bold tracking-tight">
-        {getGreeting()}
-        {user?.name ? `, ${user.name}` : ""}
-      </h1>
-    </header>
+    <header className="px-6 py-4 border-b">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          {getGreeting()}
+        </h1>
+  </header>
   )
 }

@@ -529,6 +529,7 @@ Stay informed and ensure your practice remains compliant with evolving legal sta
                 <LocationUrlGenerator
                   postTitle="Legal Marketing Post"
                   onUrlGenerated={(urls) => setGeneratedUrls(urls)}
+                  onQrGenerated={()=>{}}
                 />
 
                 {generatedUrls.full && (

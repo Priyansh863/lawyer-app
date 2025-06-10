@@ -1,7 +1,9 @@
-import type React from "react"
+"use client"
+import React, { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare, Video, FileText, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getDashboardRecentActivity } from "@/services/user"
 
 interface ActivityItemProps {
   icon: React.ReactNode
@@ -25,8 +27,7 @@ function ActivityItem({ icon, title, description, time, iconColor = "bg-gray-100
 }
 
 export default function RecentActivity() {
-  // these would come from an API
-  const activities = [
+  const [activities, setActivities] = useState<ActivityItemProps[]>([
     {
       icon: <MessageSquare size={16} />,
       title: "New chat message",
@@ -55,7 +56,59 @@ export default function RecentActivity() {
       time: "5h ago",
       iconColor: "bg-amber-100 text-amber-600",
     },
-  ]
+  ])
+
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      try {
+        const response = await getDashboardRecentActivity()
+        if (response && response.data && response.data.success) {
+          const activityData = response.data.data.map((activity: any) => ({
+            icon: getActivityIcon(activity.type),
+            title: activity.title,
+            description: activity.description,
+            time: activity.time,
+            iconColor: getActivityIconColor(activity.type),
+          }))
+          setActivities(activityData)
+        }
+      } catch (error) {
+        console.error("Failed to fetch recent activity:", error)
+      }
+    }
+
+    fetchRecentActivity()
+  }, [])
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "message":
+        return <MessageSquare size={16} />
+      case "video":
+        return <Video size={16} />
+      case "document":
+        return <FileText size={16} />
+      case "appointment":
+        return <Calendar size={16} />
+      default:
+        return <MessageSquare size={16} />
+    }
+  }
+
+  const getActivityIconColor = (type: string) => {
+    switch (type) {
+      case "message":
+        return "bg-blue-100 text-blue-600"
+      case "video":
+        return "bg-purple-100 text-purple-600"
+      case "document":
+        return "bg-green-100 text-green-600"
+      case "appointment":
+        return "bg-amber-100 text-amber-600"
+      default:
+        return "bg-gray-100 text-gray-600"
+    }
+  }
 
   return (
     <Card className="h-full">

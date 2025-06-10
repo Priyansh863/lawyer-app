@@ -1,58 +1,98 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PencilIcon, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useSelector, useDispatch } from "react-redux"
+import { RootState } from "@/lib/store"
+import { getUploadFileUrl } from "@/lib/helpers/fileupload"
+import { updateUser } from "@/services/user"
+import { logout, updateUserData } from "@/lib/slices/authSlice"
+import { useRouter } from "next/navigation"
 
 const profileFormSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-  practiceArea: z.enum(["corporate", "family", "criminal", "immigration", "intellectual", "real-estate"]),
+  about: z.string().max(500, "About must be less than 500 characters").optional(),
+  practice_area: z.enum([
+    "corporate",
+    "family",
+    "criminal",
+    "immigration",
+    "intellectual",
+    "real-estate",
+  ]),
   experience: z.enum(["1", "3", "6", "10"]),
 })
 
 type ProfileFormData = z.infer<typeof profileFormSchema>
 
 export default function ProfileSettings() {
-  const [profileImage, setProfileImage] = useState<string>("/placeholder.svg?height=100&width=100")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+    const router = useRouter();
+  
   const { toast } = useToast()
+
+  const dispatch = useDispatch()
+  const profile = useSelector((state: RootState) => state.auth.user);
+  console.log("Profile data:", profile)
+  const [profile_image, setprofile_image] = useState<string>(profile?.profile_image || "")
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      firstName: "John",
-      lastName: "Doe",
-      email: "johndoe123@gmail.com",
-      phone: "(555) 123-4567",
-      bio: "Experienced attorney specializing in corporate law with over 10 years of practice.",
-      practiceArea: "corporate",
-      experience: "10",
+      first_name: profile?.first_name,
+      last_name: profile?.last_name,
+      email: profile?.email,
+      phone: profile?.phone,
+      about: profile?.about,
+      practice_area: "corporate",
+      experience: "3",
     },
   })
 
   const onSubmit = async (data: ProfileFormData) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      console.log("Profile update data:", data)
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      })
+      const { email, ...payload } = { ...data, profile_image }
+      console.log("Submitting profile data:", payload)
+      const res = await updateUser(profile?._id as string, payload)
+      if (res && res.data && res.data.success) {
+        dispatch(updateUserData({...profile,...payload}))
+        toast({
+          title: "Profile updated",
+          description: "Your profile has been updated successfully.",
+        })
+      } else {
+        toast({
+          title: "Update Failed",
+          description: res?.data?.message || "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -64,9 +104,10 @@ export default function ProfileSettings() {
 
   const handleLogout = async () => {
     try {
-      // Simulate logout API call
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
+      dispatch(logout()) // Clear user data in Redux store
+      router.push("/login") // Redirect to login page
+      
+      
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
@@ -78,6 +119,42 @@ export default function ProfileSettings() {
         variant: "destructive",
       })
     }
+  }
+
+  const handleAvatarChange = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      try {
+        const imageFormat = file.type.split("/")[1]
+        const imageData = {
+          data: reader.result,
+          format: imageFormat,
+        }
+
+        const objectUrl = await getUploadFileUrl(profile?._id as string, imageData)
+        if (objectUrl) {
+          setprofile_image(objectUrl)
+          toast({
+            title: "Profile image updated",
+            description: "Your avatar has been changed successfully.",
+          })
+        }
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to upload image. Try again.",
+          variant: "destructive",
+        })
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -97,20 +174,32 @@ export default function ProfileSettings() {
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profileImage || "/placeholder.svg"} alt="Profile" />
+              <AvatarImage src={profile_image} alt="Profile" />
               <AvatarFallback>
-                {form.getValues("firstName")?.[0]}
-                {form.getValues("lastName")?.[0]}
+                {form.getValues("first_name")?.[0]}
+                {form.getValues("last_name")?.[0]}
               </AvatarFallback>
             </Avatar>
-            <Button size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-black hover:bg-gray-800">
+            <Button
+              size="icon"
+              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-black hover:bg-gray-800"
+              onClick={handleAvatarChange}
+            >
               <PencilIcon className="h-4 w-4" />
               <span className="sr-only">Change avatar</span>
             </Button>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
           </div>
+
           <div className="text-center">
             <h4 className="font-medium">
-              {form.watch("firstName")} {form.watch("lastName")}
+              {form.watch("first_name")} {form.watch("last_name")}
             </h4>
             <p className="text-sm text-gray-500">{form.watch("email")}</p>
           </div>
@@ -121,7 +210,7 @@ export default function ProfileSettings() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="firstName"
+                name="first_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
@@ -135,7 +224,7 @@ export default function ProfileSettings() {
 
               <FormField
                 control={form.control}
-                name="lastName"
+                name="last_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
@@ -149,6 +238,7 @@ export default function ProfileSettings() {
 
               <FormField
                 control={form.control}
+                disabled
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -177,12 +267,12 @@ export default function ProfileSettings() {
 
               <FormField
                 control={form.control}
-                name="bio"
+                name="about"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>About</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Write a short bio..." className="min-h-[100px]" {...field} />
+                      <Textarea placeholder="Write about yourself..." className="min-h-[100px]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -191,7 +281,7 @@ export default function ProfileSettings() {
 
               <FormField
                 control={form.control}
-                name="practiceArea"
+                name="practice_area"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Practice Area</FormLabel>

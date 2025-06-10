@@ -1,27 +1,24 @@
-import { getCurrentUser } from "@/lib/auth-utils"
+"use client"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { downloadSummary } from "@/lib/api/voice-summary-api"
+import { useSelector } from "react-redux"
+import { getGreeting } from "@/lib/helpers/greeting"
+import { RootState } from "@/lib/store"
 
-export default async function VoiceSummaryHeader() {
-  const user = await getCurrentUser()
+export default  function VoiceSummaryHeader() {
+  const user = useSelector((state: RootState) => state.auth.user)
 
   // Get greeting based on time of day
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return "Good morning"
-    if (hour < 18) return "Good afternoon"
-    return "Good evening"
-  }
+
 
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold tracking-tight">
-        {getGreeting()}, {user.name}
+        {/* {getGreeting()}, {user?.first_name+ " " + user?.last_name || "User"}! */}
       </h1>
       <form
         action={async () => {
-          "use server"
           // In a real app, this would download the latest summary
           // or a combined summary of all recordings
           await downloadSummary("latest")

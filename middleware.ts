@@ -1,22 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     console.log("Request pathname:", pathname);
 
-    // Example: Redirect unauthenticated users trying to access the dashboard
-    const isAuthenticated = request.cookies.get("authToken"); // Replace with your auth logic
-    console.log("Is authenticated:", isAuthenticated);
+    // Retrieve the token using NextAuth
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    console.log("Token:", token);
 
-    if (!isAuthenticated && pathname.startsWith("/dashboard")) {
+    // Example: Redirect unauthenticated users trying to access the dashboard
+    if (!token && pathname.startsWith("/dashboard")) {
         console.log("Redirecting to /login due to unauthenticated access to /dashboard");
         return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // Example: Redirect root ("/") to "/dashboard" if authenticated
     if (pathname === "/") {
-        if (isAuthenticated) {
+        if (token) {
             console.log("Redirecting to /dashboard as user is authenticated");
             return NextResponse.redirect(new URL("/dashboard", request.url));
         } else {

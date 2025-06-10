@@ -1,6 +1,8 @@
-import type React from "react"
+"use client"
+import React, { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, FileArchive, DollarSign, MessageSquare } from "lucide-react"
+import { getDashboardStats } from "@/services/user"
 
 interface StatCardProps {
   title: string
@@ -23,13 +25,28 @@ function StatCard({ title, value, icon }: StatCardProps) {
 }
 
 export default function StatsCards() {
-  
-  const stats = [
-    { title: "Active Cases", value: "24", icon: <FileText size={18} /> },
-    { title: "Inactive Cases", value: "06", icon: <FileArchive size={18} /> },
-    { title: "Earnings", value: "$120.00", icon: <DollarSign size={18} /> },
-    { title: "Today's Chats", value: "12", icon: <MessageSquare size={18} /> },
-  ]
+  const [stats, setStats] = useState([
+    { title: "Active Cases", value: 0, icon: <FileText size={18} /> },
+    { title: "Inactive Cases", value: 0, icon: <FileArchive size={18} /> },
+    { title: "Earnings", value: "$0.00", icon: <DollarSign size={18} /> },
+    { title: "Today's Chats", value: 0, icon: <MessageSquare size={18} /> },
+  ])
+
+  useEffect(() => {
+    fetchStats()
+  }, [])
+
+  async function fetchStats() {
+    try {
+     const response=await getDashboardStats();
+     if(response && response.data && response.data.success){
+      setStats(response.data.data)
+     }
+
+    } catch (error) {
+      console.error("Failed to fetch stats:", error)
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

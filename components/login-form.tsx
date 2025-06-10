@@ -1,4 +1,6 @@
 "use client"
+import { getSession, signIn } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -7,6 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import Link from "next/link"
+import { useToast } from "./ui/use-toast"
+import { useDispatch } from "react-redux";
+import { setUser } from "@/lib/slices/authSlice"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -16,6 +21,9 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginForm() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { toast } = useToast()
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -26,24 +34,50 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Handle login logic here
-      console.log("Login data:", data)
-
-      // Example API call structure for backend team
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
       })
 
-      if (response.ok) {
-        // Handle success
-        console.log("Login successful")
+      console.log("Login result:", result,result?.ok,!result?.ok)
+
+      if (!result?.ok) {
+        console.error("Login failed:", result!.error)
+        toast({
+          title: "Login Failed",
+          description: result!.error || "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        })
+        return
       }
+      const userInfo: any = await getSession();
+      console.log("User Info from session:", userInfo)
+      if (userInfo?.user?._id) {
+        // Save user details to local storage
+        localStorage.setItem("user", JSON.stringify(userInfo.user));
+
+        // Dispatch user details to Redux store
+        dispatch(setUser(userInfo.user));
+
+        router.push("/dashboard"); // Redirect after successful login
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "User data not found. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
+      console.log("User Info:", userInfo)
+      router.refresh()
     } catch (error) {
       console.error("Login error:", error)
+      toast({
+        title: "Login Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 

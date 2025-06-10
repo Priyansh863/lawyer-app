@@ -23,6 +23,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
+import { useSelector } from "react-redux"
 
 interface NavItemProps {
   href: string
@@ -50,6 +51,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const user=useSelector((state: any) => state.auth.user)
 
   // Check if mobile on mount and when window resizes
   useEffect(() => {
@@ -128,10 +130,10 @@ export default function Sidebar() {
           <div className="p-4 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+                <AvatarImage src={user?.profile_image ?? "/placeholder.svg?height=32&width=32"} alt="User" />
                 <AvatarFallback>J</AvatarFallback>
               </Avatar>
-              <span className="font-medium">Joseph</span>
+              <span className="font-medium">{user?.first_name+ " " + user?.last_name || "User"}</span>
             </div>
 
             {/* Close button for mobile */}
@@ -150,7 +152,7 @@ export default function Sidebar() {
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
-              WebkitScrollbar: { display: "none" },
+              // WebkitScrollbar: { display: "none" },
             }}
           >
             <style jsx>{`

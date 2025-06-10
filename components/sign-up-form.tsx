@@ -7,52 +7,69 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { signUp } from "@/services/auth"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
-const signUpSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+const sign_up_schema = z.object({
+  first_name: z.string().min(2, "First name must be at least 2 characters"),
+  last_name: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  agreeToTerms: z.boolean().refine((val) => val === true, {
+  account_type: z.enum(["client", "lawyer"]).refine((val) => !!val, {
+    message: "Please select an account type",
+  }),
+  agree_to_terms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
   }),
 })
 
-type SignUpFormData = z.infer<typeof signUpSchema>
+type SignUpFormData = z.infer<typeof sign_up_schema>
 
 export default function SignUpForm() {
+  const { toast } = useToast();
+  const router = useRouter();
+
+
   const form = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(sign_up_schema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
       email: "",
       password: "",
-      agreeToTerms: false,
+      account_type: "client",
+      agree_to_terms: false,
     },
   })
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      // Handle sign up logic here
-      console.log("Sign up data:", data)
+      const response = await signUp(data);
 
-      // Example API call structure for backend team
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
+      if (response && response.data!.success) {
+        toast({
+          title: "Success",
+          description: "Account created successfully!",
+        });
+        router.push("/login") // Redirect after successful login
 
-      if (response.ok) {
-        // Handle success
-        console.log("Account created successfully")
+        console.log("Account created successfully");
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create account. Please try again.",
+        });
+        console.error("Sign up error:", response.error || "Unknown error");
       }
     } catch (error) {
-      console.error("Sign up error:", error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again later.",
+      });
+      console.error("Sign up error:", error);
     }
   }
 
@@ -64,10 +81,11 @@ export default function SignUpForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="firstName"
+                name="first_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
@@ -80,7 +98,7 @@ export default function SignUpForm() {
               />
               <FormField
                 control={form.control}
-                name="lastName"
+                name="last_name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
@@ -123,7 +141,29 @@ export default function SignUpForm() {
 
             <FormField
               control={form.control}
-              name="agreeToTerms"
+              name="account_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account Type</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="client">Client</SelectItem>
+                        <SelectItem value="lawyer">Lawyer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="agree_to_terms"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>

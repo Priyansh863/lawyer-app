@@ -14,8 +14,8 @@ export default function SettingsPage() {
     <SettingsLayout>
       <div className="space-y-10">
         <ProfileSettings />
-        <NotificationSettings />
-        <AccountSettings />
+        {/* <NotificationSettings /> */}
+        {/* <AccountSettings /> */}
       </div>
     </SettingsLayout>
   )

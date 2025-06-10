@@ -14,7 +14,7 @@ export default function SubscriptionLayout({ children }: SubscriptionLayoutProps
 
   return (
     <main className="p-6 overflow-y-auto">
-      <DashboardHeader user={user} />
+      <DashboardHeader  />
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-6">Subscription</h2>
         {children}
