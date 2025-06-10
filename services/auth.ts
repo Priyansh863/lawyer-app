@@ -7,6 +7,6 @@ import { http } from "@/lib/http";
  * @param data
  * @returns
  */
-export const signUp = (data): Promise<ApiResponse> => {
+export const signUp = (data:any): Promise<ApiResponse> => {
     return http.post(`${endpoints.auth.SIGNUP}`, data);
   };
