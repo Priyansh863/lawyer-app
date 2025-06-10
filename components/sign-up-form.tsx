@@ -49,7 +49,7 @@ export default function SignUpForm() {
     try {
       const response = await signUp(data);
 
-      if (response && response.data!.success) {
+      if (response && response.data && response.data.success) {
         toast({
           title: "Success",
           description: "Account created successfully!",
@@ -61,10 +61,9 @@ export default function SignUpForm() {
       } else {
         toast({
           title: "Error",
-          description: "Failed to create account. Please try again.",
+          description: response?.data?.message ?? "Failed to create account. Please try again.",
           variant: "error",
         });
-        console.error("Sign up error:", response.error || "Unknown error");
       }
     } catch (error) {
       toast({
@@ -195,7 +194,7 @@ export default function SignUpForm() {
 
         <div className="text-center text-sm mt-4">
           Already have an account?{" "}
-          <Link href="/" className="font-medium hover:underline">
+          <Link href="/login" className="font-medium hover:underline">
             Sign In
           </Link>
         </div>

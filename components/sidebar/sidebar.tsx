@@ -52,6 +52,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const user=useSelector((state: any) => state.auth.user)
+  console.log("User from Redux:", user)
 
   // Check if mobile on mount and when window resizes
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function Sidebar() {
   const navItems = [
     { href: "/dashboard", icon: <LayoutDashboard size={18} />, label: "Dashboard" },
     { href: "/cases", icon: <FileText size={18} />, label: "Cases" },
-    { href: "/client", icon: <Users size={18} />, label: "Client" },
+    { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? "Clients" : "Lawyers" },
       { href: "/documents", icon: <FileText size={18} />, label: "Documents" },
 
     { href: "/ai-assistants", icon: <Bot size={18} />, label: "AI Assistants" },

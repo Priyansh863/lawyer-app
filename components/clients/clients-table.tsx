@@ -16,6 +16,7 @@ import { Star, Ban, MessageSquare, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { getClients, updateClientStatus, toggleFavorite, toggleBlocked } from "@/lib/api/clients-api"
 import { useToast } from "@/hooks/use-toast"
+import { useSelector } from "react-redux"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -40,6 +41,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [isLoading, setIsLoading] = useState(false)
   const [updatingClients, setUpdatingClients] = useState<Set<string>>(new Set())
+  const user = useSelector((state: any) => state.user)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -236,28 +238,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
             />
           </div>
 
-          <FormField
-            control={searchForm.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        
         </form>
       </Form>
 
@@ -265,12 +246,10 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Client Name</TableHead>
+              <TableHead>{user?.account_type==="lawyer" ? "Client" : "Lawyer"} Name</TableHead>
               <TableHead>Case ID</TableHead>
               <TableHead>Contact Info</TableHead>
               <TableHead>Last Contact Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -291,47 +270,6 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   <TableCell className="font-mono">{client.caseId}</TableCell>
                   <TableCell>{client.contactInfo}</TableCell>
                   <TableCell>{formatDate(client.lastContactDate)}</TableCell>
-                  <TableCell>{getStatusBadge(client.status)}</TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleToggleFavorite(client.id)}
-                        className={client.isFavorite ? "text-yellow-500" : "text-gray-500"}
-                        title={client.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                        disabled={updatingClients.has(client.id)}
-                      >
-                        {updatingClients.has(client.id) ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <Star size={16} className={client.isFavorite ? "fill-yellow-500" : ""} />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/chat?clientId=${client.id}`)}
-                        title="Send Message"
-                      >
-                        <MessageSquare size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleToggleBlocked(client.id)}
-                        className={client.isBlocked ? "text-red-500" : "text-gray-500"}
-                        title={client.isBlocked ? "Unblock Client" : "Block Client"}
-                        disabled={updatingClients.has(client.id)}
-                      >
-                        {updatingClients.has(client.id) ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <Ban size={16} />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))
             )}

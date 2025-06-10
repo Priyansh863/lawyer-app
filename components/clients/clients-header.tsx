@@ -15,7 +15,7 @@ export default  function ClientsHeader() {
       <h1 className="text-2xl font-bold tracking-tight">
         {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
       </h1>
-      <h2 className="text-xl font-semibold">Client</h2>
+      <h2 className="text-xl font-semibold">{user?.account_type==="client" ? "Lawyer":"Client"}</h2>
     </div>
   )
 }

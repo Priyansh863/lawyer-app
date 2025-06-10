@@ -11,10 +11,13 @@ export async function middleware(request: NextRequest) {
     console.log("Token:", token);
 
     // Example: Redirect unauthenticated users trying to access the dashboard
-    if (!token && pathname.startsWith("/dashboard")) {
-        console.log("Redirecting to /login due to unauthenticated access to /dashboard");
-        return NextResponse.redirect(new URL("/login", request.url));
+    if (!token) {
+        if(pathname.startsWith("/signup") || pathname.startsWith("/login")) {
+            console.log("Allowing access to /signup or /login without authentication");
+            return NextResponse.next();
     }
+    return NextResponse.redirect(new URL("/login", request.url));
+}
 
     // Example: Redirect root ("/") to "/dashboard" if authenticated
     if (pathname === "/") {

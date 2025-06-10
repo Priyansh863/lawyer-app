@@ -228,11 +228,9 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Case ID</TableHead>
-              <TableHead>Client Name</TableHead>
               <TableHead>Case Title</TableHead>
               <TableHead>Recent Update</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -246,87 +244,9 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               cases.map((caseItem, index) => (
                 <TableRow key={caseItem.id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                   <TableCell className="font-mono">{caseItem.id}</TableCell>
-                  <TableCell>{caseItem.clientName || "N/A"}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
                   <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => viewCaseDetails(caseItem.id)}
-                        title="View Case"
-                      >
-                        <Eye size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/cases/${caseItem.id}/files`)}
-                        title="View Files"
-                      >
-                        <FileText size={16} />
-                      </Button>
-                      {caseItem.status === "pending" && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleStatusUpdate(caseItem.id, "approved")}
-                            className="text-green-600"
-                            title="Approve Case"
-                            disabled={updatingCases.has(caseItem.id)}
-                          >
-                            {updatingCases.has(caseItem.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M20 6 9 17l-5-5" />
-                              </svg>
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleStatusUpdate(caseItem.id, "rejected")}
-                            className="text-red-600"
-                            title="Reject Case"
-                            disabled={updatingCases.has(caseItem.id)}
-                          >
-                            {updatingCases.has(caseItem.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M18 6 6 18" />
-                                <path d="m6 6 12 12" />
-                              </svg>
-                            )}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))
             )}
