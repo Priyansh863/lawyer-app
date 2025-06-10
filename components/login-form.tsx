@@ -80,7 +80,7 @@ export default function LoginForm() {
       console.error("Login error:", error)
       toast({
         title: "Login Error",
-        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        description: "User data not found. Please try again.",
         variant: "error",
       })
     }
