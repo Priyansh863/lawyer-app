@@ -113,8 +113,7 @@ export default function SignUpForm() {
                 )}
               />
             </div>
-
-            <FormField
+<FormField
               control={form.control}
               name="email"
               render={({ field }) => (
