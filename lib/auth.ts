@@ -13,40 +13,64 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
     async authorize(credentials) {
-      console.log("Authorize function called with credentials:", credentials);
-
       if (!credentials?.email || !credentials?.password) {
-        console.log("Missing email or password in credentials.");
-        return null;
+        throw new Error("Please enter both email and password");
       }
 
       try {
-        console.log("Sending login request to API...");
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password
+          }),
         });
 
-        console.log("Received response from API:", response);
-        const user = await response.json();
-        console.log("Parsed user data:", user);
+        const data = await response.json();
 
-        if (response.ok && user) {
-        console.log("Login successful, returning user.");
-        return {...user.data.userData,token:user.data.token};
+        // Handle unverified account
+        if (data?.message === 'account_not_verified') {
+          throw new Error('account_not_verified');
         }
-        return null;
+
+        // Handle invalid credentials
+        if (response.status === 401 || data?.message === 'Invalid credentials' || data?.message === 'credentials_not_match') {
+          throw new Error('Invalid email or password');
+        }
+
+        // Handle user not found
+        if (data?.message === 'no_user_found') {
+          throw new Error('No account found with this email');
+        }
+
+        // Handle inactive account
+        if (data?.message === 'user_not_active') {
+          throw new Error('This account has been deactivated');
+        }
+
+        // Handle successful login
+        if (response.ok && data?.data?.userData) {
+          return {
+            ...data.data.userData,
+            token: data.data.token
+          };
+        }
+
+        // Handle any other error responses
+        throw new Error(data?.message || 'Login failed. Please try again.');
       } catch (error) {
-        console.error("Error during login request:", error);
-        return null;
+        // Instead of returning null, throw the error to show the actual error message
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('Login failed. Please try again.');
       }
     }
     })
   ],
   callbacks: {
     async jwt({ token, user }) {
-        console.log("JWT callback called with token:", token, "and user:", user);
       if (user) {
         token.id = user.id
         token.email = user.email
@@ -54,7 +78,6 @@ export const authOptions: NextAuthOptions = {
       return {...token,...user};
     },
     async session({ session, token }) {
-        console.log("Session callback called with session:", session, "and token:", token);
       if (token) {
         session.user=token;
       }

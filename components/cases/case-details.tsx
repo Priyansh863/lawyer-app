@@ -28,7 +28,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const handleStatusUpdate = async (newStatus: "approved" | "rejected" | "pending") => {
     setIsUpdating(true)
     try {
-      await updateCaseStatus(caseState.id, newStatus)
+      await updateCaseStatus(caseState._id, newStatus)
       setCaseState({ ...caseState, status: newStatus })
       toast({
         title: "Status updated",
@@ -81,7 +81,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Case #{caseState.id}</CardTitle>
+          <CardTitle>Case #{caseState._id}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusBadge(caseState.status)}
             {caseState.status === "pending" && (
@@ -120,11 +120,11 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Created</h3>
-              <p>{formatDate(caseState.createdAt)}</p>
+              <p>{formatDate(caseState.created_at)}</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-              <p>{formatDate(caseState.updatedAt)}</p>
+              <p>{formatDate(caseState.updated_at)}</p>
             </div>
           </div>
 
@@ -140,13 +140,13 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
               <TabsTrigger value="notes">Notes</TabsTrigger>
             </TabsList>
             <TabsContent value="summary" className="mt-4">
-              <CaseSummary caseId={caseState.id} />
+              <CaseSummary caseId={caseState._id} />
             </TabsContent>
             <TabsContent value="files" className="mt-4">
-              <CaseFiles caseId={caseState.id} />
+              <CaseFiles caseId={caseState._id} />
             </TabsContent>
             <TabsContent value="notes" className="mt-4">
-              <CaseNotes caseId={caseState.id} />
+              <CaseNotes caseId={caseState._id} />
             </TabsContent>
           </Tabs>
         </CardContent>

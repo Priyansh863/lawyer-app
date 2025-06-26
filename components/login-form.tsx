@@ -4,14 +4,13 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import Link from "next/link"
-import { useToast } from "./ui/use-toast"
-import { useDispatch } from "react-redux";
-import { setUser } from "@/lib/slices/authSlice"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -21,8 +20,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginForm() {
-  const router = useRouter();
-  const dispatch = useDispatch();
+  const router = useRouter()
   const { toast } = useToast()
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -32,57 +30,64 @@ export default function LoginForm() {
     },
   })
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
+      setIsLoading(true);
+      
       const result = await signIn("credentials", {
-        email: data.email,
+        email: data.email.trim(),
         password: data.password,
         redirect: false,
-      })
+      });
 
-      console.log("Login result:", result,result?.ok,!result?.ok)
 
-      if (!result?.ok) {
-        console.error("Login failed:", result!.error)
-        toast({
-          title: "Login Failed",
-          description: result!.error || "An unexpected error occurred. Please try again.",
-          variant: "error",
-        })
-        return
+      if (!result) {
+        throw new Error("No response from server. Please try again.");
       }
-      const userInfo: any = await getSession();
-      console.log("User Info from session:", userInfo)
-      if (userInfo?.user?._id) {
+
+      if (result.error) {
+        // Handle unverified account
+        if (result.error === 'account_not_verified') {
+          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=login`);
+          toast({
+            title: "Account Not Verified",
+            description: "Please verify your email with the OTP we've sent you.",
+            variant: "success" as const,
+          });
+          return;
+        }
+
+        // For all other errors, show the error message from the server
+        throw new Error(result.error);
+      }
+      
+      // If we get here, login was successful
+      const userInfo = await getSession();
+      
+      if (userInfo?.user?.id) {
         // Save user details to local storage
         localStorage.setItem("user", JSON.stringify(userInfo.user));
 
-        // Dispatch user details to Redux store
-        dispatch(setUser(userInfo.user));
         toast({
           title: "Login Successful",
           description: `Welcome back, ${userInfo.user.first_name || userInfo.user.email}!`,
           variant: "success",
-        })
+        });
 
         router.push("/dashboard"); // Redirect after successful login
       } else {
-        toast({
-          title: "Login Failed",
-          description: "User data not found. Please try again.",
-          variant: "error",
-        })
-        return
+        throw new Error("User data not found. Please try again.");
       }
-      console.log("User Info:", userInfo)
-      router.refresh()
     } catch (error) {
-      console.error("Login error:", error)
       toast({
-        title: "Login Error",
-        description: "User data not found. Please try again.",
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "error",
-      })
+      });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -125,9 +130,9 @@ export default function LoginForm() {
             <Button
               type="submit"
               className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
-              disabled={form.formState.isSubmitting}
+              disabled={isLoading}
             >
-              {form.formState.isSubmitting ? "Logging In..." : "Log In"}
+              {isLoading ? "Logging In..." : "Log In"}
             </Button>
           </form>
         </Form>

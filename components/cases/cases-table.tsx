@@ -102,7 +102,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
       await updateCaseStatus(updateData.caseId, updateData.status)
 
       // Update local state
-      setCases(cases.map((c) => (c.id === caseId ? { ...c, status: newStatus } : c)))
+      setCases(cases.map((c) => (c._id === caseId ? { ...c, status: newStatus } : c)))
 
       toast({
         title: "Status updated",
@@ -156,6 +156,15 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Case Management</h2>
+        <Button
+          onClick={() => router.push('/cases/new')}
+          className="bg-[#0f0921] hover:bg-[#0f0921]/90"
+        >
+          Create New Case
+        </Button>
+      </div>
       <Form {...searchForm}>
         <form
           onSubmit={searchForm.handleSubmit(onSearchSubmit)}
@@ -203,19 +212,21 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
+                    onChange={e => {
+                      field.onChange(e);
+                      searchForm.handleSubmit(onSearchSubmit)(); // auto-submit on change
+                    }}
+                  >
+                    <option value="all">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -242,10 +253,11 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               </TableRow>
             ) : (
               cases.map((caseItem, index) => (
-                <TableRow key={caseItem.id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <TableCell className="font-mono">{caseItem.id}</TableCell>
+                
+                <TableRow key={caseItem._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                  <TableCell className="font-mono">{caseItem._id}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
-                  <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
+                  <TableCell>{formatDate(caseItem.updated_at)}</TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
                 </TableRow>
               ))

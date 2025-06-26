@@ -1,4 +1,6 @@
 "use client"
+
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -29,9 +31,9 @@ const sign_up_schema = z.object({
 type SignUpFormData = z.infer<typeof sign_up_schema>
 
 export default function SignUpForm() {
-  const { toast } = useToast();
-  const router = useRouter();
-
+  const { toast } = useToast()
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(sign_up_schema),
@@ -47,39 +49,40 @@ export default function SignUpForm() {
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      const response = await signUp(data);
+      setIsSubmitting(true)
+      const response = await signUp(data)
 
-      if (response && response.data && response.data.success) {
-        toast({
-          title: "Success",
-          description: "Account created successfully!",
-          variant: "success",
-        });
-        router.push("/login") // Redirect after successful login
-
-        console.log("Account created successfully");
+      if (response?.data?.success) {
+        // Redirect to OTP verification page
+        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup`)
       } else {
         toast({
           title: "Error",
           description: response?.data?.message ?? "Failed to create account. Please try again.",
           variant: "error",
-        });
+        })
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        description: error?.response?.data?.message ?? "An unexpected error occurred. Please try again later.",
         variant: "error",
-
-      });
-      console.error("Sign up error:", error);
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <h1 className="text-2xl font-bold font-heading">Welcome!</h1>
+        <h1 className="text-2xl font-bold font-heading">Create an Account</h1>
+        <p className="text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link href="/login" className="text-blue-600 hover:underline">
+            Sign in
+          </Link>
+        </p>
       </CardHeader>
       <CardContent>
         <Form {...form}>

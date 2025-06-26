@@ -34,7 +34,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
       toast({
         title: updatedClient.isFavorite ? "Added to favorites" : "Removed from favorites",
-        description: `${updatedClient.name} has been ${
+        description: `${updatedClient.first_name} has been ${
           updatedClient.isFavorite ? "added to" : "removed from"
         } favorites`,
       })
@@ -55,7 +55,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
       toast({
         title: updatedClient.isBlocked ? "Client blocked" : "Client unblocked",
-        description: `${updatedClient.name} has been ${updatedClient.isBlocked ? "blocked" : "unblocked"}`,
+        description: `${updatedClient.first_name} has been ${updatedClient.isBlocked ? "blocked" : "unblocked"}`,
       })
     } catch (error) {
       toast({
@@ -147,17 +147,17 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.name} />
-              <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.first_name} />
+              <AvatarFallback>{client.first_name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-xl">{client.name}</CardTitle>
+              <CardTitle className="text-xl">{client.first_name}</CardTitle>
               <div className="flex items-center gap-2 mt-1">
                 {getStatusBadge(client.status)}
                 {client.isBlocked && (
                   <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
                     Blocked
-                  </Badge>
+                  </Badge> 
                 )}
                 {client.isFavorite && (
                   <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
@@ -218,11 +218,11 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Client Since</h3>
-              <p className="text-base">{formatDate(client.createdAt)}</p>
+              {/* <p className="text-base">{formatDate(client.createdAt)}</p> */}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Last Contact</h3>
-              <p className="text-base">{formatDate(client.lastContactDate)}</p>
+              {/* <p className="text-base">{formatDate(client.lastContactDate)}</p> */}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Active Cases</h3>

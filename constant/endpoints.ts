@@ -29,5 +29,20 @@ export default {
     UPDATE_USER: `${URL}/user/update`,
     GET_USER_LIST: `${URL}/user/list`,
     GET_USER_INFO: `${URL}/user/info`,
+    GET_USER_CASES: `${URL}/user/cases`,
+    GET_RELATED_USERS: `${URL}/user/users/related`,
+    CREATE_CASE: `${URL}/user/CreateCases`,
+    GET_CLIENTS_AND_LAWYERS: `${URL}/user/clients-and-lawyers`,
+  },
+  blog: {
+    GET_BLOGS: `${URL}/user/blogs`,
+    GET_BLOG: `${URL}/user/blogs/`,
+    CREATE_BLOG: `${URL}/user/blogs`,
+    UPDATE_BLOG: `${URL}/user/blogs/`,
+    DELETE_BLOG: `${URL}/user/blogs/`,
+    LIKE_BLOG: `${URL}/user/blogs/`,
+  },
+  question: {
+    CREATE_QUESTION: `${URL}/question`,
   },
 };

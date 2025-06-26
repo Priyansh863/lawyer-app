@@ -1,94 +1,78 @@
-import type { BlogPost } from "@/types/blog"
+import endpoints from "@/constant/endpoints";
+import type { BlogPost } from "@/types/blog";
 
-// This is a mock API service for the blog functionality
-//these functions would make actual API calls
+// This is a real API service for the blog functionality
+//these functions make actual API calls
 
-// Mock data
-const BLOG_POSTS: BlogPost[] = [
-  {
-    id: "1",
-    title: "Master Layer: Your fall Style Guide",
-    content:
-      "# Master Layer: Your fall Style Guide\n\nLorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts.\n\n## Introduction\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\n## Legal Considerations\n\n1. First point\n2. Second point\n3. Third point\n\n> Important quote or legal precedent here.",
-    excerpt:
-      "Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts.",
-    image: "/placeholder.svg?height=400&width=800",
-    date: "2025-05-01",
-    author: {
-      id: "1",
-      name: "Joseph Smith",
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    category: "legal-advice",
-    status: "published",
-    likes: 24,
-    views: 156,
-  },
-  
-]
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function getBlogPosts(): Promise<BlogPost[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return BLOG_POSTS
+  const response = await fetch(`${endpoints.blog.GET_BLOGS}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch blog posts');
+  }
+  return response.json();
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return BLOG_POSTS.find((post) => post.id === id) || null
+  const response = await fetch(`${API_BASE_URL}/user/blogs/${id}`);
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    throw new Error('Failed to fetch blog post');
+  }
+  return response.json();
 }
 
 export async function createBlogPost(
-  post: Omit<BlogPost, "id" | "date" | "author" | "likes" | "views">,
+  post: Omit<BlogPost, "id" | "date" | "author" | "likes" | "views"> & { category: string },
 ): Promise<BlogPost> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const newPost: BlogPost = {
-    ...post,
-    id: Math.random().toString(36).substring(2, 9),
-    date: new Date().toISOString(),
-    author: {
-      id: "1",
-      name: "Joseph Smith",
-      avatar: "/placeholder.svg?height=40&width=40",
+  const response = await fetch(`${API_BASE_URL}/user/blogs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    likes: 0,
-    views: 0,
+    body: JSON.stringify(post),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create blog post');
   }
-
-  return newPost
+  return response.json();
 }
 
-export async function updateBlogPost(id: string, updates: Partial<BlogPost>): Promise<BlogPost> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  const post = BLOG_POSTS.find((post) => post.id === id)
-  if (!post) {
-    throw new Error(`Post with ID ${id} not found`)
+export async function updateBlogPost(
+  id: string,
+  updates: Partial<BlogPost> & { category?: string },
+): Promise<BlogPost> {
+  const response = await fetch(`${API_BASE_URL}/blogs/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to update blog post');
   }
-
-  const updatedPost = { ...post, ...updates }
-  return updatedPost
+  return response.json();
 }
 
 export async function deleteBlogPost(id: string): Promise<void> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  // this would delete the post from the database
+  const response = await fetch(`${endpoints.blog.DELETE_BLOG}${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete blog post');
+  }
 }
 
 export async function likeBlogPost(id: string): Promise<{ likes: number }> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  const post = BLOG_POSTS.find((post) => post.id === id)
-  if (!post) {
-    throw new Error(`Post with ID ${id} not found`)
+  const response = await fetch(`${API_BASE_URL}/blogs/${id}/like`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to like blog post');
   }
-
-  const newLikes = post.likes + 1
-  return { likes: newLikes }
+  return response.json();
 }

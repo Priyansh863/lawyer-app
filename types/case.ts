@@ -1,13 +1,13 @@
 export type CaseStatus = "pending" | "approved" | "rejected"
 
 export interface Case {
-  id: string
+  _id: string
   title: string
   clientName: string
   clientId: string
   status: CaseStatus
-  createdAt: string
-  updatedAt: string
+  created_at: string
+  updated_at: string
   description?: string
   assignedTo: string[]
 }

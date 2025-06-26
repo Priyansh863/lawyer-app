@@ -266,10 +266,10 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}
                   onClick={() => viewClientDetails(client.id)}
                 >
-                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell className="font-medium">{client.first_name}{" "}{client.last_name}</TableCell>
                   <TableCell className="font-mono">{client.caseId}</TableCell>
-                  <TableCell>{client.contactInfo}</TableCell>
-                  <TableCell>{formatDate(client.lastContactDate)}</TableCell>
+                  <TableCell>{client.email}</TableCell>
+                  {/* <TableCell>{formatDate(client.lastContactDate)}</TableCell> */}
                 </TableRow>
               ))
             )}

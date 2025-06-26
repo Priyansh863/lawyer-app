@@ -1,4 +1,5 @@
 import type { Case, CaseStatus } from "@/types/case"
+import endpoints from "@/constant/endpoints"
 
 interface GetCasesParams {
   status?: CaseStatus | "all"
@@ -16,106 +17,31 @@ export async function getCases({
   page = 1,
   limit = 10,
 }: GetCasesParams = {}): Promise<Case[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+  
+  const userString = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const user = userString ? JSON.parse(userString) : null;
+  
 
-  // Mock data
-  const mockCases: Case[] = [
-    {
-      id: "123456",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "pending",
-      createdAt: "2025-03-24T10:00:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "125632",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "rejected",
-      createdAt: "2025-03-23T09:30:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "230641",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-22T14:15:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "653241",
-      title: "Rent Agreement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-21T11:45:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Rent agreement for commercial property.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "032152",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-20T16:30:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "125421",
-      title: "Purchase House",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-19T13:20:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "House purchase agreement and documentation.",
-      assignedTo: ["user_1"],
-    },
-  ]
+  const params = new URLSearchParams();
 
-  // Filter by status
-  let filteredCases = mockCases
-  if (status !== "all") {
-    filteredCases = filteredCases.filter((c) => c.status === status)
+  if (status && status !== "all") params.append("status", status);
+  if (query) params.append("query", query);
+  params.append("page", page.toString());
+  params.append("limit", limit.toString());
+
+  const res = await fetch(`${endpoints.user.GET_USER_CASES}?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${user.token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch cases");
   }
 
-  // Filter by search query
-  if (query) {
-    const lowerQuery = query.toLowerCase()
-    filteredCases = filteredCases.filter(
-      (c) =>
-        c.id.toLowerCase().includes(lowerQuery) ||
-        c.title.toLowerCase().includes(lowerQuery) ||
-        c.clientName.toLowerCase().includes(lowerQuery) ||
-        c.description?.toLowerCase().includes(lowerQuery),
-    )
-  }
+  const data = await res.json();
 
-  // Pagination
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedCases = filteredCases.slice(startIndex, endIndex)
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  return paginatedCases
+  return data.cases;
 }
 
 /**
@@ -124,7 +50,7 @@ export async function getCases({
 export async function getCaseById(id: string): Promise<Case | null> {
   // this would call an API endpoint
   const cases = await getCases({ limit: 100 })
-  const caseData = cases.find((c) => c.id === id)
+  const caseData = cases.find((c) => c._id === id)
 
   if (!caseData) {
     return null
@@ -147,13 +73,13 @@ export async function updateCaseStatus(id: string, status: CaseStatus): Promise<
 
   // Return mock updated case
   return {
-    id,
+    _id: id,
     title: "Business Settlement",
     clientName: "John Doe",
     clientId: "client_1",
     status,
-    createdAt: "2025-03-24T10:00:00Z",
-    updatedAt: new Date().toISOString(),
+    created_at: "2025-03-24T10:00:00Z",
+    updated_at: new Date().toISOString(),
     description: "Business settlement agreement between parties.",
     assignedTo: ["user_1"],
   }
@@ -162,22 +88,19 @@ export async function updateCaseStatus(id: string, status: CaseStatus): Promise<
 /**
  * Create a new case
  */
-export async function createCase(caseData: Partial<Case>): Promise<Case> {
-  // this would call an API endpoint
+export async function createCase(data: any) {
+  const token = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").token : null;
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  const res = await fetch(endpoints.user.CREATE_CASE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-  // Return mock created case
-  return {
-    id: `case_${Date.now()}`,
-    title: caseData.title || "New Case",
-    clientName: caseData.clientName || "Unknown Client",
-    clientId: caseData.clientId || "client_unknown",
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: caseData.description || "",
-    assignedTo: caseData.assignedTo || ["user_1"],
-  }
+  if (!res.ok) throw new Error("Failed to create case");
+
+  return res.json(); // { success: true, case: {...} }
 }
