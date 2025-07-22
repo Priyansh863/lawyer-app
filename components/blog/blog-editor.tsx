@@ -1,55 +1,83 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
-import { Eye, Save, Send, Trash2 } from "lucide-react"
+import { Save, Send, Trash2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getUploadFileUrl } from "@/lib/helpers/fileupload"
+import { useToast } from "@/components/ui/use-toast"
+import { useSelector } from "react-redux"
+import { RootState } from "@/lib/store"
+import { createBlogPost, updateBlogPost, deleteBlogPost, getBlogPost, BlogPost } from "@/lib/api/blog-api"
 
-interface BlogPost {
-  id?: string
-  title: string
-  content: string
-  excerpt: string
-  image: string
-  category: string
-  status: "draft" | "published"
-}
-
-const EMPTY_POST: BlogPost = {
+const EMPTY_POST = {
   title: "",
   content: "",
   excerpt: "",
   image: "/placeholder.svg?height=400&width=800",
   category: "legal-advice",
-  status: "draft",
+  status: "draft" as const,
 }
 
 export default function BlogEditor({ postId }: { postId?: string }) {
   const router = useRouter()
-  const [post, setPost] = useState<BlogPost>(EMPTY_POST)
-  const [preview, setPreview] = useState(false)
+  const [post, setPost] = useState<BlogPost | typeof EMPTY_POST>(EMPTY_POST)
   const [isSaving, setIsSaving] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const user = useSelector((state: RootState) => state.auth.user)
+  const { toast } = useToast()
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {}
+    
+    if (!post.title.trim()) {
+      newErrors.title = 'Title is required'
+    }
+    
+    if (!post.content.trim()) {
+      newErrors.content = 'Content is required'
+    } else if (post.content.trim().length < 25) {
+      newErrors.content = 'Content must be at least 25 characters long'
+    }
+    
+    if (!post.excerpt.trim()) {
+      newErrors.excerpt = 'Excerpt is required'
+    } else if (post.excerpt.length > 160) {
+      newErrors.excerpt = 'Excerpt should be 160 characters or less'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+  
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+  }
 
   useEffect(() => {
     if (postId) {
-      // Than fetch the post data from API
-      // For now, we'll use mock data
-      setPost({
-        id: postId,
-        title: "Master Layer: Your fall Style Guide",
-        content:
-          "# Master Layer: Your fall Style Guide\n\nLorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts.\n\n## Introduction\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\n## Legal Considerations\n\n1. First point\n2. Second point\n3. Third point\n\n> Important quote or legal precedent here.",
-        excerpt:
-          "Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts.",
-        image: "/placeholder.svg?height=400&width=800",
-        category: "legal-advice",
-        status: "published",
-      })
+      // Fetch the post data from API
+      const fetchPost = async () => {
+        try {
+          const data = await getBlogPost(postId)
+          setPost(data)
+        } catch (error) {
+          console.error("Error fetching post:", error)
+        }
+      }
+      fetchPost()
     }
   }, [postId])
 
@@ -58,15 +86,37 @@ export default function BlogEditor({ postId }: { postId?: string }) {
   }
 
   const handleSave = async (newStatus?: "draft" | "published") => {
+    // Always validate required fields, regardless of draft or publish
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: newStatus === 'published' 
+          ? 'Please fix the errors before publishing' 
+          : 'Please fill in all required fields',
+        variant: 'error',
+      })
+      return
+    }
+    
     setIsSaving(true)
 
     try {
-      // In a real app, save to API
-      // For now, just simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const blogData = {
+        title: post.title.trim(),
+        content: post.content.trim(),
+        excerpt: post.excerpt.trim(),
+        author: user?._id,
+        image: post.image,
+        category: post.category,
+        status: newStatus || post.status,
+      }
 
-      if (newStatus) {
-        setPost((prev) => ({ ...prev, status: newStatus }))
+     
+
+      if (postId) {
+        await updateBlogPost(postId, blogData)
+      } else {
+        await createBlogPost(blogData)
       }
 
       // Navigate back to blog list after saving
@@ -82,34 +132,52 @@ export default function BlogEditor({ postId }: { postId?: string }) {
     if (!confirm("Are you sure you want to delete this post?")) return
 
     try {
-      // In a real app, delete via API
-      // For now, just simulate a delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await deleteBlogPost(postId as string)
       router.push("/blog")
     } catch (error) {
       console.error("Error deleting post:", error)
     }
   }
 
-  const renderMarkdown = (markdown: string) => {
-    // This is a very simple markdown renderer for demonstration
-    // In a real app, use a proper markdown library
-    return (
-      <div
-        className="prose max-w-none"
-        dangerouslySetInnerHTML={{
-          __html: markdown
-            .replace(/^# (.*$)/gm, "<h1>$1</h1>")
-            .replace(/^## (.*$)/gm, "<h2>$1</h2>")
-            .replace(/^### (.*$)/gm, "<h3>$1</h3>")
-            .replace(/\*\*(.*)\*\*/gm, "<strong>$1</strong>")
-            .replace(/\*(.*)\*/gm, "<em>$1</em>")
-            .replace(/\n/gm, "<br />")
-            .replace(/^> (.*$)/gm, "<blockquote>$1</blockquote>")
-            .replace(/^(\d+)\. (.*$)/gm, "<ol><li>$2</li></ol>"),
-        }}
-      />
-    )
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+
+    const reader = new FileReader()
+    reader.onloadend = async () => {
+      try {
+        const imageFormat = file.type.split("/")[1]
+        const imageData = {
+          data: reader.result,
+          format: imageFormat,
+        }
+
+        const objectUrl = await getUploadFileUrl(user?._id as string, imageData)
+        if (objectUrl) {
+          handleChange("image", objectUrl)
+          toast({
+            title: "Image uploaded",
+            description: "Your image has been uploaded successfully.",
+            variant: "success",
+          })
+        }
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to upload image. Try again.",
+          variant: "error",
+        })
+      } finally {
+        setIsUploading(false)
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -120,16 +188,16 @@ export default function BlogEditor({ postId }: { postId?: string }) {
           <Input
             id="post-title"
             value={post.title}
-            onChange={(e) => handleChange("title", e.target.value)}
+            onChange={(e) => {
+              handleChange("title", e.target.value)
+              clearError('title')
+            }}
             placeholder="Enter post title"
-            className="max-w-2xl"
+            className={`max-w-2xl ${errors.title ? 'border-red-500' : ''}`}
           />
+          {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setPreview(!preview)} className="flex items-center gap-2">
-            <Eye size={16} />
-            {preview ? "Edit" : "Preview"}
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -160,30 +228,16 @@ export default function BlogEditor({ postId }: { postId?: string }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-4">
-          {preview ? (
-            <div className="border rounded-md p-6 min-h-[400px] bg-white">
-              <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-              {renderMarkdown(post.content)}
-            </div>
-          ) : (
-            <Tabs defaultValue="write">
-              <TabsList>
-                <TabsTrigger value="write">Write</TabsTrigger>
-                <TabsTrigger value="markdown">Markdown</TabsTrigger>
-              </TabsList>
-              <TabsContent value="write" className="space-y-4">
-                <Textarea
-                  value={post.content}
-                  onChange={(e) => handleChange("content", e.target.value)}
-                  placeholder="Write your blog post content here..."
-                  className="min-h-[400px]"
-                />
-              </TabsContent>
-              <TabsContent value="markdown">
-                <div className="border rounded-md p-4 min-h-[400px] bg-gray-50 font-mono text-sm">{post.content}</div>
-              </TabsContent>
-            </Tabs>
-          )}
+          <Textarea
+            value={post.content}
+            onChange={(e) => {
+              handleChange("content", e.target.value)
+              clearError('content')
+            }}
+            placeholder="Write your blog post content here..."
+            className={`min-h-[400px] ${errors.content ? 'border-red-500' : ''}`}
+          />
+          {errors.content && <p className="text-sm text-red-500 mt-1">{errors.content}</p>}
         </div>
 
         <div className="space-y-6">
@@ -203,19 +257,29 @@ export default function BlogEditor({ postId }: { postId?: string }) {
             <div className="border rounded-md overflow-hidden">
               <img src={post.image || "/placeholder.svg"} alt="Featured" className="w-full h-40 object-cover" />
             </div>
-            <Input
-              id="post-image"
-              type="text"
-              value={post.image}
-              onChange={(e) => handleChange("image", e.target.value)}
-              placeholder="Image URL"
-              className="mt-2"
-            />
+            <div className="mt-2">
+              <Button 
+                type="button" 
+                onClick={handleImageUploadClick} 
+                className="w-full"
+                disabled={isUploading}
+              >
+                {isUploading ? "Uploading..." : "Upload Image"}
+              </Button>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="post-category">Category</Label>
-            <Select value={post.category} onValueChange={(value) => handleChange("category", value)}>
+            <Select value={post.category} onValueChange={(value) =>{
+               handleChange("category", value)}}>
               <SelectTrigger id="post-category">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>

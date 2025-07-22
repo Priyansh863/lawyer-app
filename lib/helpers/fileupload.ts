@@ -48,12 +48,10 @@ export const uploadFileOnS3 = async (
 };
 
  /**
-   * getting upload file url  all Notifications
+   * getting upload file url for images (with compression)
    */
  export const getUploadFileUrl = async (userId: string, item:any) => {
-    const filePath = `ai-lawyer-development-assets/${new Date().getTime()}-${userId}.${
-      item.format
-    }`;
+    const filePath = `ai-lawyer-development-assets/${new Date().getTime()}-${userId}.${item.format}`;
     const imgBlob = await imageCompression.getFilefromDataUrl(
       item.data as string,
       `${Date.now()}.${item.format}`
@@ -69,4 +67,21 @@ export const uploadFileOnS3 = async (
       filePath
     )) as string;
     return fileUrl;
-  };
+ }
+
+ /**
+   * getting upload file url for documents (PDFs, etc.) without compression
+   */
+ export const getUploadDocumentUrl = async (userId: string, item: any) => {
+    const filePath = `ai-lawyer-development-assets/${new Date().getTime()}-${userId}.${item.format}`;
+    
+    // Convert data URL to blob without image compression
+    const response = await fetch(item.data as string);
+    const blob = await response.blob();
+    
+    const fileUrl = (await uploadFileOnS3(
+      blob,
+      filePath
+    )) as string;
+    return fileUrl;
+ } 

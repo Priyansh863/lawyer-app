@@ -10,6 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useSelector } from "react-redux"
+import { RootState } from "@/lib/store"
+import endpoints from "@/constant/endpoints"
+import { useState } from "react"
 
 const qaSchema = z.object({
   question: z.string().min(10, "Question must be at least 10 characters"),
@@ -23,12 +27,17 @@ type QAFormData = z.infer<typeof qaSchema>
 
 export default function QANewForm() {
   const router = useRouter()
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token = typeof window !== "undefined" && localStorage.getItem("user") 
+    ? JSON.parse(localStorage.getItem("user") as string).token 
+    : null;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<QAFormData>({
     resolver: zodResolver(qaSchema),
     defaultValues: {
       question: "",
-      clientName: "",
+      clientName: `${user?.first_name + " " + user?.last_name}`,
       isAnonymous: true,
       category: "general",
       tags: "",
@@ -37,20 +46,50 @@ export default function QANewForm() {
 
   const onSubmit = async (data: QAFormData) => {
     try {
-      // Example API call structure for backend Person
-      const response = await fetch("/api/qa", {
+      // Show loading state
+      setIsSubmitting(true);
+      
+      // Process tags if they exist and handle anonymous submissions
+      const processedData = {
+        ...data,
+        // When isAnonymous is true, send blank clientName
+        clientName: data.isAnonymous ? "" : data.clientName
+        // If tags is a string, keep it as is for the backend to process
+      };
+
+      // Call our API endpoint
+      const response = await fetch(endpoints.question.CREATE_QUESTION, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(processedData),
       })
 
-      if (response.ok) {
-        router.push("/qa")
+      console.log(response, "<<<<<<<<<response")
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle token expiration specifically
+        if (errorData.error === "token-expired") {
+          console.error("Your session has expired. Redirecting to login...");
+          // Redirect to login page
+          // router.push("/login");
+          return; // Exit early
+        }
+        
+        throw new Error(errorData.error || "Failed to create question");
       }
+
+      // Redirect to Q&A page on success
+      router.push("/qa");
     } catch (error) {
-      console.error("Failed to save question:", error)
+      console.error("Failed to save question:", error);
+      // Could add toast notification here for error feedback
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -148,12 +187,12 @@ export default function QANewForm() {
               type="button"
               variant="outline"
               onClick={() => router.push("/qa")}
-              disabled={form.formState.isSubmitting}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Submitting..." : "Submit Question"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Question"}
             </Button>
           </div>
         </form>

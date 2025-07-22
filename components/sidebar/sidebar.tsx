@@ -104,7 +104,6 @@ export default function Sidebar() {
     { href: "/blog", icon: <BookOpen size={18} />, label: "Blog" },
     { href: "/qa", icon: <HelpCircle size={18} />, label: "Q&A" },
     { href: "/token", icon: <Coins size={18} />, label: "Token" },
-    { href: "/subscription", icon: <CreditCard size={18} />, label: "Subscription" },
     { href: "/settings", icon: <Settings size={18} />, label: "Settings" },
   ]
 

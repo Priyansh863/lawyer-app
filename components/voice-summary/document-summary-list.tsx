@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Search, FileText } from "lucide-react"
+import { Play, Pause, Search, FileText, Loader2, Volume2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
+import { getDocumentSummaries } from "@/lib/api/voice-summary-api"
 import type { DocumentSummary } from "@/types/voice-summary"
+import { useSpeech } from "react-text-to-speech"
 
 interface DocumentSummaryListProps {
   initialSummaries: DocumentSummary[]
@@ -19,13 +20,50 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   const [filteredSummaries, setFilteredSummaries] = useState<DocumentSummary[]>(initialSummaries)
   const [searchQuery, setSearchQuery] = useState("")
   const [playingId, setPlayingId] = useState<string | null>(null)
-  const [playbackProgress, setPlaybackProgress] = useState<Record<string, number>>({})
-  const [isMuted, setIsMuted] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
-  const [isSimulatedPlayback, setIsSimulatedPlayback] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentSummary, setCurrentSummary] = useState<DocumentSummary | null>(null)
 
-  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
+
+  // Initialize TTS for the current summary
+  const {
+    Text,
+    speechStatus,
+    isInQueue,
+    start: startSpeech,
+    pause: pauseSpeech,
+    stop: stopSpeech,
+  } = useSpeech({
+    text: currentSummary?.summary || '',
+    volume: 0.8,
+    rate: 1.0,
+    pitch: 1.0,
+    lang: 'en-US'
+  })
+
+  // Fetch documents from backend on component mount
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (initialSummaries.length === 0) {
+        setIsLoading(true)
+        try {
+          const fetchedSummaries = await getDocumentSummaries()
+          setSummaries(fetchedSummaries)
+          setFilteredSummaries(fetchedSummaries)
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to load document summaries",
+            variant: "destructive",
+          })
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchDocuments()
+  }, [initialSummaries.length, toast])
 
   // Filter summaries based on search query
   useEffect(() => {
@@ -42,244 +80,152 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
     }
   }, [searchQuery, summaries])
 
+  // Handle play/pause summary
   const handlePlaySummary = (summary: DocumentSummary) => {
-    // If already playing this summary, pause it
     if (playingId === summary.id) {
-      stopSimulatedPlayback()
-      setPlayingId(null)
+      // If already playing this summary, pause it
+      if (speechStatus === 'started') {
+        pauseSpeech()
+      } else {
+        stopSpeech()
+        setPlayingId(null)
+        setCurrentSummary(null)
+      }
       return
     }
 
-    // If playing another summary, stop it first
-    if (playingId) {
-      stopSimulatedPlayback()
-      setPlayingId(null)
-    }
-
-    // Start TTS playback simulation
+    // Start playing new summary
     setPlayingId(summary.id)
-    startSimulatedTTS(summary.id, summary.summary)
-
+    setCurrentSummary(summary)
+    
+    // Start speech after setting the summary
+    setTimeout(() => {
+      startSpeech()
+    }, 100)
+    
     toast({
-      title: "TTS Started",
-      description: `Playing summary for ${summary.documentName}`,
+      title: "Playing Summary",
+      description: `Now playing: ${summary.documentName}`,
     })
   }
 
-  const startSimulatedTTS = (summaryId: string, text: string) => {
-    // Stop any existing simulation
-    stopSimulatedPlayback()
-
-    // Set simulated playback state
-    setIsSimulatedPlayback(true)
-
-    // Reset progress
-    setPlaybackProgress((prev) => ({
-      ...prev,
-      [summaryId]: 0,
-    }))
-
-    // Simulate TTS playback based on text length
-    const estimatedDuration = Math.max(10, text.length / 10) // Rough estimate: 10 chars per second
-    let progress = 0
-    const updateInterval = 200 // Update every 200ms
-
-    simulationTimerRef.current = setInterval(() => {
-      progress += (100 / (estimatedDuration * 1000)) * updateInterval * playbackSpeed
-
-      if (progress > 100) {
-        stopSimulatedPlayback()
-        setPlayingId(null)
-        setPlaybackProgress((prev) => ({
-          ...prev,
-          [summaryId]: 0,
-        }))
-        toast({
-          title: "TTS Completed",
-          description: "Summary playback finished",
-        })
-        return
-      }
-
-      setPlaybackProgress((prev) => ({
-        ...prev,
-        [summaryId]: progress,
-      }))
-    }, updateInterval)
+  // Stop all playback
+  const stopPlayback = () => {
+    stopSpeech()
+    setPlayingId(null)
+    setCurrentSummary(null)
   }
-
-  const stopSimulatedPlayback = () => {
-    if (simulationTimerRef.current) {
-      clearInterval(simulationTimerRef.current)
-      simulationTimerRef.current = null
-    }
-    setIsSimulatedPlayback(false)
-  }
-
-  const handleSliderChange = (summaryId: string, values: number[]) => {
-    if (playingId === summaryId) {
-      setPlaybackProgress((prev) => ({
-        ...prev,
-        [summaryId]: values[0],
-      }))
-    }
-  }
-
-  const handleSkipBackward = () => {
-    if (playingId) {
-      setPlaybackProgress((prev) => {
-        const currentProgress = prev[playingId] || 0
-        const newProgress = Math.max(0, currentProgress - 10)
-        return {
-          ...prev,
-          [playingId]: newProgress,
-        }
-      })
-    }
-  }
-
-  const handleSkipForward = () => {
-    if (playingId) {
-      setPlaybackProgress((prev) => {
-        const currentProgress = prev[playingId] || 0
-        const newProgress = Math.min(100, currentProgress + 10)
-        return {
-          ...prev,
-          [playingId]: newProgress,
-        }
-      })
-    }
-  }
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted)
-    toast({
-      title: isMuted ? "TTS Unmuted" : "TTS Muted",
-      description: isMuted ? "Audio restored" : "Audio muted",
-    })
-  }
-
-  const changePlaybackSpeed = () => {
-    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2]
-    const currentIndex = speeds.indexOf(playbackSpeed)
-    const nextSpeed = speeds[(currentIndex + 1) % speeds.length]
-    setPlaybackSpeed(nextSpeed)
-
-    toast({
-      title: "Playback Speed Changed",
-      description: `Speed set to ${nextSpeed}x`,
-    })
-  }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (simulationTimerRef.current) {
-        clearInterval(simulationTimerRef.current)
-      }
-    }
-  }, [])
 
   return (
     <div className="space-y-6">
       {/* Search Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex w-full max-w-sm items-center space-x-2">
-            <div className="flex-1 relative">
-              <div className="relative">
-                <Input
-                  placeholder="Search document summaries..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-[#F5F5F5] border-gray-200 pl-10"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center space-x-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search document summaries..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Loading document summaries...</span>
+        </div>
+      )}
 
       {/* Document Summaries List */}
-      <div className="space-y-4">
-        {filteredSummaries.length === 0 ? (
-          <Card className="p-6 text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">
-              {searchQuery ? "No summaries found matching your search." : "No document summaries available."}
-            </p>
-            <p className="text-sm text-gray-400 mt-2">
-              Upload documents through AI Assistants to generate summaries for TTS playback.
-            </p>
+      <div className="grid gap-4">
+        {filteredSummaries.length === 0 && !isLoading ? (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No document summaries found</p>
+            </CardContent>
           </Card>
         ) : (
-          filteredSummaries.map((summary, index) => (
-            <Card key={summary.id} className={`overflow-hidden ${index % 2 === 0 ? "bg-gray-50" : ""}`}>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3 mb-3">
-                  <FileText className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate">{summary.documentName}</div>
-                    {summary.caseTitle && (
-                      <div className="text-sm text-blue-600 truncate">Case: {summary.caseTitle}</div>
-                    )}
-                    <div className="text-xs text-gray-500 mt-1">
-                      Generated: {formatDate(summary.createdAt, false)} • {summary.wordCount} words
+          filteredSummaries.map((summary) => (
+            <Card key={summary.id} className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">{summary.documentName}</h3>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                      <span>Case: {summary.caseTitle}</span>
+                      <span>•</span>
+                      <span>Uploaded: {formatDate(summary.createdAt)}</span>
+                      <span>•</span>
+                      <span>By: {summary.uploadedBy}</span>
+                      <span>•</span>
+                      <span>{summary.wordCount} words</span>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full flex-shrink-0"
-                    onClick={() => handlePlaySummary(summary)}
-                  >
-                    {playingId === summary.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant={playingId === summary.id ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={() => handlePlaySummary(summary)}
+                      disabled={summary.status !== 'ready'}
+                    >
+                      {playingId === summary.id ? (
+                        <>
+                          <Pause className="h-4 w-4 mr-1" />
+                          Pause
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-1" />
+                          Play
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
-                {/* TTS Controls */}
-                {playingId === summary.id && (
-                  <div className="space-y-3 mt-4 p-3 bg-white rounded-lg border">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 w-8">0:00</span>
-                      <Slider
-                        value={[playbackProgress[summary.id] || 0]}
-                        min={0}
-                        max={100}
-                        step={1}
-                        onValueChange={(values) => handleSliderChange(summary.id, values)}
-                        className="flex-1"
-                      />
-                      <span className="text-xs text-gray-500 w-12">
-                        {Math.ceil(((100 - (playbackProgress[summary.id] || 0)) / 100) * (summary.wordCount / 150))}:00
-                      </span>
-                    </div>
+                {/* Summary Text */}
+                <div className="bg-muted/30 rounded-lg p-4 mb-4">
+                  <p className="text-sm leading-relaxed">{summary.summary}</p>
+                </div>
 
-                    <div className="flex items-center justify-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={handleSkipBackward}>
-                        <SkipBack className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={toggleMute}>
-                        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={changePlaybackSpeed}>
-                        {playbackSpeed}x
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={handleSkipForward}>
-                        <SkipForward className="h-4 w-4" />
-                      </Button>
-                    </div>
+                {/* TTS Element (hidden but functional) */}
+                {playingId === summary.id && currentSummary && (
+                  <div className="hidden">
+                    <Text />
                   </div>
                 )}
 
-                {/* Summary Preview */}
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="text-sm text-gray-700 line-clamp-3">{summary.summary}</div>
-                  {summary.summary.length > 200 && (
-                    <Button variant="link" size="sm" className="p-0 h-auto text-xs mt-1">
-                      Read full summary
-                    </Button>
+                {/* Status Badge */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        summary.status === 'ready'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {summary.status === 'ready' ? 'Ready' : 'Processing'}
+                    </span>
+                  </div>
+                  
+                  {playingId === summary.id && (
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Volume2 className="h-4 w-4" />
+                      <span>Playing audio...</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={stopPlayback}
+                        className="text-xs"
+                      >
+                        Stop
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>

@@ -20,9 +20,10 @@ interface ChatListProps {
   initialChats: ChatSummary[]
 }
 
-export default function ChatList({ initialChats }: ChatListProps) {
+export default function ChatList() {
+
   // Use initialChats directly without state to avoid initial re-renders
-  const [chats, setChats] = useState<ChatSummary[]>(initialChats || [])
+  const [chats, setChats] = useState<any[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [activeChatClientId, setActiveChatClientId] = useState<string | null>(null)

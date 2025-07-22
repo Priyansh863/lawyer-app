@@ -1,20 +1,29 @@
+"use client"
 import React, { Suspense } from "react"
 import ClientLayout from "@/components/layouts/client-layout"
 import ClientsTable from "@/components/clients/clients-table"
 import ClientsHeader from "@/components/clients/clients-header"
-import { getClients } from "@/lib/api/clients-api"
+import { Loader2 } from "lucide-react"
 
-export default async function ClientPage() {
-  const clients = await getClients({ status: "all" })
+function ClientContent() {
+  return (
+    <div className="flex flex-col gap-6">
+      <ClientsHeader />
+      <ClientsTable initialClients={[]} />
+    </div>
+  )
+}
 
+export default function ClientPage() {
   return (
     <ClientLayout>
-      <div className="flex flex-col gap-6">
-        <ClientsHeader />
-        <Suspense fallback={<div>Loading clients...</div>}>
-          <ClientsTable initialClients={clients} />
-        </Suspense>
-      </div>
+      <Suspense fallback={
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }>
+        <ClientContent />
+      </Suspense>
     </ClientLayout>
   )
 }

@@ -17,6 +17,7 @@ import { formatDate } from "@/lib/utils"
 import { getClients, updateClientStatus, toggleFavorite, toggleBlocked } from "@/lib/api/clients-api"
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
+import type { RootState } from "@/lib/store"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -39,9 +40,10 @@ interface ClientsTableProps {
 
 export default function ClientsTable({ initialClients }: ClientsTableProps) {
   const [clients, setClients] = useState<Client[]>(initialClients)
+  const [filteredClients, setFilteredClients] = useState<Client[]>(initialClients)
   const [isLoading, setIsLoading] = useState(false)
   const [updatingClients, setUpdatingClients] = useState<Set<string>>(new Set())
-  const user = useSelector((state: any) => state.user)
+  const profile = useSelector((state: RootState) => state.auth.user)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -67,6 +69,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
           query: formData.query || undefined,
         })
         setClients(fetchedClients)
+        setFilteredClients(fetchedClients)
       } catch (error) {
         toast({
           title: "Error",
@@ -80,6 +83,31 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
 
     fetchClients()
   }, [searchParams, toast, searchForm])
+
+  // Real-time frontend search
+  useEffect(() => {
+    const query = searchForm.watch('query') || ''
+    const status = searchForm.watch('status')
+    
+    let filtered = clients
+    
+    // Filter by search query
+    if (query.trim()) {
+      filtered = filtered.filter(client => 
+        `${client.first_name || ''} ${client.last_name || ''}`.toLowerCase().includes(query.toLowerCase()) ||
+        client.email?.toLowerCase().includes(query.toLowerCase()) ||
+        client.phone?.toLowerCase().includes(query.toLowerCase()) ||
+        client.contactInfo?.toLowerCase().includes(query.toLowerCase())
+      )
+    }
+    
+    // Filter by status
+    if (status && status !== 'all') {
+      filtered = filtered.filter(client => client.status === status)
+    }
+    
+    setFilteredClients(filtered)
+  }, [searchForm.watch('query'), searchForm.watch('status'), clients])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -164,8 +192,9 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
   }
 
   // View client details
-  const viewClientDetails = (clientId: string) => {
-    router.push(`/client/${clientId}`)
+  const viewClientDetails = (client: Client) => {
+    const clientData = encodeURIComponent(JSON.stringify(client))
+    router.push(`/client/${client.id}?data=${clientData}`)
   }
 
   // Get status badge
@@ -246,30 +275,30 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{user?.account_type==="lawyer" ? "Client" : "Lawyer"} Name</TableHead>
+              <TableHead>{profile?.account_type==="lawyer" ? "Client" : "Lawyer"} Name</TableHead>
               <TableHead>Case ID</TableHead>
               <TableHead>Contact Info</TableHead>
               <TableHead>Last Contact Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.length === 0 ? (
+            {filteredClients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {isLoading ? "Loading clients..." : "No clients found"}
                 </TableCell>
               </TableRow>
             ) : (
-              clients.map((client, index) => (
+              filteredClients.map((client, index) => (
                 <TableRow
                   key={client.id}
                   className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}
-                  onClick={() => viewClientDetails(client.id)}
+                  onClick={() => viewClientDetails(client)}
                 >
-                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell className="font-medium">{client.first_name}{" "}{client.last_name}</TableCell>
                   <TableCell className="font-mono">{client.caseId}</TableCell>
-                  <TableCell>{client.contactInfo}</TableCell>
-                  <TableCell>{formatDate(client.lastContactDate)}</TableCell>
+                  <TableCell>{client.email}</TableCell>
+                  {/* <TableCell>{formatDate(client.lastContactDate)}</TableCell> */}
                 </TableRow>
               ))
             )}

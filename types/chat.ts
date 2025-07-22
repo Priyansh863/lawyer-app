@@ -1,12 +1,34 @@
+// Backend Message Schema
 export interface Message {
-  id: string
-  content: string
+  _id: string
+  chatId: string
   senderId: string
-  receiverId: string
-  timestamp: string
+  content: string
+  messageType: 'text' | 'image' | 'file'
   isRead: boolean
-  attachments: Attachment[]
-  tokenCount?: number // Number of tokens used by this message
+  readBy: string[] // Array of user IDs who read
+  createdAt: string
+  updatedAt?: string
+  attachments?: Attachment[]
+  tokenCount?: number
+}
+
+// Backend Chat Schema
+export interface Chat {
+  _id: string
+  participants: string[] // User IDs
+  lastMessage?: string // Reference to last message ID
+  createdAt: string
+  updatedAt: string
+  unreadCount?: number
+  participantDetails?: {
+    _id: string
+    first_name: string
+    last_name: string
+    email: string
+    account_type: 'client' | 'lawyer'
+    avatar?: string
+  }[]
 }
 
 export interface Attachment {
@@ -17,14 +39,80 @@ export interface Attachment {
   url: string
 }
 
+// API Response Types
+export interface ChatResponse {
+  success: boolean
+  message: string
+  data: {
+    _id: string
+    participants: any[]
+    createdAt: string
+  }
+}
+
+export interface ChatsResponse {
+  success: boolean
+  message: string
+  data: {
+    chats: Chat[]
+    pagination: {
+      currentPage: number
+      totalPages: number
+      totalChats: number
+    }
+  }
+}
+
+export interface MessagesResponse {
+  success: boolean
+  data: {
+    messages: Message[]
+    pagination: {
+      currentPage: number
+      totalPages: number
+      totalMessages: number
+    }
+  }
+}
+
+// Socket.IO Event Types
+export interface SocketEvents {
+  // Client to Server
+  join_chat: (chatId: string) => void
+  leave_chat: (chatId: string) => void
+  send_message: (data: { chatId: string; message: string; messageType?: string }) => void
+  start_typing: (data: { chatId: string }) => void
+  stop_typing: (data: { chatId: string }) => void
+  mark_as_read: (data: { chatId: string }) => void
+
+  // Server to Client
+  new_message: (data: { message: Message; chatId: string; sender: any }) => void
+  user_typing: (data: { userId: string; chatId: string; isTyping: boolean }) => void
+  message_read: (data: { chatId: string; userId: string; messageIds: string[] }) => void
+  user_status: (data: { userId: string; isOnline: boolean }) => void
+  error: (error: { message: string }) => void
+}
+
+// UI Helper Types
 export interface ChatSummary {
-  clientId: string
-  clientName: string
-  clientAvatar?: string
+  chatId: string
+  participantName: string
+  participantAvatar?: string
   lastMessageTime: string
   lastMessagePreview: string
   unreadCount: number
-  tokenUsage: number
+  isOnline?: boolean
+}
+
+export interface TypingUser {
+  userId: string
+  chatId: string
+  isTyping: boolean
+}
+
+export interface OnlineUser {
+  userId: string
+  isOnline: boolean
 }
 
 // Schema for message creation

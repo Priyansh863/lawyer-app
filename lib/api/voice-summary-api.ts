@@ -1,12 +1,65 @@
 import type { DocumentSummary } from "@/types/voice-summary"
+import axios from "axios"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  if (typeof window !== 'undefined') {
+    const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
+    const authState = JSON.parse(state.auth || '{}')
+    const token = authState.user?.token
+    
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }
+  return {
+    'Content-Type': 'application/json'
+  }
+}
 
 /**
- * Get document summaries for TTS playback
+ * Get document summaries for TTS playback from backend
  */
 export async function getDocumentSummaries(): Promise<DocumentSummary[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+  try {
+    const response = await axios.get(`${API_BASE_URL}/document/list`, {
+      headers: getAuthHeaders()
+    })
 
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch documents')
+    }
+
+    const documents = response.data.documents || []
+    
+    // Transform backend document data to DocumentSummary format
+    return documents.map((doc: any) => ({
+      id: doc._id,
+      documentName: doc.document_name,
+      documentId: doc._id,
+      summary: doc.summary || 'No summary available',
+      wordCount: doc.summary ? doc.summary.split(' ').length : 0,
+      caseTitle: 'Document Summary', // You can enhance this with case data if available
+      caseId: doc._id,
+      createdAt: doc.createdAt || new Date().toISOString(),
+      uploadedBy: doc.uploaded_by || 'Unknown',
+      status: doc.status === 'Approved' ? 'ready' : 'processing',
+      link: doc.link
+    }))
+  } catch (error) {
+    console.error('Error fetching document summaries:', error)
+    // Return empty array on error
+    return []
+  }
+}
+
+/**
+ * Get mock document summaries for development/fallback
+ */
+export async function getMockDocumentSummaries(): Promise<DocumentSummary[]> {
   const mockSummaries: DocumentSummary[] = [
     {
       id: "sum_1",

@@ -2,7 +2,9 @@ export type ClientStatus = "active" | "inactive" | "pending"
 
 export interface Client {
   id: string
-  name: string
+  name: string // Computed from first_name + last_name
+  first_name: string
+  last_name: string
   email: string
   phone: string
   address: string
@@ -16,6 +18,9 @@ export interface Client {
   isFavorite: boolean
   isBlocked: boolean
   avatar?: string
+  // Backend fields
+  account_type?: string
+  _id?: string
 }
 
 // Schema for client creation/update

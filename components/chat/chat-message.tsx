@@ -31,7 +31,7 @@ export function ChatMessage({ message, isOutgoing, showTokenCount = false }: Cha
             {message.content}
           </div>
           <div className={`flex items-center gap-2 text-xs text-gray-500 ${isOutgoing ? "justify-end" : ""}`}>
-            <span>{formatRelativeTime(message.timestamp)}</span>
+            {/* <span>{formatRelativeTime(message.timestamp)}</span> */}
             {showTokenCount && message.tokenCount && (
               <Badge variant="outline" className="text-xs py-0 h-4">
                 {message.tokenCount} tokens

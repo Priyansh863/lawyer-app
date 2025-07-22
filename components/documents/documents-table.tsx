@@ -1,88 +1,104 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSelector } from "react-redux"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Eye, Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { Eye, Edit, Trash2, MoreHorizontal, Loader2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Card, CardContent } from "@/components/ui/card"
+import { useToast } from "@/hooks/use-toast"
+import { getDocuments, deleteDocument, type Document } from "@/lib/api/documents-api"
+import { RootState } from "@/lib/store"
 
-interface Document {
-  id: string
-  name: string
-  uploadedBy: string
-  uploadDate: string
-  summary: string
-  status: "approved" | "pending" | "rejected"
+interface DocumentTableProps {
+  onDocumentUploaded?: () => void
 }
 
-const mockDocuments: Document[] = [
-  {
-    id: "1",
-    name: "Agreement.pdf",
-    uploadedBy: "Client",
-    uploadDate: "18/02/2025",
-    summary: "Property sale agreement summary",
-    status: "approved",
-  },
-  {
-    id: "2",
-    name: "ID_Proof.jpg",
-    uploadedBy: "Client",
-    uploadDate: "18/02/2025",
-    summary: "Aadhaar card for verification",
-    status: "pending",
-  },
-  {
-    id: "3",
-    name: "LegalNotice.docx",
-    uploadedBy: "Lawyer",
-    uploadDate: "18/02/2025",
-    summary: "Notice drafted for rental dispute",
-    status: "approved",
-  },
-  {
-    id: "4",
-    name: "Agreement.pdf",
-    uploadedBy: "Client",
-    uploadDate: "18/02/2025",
-    summary: "Property sale agreement summary",
-    status: "approved",
-  },
-  {
-    id: "5",
-    name: "Agreement.pdf",
-    uploadedBy: "Lawyer",
-    uploadDate: "18/02/2025",
-    summary: "Property sale agreement summary",
-    status: "approved",
-  },
-  {
-    id: "6",
-    name: "Agreement.pdf",
-    uploadedBy: "Client",
-    uploadDate: "18/02/2025",
-    summary: "Property sale agreement summary",
-    status: "approved",
-  },
-]
+export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProps) {
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const { toast } = useToast()
+  const profile = useSelector((state: RootState) => state.auth.user)
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "approved":
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Approved</Badge>
-    case "pending":
-      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
-    case "rejected":
-      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>
-    default:
-      return <Badge variant="secondary">{status}</Badge>
+  useEffect(() => {
+    fetchDocuments()
+  }, [onDocumentUploaded])
+
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true)
+      const response = await getDocuments()
+      if (response.success && response.documents) {
+        setDocuments(response.documents)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch documents",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
-export function DocumentsTable() {
-  const [documents] = useState<Document[]>(mockDocuments)
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      setDeleting(documentId)
+      await deleteDocument(documentId)
+      setDocuments(prev => prev.filter(doc => doc._id !== documentId))
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+        variant: "default",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete document",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(null)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
+      case "failed":
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Failed</Badge>
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading documents...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -103,27 +119,30 @@ export function DocumentsTable() {
               </TableHeader>
               <TableBody>
                 {documents.map((document) => (
-                  <TableRow key={document.id}>
-                    <TableCell className="font-medium">{document.name}</TableCell>
-                    <TableCell>{document.uploadedBy}</TableCell>
-                    <TableCell>{document.uploadDate}</TableCell>
-                    <TableCell className="max-w-xs truncate">{document.summary}</TableCell>
+                  <TableRow key={document._id}>
+                    <TableCell className="font-medium">{document.document_name}</TableCell>
+                    <TableCell>You</TableCell>
+                    <TableCell>{formatDate(document.createdAt)}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {document.summary || "Processing..."}
+                    </TableCell>
                     <TableCell>{getStatusBadge(document.status)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => window.open(document.link, '_blank')}>
                           <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
+                {documents.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No documents found. Upload your first PDF document to get started.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -133,33 +152,30 @@ export function DocumentsTable() {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-4">
         {documents.map((document) => (
-          <Card key={document.id}>
+          <Card key={document._id}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm">{document.name}</h3>
+                  <h3 className="font-semibold text-sm">{document.document_name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Uploaded by {document.uploadedBy} • {document.uploadDate}
+                    Uploaded by You • {formatDate(document.createdAt)}
                   </p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" className="h-8 w-8 p-0" disabled={deleting === document._id}>
+                      <span className="sr-only">Open menu</span>
+                      {deleting === document._id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MoreHorizontal className="h-4 w-4" />
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.open(document.link, '_blank')}>
                       <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                      View PDF
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -170,14 +186,20 @@ export function DocumentsTable() {
               <div className="flex items-center justify-between">
                 {getStatusBadge(document.status)}
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => window.open(document.link, '_blank')}>
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleDeleteDocument(document._id)}
+                    disabled={deleting === document._id}
+                  >
+                    {deleting === document._id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>

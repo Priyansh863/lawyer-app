@@ -1,4 +1,24 @@
+import axios from "axios"
 import type { Case, CaseStatus } from "@/types/case"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+
+// Helper function to get auth headers
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
+
+const getAuthHeaders = () => {
+  const token = getToken()
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+}
 
 interface GetCasesParams {
   status?: CaseStatus | "all"
@@ -7,177 +27,106 @@ interface GetCasesParams {
   limit?: number
 }
 
-/**
- * Get cases with optional filtering
- */
-export async function getCases({
-  status = "all",
-  query = "",
-  page = 1,
-  limit = 10,
-}: GetCasesParams = {}): Promise<Case[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
-
-  // Mock data
-  const mockCases: Case[] = [
-    {
-      id: "123456",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "pending",
-      createdAt: "2025-03-24T10:00:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "125632",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "rejected",
-      createdAt: "2025-03-23T09:30:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "230641",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-22T14:15:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "653241",
-      title: "Rent Agreement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-21T11:45:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Rent agreement for commercial property.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "032152",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-20T16:30:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "125421",
-      title: "Purchase House",
-      clientName: "John Doe",
-      clientId: "client_1",
-      status: "approved",
-      createdAt: "2025-03-19T13:20:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "House purchase agreement and documentation.",
-      assignedTo: ["user_1"],
-    },
-  ]
-
-  // Filter by status
-  let filteredCases = mockCases
-  if (status !== "all") {
-    filteredCases = filteredCases.filter((c) => c.status === status)
-  }
-
-  // Filter by search query
-  if (query) {
-    const lowerQuery = query.toLowerCase()
-    filteredCases = filteredCases.filter(
-      (c) =>
-        c.id.toLowerCase().includes(lowerQuery) ||
-        c.title.toLowerCase().includes(lowerQuery) ||
-        c.clientName.toLowerCase().includes(lowerQuery) ||
-        c.description?.toLowerCase().includes(lowerQuery),
-    )
-  }
-
-  // Pagination
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedCases = filteredCases.slice(startIndex, endIndex)
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  return paginatedCases
+interface CasesApiResponse {
+  success: boolean
+  cases: Case[]
+  total?: number
+  page?: number
+  limit?: number
 }
 
-/**
- * Get a case by ID
- */
-export async function getCaseById(id: string): Promise<Case | null> {
-  // this would call an API endpoint
-  const cases = await getCases({ limit: 100 })
-  const caseData = cases.find((c) => c.id === id)
+export const casesApi = {
+  /**
+   * Get cases with optional filtering
+   */
+  getCases: async ({
+    status = "all",
+    query = "",
+    page = 1,
+    limit = 10,
+  }: GetCasesParams = {}): Promise<CasesApiResponse> => {
+    try {
+      const params: any = {
+        page: page.toString(),
+        limit: limit.toString()
+      }
+      
+      if (status && status !== "all") {
+        params.status = status
+      }
+      
+      if (query && query.trim()) {
+        params.query = query.trim()
+      }
 
-  if (!caseData) {
-    return null
-  }
+      const response = await axios.get(`${API_BASE_URL}/user/cases`, {
+        headers: getAuthHeaders(),
+        params
+      })
 
-  return {
-    ...caseData,
-    description: caseData.description || "No description provided.",
+      return {
+        success: response.data.success || true,
+        cases: response.data.cases || [],
+        total: response.data.total,
+        page: page,
+        limit: limit
+      }
+    } catch (error) {
+      console.error('Error fetching cases:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Get single case by ID
+   */
+  getCaseById: async (caseId: string): Promise<{ success: boolean; case: Case }> => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/cases/${caseId}`, {
+        headers: getAuthHeaders()
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching case:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Create new case
+   */
+   createCase: async (caseData: any): Promise<{ success: boolean; case: Case }> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/user/CreateCases`, caseData, {
+        headers: getAuthHeaders()
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error creating case:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update case status
+   */
+  updateCaseStatus: async (caseId: string, status: CaseStatus): Promise<{ success: boolean; case: Case }> => {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/user/cases/${caseId}/status`, 
+        { status }, 
+        { headers: getAuthHeaders() }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error updating case status:', error)
+      throw error
+    }
   }
 }
 
-/**
- * Update a case's status
- */
-export async function updateCaseStatus(id: string, status: CaseStatus): Promise<Case> {
-  // this would call an API endpoint
+// Export the main function for backward compatibility
+export const getCases = casesApi.getCases
+export const createCase = casesApi.createCase
+export const updateCaseStatus = casesApi.updateCaseStatus
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
 
-  // Return mock updated case
-  return {
-    id,
-    title: "Business Settlement",
-    clientName: "John Doe",
-    clientId: "client_1",
-    status,
-    createdAt: "2025-03-24T10:00:00Z",
-    updatedAt: new Date().toISOString(),
-    description: "Business settlement agreement between parties.",
-    assignedTo: ["user_1"],
-  }
-}
-
-/**
- * Create a new case
- */
-export async function createCase(caseData: Partial<Case>): Promise<Case> {
-  // this would call an API endpoint
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Return mock created case
-  return {
-    id: `case_${Date.now()}`,
-    title: caseData.title || "New Case",
-    clientName: caseData.clientName || "Unknown Client",
-    clientId: caseData.clientId || "client_unknown",
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    description: caseData.description || "",
-    assignedTo: caseData.assignedTo || ["user_1"],
-  }
-}

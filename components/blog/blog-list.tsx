@@ -7,72 +7,70 @@ import { Heart, MoreHorizontal } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Image from "next/image"
 import Link from "next/link"
+import { useState, useEffect } from "react";
+import { getBlogPosts, deleteBlogPost, BlogPost } from "@/lib/api/blog-api";
 
-// Updated with realistic legal blog post data
-const blogPosts = [
-  {
-    id: 1,
-    title: "Recent Changes to Family Law in 2025",
-    excerpt:
-      "An overview of the most significant changes to family law this year and how they might affect your clients.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Mar 24, 2025",
-    status: "published",
-    likes: 24,
-  },
-  {
-    id: 2,
-    title: "Navigating Intellectual Property in the AI Era",
-    excerpt: "How artificial intelligence is changing intellectual property law and what practitioners need to know.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Mar 20, 2025",
-    status: "published",
-    likes: 18,
-  },
-  {
-    id: 3,
-    title: "The Impact of Remote Work on Employment Law",
-    excerpt: "Examining how the shift to remote work has created new challenges and considerations in employment law.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Mar 15, 2025",
-    status: "draft",
-    likes: 0,
-  },
-  {
-    id: 4,
-    title: "Understanding the New Data Privacy Regulations",
-    excerpt: "A comprehensive guide to the latest data privacy regulations and compliance requirements for law firms.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Mar 10, 2025",
-    status: "published",
-    likes: 12,
-  },
-  {
-    id: 5,
-    title: "Estate Planning Strategies for Digital Assets",
-    excerpt:
-      "How to help clients properly include cryptocurrencies, NFTs, and other digital assets in their estate plans.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Mar 5, 2025",
-    status: "published",
-    likes: 8,
-  },
-  {
-    id: 6,
-    title: "The Future of Legal Technology: 2025 and Beyond",
-    excerpt: "Exploring emerging technologies that will shape the practice of law in the coming years.",
-    image: "/placeholder.svg?height=200&width=400",
-    date: "Feb 28, 2025",
-    status: "draft",
-    likes: 0,
-  },
-]
+interface BlogListProps {
+  searchQuery?: string
+  categoryFilter?: string
+  statusFilter?: string
+}
 
-export default function BlogList() {
+export default function BlogList({ searchQuery = "", categoryFilter = "all", statusFilter = "all" }: BlogListProps) {
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalBlogs: 0,
+    hasNext: false,
+    hasPrev: false
+  });
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      setIsLoading(true);
+      try {
+        const params: any = {
+          page: 1,
+          limit: 12
+        };
+        
+        if (searchQuery) params.search = searchQuery;
+        if (categoryFilter !== "all") params.category = categoryFilter;
+        if (statusFilter !== "all") params.status = statusFilter;
+        
+        const response = await getBlogPosts(params);
+        setBlogs(response.blogs);
+        setPagination(response.pagination);
+      } catch (error) {
+        console.error("Error fetching blogs:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, [searchQuery, categoryFilter, statusFilter]);
+
+  const handleDelete = async (_id: string) => {
+    if (confirm("Are you sure you want to delete this blog?")) {
+      try {
+        await deleteBlogPost(_id);
+        setBlogs(blogs.filter(blog => blog._id !== _id));
+      } catch (error) {
+        alert("Failed to delete blog");
+      }
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {blogPosts.map((post, index) => (
-        <Card key={post.id} className={`overflow-hidden ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
+      {blogs.map((post, index) => (
+        <Card key={post._id} className={`overflow-hidden ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
           <div className="relative h-48 w-full">
             <Image src={post.image || "/placeholder.svg"} alt={post.title} fill className="object-cover" />
           </div>
@@ -91,7 +89,7 @@ export default function BlogList() {
                 <Heart className="h-4 w-4" />
               </Button>
               <span className="text-sm text-gray-500">{post.likes}</span>
-              <span className="text-sm text-gray-500 ml-2">{post.date}</span>
+              <span className="text-sm text-gray-500 ml-2">{new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -102,13 +100,13 @@ export default function BlogList() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/blog/${post.id}`}>Edit</Link>
+                  <Link href={`/blog/${post._id}`}>Edit</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/blog/${post.id}/preview`}>Preview</Link>
-                </DropdownMenuItem>
+                {/* <DropdownMenuItem asChild>
+                  <Link href={`/blog/${post._id}/preview`}>Preview</Link>
+                </DropdownMenuItem> */}
+                <DropdownMenuItem onClick={() => handleDelete(post._id)}>Delete</DropdownMenuItem>
                 <DropdownMenuItem>{post.status === "published" ? "Unpublish" : "Publish"}</DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </CardFooter>

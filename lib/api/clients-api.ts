@@ -1,5 +1,31 @@
 import type { Client, ClientStatus } from "@/types/client"
 import type { Case } from "@/types/case"
+import axios from "axios"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  if (typeof window === 'undefined') return {}
+  
+  const token = localStorage.getItem('token')
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+}
+
+// Helper function to get current user from localStorage
+const getCurrentUser = () => {
+  if (typeof window === 'undefined') return null
+  
+  try {
+    const userStr = localStorage.getItem('user')
+    return userStr ? JSON.parse(userStr) : null
+  } catch {
+    return null
+  }
+}
 
 interface GetClientsParams {
   status?: ClientStatus | "all"
@@ -9,7 +35,9 @@ interface GetClientsParams {
 }
 
 /**
- * Get clients with optional filtering
+ * Get clients or lawyers based on current user's role
+ * If user is lawyer -> show clients
+ * If user is client -> show lawyers
  */
 export async function getClients({
   status = "all",
@@ -17,192 +45,164 @@ export async function getClients({
   page = 1,
   limit = 10,
 }: GetClientsParams = {}): Promise<Client[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+  try {
+    const currentUser = getCurrentUser()
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
 
-  // Mock data
-  const mockClients: Client[] = [
-    {
-      id: "client_1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "active",
-      createdAt: "2024-12-01T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "123456",
-      contactInfo: "Business Settlement",
-      activeCases: 3,
-      isFavorite: true,
-      isBlocked: false,
-    },
-    {
-      id: "client_2",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "inactive",
-      createdAt: "2024-11-15T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "125632",
-      contactInfo: "Business Settlement",
-      activeCases: 0,
-      isFavorite: false,
-      isBlocked: true,
-    },
-    {
-      id: "client_3",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "active",
-      createdAt: "2025-01-10T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "230641",
-      contactInfo: "Business Settlement",
-      activeCases: 1,
-      isFavorite: false,
-      isBlocked: false,
-    },
-    {
-      id: "client_4",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "active",
-      createdAt: "2025-02-05T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "653241",
-      contactInfo: "Rent Agreement",
-      activeCases: 2,
-      isFavorite: true,
-      isBlocked: false,
-    },
-    {
-      id: "client_5",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "active",
-      createdAt: "2024-10-20T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "032152",
-      contactInfo: "Business Settlement",
-      activeCases: 1,
-      isFavorite: false,
-      isBlocked: false,
-    },
-    {
-      id: "client_6",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "(555) 123-4567",
-      address: "123 Main St, Anytown, USA",
-      status: "pending",
-      createdAt: "2025-03-01T10:00:00Z",
-      lastContactDate: "2025-03-24T10:00:00Z",
-      caseId: "125421",
-      contactInfo: "Purchase House",
-      activeCases: 1,
-      isFavorite: false,
-      isBlocked: false,
-    },
-  ]
+    // Determine what type of users to fetch based on current user's role
+    let accountType: string
+    if (currentUser.account_type === 'lawyer') {
+      accountType = 'client' // Lawyers see clients
+    } else if (currentUser.account_type === 'client') {
+      accountType = 'lawyer' // Clients see lawyers
+    } else {
+      accountType = 'client' // Default to clients for admin/other roles
+    }
 
-  // Filter by status
-  let filteredClients = mockClients
-  if (status !== "all") {
-    filteredClients = filteredClients.filter((c) => c.status === status)
+    const offset = (page - 1) * limit
+    
+    const response = await axios.get(`${API_BASE_URL}/user/list`, {
+      headers: getAuthHeaders(),
+      params: {
+        accountType,
+        offset,
+        limit
+      }
+    })
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch users')
+    }
+
+    // Transform backend response to match Client interface
+    const users = response.data.data || []
+    const transformedClients: Client[] = users.map((user: any) => ({
+      id: user._id,
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      phone: user.phone || 'N/A',
+      address: user.address || 'N/A',
+      status: 'active' as ClientStatus, // Default status
+      createdAt: user.created_at || new Date().toISOString(),
+      lastContactDate: user.updated_at || user.created_at || new Date().toISOString(),
+      caseId: '', // Will be populated if needed
+      contactInfo: user.bio || '',
+      activeCases: 0, // Will be populated if needed
+      isFavorite: false,
+      isBlocked: false,
+      // Additional fields from backend
+      account_type: user.account_type,
+      _id: user._id
+    }))
+
+    // Apply client-side filtering if needed
+    let filteredClients = transformedClients
+
+    // Filter by search query
+    if (query) {
+      const lowerQuery = query.toLowerCase()
+      filteredClients = filteredClients.filter(
+        (c) =>
+          c.name.toLowerCase().includes(lowerQuery) ||
+          c.email.toLowerCase().includes(lowerQuery) ||
+          (c.phone && c.phone.includes(lowerQuery))
+      )
+    }
+
+    return filteredClients
+  } catch (error) {
+    console.error('Error fetching users:', error)
+    throw error
   }
-
-  // Filter by search query
-  if (query) {
-    const lowerQuery = query.toLowerCase()
-    filteredClients = filteredClients.filter(
-      (c) =>
-        c.name.toLowerCase().includes(lowerQuery) ||
-        c.email.toLowerCase().includes(lowerQuery) ||
-        c.phone.includes(lowerQuery) ||
-        c.caseId.includes(query),
-    )
-  }
-
-  // Pagination
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedClients = filteredClients.slice(startIndex, endIndex)
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  return paginatedClients
 }
 
 /**
  * Get a client by ID
  */
 export async function getClientById(id: string): Promise<Client | null> {
-  // In a real app, this would call an API endpoint
-  const clients = await getClients({ limit: 100 })
-  const client = clients.find((c) => c.id === id)
+  try {
+    const response = await axios.get(`${API_BASE_URL}/user/${id}`, {
+      headers: getAuthHeaders()
+    })
 
-  if (!client) {
+    if (!response.data.success) {
+      return null
+    }
+
+    const user = response.data.data
+    return {
+      id: user._id,
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      phone: user.phone || 'N/A',
+      address: user.address || 'N/A',
+      status: 'active' as ClientStatus,
+      createdAt: user.created_at || new Date().toISOString(),
+      lastContactDate: user.updated_at || user.created_at || new Date().toISOString(),
+      caseId: '',
+      contactInfo: user.bio || '',
+      activeCases: 0,
+      isFavorite: false,
+      isBlocked: false,
+      account_type: user.account_type,
+      _id: user._id
+    }
+  } catch (error) {
+    console.error('Error fetching client by ID:', error)
     return null
   }
-
-  return {
-    ...client,
-    notes:
-      "This client has been with us since December 2024. They are reliable with payments and responsive to communications. They are looking to expand their business operations and may need additional legal support in the coming months.",
-  }
 }
 
-/**
- * Toggle a client's favorite status
- */
+// Placeholder functions for backward compatibility
 export async function toggleFavorite(id: string, isFavorite: boolean): Promise<Client> {
-  // this would call an API endpoint
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  // Get existing client
-  const client = await getClientById(id)
-  if (!client) {
-    throw new Error("Client not found")
-  }
-
-  // Return updated client
-  return {
-    ...client,
-    isFavorite,
-  }
+  // This would be implemented when needed
+  throw new Error('Not implemented')
 }
 
 /**
- * Toggle a client's blocked status
+ * Toggle blocked status of a client
  */
 export async function toggleBlocked(id: string, isBlocked: boolean): Promise<Client> {
-  //  this would call an API endpoint
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/user/${id}`, {
+      isBlocked,
+    }, {
+      headers: getAuthHeaders(),
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update client')
+    }
 
-  // Get existing client
-  const client = await getClientById(id)
-  if (!client) {
-    throw new Error("Client not found")
-  }
-
-  // Return updated client
-  return {
-    ...client,
-    isBlocked,
+    const client = response.data.data
+    return {
+      id: client._id,
+      name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      phone: client.phone || 'N/A',
+      address: client.address || 'N/A',
+      status: 'active' as ClientStatus,
+      createdAt: client.created_at || new Date().toISOString(),
+      lastContactDate: client.updated_at || client.created_at || new Date().toISOString(),
+      caseId: '',
+      contactInfo: client.bio || '',
+      activeCases: 0,
+      isFavorite: false,
+      isBlocked,
+      account_type: client.account_type,
+      _id: client._id
+    }
+  } catch (error) {
+    console.error('Error toggling blocked status:', error)
+    throw error
   }
 }
 
@@ -210,21 +210,40 @@ export async function toggleBlocked(id: string, isBlocked: boolean): Promise<Cli
  * Update a client's status
  */
 export async function updateClientStatus(id: string, status: ClientStatus): Promise<Client> {
-  // this would call an API endpoint
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/user/${id}`, {
+      status,
+    }, {
+      headers: getAuthHeaders(),
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update client')
+    }
 
-  // Get existing client
-  const client = await getClientById(id)
-  if (!client) {
-    throw new Error("Client not found")
-  }
-
-  // Return updated client
-  return {
-    ...client,
-    status,
+    const client = response.data.data
+    return {
+      id: client._id,
+      name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      phone: client.phone || 'N/A',
+      address: client.address || 'N/A',
+      status,
+      createdAt: client.created_at || new Date().toISOString(),
+      lastContactDate: client.updated_at || client.created_at || new Date().toISOString(),
+      caseId: '',
+      contactInfo: client.bio || '',
+      activeCases: 0,
+      isFavorite: false,
+      isBlocked: false,
+      account_type: client.account_type,
+      _id: client._id
+    }
+  } catch (error) {
+    console.error('Error updating client status:', error)
+    throw error
   }
 }
 
@@ -232,21 +251,41 @@ export async function updateClientStatus(id: string, status: ClientStatus): Prom
  * Update a client's notes
  */
 export async function updateClientNotes(id: string, notes: string): Promise<Client> {
-  // this would call an API endpoint
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/user/${id}`, {
+      notes,
+    }, {
+      headers: getAuthHeaders(),
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update client')
+    }
 
-  // Get existing client
-  const client = await getClientById(id)
-  if (!client) {
-    throw new Error("Client not found")
-  }
-
-  // Return updated client
-  return {
-    ...client,
-    notes,
+    const client = response.data.data
+    return {
+      id: client._id,
+      name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      phone: client.phone || 'N/A',
+      address: client.address || 'N/A',
+      status: 'active' as ClientStatus,
+      createdAt: client.created_at || new Date().toISOString(),
+      lastContactDate: client.updated_at || client.created_at || new Date().toISOString(),
+      caseId: '',
+      contactInfo: client.bio || '',
+      activeCases: 0,
+      isFavorite: false,
+      isBlocked: false,
+      notes,
+      account_type: client.account_type,
+      _id: client._id
+    }
+  } catch (error) {
+    console.error('Error updating client notes:', error)
+    throw error
   }
 }
 
@@ -254,73 +293,71 @@ export async function updateClientNotes(id: string, notes: string): Promise<Clie
  * Get cases for a specific client
  */
 export async function getClientCases(clientId: string): Promise<Case[]> {
-  // this would call an API endpoint
+  try {
+    const response = await axios.get(`${API_BASE_URL}/case/list`, {
+      headers: getAuthHeaders(),
+      params: {
+        clientId,
+      }
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 700))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch cases')
+    }
 
-  // Mock data
-  return [
-    {
-      id: "123456",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId,
-      status: "pending",
-      createdAt: "2025-03-24T10:00:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "230641",
-      title: "Business Settlement",
-      clientName: "John Doe",
-      clientId,
-      status: "approved",
-      createdAt: "2025-03-22T14:15:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Business settlement agreement between parties.",
-      assignedTo: ["user_1"],
-    },
-    {
-      id: "653241",
-      title: "Rent Agreement",
-      clientName: "John Doe",
-      clientId,
-      status: "approved",
-      createdAt: "2025-03-21T11:45:00Z",
-      updatedAt: "2025-03-24T10:00:00Z",
-      description: "Rent agreement for commercial property.",
-      assignedTo: ["user_1"],
-    },
-  ]
+    const cases = response.data.data || []
+    return cases.map((caseData: any) => ({
+      id: caseData._id,
+      title: caseData.title,
+      clientName: caseData.client_name,
+      clientId: caseData.client_id,
+      status: caseData.status,
+      createdAt: caseData.created_at || new Date().toISOString(),
+      updatedAt: caseData.updated_at || caseData.created_at || new Date().toISOString(),
+      description: caseData.description,
+      assignedTo: caseData.assigned_to,
+    }))
+  } catch (error) {
+    console.error('Error fetching cases:', error)
+    throw error
+  }
 }
 
 /**
  * Create a new client
  */
 export async function createClient(clientData: Partial<Client>): Promise<Client> {
-  // this would call an API endpoint
+  try {
+    const response = await axios.post(`${API_BASE_URL}/user`, clientData, {
+      headers: getAuthHeaders(),
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to create client')
+    }
 
-  // Return mock created client
-  return {
-    id: `client_${Date.now()}`,
-    name: clientData.name || "New Client",
-    email: clientData.email || "client@example.com",
-    phone: clientData.phone || "(555) 000-0000",
-    address: clientData.address || "",
-    notes: clientData.notes || "",
-    status: clientData.status || "active",
-    createdAt: new Date().toISOString(),
-    lastContactDate: new Date().toISOString(),
-    caseId: "",
-    contactInfo: "",
-    activeCases: 0,
-    isFavorite: clientData.isFavorite || false,
-    isBlocked: clientData.isBlocked || false,
+    const client = response.data.data
+    return {
+      id: client._id,
+      name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
+      first_name: client.first_name,
+      last_name: client.last_name,
+      email: client.email,
+      phone: client.phone || 'N/A',
+      address: client.address || 'N/A',
+      status: 'active' as ClientStatus,
+      createdAt: client.created_at || new Date().toISOString(),
+      lastContactDate: client.updated_at || client.created_at || new Date().toISOString(),
+      caseId: '',
+      contactInfo: client.bio || '',
+      activeCases: 0,
+      isFavorite: false,
+      isBlocked: false,
+      account_type: client.account_type,
+      _id: client._id
+    }
+  } catch (error) {
+    console.error('Error creating client:', error)
+    throw error
   }
 }

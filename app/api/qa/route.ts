@@ -1,80 +1,95 @@
 import { type NextRequest, NextResponse } from "next/server"
 import type { QAItem } from "@/types/qa"
-
-// Mock data - in a real app, this would come from a database
-const qaItems: QAItem[] = [
-  {
-    id: "1",
-    question:
-      "Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.",
-    answer:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    client: {
-      id: "client1",
-      name: "Anonymous",
-      isAnonymous: true,
-    },
-    date: "2025-05-15",
-    status: "answered",
-    likes: 12,
-    category: "family-law",
-    tags: ["divorce", "custody"],
-  },
-  // Add more mock items as needed
-]
+import endpoints from "@/constant/endpoints"
+import { cookies } from "next/headers"
 
 export async function GET(request: NextRequest) {
-  // Get query parameters
-  const { searchParams } = new URL(request.url)
-  const status = searchParams.get("status")
-  const category = searchParams.get("category")
-
-  let filteredItems = [...qaItems]
-
-  // Apply filters if provided
-  if (status) {
-    filteredItems = filteredItems.filter((item) => item.status === status)
+  try {
+    // Get query parameters
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get("status")
+    const category = searchParams.get("category")
+    const page = searchParams.get("page") || "1"
+    const limit = searchParams.get("limit") || "10"
+    
+    // Build query string
+    const queryParams = new URLSearchParams()
+    if (status) queryParams.append("status", status)
+    if (category) queryParams.append("category", category)
+    queryParams.append("page", page)
+    queryParams.append("limit", limit)
+    
+    // Call backend API
+    const response = await fetch(`${endpoints.question.CREATE_QUESTION}?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching questions: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    return NextResponse.json(data.data)
+  } catch (error) {
+    console.error("Error fetching questions:", error)
+    return NextResponse.json(
+      { error: "Failed to fetch questions" },
+      { status: 500 }
+    )
   }
-
-  if (category) {
-    filteredItems = filteredItems.filter((item) => item.category === category)
-  }
-
-  return NextResponse.json(filteredItems)
 }
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
+    
+    // Get the auth token from request headers or cookies
+    let token = request.headers.get('authorization')?.split(' ')[1]
+    
+    // If no token in headers, try cookies from the request
+    if (!token) {
+      token = request.cookies.get('authToken')?.value
+    }
 
     // Validate required fields
     if (!data.question) {
       return NextResponse.json({ error: "Question is required" }, { status: 400 })
     }
 
-    // Create new Q&A item
-    const newItem: QAItem = {
-      id: Math.random().toString(36).substring(2, 9),
-      question: data.question,
-      answer: "",
-      client: {
-        id: data.clientId || "anonymous",
-        name: data.clientName || "Anonymous",
-        isAnonymous: data.isAnonymous || true,
+    // Call backend API to create the question
+    const response = await fetch(endpoints.question.CREATE_QUESTION, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
       },
-      date: new Date().toISOString(),
-      status: "pending",
-      likes: 0,
-      category: data.category || "general",
-      tags: data.tags || [],
+      body: JSON.stringify({
+        question: data.question,
+        clientName: data.clientName,
+        isAnonymous: data.isAnonymous,
+        category: data.category,
+        tags: data.tags
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      return NextResponse.json(
+        { error: errorData.message || "Failed to create question" },
+        { status: response.status }
+      )
     }
 
-    // Add to collection
-    qaItems.push(newItem)
-
-    return NextResponse.json(newItem, { status: 201 })
+    const responseData = await response.json()
+    return NextResponse.json(responseData.data, { status: 201 })
   } catch (error) {
-    console.error("Error creating Q&A item:", error)
-    return NextResponse.json({ error: "Failed to create Q&A item" }, { status: 500 })
+    console.error("Error creating question:", error)
+    return NextResponse.json(
+      { error: "Failed to create question" },
+      { status: 500 }
+    )
   }
 }

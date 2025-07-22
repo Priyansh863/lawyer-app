@@ -1,135 +1,197 @@
+import axios from 'axios'
+import { getUploadFileUrl, getUploadDocumentUrl } from '@/lib/helpers/fileupload'
 import type { ProcessedFile, SecureLinkOptions, SecureLinkResult } from "@/types/ai-assistant"
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+
+// Helper function to get current user from localStorage
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
+
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+const token = getToken()
+return {
+  'Authorization': `Bearer ${token}`,
+  'Content-Type': 'application/json'
+}
+}
+
 /**
- * Process a file for text extraction
+ * Process a file for text extraction using backend API
  */
-export async function processFile(file: File): Promise<ProcessedFile> {
-  //  this would call an API endpoint
-  // This is a mock implementation for demonstration
+export async function processFile(file: File, userId: string): Promise<ProcessedFile | undefined> {
+  try {
 
-  // Determine processing method based on file type
-  let processingMethod: "OCR" | "ACR" | "TEXT" | "OTHER" = "TEXT"
-  if (file.type.startsWith("image/")) {
-    processingMethod = "OCR"
-  } else if (file.type.startsWith("audio/") || file.type.includes("mp3") || file.type.includes("mp4")) {
-    processingMethod = "ACR"
-  } else if (!file.type.includes("text") && !file.type.includes("pdf") && !file.type.includes("doc")) {
-    processingMethod = "OTHER"
-  }
+    // Step 1: Upload file to S3 using presigned URL
+    const fileFormat = file.type.split("/")[1] || 'pdf'
+    const fileData = await new Promise<{ data: string | ArrayBuffer | null, format: string }>((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        resolve({
+          data: reader.result,
+          format: fileFormat,
+        })
+      }
+      reader.readAsDataURL(file)
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Use appropriate upload function based on file type
+    let fileUrl: string
+    if (file.type.startsWith('image/')) {
+      fileUrl = await getUploadFileUrl(userId, fileData)
+    } else {
+      fileUrl = await getUploadDocumentUrl(userId, fileData)
+    }
+    
+    if (!fileUrl) {
+      throw new Error('Failed to upload file')
+    }
 
-  // Mock extracted text based on file type
-  let extractedText = ""
-  if (processingMethod === "OCR") {
-    extractedText = "This is extracted text from an image using OCR technology."
-  } else if (processingMethod === "ACR") {
-    extractedText = "This is transcribed text from audio using ACR technology."
-  } else if (processingMethod === "TEXT") {
-    extractedText = `Merry Christmas from all of us to you!
+    // Step 2: Call backend API to process the file
+    const response = await axios.post(`${API_BASE_URL}/document/upload-with-summary`, {
+      userId: userId,
+      fileUrl: fileUrl,
+      fileName: file.name,
+    }, {
+      headers: getAuthHeaders()
+    })
 
-May your day be filled with love, laughter, and lots of holiday cheer. Whether you're unwrapping gifts or making memories, we hope this season brings warmth to your heart and joy to your home. 🎄❤️
-#MerryChristmas #HappyHolidays #TisTheSeason #JoyfulMoments
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to process file')
+    }
 
-Would you like a version tailored for a business, brand, or personal account?`
-  } else {
-    extractedText = "This file type doesn't support text extraction."
-  }
+    // Determine processing method based on file type
+    let processingMethod: "OCR" | "ACR" | "TEXT" | "OTHER" = "TEXT"
+    if (file.type.startsWith("image/")) {
+      processingMethod = "OCR"
+    } else if (file.type.startsWith("audio/") || file.type.includes("mp3") || file.type.includes("mp4")) {
+      processingMethod = "ACR"
+    } else if (!file.type.includes("text") && !file.type.includes("pdf") && !file.type.includes("doc")) {
+      processingMethod = "OTHER"
+    }
 
-  // Return mock processed file
-  return {
-    id: `file_${Date.now()}`,
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type,
-    extractedText,
-    processingMethod,
-    uploadedAt: new Date().toISOString(),
-    uploadedBy: "current-user-id", // Would come from auth context
-    url: URL.createObjectURL(file), // In a real app, this would be a server URL
+    // Return processed file with real data from backend
+    return {
+      id: response.data.document._id,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      extractedText: response.data.summary || 'No summary available',
+      processingMethod,
+      uploadedAt: response.data.document.createdAt,
+      uploadedBy: userId,
+      url: fileUrl,
+    }
+  } catch (error: any) {
+    if (error.message.includes('The file given is not an image')) {
+      console.warn('File processing warning:', error)
+    } else {
+      console.error('File processing error:', error)
+      throw new Error(error.message || 'Failed to process file')
+    }
   }
 }
 
 /**
- * Generate a summary for a processed file
+ * Generate a summary for a processed file using backend API
  */
 export async function generateSummary(fileId: string): Promise<{ summary: string }> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+  try {
+    const response = await axios.get(`${API_BASE_URL}/document/${fileId}/summary`, {
+      headers: getAuthHeaders()
+    })
 
-  // Simulate network delay for AI processing
-  await new Promise((resolve) => setTimeout(resolve, 3000))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to generate summary')
+    }
 
-  // Mock summary
-  return {
-    summary:
-      "This is a holiday greeting message wishing the recipient a Merry Christmas and happy holidays. It expresses warm wishes for a day filled with love and joy, and offers to create a tailored version for business or personal use.",
+    return {
+      summary: response.data.summary || 'No summary available'
+    }
+  } catch (error: any) {
+    console.error('Summary generation error:', error)
+    throw new Error(error.message || 'Failed to generate summary')
   }
 }
 
 /**
- * Download a summary
+ * Download a summary from backend API
  */
 export async function downloadSummary(fileId: string): Promise<void> {
-  // this would generate and download a file
-  // This is a mock implementation for demonstration
+  try {
+    const response = await axios.get(`${API_BASE_URL}/document/${fileId}/download-summary`, {
+      headers: getAuthHeaders(),
+      responseType: 'blob'
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  // Create a mock text file and trigger download
-  const text =
-    "This is a holiday greeting message wishing the recipient a Merry Christmas and happy holidays. It expresses warm wishes for a day filled with love and joy, and offers to create a tailored version for business or personal use."
-  const blob = new Blob([text], { type: "text/plain" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = "summary.txt"
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+    // Create download link
+    const blob = new Blob([response.data], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `summary-${fileId}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (error: any) {
+    console.error('Summary download error:', error)
+    throw new Error(error.message || 'Failed to download summary')
+  }
 }
 
 /**
- * Save a summary to a case
+ * Save a summary to a case using backend API
  */
 export async function saveToCase(fileId: string, caseId: string): Promise<void> {
-  //this would call an API endpoint
-  // This is a mock implementation for demonstration
+  try {
+    const response = await axios.post(`${API_BASE_URL}/document/${fileId}/save-to-case`, {
+      caseId: caseId
+    }, {
+      headers: getAuthHeaders()
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1500))
-
-  // this would save the file to the case in the database
-  console.log(`Saved file ${fileId} to case ${caseId}`)
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to save to case')
+    }
+  } catch (error: any) {
+    console.error('Save to case error:', error)
+    throw new Error(error.message || 'Failed to save summary to case')
+  }
 }
 
 /**
- * Generate a secure link for file sharing
+ * Generate a secure link for file sharing using backend API
  */
 export async function generateSecureLink(options: SecureLinkOptions): Promise<SecureLinkResult> {
-  //  this would call an API endpoint
-  // This is a mock implementation for demonstration
+  try {
+    const response = await axios.post(`${API_BASE_URL}/document/generate-secure-link`, {
+      fileId: options.fileId,
+      expiryDays: options.expiryDays,
+      password: options.password,
+      maxDownloads: options.maxDownloads
+    }, {
+      headers: getAuthHeaders()
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to generate secure link')
+    }
 
-  // Calculate expiry date
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + options.expiryDays)
-
-  // Generate a mock secure URL
-  const secureId = Math.random().toString(36).substring(2, 15)
-  const baseUrl = "https://example.com/secure"
-  const url = options.fileId ? `${baseUrl}/download/${secureId}` : `${baseUrl}/upload/${secureId}`
-
-  // Return mock result
-  return {
-    url,
-    expiresAt: expiresAt.toISOString(),
-    isPasswordProtected: Boolean(options.password),
-    maxDownloads: options.maxDownloads,
+    return {
+      url: response.data.url,
+      expiresAt: response.data.expiresAt,
+      isPasswordProtected: Boolean(options.password),
+      maxDownloads: options.maxDownloads,
+    }
+  } catch (error: any) {
+    console.error('Secure link generation error:', error)
+    throw new Error(error.message || 'Failed to generate secure link')
   }
 }

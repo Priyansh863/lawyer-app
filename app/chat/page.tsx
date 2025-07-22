@@ -1,17 +1,15 @@
 import ChatLayout from "@/components/layouts/chat-layout"
-import ChatHeader from "@/components/chat/chat-header"
-import ChatList from "@/components/chat/chat-list"
-import { getChats } from "@/lib/api/chat-api"
+import SimpleChatList from "@/components/chat/simple-chat-list"
 
-export default async function ChatPage() {
-  // this would use server-side data fetching
-  const chats = await getChats()
-
+export default function ChatPage() {
   return (
     <ChatLayout>
-      <div className="flex flex-col gap-6">
-        <ChatHeader />
-        <ChatList initialChats={chats} />
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold tracking-tight">Chat</h1>
+          <h2 className="text-lg text-gray-600">Manage your conversations with clients</h2>
+        </div>
+        <SimpleChatList />
       </div>
     </ChatLayout>
   )

@@ -7,18 +7,28 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
-import { Save, Send } from "lucide-react"
+import { Save, Send, Loader2 } from "lucide-react"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { format } from "date-fns"
+import endpoints from "@/constant/endpoints"
 
 interface QAItem {
-  id: string
+  _id: string
   question: string
-  answer: string
-  client: string
-  date: string
-  status: "pending" | "answered"
-  likes: number
+  answer?: string
+  userId: {
+    _id: string
+    first_name: string
+    last_name: string
+    email: string
+  }
+  createdAt: string
+  updatedAt: string
+  status?: string
+  likes?: number
+  category: string
+  tags?: string[]
 }
 
 const answerSchema = z.object({
@@ -26,19 +36,6 @@ const answerSchema = z.object({
 })
 
 type AnswerFormData = z.infer<typeof answerSchema>
-
-// Mock data for a single Q&A item
-const MOCK_QA_ITEM: QAItem = {
-  id: "1",
-  question:
-    "Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.",
-  answer:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  client: "Anonymous",
-  date: "2025-05-15",
-  status: "answered",
-  likes: 12,
-}
 
 export default function QAAnswerForm({
   questionId,
@@ -50,6 +47,7 @@ export default function QAAnswerForm({
   const router = useRouter()
   const [qaItem, setQaItem] = useState<QAItem | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const form = useForm<AnswerFormData>({
     resolver: zodResolver(answerSchema),
@@ -58,57 +56,115 @@ export default function QAAnswerForm({
     },
   })
 
+  // Get token from localStorage
+  const getToken = () => {
+    try {
+      if (typeof window === "undefined") return null;
+      const user = localStorage.getItem("user");
+      return user ? JSON.parse(user).token : null;
+    } catch (error) {
+      console.error("Error getting token:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    // this would in real app fetch the question data from API
     const fetchQuestion = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        const mockItem = { ...MOCK_QA_ITEM, id: questionId }
-        setQaItem(mockItem)
+        setLoading(true);
+        const token = getToken();
+        
+        if (!token) {
+          setError("Authentication required");
+          setLoading(false);
+          return;
+        }
 
-        if (isEditing) {
-          form.setValue("answer", mockItem.answer)
+        const response = await fetch(`${endpoints.question.GET_QUESTION_BY_ID}${questionId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          setQaItem(data.data);
+          
+          if (isEditing && data.data.answer) {
+            form.setValue("answer", data.data.answer);
+          }
+        } else {
+          throw new Error("Failed to load question data");
         }
       } catch (err) {
-        setError("Failed to load question data")
-        console.error(err)
+        console.error("Failed to load question:", err);
+        setError("Failed to load question data");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    fetchQuestion()
-  }, [questionId, isEditing, form])
+    fetchQuestion();
+  }, [questionId, isEditing, form]);
 
   const onSubmit = async (data: AnswerFormData) => {
-    setError(null)
+    setError(null);
 
     try {
-      // Example API call structure for backend person
-      const response = await fetch(`/api/qa/${questionId}/answer`, {
+      const token = getToken();
+      
+      if (!token) {
+        setError("Authentication required");
+        return;
+      }
+
+      const response = await fetch(`${endpoints.question.SUBMIT_ANSWER}${questionId}`, {
         method: isEditing ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(data),
-      })
+      });
 
-      if (response.ok) {
-        router.push("/qa")
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error: ${response.status}`);
       }
+
+      // Redirect back to question list on success
+      router.push("/qa");
     } catch (err) {
-      setError("Failed to save answer")
-      console.error(err)
+      console.error("Failed to save answer:", err);
+      setError("Failed to save answer. Please try again.");
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-10">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <span className="ml-2">Loading question...</span>
+      </div>
+    );
+  }
+
   if (!qaItem) {
-    return <div className="text-center py-8">Loading question...</div>
+    return <div className="text-center py-8 text-red-500">Question not found</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="border rounded-md p-4 bg-gray-50">
         <div className="text-sm text-gray-500 mb-2">
-          {qaItem.client} • {new Date(qaItem.date).toLocaleDateString()}
+          {qaItem.userId?.first_name || "Anonymous"} {qaItem.userId?.last_name || ""} • {format(new Date(qaItem.createdAt), "MMM dd, yyyy")}
         </div>
         <p className="font-medium font-heading">{qaItem.question}</p>
       </div>

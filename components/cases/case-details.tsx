@@ -25,10 +25,12 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  console.log(caseState,"caseStatecaseStatecaseState")
+
   const handleStatusUpdate = async (newStatus: "approved" | "rejected" | "pending") => {
     setIsUpdating(true)
     try {
-      await updateCaseStatus(caseState.id, newStatus)
+      await updateCaseStatus(caseState._id, newStatus)
       setCaseState({ ...caseState, status: newStatus })
       toast({
         title: "Status updated",
@@ -81,7 +83,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Case #{caseState.id}</CardTitle>
+          <CardTitle>Case #{caseState._id}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusBadge(caseState.status)}
             {caseState.status === "pending" && (
@@ -111,44 +113,66 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <h3 className="text-sm font-medium text-gray-500">Case Number</h3>
+              <p className="text-lg font-medium font-mono">{caseState.case_number}</p>
+            </div>
+            <div>
               <h3 className="text-sm font-medium text-gray-500">Case Title</h3>
               <p className="text-lg font-medium">{caseState.title}</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Client</h3>
-              <p className="text-lg font-medium">{caseState.clientName}</p>
+              <p className="text-lg font-medium">
+                {caseState.client_id ? 
+                  `${caseState.client_id.first_name} ${caseState.client_id.last_name || ''}`.trim() 
+                  : caseState.clientName || 'N/A'
+                }
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Lawyer</h3>
+              <p className="text-lg font-medium">
+                {caseState.lawyer_id ? 
+                  `${caseState.lawyer_id.first_name} ${caseState.lawyer_id.last_name || ''}`.trim() 
+                  : 'N/A'
+                }
+              </p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Created</h3>
-              <p>{formatDate(caseState.createdAt)}</p>
+              <p>{formatDate(caseState.created_at)}</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Last Updated</h3>
-              <p>{formatDate(caseState.updatedAt)}</p>
+              <p>{formatDate(caseState.updated_at)}</p>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Description</h3>
-            <p className="mt-1">{caseState.description}</p>
-          </div>
+          {caseState.description && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Description</h3>
+              <p className="mt-1">{caseState.description}</p>
+            </div>
+          )}
 
-          <Tabs defaultValue="summary" className="mt-6">
-            <TabsList>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="files">Files</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-            </TabsList>
-            <TabsContent value="summary" className="mt-4">
-              <CaseSummary caseId={caseState.id} />
-            </TabsContent>
-            <TabsContent value="files" className="mt-4">
-              <CaseFiles caseId={caseState.id} />
-            </TabsContent>
-            <TabsContent value="notes" className="mt-4">
-              <CaseNotes caseId={caseState.id} />
-            </TabsContent>
-          </Tabs>
+          {caseState.summary && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Summary</h3>
+              <p className="mt-1">{caseState.summary}</p>
+            </div>
+          )}
+
+          {caseState.key_points && caseState.key_points.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Key Points</h3>
+              <ul className="mt-1 list-disc list-inside space-y-1">
+                {caseState.key_points.map((point, index) => (
+                  <li key={index} className="text-sm">{point}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
         </CardContent>
       </Card>
     </div>

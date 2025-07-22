@@ -32,7 +32,7 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
       setIsLoadingCases(true)
       try {
         const fetchedCases = await getCases({ status: "all" })
-        setCases(fetchedCases)
+        setCases(fetchedCases.cases)
       } catch (error) {
         console.error("Failed to load cases:", error)
       } finally {
@@ -101,19 +101,7 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
           </Button>
         ) : (
           <>
-            <Button variant="outline" onClick={handleDownloadSummary} disabled={isDownloading}>
-              {isDownloading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Downloading...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Summary
-                </>
-              )}
-            </Button>
+           
 
             <div className="flex items-center gap-2">
               <Select value={selectedCaseId} onValueChange={setSelectedCaseId} disabled={isLoadingCases || isSaving}>
@@ -131,7 +119,7 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
                     </SelectItem>
                   ) : (
                     cases.map((caseItem) => (
-                      <SelectItem key={caseItem.id} value={caseItem.id}>
+                      <SelectItem key={caseItem._id} value={caseItem._id}>
                         {caseItem.title}
                       </SelectItem>
                     ))

@@ -24,10 +24,6 @@ export default  function VoiceSummaryHeader() {
           await downloadSummary("latest")
         }}
       >
-        <Button type="submit" variant="default" className="bg-[#0f0921] hover:bg-[#0f0921]/90">
-          <Download className="h-4 w-4 mr-2" />
-          Download Summary
-        </Button>
       </form>
     </div>
   )

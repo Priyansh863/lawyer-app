@@ -10,11 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Eye, FileText, Loader2 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
-import { getCases, updateCaseStatus } from "@/lib/api/cases-api"
+import { getCases } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
 
 const searchFormSchema = z.object({
@@ -37,8 +34,8 @@ interface CasesTableProps {
 
 export default function CasesTable({ initialCases }: CasesTableProps) {
   const [cases, setCases] = useState<Case[]>(initialCases || [])
+  const [filteredCases, setFilteredCases] = useState<Case[]>(initialCases || [])
   const [isLoading, setIsLoading] = useState(false)
-  const [updatingCases, setUpdatingCases] = useState<Set<string>>(new Set())
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -63,7 +60,8 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
           status: formData.status === "all" ? undefined : formData.status,
           query: formData.query || undefined,
         })
-        setCases(fetchedCases)
+        setCases(fetchedCases.cases || [])
+        setFilteredCases(fetchedCases.cases || [])
       } catch (error) {
         toast({
           title: "Error",
@@ -77,6 +75,31 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
     fetchCases()
   }, [searchParams, toast, searchForm])
+
+  // Real-time frontend search
+  useEffect(() => {
+    const query = searchForm.watch('query') || ''
+    const status = searchForm.watch('status')
+    
+    let filtered = cases
+    
+    // Filter by search query
+    if (query.trim()) {
+      filtered = filtered.filter(caseItem => 
+        caseItem.title?.toLowerCase().includes(query.toLowerCase()) ||
+        caseItem.case_number?.toLowerCase().includes(query.toLowerCase()) ||
+        `${caseItem.client_id?.first_name || ''} ${caseItem.client_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase()) ||
+        `${caseItem.lawyer_id?.first_name || ''} ${caseItem.lawyer_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase())
+      )
+    }
+    
+    // Filter by status
+    if (status && status !== 'all') {
+      filtered = filtered.filter(caseItem => caseItem.status === status)
+    }
+    
+    setFilteredCases(filtered)
+  }, [searchForm.watch('query'), searchForm.watch('status'), cases])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -93,39 +116,13 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
     router.push(`/cases?${params.toString()}`)
   }
 
-  // Handle case status update
-  const handleStatusUpdate = async (caseId: string, newStatus: CaseStatus) => {
-    setUpdatingCases((prev) => new Set(prev).add(caseId))
 
-    try {
-      const updateData: StatusUpdateData = { caseId, status: newStatus }
-      await updateCaseStatus(updateData.caseId, updateData.status)
-
-      // Update local state
-      setCases(cases.map((c) => (c.id === caseId ? { ...c, status: newStatus } : c)))
-
-      toast({
-        title: "Status updated",
-        description: `Case ${caseId} has been ${newStatus}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update case status",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingCases((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(caseId)
-        return newSet
-      })
-    }
-  }
 
   // View case details
-  const viewCaseDetails = (caseId: string) => {
-    router.push(`/cases/${caseId}`)
+  const viewCaseDetails = (caseItem: Case) => {
+    // Encode case data as URL search params to pass to details page
+    const caseData = encodeURIComponent(JSON.stringify(caseItem))
+    router.push(`/cases/${caseItem._id}?data=${caseData}`)
   }
 
   // Get status badge
@@ -156,6 +153,15 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Case Management</h2>
+        <Button
+          onClick={() => router.push('/cases/new')}
+          className="bg-[#0f0921] hover:bg-[#0f0921]/90"
+        >
+          Create New Case
+        </Button>
+      </div>
       <Form {...searchForm}>
         <form
           onSubmit={searchForm.handleSubmit(onSearchSubmit)}
@@ -203,19 +209,21 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
             name="status"
             render={({ field }) => (
               <FormItem>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
+                    onChange={e => {
+                      field.onChange(e);
+                      searchForm.handleSubmit(onSearchSubmit)(); // auto-submit on change
+                    }}
+                  >
+                    <option value="all">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -227,26 +235,48 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Case ID</TableHead>
+              <TableHead>Case Number</TableHead>
               <TableHead>Case Title</TableHead>
-              <TableHead>Recent Update</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Lawyer</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {cases.length === 0 ? (
+            {filteredCases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {isLoading ? "Loading cases..." : "No cases found"}
                 </TableCell>
               </TableRow>
             ) : (
-              cases.map((caseItem, index) => (
-                <TableRow key={caseItem.id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <TableCell className="font-mono">{caseItem.id}</TableCell>
+              filteredCases.map((caseItem, index) => (
+                <TableRow key={caseItem._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                  <TableCell className="font-mono">{caseItem.case_number}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
-                  <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
+                  <TableCell>
+                    {caseItem.client_id ? 
+                      `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ''}`.trim() 
+                      : 'N/A'
+                    }
+                  </TableCell>
+                  <TableCell>
+                    {caseItem.lawyer_id ? 
+                      `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ''}`.trim() 
+                      : 'N/A'
+                    }
+                  </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => viewCaseDetails(caseItem)}
+                    >
+                      View Details
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))
             )}

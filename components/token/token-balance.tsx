@@ -1,61 +1,112 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { RefreshCw, TrendingUp, TrendingDown } from "lucide-react"
 
-export default function TokenBalance() {
+interface TokenBalanceProps {
+  currentTokens: number
+  loading: boolean
+  onRefresh: () => void
+}
+
+export default function TokenBalance({ currentTokens, loading, onRefresh }: TokenBalanceProps) {
+  // Mock data for usage analytics - in real app, fetch from API
+  const monthlyUsage = 2450
+  const monthlyLimit = 5000
+  const usagePercentage = (monthlyUsage / monthlyLimit) * 100
+  const lastMonthUsage = 2100
+  const usageChange = monthlyUsage - lastMonthUsage
+  const usageChangePercent = ((usageChange / lastMonthUsage) * 100).toFixed(1)
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Token Balance</h3>
-              <span className="text-sm text-gray-500">Updated: May 19, 2025</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">1,250</span>
-              <span className="text-gray-500">tokens available</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Monthly Usage</span>
-                <span className="font-medium">450 / 2,000 tokens</span>
-              </div>
-              <Progress value={22.5} className="h-2" />
-              <p className="text-sm text-gray-500">Your plan renews on June 1, 2025</p>
-            </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <CardTitle className="text-lg font-semibold">Token Usage & Balance</CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onRefresh}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Current Balance */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium text-muted-foreground">Available Balance</h3>
+            <span className="text-sm text-muted-foreground">
+              Updated: {new Date().toLocaleDateString()}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold">
+              {loading ? "..." : currentTokens.toLocaleString()}
+            </span>
+            <span className="text-muted-foreground">tokens</span>
+          </div>
+        </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Token Usage Summary</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">This Month</p>
-                <p className="text-2xl font-semibold">450</p>
-                <p className="text-xs text-green-600">+12% from last month</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">Last Month</p>
-                <p className="text-2xl font-semibold">402</p>
-                <p className="text-xs text-green-600">+8% from previous</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">Earned</p>
-                <p className="text-2xl font-semibold">320</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">Spent</p>
-                <p className="text-2xl font-semibold">130</p>
-              </div>
+        {/* Monthly Usage Progress */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Monthly Usage</span>
+            <span className="text-sm font-medium">
+              {monthlyUsage.toLocaleString()} / {monthlyLimit.toLocaleString()} tokens
+            </span>
+          </div>
+          <Progress value={usagePercentage} className="h-2" />
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <span>{usagePercentage.toFixed(1)}% used this month</span>
+            <span>{(monthlyLimit - monthlyUsage).toLocaleString()} remaining</span>
+          </div>
+        </div>
+
+        {/* Usage Comparison */}
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">This Month</p>
+            <p className="text-xl font-semibold">{monthlyUsage.toLocaleString()}</p>
+            <div className="flex items-center gap-1">
+              {usageChange >= 0 ? (
+                <TrendingUp className="h-3 w-3 text-red-500" />
+              ) : (
+                <TrendingDown className="h-3 w-3 text-green-500" />
+              )}
+              <p className={`text-xs ${usageChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {usageChange >= 0 ? '+' : ''}{usageChangePercent}% from last month
+              </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Last Month</p>
+            <p className="text-xl font-semibold">{lastMonthUsage.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">Previous period</p>
+          </div>
+        </div>
+
+        {/* Usage Breakdown */}
+        <div className="space-y-3 pt-4 border-t">
+          <h4 className="text-sm font-medium">Usage Breakdown</h4>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Document Processing</span>
+              <span className="font-medium">1,200 tokens</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">AI Chat</span>
+              <span className="font-medium">850 tokens</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Content Generation</span>
+              <span className="font-medium">400 tokens</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

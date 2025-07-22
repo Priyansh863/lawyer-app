@@ -33,11 +33,11 @@ import { useRouter } from "next/navigation"
 import { useToast } from "../ui/use-toast"
 
 const profileFormSchema = z.object({
-  first_name: z.string().min(2, "First name must be at least 2 characters"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  about: z.string().max(500, "About must be less than 500 characters").optional(),
+  first_name: z.string().min(2, "First name must be at least 2 characters."),
+  last_name: z.string().min(2, "Last name must be at least 2 characters."),
+  email: z.string().email("Invalid email address."),
+  phone: z.string().min(10, "Phone number must be at least 10 digits."),
+  about: z.string().max(500, "About section cannot exceed 500 characters.").optional(),
   practice_area: z.enum([
     "corporate",
     "family",
@@ -53,13 +53,10 @@ type ProfileFormData = z.infer<typeof profileFormSchema>
 
 export default function ProfileSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-    const router = useRouter();
-  
+  const router = useRouter()
   const { toast } = useToast()
-
   const dispatch = useDispatch()
-  const profile = useSelector((state: RootState) => state.auth.user);
-  console.log("Profile data:", profile)
+  const profile = useSelector((state: RootState) => state.auth.user)
   const [profile_image, setprofile_image] = useState<string>(profile?.profile_image || "")
 
   const form = useForm<ProfileFormData>({
@@ -78,26 +75,25 @@ export default function ProfileSettings() {
   const onSubmit = async (data: ProfileFormData) => {
     try {
       const { email, ...payload } = { ...data, profile_image }
-      console.log("Submitting profile data:", payload)
       const res = await updateUser(profile?._id as string, payload)
       if (res && res.data && res.data.success) {
-        dispatch(updateUserData({...profile,...payload}))
+        dispatch(updateUserData({ ...profile, ...payload }))
         toast({
-          title: "Profile updated",
-          description: "Your profile has been updated successfully.",
+          title: "Profile updated successfully.",
+          description: "Your profile information has been updated.",
           variant: "success",
         })
       } else {
         toast({
-          title: "Update Failed",
-          description: res?.data?.message || "An unexpected error occurred. Please try again.",
+          title: "Update failed.",
+          description: res?.data?.message || "An error occurred while updating your profile.",
           variant: "error",
         })
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
+        title: "Error.",
+        description: "An error occurred while updating your profile.",
         variant: "error",
       })
     }
@@ -105,19 +101,17 @@ export default function ProfileSettings() {
 
   const handleLogout = async () => {
     try {
-      dispatch(logout()) // Clear user data in Redux store
-      router.push("/login") // Redirect to login page
-      
-      
+      dispatch(logout())
+      router.push("/login")
       toast({
-        title: "Logged out",
+        title: "Logged out.",
         description: "You have been logged out successfully.",
         variant: "success",
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to log out. Please try again.",
+        title: "Logout error.",
+        description: "An error occurred while logging out.",
         variant: "error",
       })
     }
@@ -144,17 +138,16 @@ export default function ProfileSettings() {
         if (objectUrl) {
           setprofile_image(objectUrl)
           toast({
-            title: "Profile image updated",
-            description: "Your avatar has been changed successfully.",
+            title: "Profile updated successfully.",
+            description: "Your profile picture has been updated.",
             variant: "success",
           })
         }
       } catch (err) {
         toast({
-          title: "Error",
-          description: "Failed to upload image. Try again.",
+          title: "Error.",
+          description: "An error occurred while updating your profile picture.",
           variant: "error",
-
         })
       }
     }
@@ -164,13 +157,18 @@ export default function ProfileSettings() {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h3 className="text-xl font-semibold">Profile Details</h3>
+        <div>
+          <h3 className="text-xl font-semibold">Profile Settings</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Update your profile information and settings.
+          </p>
+        </div>
         <Button
           variant="outline"
           className="text-red-600 border-red-200 hover:bg-red-50 sm:w-auto w-full"
           onClick={handleLogout}
         >
-          Log Out
+          Logout
         </Button>
       </div>
 
@@ -178,7 +176,7 @@ export default function ProfileSettings() {
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profile_image} alt="Profile" />
+              <AvatarImage src={profile_image} alt="Profile picture" />
               <AvatarFallback>
                 {form.getValues("first_name")?.[0]}
                 {form.getValues("last_name")?.[0]}
@@ -187,10 +185,10 @@ export default function ProfileSettings() {
             <Button
               size="icon"
               className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-black hover:bg-gray-800"
-              onClick={handleAvatarChange}
+              onClick={() => fileInputRef.current?.click()}
             >
               <PencilIcon className="h-4 w-4" />
-              <span className="sr-only">Change avatar</span>
+              <span className="sr-only">Change profile picture</span>
             </Button>
             <input
               type="file"
@@ -219,7 +217,7 @@ export default function ProfileSettings() {
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter first name" {...field} />
+                      <Input placeholder="Enter your first name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -233,7 +231,7 @@ export default function ProfileSettings() {
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter last name" {...field} />
+                      <Input placeholder="Enter your last name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -248,7 +246,7 @@ export default function ProfileSettings() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter email" {...field} />
+                      <Input type="email" placeholder="Enter your email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,7 +260,7 @@ export default function ProfileSettings() {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter phone number" {...field} />
+                      <Input placeholder="Enter your phone number" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,7 +274,7 @@ export default function ProfileSettings() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>About</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Write about yourself..." className="min-h-[100px]" {...field} />
+                      <Textarea placeholder="Tell us about yourself" className="min-h-[100px]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,12 +294,12 @@ export default function ProfileSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="corporate">Corporate Law</SelectItem>
-                        <SelectItem value="family">Family Law</SelectItem>
-                        <SelectItem value="criminal">Criminal Law</SelectItem>
-                        <SelectItem value="immigration">Immigration Law</SelectItem>
-                        <SelectItem value="intellectual">Intellectual Property</SelectItem>
-                        <SelectItem value="real-estate">Real Estate Law</SelectItem>
+                        <SelectItem value="corporate">Corporate</SelectItem>
+                        <SelectItem value="family">Family</SelectItem>
+                        <SelectItem value="criminal">Criminal</SelectItem>
+                        <SelectItem value="immigration">Immigration</SelectItem>
+                        <SelectItem value="intellectual">Intellectual</SelectItem>
+                        <SelectItem value="real-estate">Real Estate</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -314,7 +312,7 @@ export default function ProfileSettings() {
                 name="experience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
+                    <FormLabel>Experience</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -322,10 +320,10 @@ export default function ProfileSettings() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">1-2 years</SelectItem>
-                        <SelectItem value="3">3-5 years</SelectItem>
-                        <SelectItem value="6">6-9 years</SelectItem>
-                        <SelectItem value="10">10+ years</SelectItem>
+                        <SelectItem value="1">1 Year</SelectItem>
+                        <SelectItem value="3">3 Years</SelectItem>
+                        <SelectItem value="6">6 Years</SelectItem>
+                        <SelectItem value="10">10 Years</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -334,23 +332,19 @@ export default function ProfileSettings() {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:justify-end mt-6 gap-4">
-              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => form.reset()}>
+            <div className="mt-6 flex gap-4">
+              <Button type="button" variant="outline" className="flex-1" onClick={() => form.reset()}>
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-black hover:bg-gray-800 text-white w-full sm:w-auto"
-                disabled={form.formState.isSubmitting}
+                className="bg-black hover:bg-gray-800 text-white flex-1"
+                disabled={form.formState.isSubmitting || !form.formState.isDirty}
               >
-                {form.formState.isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
+                {form.formState.isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
+                {form.formState.isSubmitting ? "Saving..." : "Save"}
               </Button>
             </div>
           </form>

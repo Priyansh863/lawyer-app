@@ -1,15 +1,11 @@
 export interface BlogPost {
-  id: string
+  _id: string;
   title: string
   content: string
   excerpt: string
   image: string
   date: string
-  author: {
-    id: string
-    name: string
-    avatar?: string
-  }
+  author: string
   category: string
   status: "draft" | "published"
   likes: number

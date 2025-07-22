@@ -4,18 +4,32 @@ import type { Client } from "@/types/client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSelector } from "react-redux"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star, Ban, MessageSquare, Phone, Video } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Star, Ban, MessageSquare, Phone, Video, Calendar, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { updateClientStatus, toggleFavorite, toggleBlocked, updateClientNotes } from "@/lib/api/clients-api"
+import { createMeeting } from "@/lib/api/meeting-api"
 import { useToast } from "@/hooks/use-toast"
+import { RootState } from "@/lib/store"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import ClientCases from "@/components/clients/client-cases"
 import ClientDocuments from "@/components/clients/client-documents"
 import ClientNotes from "@/components/clients/client-notes"
+import { SimpleChat } from "@/components/chat/simple-chat"
 
 interface ClientDetailsProps {
   client: Client
@@ -23,8 +37,12 @@ interface ClientDetailsProps {
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
   const [client, setClient] = useState<Client>(initialClient)
+  const [meetingLink, setMeetingLink] = useState('')
+  const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
+  const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const profile = useSelector((state: RootState) => state.auth.user)
 
   // Toggle favorite status
   const handleToggleFavorite = async () => {
@@ -34,7 +52,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
       toast({
         title: updatedClient.isFavorite ? "Added to favorites" : "Removed from favorites",
-        description: `${updatedClient.name} has been ${
+        description: `${updatedClient.first_name} has been ${
           updatedClient.isFavorite ? "added to" : "removed from"
         } favorites`,
       })
@@ -55,7 +73,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
       toast({
         title: updatedClient.isBlocked ? "Client blocked" : "Client unblocked",
-        description: `${updatedClient.name} has been ${updatedClient.isBlocked ? "blocked" : "unblocked"}`,
+        description: `${updatedClient.first_name} has been ${updatedClient.isBlocked ? "blocked" : "unblocked"}`,
       })
     } catch (error) {
       toast({
@@ -64,6 +82,66 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         variant: "destructive",
       })
     }
+  }
+
+  // Handle meeting scheduling
+  const handleScheduleMeeting = async () => {
+    if (!meetingLink.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a meeting link",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!profile?._id) {
+      toast({
+        title: "Error",
+        description: "Please ensure you're logged in",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setIsSchedulingMeeting(true)
+
+      const meetingData = {
+        lawyerId: profile._id,
+        clientId: client.id,
+        meetingLink: meetingLink.trim(),
+      }
+
+      const response = await createMeeting(meetingData)
+
+      if (response.success) {
+        toast({
+          title: "Success!",
+          description: "Meeting scheduled successfully",
+          variant: "default",
+        })
+        setMeetingLink('')
+        setMeetingDialogOpen(false)
+      } else {
+        throw new Error(response.message || "Failed to schedule meeting")
+      }
+    } catch (error: any) {
+      console.error('Meeting scheduling error:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to schedule meeting",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSchedulingMeeting(false)
+    }
+  }
+
+  // Handle create chat
+  const [showChat, setShowChat] = useState(false)
+  const handleCreateChat = () => {
+    setShowChat(true)
   }
 
   // Update client status
@@ -147,17 +225,17 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.name} />
-              <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.first_name} />
+              <AvatarFallback>{client.first_name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-xl">{client.name}</CardTitle>
+              <CardTitle className="text-xl">{client.first_name}</CardTitle>
               <div className="flex items-center gap-2 mt-1">
                 {getStatusBadge(client.status)}
                 {client.isBlocked && (
                   <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
                     Blocked
-                  </Badge>
+                  </Badge> 
                 )}
                 {client.isFavorite && (
                   <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
@@ -168,38 +246,76 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             </div>
           </div>
           <div className="flex items-center gap-2">
+        
+
+            
+            {/* Create Chat Button */}
             <Button
               variant="outline"
-              size="icon"
-              onClick={handleToggleFavorite}
-              className={client.isFavorite ? "text-yellow-500" : ""}
-              title={client.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+              onClick={handleCreateChat}
+              title="Create Chat"
             >
-              <Star className={client.isFavorite ? "fill-yellow-500" : ""} size={16} />
+              <MessageSquare className="mr-2" size={16} />
+              Create Chat
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleToggleBlocked}
-              className={client.isBlocked ? "text-red-500" : ""}
-              title={client.isBlocked ? "Unblock Client" : "Block Client"}
-            >
-              <Ban size={16} />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => router.push(`/chat?clientId=${client.id}`)}
-              title="Send Message"
-            >
-              <MessageSquare size={16} />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => {}} title="Call Client">
-              <Phone size={16} />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => {}} title="Video Call">
-              <Video size={16} />
-            </Button>
+            
+            {/* Schedule Meeting Button with Dialog */}
+            <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" title="Schedule Meeting">
+                  <Calendar className="mr-2" size={16} />
+                  Schedule Meeting
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Schedule Meeting</DialogTitle>
+                  <DialogDescription>
+                    Schedule a meeting with {client.first_name}. Please provide the meeting link.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="meetingLink">Meeting Link</Label>
+                    <Input
+                      id="meetingLink"
+                      type="url"
+                      placeholder="https://zoom.us/j/123456789 or https://meet.google.com/abc-defg-hij"
+                      value={meetingLink}
+                      onChange={(e) => setMeetingLink(e.target.value)}
+                      disabled={isSchedulingMeeting}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setMeetingDialogOpen(false)}
+                      disabled={isSchedulingMeeting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleScheduleMeeting}
+                      disabled={!meetingLink.trim() || isSchedulingMeeting}
+                    >
+                      {isSchedulingMeeting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Scheduling...
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Schedule Meeting
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -218,11 +334,11 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Client Since</h3>
-              <p className="text-base">{formatDate(client.createdAt)}</p>
+              {/* <p className="text-base">{formatDate(client.createdAt)}</p> */}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Last Contact</h3>
-              <p className="text-base">{formatDate(client.lastContactDate)}</p>
+              {/* <p className="text-base">{formatDate(client.lastContactDate)}</p> */}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Active Cases</h3>
@@ -230,7 +346,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             </div>
           </div>
 
-          <Tabs defaultValue="cases" className="mt-6">
+          {/* <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">Cases</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -245,9 +361,19 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             <TabsContent value="notes" className="mt-4">
               <ClientNotes clientId={client.id} notes={client.notes || ""} onSave={handleNotesUpdate} />
             </TabsContent>
-          </Tabs>
+          </Tabs> */}
         </CardContent>
       </Card>
+      
+      {/* Simple Chat Modal */}
+      {showChat && (
+        <SimpleChat
+          onClose={() => setShowChat(false)}
+          clientId={client.id}
+          clientName={`${client.first_name} ${client.last_name}`}
+          clientAvatar={client.avatar}
+        />
+      )}
     </div>
   )
 }

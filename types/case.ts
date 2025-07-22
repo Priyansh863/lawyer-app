@@ -1,15 +1,33 @@
 export type CaseStatus = "pending" | "approved" | "rejected"
 
 export interface Case {
-  id: string
+  _id: string
+  case_number: string
   title: string
-  clientName: string
-  clientId: string
-  status: CaseStatus
-  createdAt: string
-  updatedAt: string
   description?: string
-  assignedTo: string[]
+  summary?: string
+  key_points?: string[]
+  status: CaseStatus
+  client_id: {
+    _id: string
+    first_name: string
+    last_name?: string
+    id: string
+  }
+  lawyer_id: {
+    _id: string
+    first_name: string
+    last_name?: string
+    id: string
+  }
+  files: any[]
+  created_at: string
+  updated_at: string
+  __v: number
+  // Legacy fields for backward compatibility
+  clientName?: string
+  clientId?: string
+  assignedTo?: string[]
 }
 
 // Schema for case creation/update

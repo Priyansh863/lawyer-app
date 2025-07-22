@@ -2,13 +2,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Download, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PDFUpload } from "./pdf-upload"
 
-export function DocumentsHeader() {
+interface DocumentsHeaderProps {
+  onDocumentUploaded?: () => void
+}
+
+export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
   return (
     <div className="flex flex-col space-y-4">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Document</h2>
-        <p className="text-muted-foreground">Document list</p>
+        <h2 className="text-3xl font-bold tracking-tight">Documents</h2>
+        <p className="text-muted-foreground">Manage and upload your PDF documents for AI analysis</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -18,27 +23,19 @@ export function DocumentsHeader() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Select>
-            <SelectTrigger className="w-full sm:w-[120px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+     
 
-          <Button variant="outline" className="w-full sm:w-auto">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+         
 
-          <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Document
-          </Button>
+          <PDFUpload 
+            onUploadSuccess={onDocumentUploaded}
+            trigger={
+              <Button className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800">
+                <Plus className="mr-2 h-4 w-4" />
+                Upload PDF
+              </Button>
+            }
+          />
         </div>
       </div>
     </div>

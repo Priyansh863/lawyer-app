@@ -1,4 +1,49 @@
-import type { Message, ChatSummary } from "@/types/chat"
+import axios from 'axios'
+import type { 
+  Message, 
+  Chat, 
+  ChatResponse, 
+  ChatsResponse, 
+  MessagesResponse,
+  ChatSummary 
+} from '@/types/chat'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+
+// Helper function to get auth headers
+
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
+
+const getAuthHeaders = () => {
+  if (typeof window === 'undefined') return {}
+  
+  const token = getToken()
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+}
+
+// Helper function to get current user ID
+const getCurrentUserId = (): string | null => {
+  if (typeof window === 'undefined') return null
+  
+  const userStr = localStorage.getItem('user')
+  if (!userStr) return null
+  
+  try {
+    const user = JSON.parse(userStr)
+    return user._id || user.id
+  } catch {
+    return null
+  }
+}
 
 interface GetChatsParams {
   query?: string
@@ -6,221 +51,202 @@ interface GetChatsParams {
   limit?: number
 }
 
+interface CreateChatParams {
+  lawyerId: string
+}
+
+interface SendMessageParams {
+  chatId: string
+  message: string
+  messageType?: 'text' | 'image' | 'file'
+}
+
 /**
- * Get chat summaries with optional filtering
+ * Create a new chat
  */
-export async function getChats({ query = "", page = 1, limit = 10 }: GetChatsParams = {}): Promise<ChatSummary[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
-
-  // Mock data
-  const mockChats: ChatSummary[] = [
-    {
-      clientId: "client_1",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T10:00:00Z",
-      lastMessagePreview: "Hello, I need help with my case.",
-      unreadCount: 0,
-      tokenUsage: 236,
-    },
-    {
-      clientId: "client_2",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T09:30:00Z",
-      lastMessagePreview: "Can you review the contract?",
-      unreadCount: 2,
-      tokenUsage: 124,
-    },
-    {
-      clientId: "client_3",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T09:00:00Z",
-      lastMessagePreview: "Thank you for your help.",
-      unreadCount: 0,
-      tokenUsage: 236,
-    },
-    {
-      clientId: "client_4",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T08:30:00Z",
-      lastMessagePreview: "I'll send the documents tomorrow.",
-      unreadCount: 0,
-      tokenUsage: 124,
-    },
-    {
-      clientId: "client_5",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T08:00:00Z",
-      lastMessagePreview: "When is our next meeting?",
-      unreadCount: 1,
-      tokenUsage: 98,
-    },
-    {
-      clientId: "client_6",
-      clientName: "John Doe",
-      clientAvatar: "/placeholder.svg?height=40&width=40",
-      lastMessageTime: "2025-03-24T07:30:00Z",
-      lastMessagePreview: "I have a question about the case.",
-      unreadCount: 0,
-      tokenUsage: 63,
-    },
-  ]
-
-  // Filter by search query
-  let filteredChats = mockChats
-  if (query) {
-    const lowerQuery = query.toLowerCase()
-    filteredChats = filteredChats.filter(
-      (c) => c.clientName.toLowerCase().includes(lowerQuery) || c.lastMessagePreview.toLowerCase().includes(lowerQuery),
+export async function createChat({ lawyerId }: CreateChatParams): Promise<ChatResponse> {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/chat/create`,
+      { lawyerId },
+      { headers: getAuthHeaders() }
     )
+    return response.data
+  } catch (error: any) {
+    console.error('Create chat error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to create chat')
   }
+}
 
-  // Pagination
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedChats = filteredChats.slice(startIndex, endIndex)
+/**
+ * Get user's chats with pagination
+ */
+export async function getChats({ query = '', page = 1, limit = 20 }: GetChatsParams = {}){
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    
+    if (query) {
+      params.append('query', query)
+    }
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  return paginatedChats
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/my-chats?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Get chats error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to fetch chats')
+  }
 }
 
 /**
  * Get messages for a specific chat
  */
-export async function getMessages(clientId: string): Promise<Message[]> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+export async function getChatMessages(chatId: string, page = 1, limit = 50): Promise<MessagesResponse> {
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 700))
-
-  // For AI assistant, return specific messages
-  if (clientId === "ai_assistant") {
-    return [
-      {
-        id: "ai_msg_1",
-        content: "Hello! I'm your AI legal assistant. How can I help you today?",
-        senderId: "ai_assistant",
-        receiverId: "current_user",
-        timestamp: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
-        isRead: true,
-        attachments: [],
-        tokenCount: 15,
-      },
-    ]
-  }
-
-  // For regular clients, return mock conversation
-  return [
-    {
-      id: "msg_1",
-      content: "Hello, I need help with my case.",
-      senderId: clientId,
-      receiverId: "current_user",
-      timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-      isRead: true,
-      attachments: [],
-      tokenCount: 8,
-    },
-    {
-      id: "msg_2",
-      content: "Of course, I'd be happy to help. Could you provide more details about your case?",
-      senderId: "current_user",
-      receiverId: clientId,
-      timestamp: new Date(Date.now() - 3540000).toISOString(), // 59 minutes ago
-      isRead: true,
-      attachments: [],
-      tokenCount: 18,
-    },
-    {
-      id: "msg_3",
-      content: "Please show me the link of Sigma of AI Legal",
-      senderId: clientId,
-      receiverId: "current_user",
-      timestamp: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
-      isRead: true,
-      attachments: [],
-      tokenCount: 10,
-    },
-  ]
-}
-
-/**
- * Send a message
- */
-export async function sendMessage(message: Message): Promise<Message> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  // Return the message with a server-generated ID
-  return {
-    ...message,
-    id: `msg_${Date.now()}`,
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/${chatId}/messages?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Get messages error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to fetch messages')
   }
 }
 
 /**
- * Mark messages as read
+ * Send a message (REST fallback)
  */
-export async function markAsRead(messageIds: string[]): Promise<void> {
-  //this would call an API endpoint
-  // This is a mock implementation for demonstration
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 300))
-
-  //this would update the messages in the database
-  console.log(`Marked messages as read: ${messageIds.join(", ")}`)
+export async function sendMessage({ chatId, message, messageType = 'text' }: SendMessageParams): Promise<Message> {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/chat/${chatId}/send`,
+      { message, messageType },
+      { headers: getAuthHeaders() }
+    )
+    return response.data.data
+  } catch (error: any) {
+    console.error('Send message error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to send message')
+  }
 }
 
 /**
- * End a chat session
+ * Mark all messages in a chat as read
  */
-export async function endChatSession(clientId: string): Promise<void> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-
-  // this would update the chat session in the database
-  console.log(`Ended chat session with client: ${clientId}`)
+export async function markMessagesAsRead(chatId: string): Promise<void> {
+  try {
+    await axios.post(
+      `${API_BASE_URL}/chat/${chatId}/read`,
+      {},
+      { headers: getAuthHeaders() }
+    )
+  } catch (error: any) {
+    console.error('Mark as read error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to mark messages as read')
+  }
 }
 
 /**
- * Get chat session summary
+ * Mark messages as read (alias for compatibility)
  */
-export async function getChatSummary(clientId: string): Promise<{
-  summary: string
-  keyPoints: string[]
-  tokenUsage: number
-}> {
-  // this would call an API endpoint
-  // This is a mock implementation for demonstration
+export const markAsRead = markMessagesAsRead
 
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+/**
+ * Delete a chat
+ */
+export async function deleteChat(chatId: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${API_BASE_URL}/chat/${chatId}`,
+      { headers: getAuthHeaders() }
+    )
+  } catch (error: any) {
+    console.error('Delete chat error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to delete chat')
+  }
+}
 
-  // Return mock summary
+/**
+ * Search chats
+ */
+export async function searchChats(query: string, page = 1, limit = 20): Promise<ChatsResponse> {
+  try {
+    const params = new URLSearchParams({
+      query,
+      page: page.toString(),
+      limit: limit.toString()
+    })
+
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/search?${params.toString()}`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Search chats error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to search chats')
+  }
+}
+
+/**
+ * Get chat summary
+ */
+export async function getChatSummary(chatId: string): Promise<{ summary: string; keyPoints: string[]; tokenUsage: number }> {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/${chatId}/summary`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data.data
+  } catch (error: any) {
+    console.error('Get chat summary error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to get chat summary')
+  }
+}
+
+/**
+ * Get unread message count
+ */
+export async function getUnreadCount(): Promise<{ count: number }> {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/chat/unread-count`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data.data
+  } catch (error: any) {
+    console.error('Get unread count error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to get unread count')
+  }
+}
+
+/**
+ * Transform backend chat data to UI-friendly format
+ */
+export function transformChatToSummary(chat: Chat, currentUserId: string): ChatSummary {
+  // Find the other participant (not current user)
+  const otherParticipant = chat.participantDetails?.find(p => p._id !== currentUserId)
+  
   return {
-    summary:
-      "This conversation covered legal consultation topics. The client asked questions about their case, and the AI assistant provided guidance and information.",
-    keyPoints: [
-      "Client inquired about legal procedures",
-      "Information was provided about documentation requirements",
-      "Next steps were outlined for the client's case",
-      "Follow-up actions were recommended",
-    ],
-    tokenUsage: 236,
+    chatId: chat._id,
+    participantName: otherParticipant 
+      ? `${otherParticipant.first_name} ${otherParticipant.last_name}`.trim()
+      : 'Unknown User',
+    participantAvatar: otherParticipant?.avatar,
+    lastMessageTime: chat.updatedAt,
+    lastMessagePreview: '', // Will be populated from last message
+    unreadCount: chat.unreadCount || 0,
+    isOnline: false // Will be updated via Socket.IO
   }
 }

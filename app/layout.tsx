@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Lato } from "next/font/google"
 import "./globals.css"
 import ReduxProvider from "@/lib/redux-provider"
+import TokenValidationProvider from "@/components/providers/TokenValidationProvider"
 import toast, { Toaster } from 'react-hot-toast';
 // import { SessionProvider } from "next-auth/react"
 
@@ -30,8 +31,10 @@ export default function RootLayout({
       </head>
       <body className={`${lato.variable} font-lato`}>
           <ReduxProvider>
-            {children}
-            <Toaster />
+            <TokenValidationProvider>
+              {children}
+              <Toaster />
+            </TokenValidationProvider>
           </ReduxProvider>
       </body>
     </html>
