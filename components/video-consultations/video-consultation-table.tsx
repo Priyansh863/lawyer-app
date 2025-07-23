@@ -4,25 +4,15 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Video, FileText, Download, ExternalLink, Loader2, Calendar, X } from "lucide-react"
+import { Video, ExternalLink, Loader2, Calendar, X } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { getMeetings, updateMeetingStatus, type Meeting } from "@/lib/api/meeting-api"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const searchFormSchema = z.object({
   query: z.string(),
@@ -30,9 +20,7 @@ const searchFormSchema = z.object({
 
 type SearchFormData = z.infer<typeof searchFormSchema>
 
-interface VideoConsultationTableProps {
-  // Remove initialConsultations prop as we'll fetch meetings dynamically
-}
+type VideoConsultationTableProps = {}
 
 export default function VideoConsultationTable({}: VideoConsultationTableProps) {
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -76,9 +64,10 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     if (query === "") {
       setFilteredMeetings(meetings)
     } else {
-      const filtered = meetings.filter((meeting) =>
-        (meeting.clientName && meeting.clientName.toLowerCase().includes(query)) ||
-        (meeting.lawyerName && meeting.lawyerName.toLowerCase().includes(query))
+      const filtered = meetings.filter(
+        (meeting) =>
+          (meeting.clientName && meeting.clientName.toLowerCase().includes(query)) ||
+          (meeting.lawyerName && meeting.lawyerName.toLowerCase().includes(query)),
       )
       setFilteredMeetings(filtered)
     }
@@ -106,10 +95,10 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
 
   const handleConnectToMeeting = (meeting: Meeting) => {
     if (meeting.meetingLink) {
-      window.open(meeting.meetingLink, '_blank')
+      window.open(meeting.meetingLink, "_blank")
       toast({
         title: "Opening Meeting",
-        description: `Opening meeting with ${meeting.clientName || 'client'}`,
+        description: `Opening meeting with ${meeting.clientName || "client"}`,
       })
     } else {
       toast({
@@ -123,21 +112,15 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
   const handleCloseMeeting = async (meetingId: string) => {
     try {
       setUpdatingMeeting(meetingId)
-      const response = await updateMeetingStatus(meetingId, 'completed')
-      
+      const response = await updateMeetingStatus(meetingId, "completed")
       if (response.success) {
         // Update local state
-        setMeetings(prev => prev.map(meeting => 
-          meeting._id === meetingId 
-            ? { ...meeting, status: 'completed' as const }
-            : meeting
-        ))
-        setFilteredMeetings(prev => prev.map(meeting => 
-          meeting._id === meetingId 
-            ? { ...meeting, status: 'completed' as const }
-            : meeting
-        ))
-        
+        setMeetings((prev) =>
+          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
+        )
+        setFilteredMeetings((prev) =>
+          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
+        )
         toast({
           title: "Meeting Closed",
           description: "Meeting has been marked as completed",
@@ -196,9 +179,10 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           />
         </Form>
       </div>
-
       {/* Consultations Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full">
+        {" "}
+        {/* Added w-full here */}
         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
           <div className="min-w-[1000px] relative">
             <Table>
@@ -234,25 +218,17 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                 ) : (
                   filteredMeetings.map((meeting: Meeting, index: number) => (
                     <TableRow key={meeting._id} className={index % 2 === 0 ? "bg-gray-100" : ""}>
-                      <TableCell className="min-w-[120px]">
-                        {meeting.clientName || 'Unknown Client'}
-                      </TableCell>
-                      <TableCell className="min-w-[120px]">
-                        {meeting.lawyerName || 'Unknown Lawyer'}
-                      </TableCell>
+                      <TableCell className="min-w-[120px]">{meeting.clientName || "Unknown Client"}</TableCell>
+                      <TableCell className="min-w-[120px]">{meeting.lawyerName || "Unknown Lawyer"}</TableCell>
                       <TableCell className="min-w-[150px]">
-                        {meeting.createdAt ? formatDate(meeting.createdAt, true) : 'Not scheduled'}
+                        {meeting.createdAt ? formatDate(meeting.createdAt, true) : "Not scheduled"}
                       </TableCell>
-                      <TableCell className="min-w-[100px]">
-                        {getStatusBadge(meeting.status || 'scheduled')}
-                      </TableCell>
+                      <TableCell className="min-w-[100px]">{getStatusBadge(meeting.status || "scheduled")}</TableCell>
                       <TableCell className="min-w-[200px]">
                         {meeting.meetingLink ? (
                           <div className="flex items-center space-x-2">
                             <ExternalLink className="h-3 w-3 text-blue-600" />
-                            <span className="text-xs text-blue-600 truncate max-w-[150px]">
-                              {meeting.meetingLink}
-                            </span>
+                            <span className="text-xs text-blue-600 truncate max-w-[150px]">{meeting.meetingLink}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-gray-500">No link provided</span>
@@ -260,7 +236,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                       </TableCell>
                       <TableCell className="min-w-[200px]">
                         <div className="flex gap-1 flex-wrap">
-                          {meeting.status !== 'completed' && meeting.meetingLink && (
+                          {meeting.status !== "completed" && meeting.meetingLink && (
                             <Button
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
@@ -270,11 +246,11 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                               Connect
                             </Button>
                           )}
-                          {meeting.status !== 'completed' && meeting.status !== 'cancelled' && (
+                          {meeting.status !== "completed" && meeting.status !== "cancelled" && (
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 bg-transparent"
                               onClick={() => handleCloseMeeting(meeting._id)}
                               disabled={updatingMeeting === meeting._id}
                             >
@@ -293,7 +269,6 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                 )}
               </TableBody>
             </Table>
-
           </div>
         </div>
       </div>

@@ -14,8 +14,8 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 
   return (
     <main className="p-6 overflow-y-auto">
-      <DashboardHeader />
-      <div className="mt-6">
+      {/* <DashboardHeader /> */}
+      <div className="mt-10" style={{ marginTop: "2.25rem" }}>
         <h2 className="text-xl font-semibold mb-6">Settings</h2>
         {children}
       </div>

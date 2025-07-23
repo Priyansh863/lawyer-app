@@ -13,7 +13,7 @@ export default  function ClientsHeader() {
   
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <h1 className="text-2xl font-bold tracking-tight">
         {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
       </h1>

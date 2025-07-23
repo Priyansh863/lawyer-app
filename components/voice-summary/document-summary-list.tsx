@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,7 +21,6 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [currentSummary, setCurrentSummary] = useState<DocumentSummary | null>(null)
-
   const { toast } = useToast()
 
   // Initialize TTS for the current summary
@@ -34,11 +32,11 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
     pause: pauseSpeech,
     stop: stopSpeech,
   } = useSpeech({
-    text: currentSummary?.summary || '',
+    text: currentSummary?.summary || "",
     volume: 0.8,
     rate: 1.0,
     pitch: 1.0,
-    lang: 'en-US'
+    lang: "en-US",
   })
 
   // Fetch documents from backend on component mount
@@ -61,7 +59,6 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
         }
       }
     }
-
     fetchDocuments()
   }, [initialSummaries.length, toast])
 
@@ -84,7 +81,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   const handlePlaySummary = (summary: DocumentSummary) => {
     if (playingId === summary.id) {
       // If already playing this summary, pause it
-      if (speechStatus === 'started') {
+      if (speechStatus === "started") {
         pauseSpeech()
       } else {
         stopSpeech()
@@ -93,16 +90,13 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
       }
       return
     }
-
     // Start playing new summary
     setPlayingId(summary.id)
     setCurrentSummary(summary)
-    
     // Start speech after setting the summary
     setTimeout(() => {
       startSpeech()
     }, 100)
-    
     toast({
       title: "Playing Summary",
       description: `Now playing: ${summary.documentName}`,
@@ -117,9 +111,9 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col space-y-6 min-h-screen md:min-h-0">
       {/* Search Bar */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 mt-4 md:mt-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -130,7 +124,6 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           />
         </div>
       </div>
-
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-8">
@@ -138,9 +131,8 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           <span>Loading document summaries...</span>
         </div>
       )}
-
       {/* Document Summaries List */}
-      <div className="grid gap-4">
+      <div className="relative flex-1 overflow-y-auto pr-2 md:grid md:gap-4 md:overflow-y-visible">
         {filteredSummaries.length === 0 && !isLoading ? (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
@@ -150,12 +142,12 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           </Card>
         ) : (
           filteredSummaries.map((summary) => (
-            <Card key={summary.id} className="overflow-hidden">
+            <Card key={summary.id} className="overflow-hidden mb-4">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-2">{summary.documentName}</h3>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                    <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground mb-3">
                       <span>Case: {summary.caseTitle}</span>
                       <span>•</span>
                       <span>Uploaded: {formatDate(summary.createdAt)}</span>
@@ -170,7 +162,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                       variant={playingId === summary.id ? "secondary" : "outline"}
                       size="sm"
                       onClick={() => handlePlaySummary(summary)}
-                      disabled={summary.status !== 'ready'}
+                      disabled={summary.status !== "ready"}
                     >
                       {playingId === summary.id ? (
                         <>
@@ -186,43 +178,44 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                     </Button>
                   </div>
                 </div>
-
                 {/* Summary Text */}
                 <div className="bg-muted/30 rounded-lg p-4 mb-4">
-                  <p className="text-sm leading-relaxed">{summary.summary}</p>
+                  {summary.status === "failed" ? (
+                    <p className="text-sm leading-relaxed text-red-600 truncate max-w-[calc(100%-2rem)]">
+                      Processing failed: Failed to generate summary....
+                    </p>
+                  ) : (
+                    <p className="text-sm leading-relaxed truncate max-w-[calc(100%-2rem)]">
+                      {summary.summary || "Processing..."}
+                    </p>
+                  )}
                 </div>
-
                 {/* TTS Element (hidden but functional) */}
                 {playingId === summary.id && currentSummary && (
                   <div className="hidden">
                     <Text />
                   </div>
                 )}
-
                 {/* Status Badge */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        summary.status === 'ready'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                        summary.status === "ready"
+                          ? "bg-green-100 text-green-800"
+                          : summary.status === "failed"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {summary.status === 'ready' ? 'Ready' : 'Processing'}
+                      {summary.status === "ready" ? "Ready" : summary.status === "failed" ? "Failed" : "Processing"}
                     </span>
                   </div>
-                  
                   {playingId === summary.id && (
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                       <Volume2 className="h-4 w-4" />
                       <span>Playing audio...</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={stopPlayback}
-                        className="text-xs"
-                      >
+                      <Button variant="ghost" size="sm" onClick={stopPlayback} className="text-xs">
                         Stop
                       </Button>
                     </div>

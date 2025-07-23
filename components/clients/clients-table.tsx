@@ -277,7 +277,12 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{profile?.account_type==="lawyer" ? t('pages:clients.clientDetails') : "Lawyer"} {t('pages:clients.clientDetails')}</TableHead>
+              <TableHead>
+  {profile?.account_type === "lawyer"
+    ? "Lawyer"
+    : t('pages:clients.clientDetails')}
+</TableHead>
+
               <TableHead>{t('pages:cases.caseTitle')}</TableHead>
               <TableHead>{t('pages:clients.contactInformation')}</TableHead>
               <TableHead>{t('pages:clients.notes')}</TableHead>

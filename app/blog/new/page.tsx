@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function NewBlogPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Create New Blog Post</h1>
+    <div className="space-y-7">
+      <h1 className="text-2xl font-semibold" style={{ marginTop: "2.25rem" }}>Create New Blog Post</h1>
       <BlogEditor />
     </div>
   )

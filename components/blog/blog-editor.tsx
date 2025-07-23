@@ -197,7 +197,8 @@ export default function BlogEditor({ postId }: { postId?: string }) {
           />
           {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-6">
+
           <Button
             variant="outline"
             size="sm"

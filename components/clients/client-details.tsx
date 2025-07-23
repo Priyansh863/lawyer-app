@@ -214,16 +214,16 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+ <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold">Client Details</h1>
         <Button variant="outline" onClick={() => router.back()}>
-          Back to Clients
+          Back to Client
         </Button>
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center space-x-4">
+ <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">          
+  <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
               <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.first_name} />
               <AvatarFallback>{client.first_name.charAt(0)}</AvatarFallback>
@@ -245,8 +245,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-        
+<div className="flex flex-col sm:flex-row items-center gap-2">        
 
             
             {/* Create Chat Button */}

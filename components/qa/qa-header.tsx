@@ -13,7 +13,7 @@ export default function QAHeader() {
   
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-12">
       <div>
         <h1 className="text-2xl font-semibold">{t('pages:qa.title')}</h1>
         <p className="text-sm text-gray-500">{t('pages:qa.description')}</p>

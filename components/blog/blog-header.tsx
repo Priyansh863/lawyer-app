@@ -28,11 +28,14 @@ export default function BlogHeader({
   const { t } = useTranslation()
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-10 mt-8">
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t('pages:blog.title')}</h1>
-          <p className="text-sm text-gray-500">{t('pages:blog.description')}</p>
+        <p className="text-[10px] text-gray-500">{t('pages:blog.description')}</p>
+
+
         </div>
         <Button onClick={() => router.push("/blog/new")} className="flex items-center gap-2">
           <PlusCircle size={16} />

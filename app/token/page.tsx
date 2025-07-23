@@ -59,7 +59,7 @@ export default function TokenPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6"style={{ marginTop: "2.25rem" }}>
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

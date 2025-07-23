@@ -1,19 +1,14 @@
 "use client"
 
 import type { Case } from "@/types/case"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { updateCaseStatus } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
-import CaseFiles from "@/components/cases/case-files"
-import CaseSummary from "@/components/cases/case-summary"
-import CaseNotes from "@/components/cases/case-notes"
 
 interface CaseDetailsProps {
   caseData: Case
@@ -24,8 +19,6 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
-
-  console.log(caseState,"caseStatecaseStatecaseState")
 
   const handleStatusUpdate = async (newStatus: "approved" | "rejected" | "pending") => {
     setIsUpdating(true)
@@ -73,8 +66,8 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 md:px-0">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold">Case Details</h1>
         <Button variant="outline" onClick={() => router.back()}>
           Back to Cases
@@ -82,12 +75,16 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Case #{caseState._id}</CardTitle>
-          <div className="flex items-center gap-2">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <CardTitle className="text-lg sm:text-xl break-words w-full sm:w-auto">
+  Case #{caseState._id}
+</CardTitle>
+
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             {getStatusBadge(caseState.status)}
             {caseState.status === "pending" && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -110,6 +107,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
             )}
           </div>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -123,19 +121,17 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Client</h3>
               <p className="text-lg font-medium">
-                {caseState.client_id ? 
-                  `${caseState.client_id.first_name} ${caseState.client_id.last_name || ''}`.trim() 
-                  : caseState.clientName || 'N/A'
-                }
+                {caseState.client_id
+                  ? `${caseState.client_id.first_name} ${caseState.client_id.last_name || ""}`.trim()
+                  : caseState.clientName || "N/A"}
               </p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Lawyer</h3>
               <p className="text-lg font-medium">
-                {caseState.lawyer_id ? 
-                  `${caseState.lawyer_id.first_name} ${caseState.lawyer_id.last_name || ''}`.trim() 
-                  : 'N/A'
-                }
+                {caseState.lawyer_id
+                  ? `${caseState.lawyer_id.first_name} ${caseState.lawyer_id.last_name || ""}`.trim()
+                  : "N/A"}
               </p>
             </div>
             <div>
@@ -167,12 +163,13 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
               <h3 className="text-sm font-medium text-gray-500">Key Points</h3>
               <ul className="mt-1 list-disc list-inside space-y-1">
                 {caseState.key_points.map((point, index) => (
-                  <li key={index} className="text-sm">{point}</li>
+                  <li key={index} className="text-sm">
+                    {point}
+                  </li>
                 ))}
               </ul>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
