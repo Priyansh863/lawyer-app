@@ -31,6 +31,7 @@ import { updateUser } from "@/services/user"
 import { logout, updateUserData } from "@/lib/slices/authSlice"
 import { useRouter } from "next/navigation"
 import { useToast } from "../ui/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const profileFormSchema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters."),
@@ -58,6 +59,7 @@ export default function ProfileSettings() {
   const dispatch = useDispatch()
   const profile = useSelector((state: RootState) => state.auth.user)
   const [profile_image, setprofile_image] = useState<string>(profile?.profile_image || "")
+  const { t } = useTranslation()
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),

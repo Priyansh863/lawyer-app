@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { activityApi, Activity } from "@/lib/api/activity-api"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface ActivityItemProps {
   icon: React.ReactNode
@@ -33,6 +34,7 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const fetchRecentActivity = async () => {
@@ -57,13 +59,13 @@ export default function RecentActivity() {
         }
       } catch (error) {
         console.error("Failed to fetch recent activity:", error)
-        setError("Failed to load recent activity")
+        setError(t('common.error'))
         // Fallback to some default activities
         setActivities([
           {
             icon: <Clock size={16} />,
-            title: "No recent activity",
-            description: "Your recent activities will appear here",
+            title: t('dashboard.recentActivity'),
+            description: t('dashboard.recentActivity'),
             time: "--",
             iconColor: "bg-gray-100 text-gray-600",
           }
@@ -129,7 +131,7 @@ export default function RecentActivity() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-0 divide-y">
         {loading ? (
@@ -143,7 +145,7 @@ export default function RecentActivity() {
         ) : activities.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
-            <p>No recent activity found</p>
+            <p>{t('dashboard.recentActivity')}</p>
           </div>
         ) : (
           activities.map((activity, index) => (

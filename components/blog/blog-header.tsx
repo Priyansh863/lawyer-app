@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PlusCircle, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface BlogHeaderProps {
   onSearch?: (query: string) => void
@@ -24,17 +25,18 @@ export default function BlogHeader({
   selectedStatus = "all"
 }: BlogHeaderProps) {
   const router = useRouter()
+  const { t } = useTranslation()
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Blog</h1>
-          <p className="text-sm text-gray-500">Manage your legal blog content</p>
+          <h1 className="text-2xl font-semibold">{t('pages:blog.title')}</h1>
+          <p className="text-sm text-gray-500">{t('pages:blog.description')}</p>
         </div>
         <Button onClick={() => router.push("/blog/new")} className="flex items-center gap-2">
           <PlusCircle size={16} />
-          <span>New Post</span>
+          <span>{t('pages:blog.newPost')}</span>
         </Button>
       </div>
       
@@ -43,7 +45,7 @@ export default function BlogHeader({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search blog posts..."
+            placeholder={t('pages:blog.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => onSearch?.(e.target.value)}
             className="pl-10"
@@ -52,25 +54,25 @@ export default function BlogHeader({
         
         <Select value={selectedCategory} onValueChange={onCategoryFilter}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t('pages:blog.category')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="legal-advice">Legal Advice</SelectItem>
-            <SelectItem value="case-studies">Case Studies</SelectItem>
-            <SelectItem value="news">News</SelectItem>
-            <SelectItem value="insights">Insights</SelectItem>
+            <SelectItem value="all">{t('pages:blog.allCategories')}</SelectItem>
+            <SelectItem value="legal-advice">{t('pages:blog.legalAdvice')}</SelectItem>
+            <SelectItem value="case-studies">{t('pages:blog.caseStudies')}</SelectItem>
+            <SelectItem value="news">{t('pages:blog.news')}</SelectItem>
+            <SelectItem value="insights">{t('pages:blog.insights')}</SelectItem>
           </SelectContent>
         </Select>
         
         <Select value={selectedStatus} onValueChange={onStatusFilter}>
           <SelectTrigger className="w-full sm:w-32">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t('pages:blog.status')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="all">{t('pages:blog.allStatus')}</SelectItem>
+            <SelectItem value="published">{t('pages:blog.published')}</SelectItem>
+            <SelectItem value="draft">{t('pages:blog.draft')}</SelectItem>
           </SelectContent>
         </Select>
       </div>

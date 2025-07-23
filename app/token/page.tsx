@@ -9,8 +9,10 @@ import TokenHistory from "@/components/token/token-history"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Coins, CreditCard, TrendingUp } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 export default function TokenPage() {
+  const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
   const token = useSelector((state: RootState) => state.auth.token)
   const [currentTokens, setCurrentTokens] = useState(0)
@@ -38,8 +40,8 @@ export default function TokenPage() {
     } catch (error) {
       console.error('Error fetching tokens:', error)
       toast({
-        title: "Error",
-        description: "Failed to fetch current token balance",
+        title: t('common.error'),
+        description: t('pages:tokens.fetchError'),
         variant: "destructive"
       })
     } finally {
@@ -50,8 +52,8 @@ export default function TokenPage() {
   const handleTokenPurchaseSuccess = (newTokens: number) => {
     setCurrentTokens(prev => prev + newTokens)
     toast({
-      title: "Success!",
-      description: `${newTokens} tokens have been added to your account`,
+      title: t('common.success'),
+      description: t('pages:tokens.purchaseSuccess', { tokens: newTokens }),
       variant: "default"
     })
   }
@@ -61,15 +63,15 @@ export default function TokenPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Token Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('pages:tokens.title')}</h1>
           <p className="text-muted-foreground">
-            Manage your AI tokens and purchase additional credits
+            {t('pages:tokens.description')}
           </p>
         </div>
         <div className="flex items-center gap-2 text-2xl font-bold">
           <Coins className="h-6 w-6 text-yellow-500" />
           <span>{loading ? "..." : currentTokens.toLocaleString()}</span>
-          <span className="text-sm font-normal text-muted-foreground">tokens</span>
+          <span className="text-sm font-normal text-muted-foreground">{t('pages:tokens.tokens')}</span>
         </div>
       </div>
 

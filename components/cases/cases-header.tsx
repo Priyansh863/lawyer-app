@@ -2,10 +2,12 @@
 import { RootState } from "@/lib/store"
 import { useSelector } from "react-redux"
 import { getGreeting } from "@/lib/helpers/greeting"
+import { useTranslation } from "@/hooks/useTranslation"
 
 
 export default  function CasesHeader() {
   const user = useSelector((state: RootState) => state.auth.user)
+  const { t } = useTranslation()
 
   // Get greeting based on time of day
 
@@ -16,7 +18,7 @@ export default  function CasesHeader() {
        {/* {getGreeting()}, {user?.first_name+ " " + user?.last_name || "User"}! */}
 
       </h1>
-      <h2 className="text-xl font-semibold">Cases</h2>
+      <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2>
     </div>
   )
 }

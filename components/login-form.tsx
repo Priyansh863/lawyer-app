@@ -13,10 +13,12 @@ import { useToast } from "@/components/ui/use-toast"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import Link from "next/link"
+import { useTranslation } from "@/hooks/useTranslation"
 
+// Note: Validation messages will be handled by the component using i18n
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().email(),
+  password: z.string().min(8),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -25,8 +27,20 @@ export default function LoginForm() {
   const router = useRouter()
   const dispatch = useDispatch()
   const { toast } = useToast()
+  const { t } = useTranslation()
   const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema.refine(
+      (data) => {
+        // Custom validation with i18n messages
+        if (!data.email || !z.string().email().safeParse(data.email).success) {
+          throw new Error(t('auth.emailValidation'))
+        }
+        if (!data.password || data.password.length < 8) {
+          throw new Error(t('auth.passwordMinLength'))
+        }
+        return true
+      }
+    )),
     defaultValues: {
       email: "",
       password: "",
@@ -55,8 +69,8 @@ export default function LoginForm() {
         if (result.error === 'account_not_verified') {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=login`);
           toast({
-            title: "Account Not Verified",
-            description: "Please verify your email with the OTP we've sent you.",
+            title: t('auth.accountNotVerified'),
+            description: t('auth.verifyEmailOtp'),
             variant: "success" as const,
           });
           return;
@@ -83,19 +97,19 @@ export default function LoginForm() {
         }
 
         toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userInfo.user.email}!`,
+          title: t('auth.loginSuccessful'),
+          description: t('auth.welcomeBackUser', { email: userInfo.user.email }),
           variant: "success",
         });
 
         router.push("/dashboard"); // Redirect after successful login
       } else {
-        throw new Error("User data not found. Please try again.");
+        throw new Error(t('auth.userDataNotFound'));
       }
     } catch (error) {
       toast({
-        title: "Login Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        title: t('auth.loginFailed'),
+        description: error instanceof Error ? error.message : t('auth.unexpectedError'),
         variant: "error",
       });
     } finally {
@@ -106,7 +120,7 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <h1 className="text-2xl font-bold font-heading">Welcome Back!</h1>
+        <h1 className="text-2xl font-bold font-heading">{t('auth.welcomeBack')}</h1>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -116,9 +130,9 @@ export default function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('auth.email')}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email" className="bg-gray-50" {...field} />
+                    <Input type="email" placeholder={t('auth.enterEmail')} className="bg-gray-50" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,9 +144,9 @@ export default function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t('auth.password')}</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Enter password" className="bg-gray-50" {...field} />
+                    <Input type="password" placeholder={t('auth.enterPassword')} className="bg-gray-50" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,28 +158,28 @@ export default function LoginForm() {
               className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
               disabled={isLoading}
             >
-              {isLoading ? "Logging In..." : "Log In"}
+              {isLoading ? t('auth.loggingIn') : t('auth.logIn')}
             </Button>
           </form>
         </Form>
 
         <div className="text-center text-sm mt-4">
-          Don't have an account?{" "}
+          {t('auth.dontHaveAccount')}{" "}
           <Link href="/signup" className="font-medium hover:underline">
-            Sign Up
+            {t('auth.signUp')}
           </Link>
         </div>
       </CardContent>
       <CardFooter className="text-xs text-center text-muted-foreground flex flex-col">
-        <p>This site is protected by reCAPTCHA and the</p>
+        <p>{t('auth.recaptchaNotice')}</p>
         <p>
           Google{" "}
           <Link href="#" className="underline">
-            Privacy Policy
+            {t('auth.privacyPolicy')}
           </Link>{" "}
           and{" "}
           <Link href="#" className="underline">
-            Terms
+            {t('auth.termsOfService')}
           </Link>{" "}
           of service apply.
         </p>

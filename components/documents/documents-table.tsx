@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { getDocuments, deleteDocument, type Document } from "@/lib/api/documents-api"
 import { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface DocumentTableProps {
   onDocumentUploaded?: () => void
@@ -21,6 +22,7 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const { toast } = useToast()
+  const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
 
   useEffect(() => {
@@ -36,8 +38,8 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch documents",
+        title: t('common.error'),
+        description: error.message || t('pages:documents.fetchError'),
         variant: "destructive",
       })
     } finally {
@@ -51,14 +53,14 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
       await deleteDocument(documentId)
       setDocuments(prev => prev.filter(doc => doc._id !== documentId))
       toast({
-        title: "Success",
-        description: "Document deleted successfully",
+        title: t('common.success'),
+        description: t('pages:documents.deleteSuccess'),
         variant: "default",
       })
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete document",
+        title: t('common.error'),
+        description: error.message || t('pages:documents.deleteError'),
         variant: "destructive",
       })
     } finally {
@@ -69,11 +71,11 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">{t('pages:documents.completed')}</Badge>
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{t('pages:documents.processing')}</Badge>
       case "failed":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Failed</Badge>
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{t('pages:documents.failed')}</Badge>
       default:
         return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>
     }
@@ -93,7 +95,7 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
         <CardContent className="p-6">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading documents...</span>
+            <span className="ml-2">{t('pages:documents.loadingDocuments')}</span>
           </div>
         </CardContent>
       </Card>
@@ -109,22 +111,22 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Document Name</TableHead>
-                  <TableHead>Uploaded By</TableHead>
-                  <TableHead>Upload Date</TableHead>
-                  <TableHead>Summary</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('pages:documents.fileName')}</TableHead>
+                  <TableHead>{t('pages:documents.uploadedBy')}</TableHead>
+                  <TableHead>{t('pages:documents.uploadDate')}</TableHead>
+                  <TableHead>{t('pages:documents.summary')}</TableHead>
+                  <TableHead>{t('pages:documents.status')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {documents.map((document) => (
                   <TableRow key={document._id}>
                     <TableCell className="font-medium">{document.document_name}</TableCell>
-                    <TableCell>You</TableCell>
+                    <TableCell>{t('common.you')}</TableCell>
                     <TableCell>{formatDate(document.createdAt)}</TableCell>
                     <TableCell className="max-w-xs truncate">
-                      {document.summary || "Processing..."}
+                      {document.summary || t('pages:documents.processing')}
                     </TableCell>
                     <TableCell>{getStatusBadge(document.status)}</TableCell>
                     <TableCell className="text-right">
@@ -139,7 +141,7 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
                 {documents.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      No documents found. Upload your first PDF document to get started.
+                      {t('pages:documents.noDocuments')}
                     </TableCell>
                   </TableRow>
                 )}

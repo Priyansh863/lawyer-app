@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import {
   Send,
   Loader2,
@@ -82,6 +83,7 @@ export default function AIMarketingPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState("")
   const [isCreatingPost, setIsCreatingPost] = useState(false)
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   const platforms = [
     {
@@ -300,8 +302,8 @@ export default function AIMarketingPage() {
   const createPostWithLocation = useCallback(async () => {
     if (!generatedContent.trim()) {
       toast({
-        title: "No Content",
-        description: "Please generate content first",
+        title: t('common.error'),
+        description: t('pages:aiMarketing.generateContent'),
         variant: "destructive",
       })
       return
@@ -312,7 +314,7 @@ export default function AIMarketingPage() {
       const errors = validateSpatialInfo(spatialInfo)
       if (errors.length > 0) {
         toast({
-          title: "Invalid Location Data",
+          title: t('common.error'),
           description: errors[0],
           variant: "destructive",
         })
@@ -340,14 +342,14 @@ export default function AIMarketingPage() {
       if (createdPost.qrCodeUrl) setQrCodeUrl(createdPost.qrCodeUrl)
 
       toast({
-        title: "Post Created Successfully!",
-        description: "Your content has been saved with location information",
+        title: t('common.success'),
+        description: t('pages:aiMarketing.contentGenerated'),
       })
     } catch (error: any) {
       console.error("Error creating post:", error)
       toast({
-        title: "Error Creating Post",
-        description: error.message || "Failed to create post",
+        title: t('common.error'),
+        description: error.message || t('common.error'),
         variant: "destructive",
       })
     } finally {
@@ -376,8 +378,8 @@ export default function AIMarketingPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast({
-      title: "Copied!",
-      description: "URL copied to clipboard",
+      title: t('common.copied'),
+      description: t('common.copied'),
     })
   }
 
@@ -388,9 +390,9 @@ export default function AIMarketingPage() {
 
       <Tabs defaultValue="generate" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="generate">AI Generator</TabsTrigger>
-          <TabsTrigger value="location">Location URLs</TabsTrigger>
-          <TabsTrigger value="history">Post History</TabsTrigger>
+          <TabsTrigger value="generate">{t('pages:aiMarketing.generateContent')}</TabsTrigger>
+          <TabsTrigger value="location">{t('pages:aiMarketing.locationUrls')}</TabsTrigger>
+          <TabsTrigger value="history">{t('pages:aiMarketing.title')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="generate" className="mt-6 space-y-6">
@@ -399,15 +401,15 @@ export default function AIMarketingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wand2 className="h-5 w-5" />
-                AI Content Generation
+                {t('pages:aiMarketing.generateContent')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="prompt">Content Promptdd</Label>
+                <Label htmlFor="prompt">{t('pages:aiMarketing.contentPrompt')}</Label>
                 <Textarea
                   id="prompt"
-                  placeholder="Enter your prompt for AI content generation (e.g., 'Create a post about new employment law changes')"
+                  placeholder={t('pages:aiMarketing.enterPrompt')}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[100px]"
@@ -418,12 +420,12 @@ export default function AIMarketingPage() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating Content...
+                    {t('pages:aiMarketing.generating')}
                   </>
                 ) : (
                   <>
                     <Wand2 className="mr-2 h-4 w-4" />
-                    Generate Content
+                    {t('pages:aiMarketing.generateContent')}
                   </>
                 )}
               </Button>
@@ -442,10 +444,10 @@ export default function AIMarketingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Share2 className="h-5 w-5" />
-                Share Content on Social Platforms
+                {t('pages:aiMarketing.shareOnSocial')}
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
-                Share your generated content directly to social media platforms using the buttons below.
+                {t('pages:aiMarketing.shareOnSocial')}
               </p>
             </CardHeader>
             <CardContent>
@@ -453,13 +455,13 @@ export default function AIMarketingPage() {
                 <div className="space-y-6">
                   {/* Content Preview */}
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium mb-2 block">Content to Share:</Label>
+                    <Label className="text-sm font-medium mb-2 block">{t('pages:aiMarketing.generatedContent')}:</Label>
                     <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">{generatedContent}</p>
                   </div>
 
                   {/* Social Share Buttons */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Share on Social Media:</h4>
+                    <h4 className="font-medium text-sm">{t('pages:aiMarketing.shareOnSocial')}:</h4>
                     <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                       {/* Facebook */}
                       <div className="flex flex-col items-center space-y-2">

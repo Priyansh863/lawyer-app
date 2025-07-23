@@ -18,6 +18,7 @@ import { getClients, updateClientStatus, toggleFavorite, toggleBlocked } from "@
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -48,6 +49,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   // Search and filter form
   const searchForm = useForm<SearchFormData>({
@@ -72,8 +74,8 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         setFilteredClients(fetchedClients)
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to load clients",
+          title: t('common.error'),
+          description: t('common.error'),
           variant: "destructive",
         })
       } finally {
@@ -149,13 +151,13 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
       setClients(clients.map((c) => (c.id === actionData.clientId ? updatedClient : c)))
 
       toast({
-        title: "Client updated",
-        description: `Client ${actionData.action} has been updated`,
+        title: t('common.success'),
+        description: t('common.success'),
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to update client ${actionData.action}`,
+        title: t('common.error'),
+        description: t('common.error'),
         variant: "destructive",
       })
     } finally {
@@ -203,19 +205,19 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
       case "pending":
         return (
           <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
-            Pending
+            {t('pages:cases.pending')}
           </Badge>
         )
       case "active":
         return (
           <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-            Active
+            {t('pages:cases.active')}
           </Badge>
         )
       case "inactive":
         return (
           <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-            Inactive
+            {t('pages:cases.closed')}
           </Badge>
         )
       default:
@@ -239,7 +241,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   <FormControl>
                     <div className="relative">
                       <Input
-                        placeholder="Search clients..."
+                        placeholder={t('common.search')}
                         {...field}
                         value={field.value || ""}
                         className="bg-[#F5F5F5] border-gray-200 pl-10"
@@ -275,17 +277,17 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{profile?.account_type==="lawyer" ? "Client" : "Lawyer"} Name</TableHead>
-              <TableHead>Case ID</TableHead>
-              <TableHead>Contact Info</TableHead>
-              <TableHead>Last Contact Date</TableHead>
+              <TableHead>{profile?.account_type==="lawyer" ? t('pages:clients.clientDetails') : "Lawyer"} {t('pages:clients.clientDetails')}</TableHead>
+              <TableHead>{t('pages:cases.caseTitle')}</TableHead>
+              <TableHead>{t('pages:clients.contactInformation')}</TableHead>
+              <TableHead>{t('pages:clients.notes')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredClients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {isLoading ? "Loading clients..." : "No clients found"}
+                  {isLoading ? t('common.loading') : t('pages:clients.title')}
                 </TableCell>
               </TableRow>
             ) : (

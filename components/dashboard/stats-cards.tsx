@@ -5,6 +5,7 @@ import { FileText, FileArchive, DollarSign, MessageSquare } from "lucide-react"
 import { activityApi, DashboardSummary } from "@/lib/api/activity-api"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface StatCardProps {
   title: string
@@ -31,6 +32,7 @@ export default function StatsCards() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
+  const { t } = useTranslation()
 
   useEffect(() => {
     fetchStats()
@@ -59,12 +61,12 @@ export default function StatsCards() {
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error)
-      setError("Failed to load dashboard statistics")
+      setError(t('common.error'))
       // Fallback to default stats
       setStats([
-        { title: "Active Cases", value: 0, icon: <FileText size={18} /> },
-        { title: "Inactive Cases", value: 0, icon: <FileArchive size={18} /> },
-        { title: "Today's Chats", value: 0, icon: <MessageSquare size={18} /> },
+        { title: t('dashboard.activeCases'), value: 0, icon: <FileText size={18} /> },
+        { title: t('dashboard.inactiveCases'), value: 0, icon: <FileArchive size={18} /> },
+        { title: t('dashboard.todaysChats'), value: 0, icon: <MessageSquare size={18} /> },
       ])
     } finally {
       setLoading(false)

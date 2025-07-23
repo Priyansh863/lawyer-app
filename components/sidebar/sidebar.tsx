@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react"
 import { useSelector } from "react-redux"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface NavItemProps {
   href: string
@@ -52,6 +53,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const user=useSelector((state: any) => state.auth.user)
+  const { t } = useTranslation()
   console.log("User from Redux:", user)
 
   // Check if mobile on mount and when window resizes
@@ -88,23 +90,23 @@ export default function Sidebar() {
   }, [isOpen, isMobile])
 
   const navItems = [
-    { href: "/dashboard", icon: <LayoutDashboard size={18} />, label: "Dashboard" },
-    { href: "/cases", icon: <FileText size={18} />, label: "Cases" },
-    { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? "Clients" : "Lawyers" },
-    { href: "/documents", icon: <FileText size={18} />, label: "Documents" },
+    { href: "/dashboard", icon: <LayoutDashboard size={18} />, label: t('navigation.dashboard') },
+    { href: "/cases", icon: <FileText size={18} />, label: t('navigation.cases') },
+    { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? t('navigation.clients') : "Lawyers" },
+    { href: "/documents", icon: <FileText size={18} />, label: t('navigation.documents') },
     ...(user?.account_type === "lawyer"
       ? [
-          { href: "/ai-assistants", icon: <Bot size={18} />, label: "AI Assistants" },
-          { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: "Voice Summary" },
-          { href: "/ai-marketing", icon: <TrendingUp size={18} />, label: "AI-Marketing" },
+          { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
+          { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
+          { href: "/ai-marketing", icon: <TrendingUp size={18} />, label: t('navigation.aiMarketing') },
         ]
       : []),
-    { href: "/chat", icon: <MessageSquare size={18} />, label: "Chat" },
-    { href: "/video-consultations", icon: <Video size={18} />, label: "Video Consultations" },
-    { href: "/blog", icon: <BookOpen size={18} />, label: "Blog" },
-    { href: "/qa", icon: <HelpCircle size={18} />, label: "Q&A" },
-    { href: "/token", icon: <Coins size={18} />, label: "Token" },
-    { href: "/settings", icon: <Settings size={18} />, label: "Settings" },
+    { href: "/chat", icon: <MessageSquare size={18} />, label: t('navigation.chat') },
+    { href: "/video-consultations", icon: <Video size={18} />, label: t('navigation.videoConsultations') },
+    { href: "/blog", icon: <BookOpen size={18} />, label: t('navigation.blog') },
+    { href: "/qa", icon: <HelpCircle size={18} />, label: t('navigation.qa') },
+    { href: "/token", icon: <Coins size={18} />, label: t('navigation.token') },
+    { href: "/settings", icon: <Settings size={18} />, label: t('navigation.settings') },
   ]
 
   return (

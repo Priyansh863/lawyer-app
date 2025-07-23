@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { getCases } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -40,6 +41,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   // Search and filter form
   const searchForm = useForm<SearchFormData>({
@@ -64,8 +66,8 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         setFilteredCases(fetchedCases.cases || [])
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to load cases",
+          title: t('common.error'),
+          description: t('common.error'),
           variant: "destructive",
         })
       } finally {
@@ -154,12 +156,12 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Case Management</h2>
+        <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2>
         <Button
           onClick={() => router.push('/cases/new')}
           className="bg-[#0f0921] hover:bg-[#0f0921]/90"
         >
-          Create New Case
+          {t('pages:cases.newCase')}
         </Button>
       </div>
       <Form {...searchForm}>
@@ -176,7 +178,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   <FormControl>
                     <div className="relative">
                       <Input
-                        placeholder="Search cases..."
+                        placeholder={t('common.search')}
                         {...field}
                         value={field.value || ""}
                         className="bg-[#F5F5F5] border-gray-200 pl-10"
@@ -218,10 +220,10 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                       searchForm.handleSubmit(onSearchSubmit)(); // auto-submit on change
                     }}
                   >
-                    <option value="all">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="all">{t('common.filter')}</option>
+                    <option value="pending">{t('pages:cases.pending')}</option>
+                    <option value="approved">{t('pages:cases.active')}</option>
+                    <option value="rejected">{t('pages:cases.closed')}</option>
                   </select>
                 </FormControl>
                 <FormMessage />
@@ -235,19 +237,19 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Case Number</TableHead>
-              <TableHead>Case Title</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Lawyer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('pages:cases.caseTitle')}</TableHead>
+              <TableHead>{t('pages:cases.caseDescription')}</TableHead>
+              <TableHead>{t('pages:cases.clientName')}</TableHead>
+              <TableHead>{t('pages:cases.assignedLawyer')}</TableHead>
+              <TableHead>{t('pages:cases.status')}</TableHead>
+              <TableHead>{t('common.view')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {isLoading ? "Loading cases..." : "No cases found"}
+                  {isLoading ? t('common.loading') : t('pages:cases.title')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -274,7 +276,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                       size="sm"
                       onClick={() => viewCaseDetails(caseItem)}
                     >
-                      View Details
+                      {t('common.view')}
                     </Button>
                   </TableCell>
                 </TableRow>
