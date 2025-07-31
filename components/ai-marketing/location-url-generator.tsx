@@ -31,9 +31,15 @@ interface LocationUrlGeneratorProps {
   postTitle: string
   onUrlGenerated: (urls: { full: string; short: string }) => void
   onQrGenerated: (qrUrl: string) => void
+  onSpatialInfoChange: (info: LocationFormData) => void // Added prop
 }
 
-export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGenerated }: LocationUrlGeneratorProps) {
+export default function LocationUrlGenerator({
+  postTitle,
+  onUrlGenerated,
+  onQrGenerated,
+  onSpatialInfoChange,
+}: LocationUrlGeneratorProps) {
   const [currentAltitude, setCurrentAltitude] = useState<number | null>(null)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
@@ -48,18 +54,23 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
 
   const watchedValues = form.watch()
 
-  // Generate URLs whenever form values change
+  // Generate URLs and update spatial info whenever form values change
   useEffect(() => {
     if (watchedValues.latitude && watchedValues.longitude) {
       const urls = generateCustomUrl(watchedValues, postTitle)
       onUrlGenerated(urls)
       generateQRCode(urls.short)
+    } else {
+      // Clear URLs if lat/lng are removed
+      onUrlGenerated({ full: "", short: "" })
+      onQrGenerated("")
     }
-  }, [watchedValues, postTitle, onUrlGenerated])
+    // Always update spatial info in parent
+    onSpatialInfoChange(watchedValues)
+  }, [watchedValues, postTitle, onUrlGenerated, onQrGenerated, onSpatialInfoChange])
 
   const generateCustomUrl = (location: LocationFormData, title: string) => {
     const baseUrl = `https://yourapp.com/${title.toLowerCase().replace(/\s+/g, "-")}`
-
     if (!location.latitude || !location.longitude) {
       return { full: baseUrl, short: `https://yourapp.com/l/${title.toLowerCase().replace(/\s+/g, "-")}` }
     }
@@ -69,14 +80,12 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
     params.set("planet", location.planet || "Earth")
     params.set("lat", location.latitude.toString())
     params.set("lng", location.longitude.toString())
-
     if (location.altitude) params.set("altitude", location.altitude.toString())
     if (location.timestamp) params.set("timestamp", location.timestamp)
     if (location.floor) params.set("floor", location.floor.toString())
-
     const fullUrl = `${baseUrl}?${params.toString()}`
 
-    // Short URL format 
+    // Short URL format
     const parts = [
       location.planet || "Earth",
       location.latitude,
@@ -91,35 +100,41 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
   }
 
   const generateQRCode = (url: string) => {
+    if (!url) {
+      onQrGenerated("")
+      return
+    }
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`
     onQrGenerated(qrUrl)
   }
 
   // Method 1: Address Input with Google Places API
   const searchAddresses = async (query: string) => {
-    if (query.length < 3) return
-
+    if (query.length < 3) {
+      setAddressSuggestions([])
+      return
+    }
     // Simulate Google Places API call
     const mockAddresses = [
       { description: "123 Main Street, New York, NY, USA", lat: 40.7128, lng: -74.006 },
       { description: "456 Broadway, New York, NY, USA", lat: 40.7589, lng: -73.9851 },
       { description: "789 Fifth Avenue, New York, NY, USA", lat: 40.7614, lng: -73.9776 },
     ].filter((addr) => addr.description.toLowerCase().includes(query.toLowerCase()))
-
     setAddressSuggestions(mockAddresses)
   }
 
   // Method 2: Place Name Input with Google Places API
   const searchPlaces = async (query: string) => {
-    if (query.length < 3) return
-
+    if (query.length < 3) {
+      setPlaceSuggestions([])
+      return
+    }
     // Simulate Google Places API call
     const mockPlaces = [
       { name: "Central Park", lat: 40.7829, lng: -73.9654 },
       { name: "Times Square", lat: 40.758, lng: -73.9855 },
       { name: "Brooklyn Bridge", lat: 40.7061, lng: -73.9969 },
     ].filter((place) => place.name.toLowerCase().includes(query.toLowerCase()))
-
     setPlaceSuggestions(mockPlaces)
   }
 
@@ -128,7 +143,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
     // Simulate map click - in real implementation, this would open a map interface
     const mockLat = 40.7128 + (Math.random() - 0.5) * 0.01
     const mockLng = -74.006 + (Math.random() - 0.5) * 0.01
-
     form.setValue("latitude", Number.parseFloat(mockLat.toFixed(6)))
     form.setValue("longitude", Number.parseFloat(mockLng.toFixed(6)))
   }
@@ -136,13 +150,11 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
   // Method 4: Automatic GPS Location
   const getCurrentLocation = () => {
     setIsGettingLocation(true)
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           form.setValue("latitude", Number.parseFloat(position.coords.latitude.toFixed(6)))
           form.setValue("longitude", Number.parseFloat(position.coords.longitude.toFixed(6)))
-
           // Simulate altitude measurement
           setCurrentAltitude(Math.round(position.coords.altitude || Math.random() * 100))
           setIsGettingLocation(false)
@@ -210,7 +222,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   GPS
                 </TabsTrigger>
               </TabsList>
-
               <TabsContent value="address" className="space-y-3">
                 <div>
                   <Label htmlFor="address-search">Address Search</Label>
@@ -235,7 +246,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   )}
                 </div>
               </TabsContent>
-
               <TabsContent value="place" className="space-y-3">
                 <div>
                   <Label htmlFor="place-search">Place Name Search</Label>
@@ -260,7 +270,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   )}
                 </div>
               </TabsContent>
-
               <TabsContent value="map" className="space-y-3">
                 <div className="text-center">
                   <Button type="button" variant="outline" onClick={handleMapClick}>
@@ -270,7 +279,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   <p className="text-xs text-gray-500 mt-2">Simulated map click - would open interactive map</p>
                 </div>
               </TabsContent>
-
               <TabsContent value="gps" className="space-y-3">
                 <div className="text-center">
                   <Button type="button" variant="outline" onClick={getCurrentLocation} disabled={isGettingLocation}>
@@ -313,7 +321,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="longitude"
@@ -334,7 +341,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                   </FormItem>
                 )}
               />
-
               {/* Additional fields only enabled when lat/lng are provided */}
               {watchedValues.latitude && watchedValues.longitude && (
                 <>
@@ -385,7 +391,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="floor"
@@ -417,7 +422,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="timestamp"
@@ -432,7 +436,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                       </FormItem>
                     )}
                   />
-
                   <FormField
                     control={form.control}
                     name="planet"
@@ -455,7 +458,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
             {watchedValues.latitude && watchedValues.longitude && (
               <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900">Generated URLs</h4>
-
                 <div className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-blue-800">Full URL:</Label>
@@ -473,7 +475,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                       </Button>
                     </div>
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium text-blue-800">Short URL:</Label>
                     <div className="flex items-center gap-2 mt-1">
@@ -490,7 +491,6 @@ export default function LocationUrlGenerator({ postTitle, onUrlGenerated, onQrGe
                       </Button>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-4">
                     <Button
                       type="button"

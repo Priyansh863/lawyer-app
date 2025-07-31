@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import {
@@ -24,7 +23,6 @@ import {
   Wand2,
   Share2,
   Copy,
-  QrCode,
   MapPin,
   FileText,
   Globe,
@@ -49,8 +47,15 @@ import {
   RedditIcon,
   EmailIcon,
 } from "react-share"
-import { SpatialInfo, generatePost, createPost, generateQRCode, generateCustomUrl, generateShortUrl, validateSpatialInfo } from "@/lib/api/post-api"
-import LocationInput from "@/components/location/location-input"
+import {
+  type SpatialInfo,
+  generatePost,
+  createPost,
+  generateCustomUrl,
+  generateShortUrl,
+  validateSpatialInfo,
+} from "@/lib/api/post-api"
+// import LocationInput from "@/components/location/location-input" // Removed as LocationUrlGenerator is now primary
 
 interface PlatformContent {
   [key: string]: {
@@ -76,12 +81,14 @@ export default function AIMarketingPage() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus[]>([])
   const [prompt, setPrompt] = useState("")
-  const [generatedUrls, setGeneratedUrls] = useState({ full: "", short: "" })
-  const [spatialInfo, setSpatialInfo] = useState<SpatialInfo | undefined>(undefined)
-  const [customUrl, setCustomUrl] = useState("")
-  const [shortUrl, setShortUrl] = useState("")
-  const [qrCodeUrl, setQrCodeUrl] = useState("")
+  const [generatedUrls, setGeneratedUrls] = useState({ full: "", short: "" }) // From LocationUrlGenerator
+  const [spatialInfo, setSpatialInfo] = useState<SpatialInfo | undefined>(undefined) // From LocationUrlGenerator
+  const [customUrl, setCustomUrl] = useState("") // Managed by AIMarketingPage's useEffect
+  const [shortUrl, setShortUrl] = useState("") // Managed by AIMarketingPage's useEffect
+  const [qrCodeUrl, setQrCodeUrl] = useState("") // Managed by AIMarketingPage's useEffect and createPost
+
   const [isCreatingPost, setIsCreatingPost] = useState(false)
+
   const { toast } = useToast()
   const { t } = useTranslation()
 
@@ -132,14 +139,12 @@ export default function AIMarketingPage() {
 
   const generateContent = async () => {
     if (!prompt.trim()) return
-
     setIsGenerating(true)
     try {
       // Call backend to generate post content
       const response = await generatePost(prompt)
-      console.log(response,"responseresponseresponseresponseresponseresponse")
+      console.log(response, "responseresponseresponseresponseresponseresponse")
       const generatedContent = response.content
-      
       setGeneratedContent(generatedContent)
 
       // Auto-populate platform content
@@ -161,13 +166,12 @@ export default function AIMarketingPage() {
         }
       })
       setPlatformContent(newContent)
-
       toast({
         title: "Content Generated!",
         description: "Your AI-powered legal content is ready for distribution.",
       })
     } catch (error: any) {
-      console.error('Error generating content:', error)
+      console.error("Error generating content:", error)
       toast({
         title: "Generation Failed",
         description: error.message || "There was an error generating content. Please try again.",
@@ -182,7 +186,6 @@ export default function AIMarketingPage() {
     const newPlatforms = checked
       ? [...selectedPlatforms, platformId]
       : selectedPlatforms.filter((p) => p !== platformId)
-
     setSelectedPlatforms(newPlatforms)
   }
 
@@ -217,7 +220,6 @@ export default function AIMarketingPage() {
     }
 
     setIsPublishing(true)
-
     // Initialize delivery status
     const statuses: DeliveryStatus[] = selectedPlatforms.map((platform) => ({
       platform,
@@ -237,7 +239,6 @@ export default function AIMarketingPage() {
         // Validate required fields
         let success = true
         let message = "Posted successfully"
-
         if (platform === "instagram" && !content?.media) {
           success = false
           message = "Image required for Instagram"
@@ -266,7 +267,6 @@ export default function AIMarketingPage() {
           ),
         )
       }
-
       toast({
         title: "Publishing Completed!",
         description: `Content distributed to ${selectedPlatforms.length} platform(s) via Ayrshare`,
@@ -285,16 +285,12 @@ export default function AIMarketingPage() {
   // Generate URLs with spatial information
   const generateUrls = useCallback((content: string, spatial?: SpatialInfo) => {
     if (!content.trim()) return
-
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://yourapp.com"
     const postTitle = content.substring(0, 50).replace(/[^\w\s]/gi, "") || "AI Generated Content"
-
     const fullUrl = generateCustomUrl(baseUrl, postTitle, spatial)
     const shortUrlGenerated = generateShortUrl(baseUrl, postTitle, spatial)
-
     setCustomUrl(fullUrl)
     setShortUrl(shortUrlGenerated)
-
     return { fullUrl, shortUrlGenerated }
   }, [])
 
@@ -302,8 +298,8 @@ export default function AIMarketingPage() {
   const createPostWithLocation = useCallback(async () => {
     if (!generatedContent.trim()) {
       toast({
-        title: t('common.error'),
-        description: t('pages:aiMarketing.generateContent'),
+        title: t("common.error"),
+        description: t("pages:aiMarketing.generateContent"),
         variant: "destructive",
       })
       return
@@ -314,7 +310,7 @@ export default function AIMarketingPage() {
       const errors = validateSpatialInfo(spatialInfo)
       if (errors.length > 0) {
         toast({
-          title: t('common.error'),
+          title: t("common.error"),
           description: errors[0],
           variant: "destructive",
         })
@@ -323,17 +319,14 @@ export default function AIMarketingPage() {
     }
 
     setIsCreatingPost(true)
-
     try {
       const postTitle = generatedContent.substring(0, 50).replace(/[^\w\s]/gi, "") || "AI Generated Content"
-
       const postData = {
         title: postTitle,
         content: generatedContent,
         spatialInfo,
         status: "published" as const,
       }
-
       const createdPost = await createPost(postData)
 
       // Update URLs with the actual post data
@@ -342,20 +335,20 @@ export default function AIMarketingPage() {
       if (createdPost.qrCodeUrl) setQrCodeUrl(createdPost.qrCodeUrl)
 
       toast({
-        title: t('common.success'),
-        description: t('pages:aiMarketing.contentGenerated'),
+        title: t("common.success"),
+        description: t("pages:aiMarketing.contentGenerated"),
       })
     } catch (error: any) {
       console.error("Error creating post:", error)
       toast({
-        title: t('common.error'),
-        description: error.message || t('common.error'),
+        title: t("common.error"),
+        description: error.message || t("common.error"),
         variant: "destructive",
       })
     } finally {
       setIsCreatingPost(false)
     }
-  }, [generatedContent, spatialInfo, toast])
+  }, [generatedContent, spatialInfo, toast, t])
 
   // Update URLs when content or spatial info changes
   useEffect(() => {
@@ -378,8 +371,8 @@ export default function AIMarketingPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast({
-      title: t('common.copied'),
-      description: t('common.copied'),
+      title: t("common.copied"),
+      description: t("common.copied"),
     })
   }
 
@@ -387,49 +380,45 @@ export default function AIMarketingPage() {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <DashboardHeader />
-
       <Tabs defaultValue="generate" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="generate">{t('pages:aiMarketing.generateContent')}</TabsTrigger>
-          <TabsTrigger value="location">{t('pages:aiMarketing.locationUrls')}</TabsTrigger>
-          <TabsTrigger value="history">{t('pages:aiMarketing.title')}</TabsTrigger>
+          <TabsTrigger value="generate">{t("pages:aiMarketing.generateContent")}</TabsTrigger>
+          <TabsTrigger value="location">{t("pages:aiMarketing.locationUrls")}</TabsTrigger>
+          <TabsTrigger value="history">{t("pages:aiMarketing.title")}</TabsTrigger>
         </TabsList>
-
         <TabsContent value="generate" className="mt-6 space-y-6">
           {/* Content Generation */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wand2 className="h-5 w-5" />
-                {t('pages:aiMarketing.generateContent')}
+                {t("pages:aiMarketing.generateContent")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="prompt">{t('pages:aiMarketing.contentPrompt')}</Label>
+                <Label htmlFor="prompt">{t("pages:aiMarketing.contentPrompt")}</Label>
                 <Textarea
                   id="prompt"
-                  placeholder={t('pages:aiMarketing.enterPrompt')}
+                  placeholder={t("pages:aiMarketing.enterPrompt")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="min-h-[100px]"
                 />
               </div>
-
               <Button onClick={generateContent} disabled={isGenerating || !prompt.trim()}>
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('pages:aiMarketing.generating')}
+                    {t("pages:aiMarketing.generating")}
                   </>
                 ) : (
                   <>
                     <Wand2 className="mr-2 h-4 w-4" />
-                    {t('pages:aiMarketing.generateContent')}
+                    {t("pages:aiMarketing.generateContent")}
                   </>
                 )}
               </Button>
-
               {generatedContent && (
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <Label className="text-sm font-medium">Generated Content:</Label>
@@ -438,157 +427,146 @@ export default function AIMarketingPage() {
               )}
             </CardContent>
           </Card>
-
           {/* Platform Selection with React Share Social */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Share2 className="h-5 w-5" />
-                {t('pages:aiMarketing.shareOnSocial')}
+                {t("pages:aiMarketing.shareOnSocial")}
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                {t('pages:aiMarketing.shareOnSocial')}
-              </p>
+              <p className="text-sm text-gray-600 mt-2">{t("pages:aiMarketing.shareOnSocial")}</p>
             </CardHeader>
             <CardContent>
-              {true ? (
-                <div className="space-y-6">
-                  {/* Content Preview */}
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <Label className="text-sm font-medium mb-2 block">{t('pages:aiMarketing.generatedContent')}:</Label>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">{generatedContent}</p>
-                  </div>
-
-                  {/* Social Share Buttons */}
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">{t('pages:aiMarketing.shareOnSocial')}:</h4>
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {/* Facebook */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <FacebookShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          // quote={generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <FacebookIcon size={48} round />
-                        </FacebookShareButton>
-                        <span className="text-xs text-gray-600">Facebook</span>
-                      </div>
-
-                      {/* Twitter */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <TwitterShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          title={generatedContent.length > 240 ? generatedContent.substring(0, 200) + '...' : generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <TwitterIcon size={48} round />
-                        </TwitterShareButton>
-                        <span className="text-xs text-gray-600">Twitter</span>
-                      </div>
-
-                      {/* LinkedIn */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <LinkedinShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          title={generatedContent.split('\n')[0]}
-                          summary={generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <LinkedinIcon size={48} round />
-                        </LinkedinShareButton>
-                        <span className="text-xs text-gray-600">LinkedIn</span>
-                      </div>
-
-                      {/* WhatsApp */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <WhatsappShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          title={generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <WhatsappIcon size={48} round />
-                        </WhatsappShareButton>
-                        <span className="text-xs text-gray-600">WhatsApp</span>
-                      </div>
-
-                      {/* Telegram */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <TelegramShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          title={generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <TelegramIcon size={48} round />
-                        </TelegramShareButton>
-                        <span className="text-xs text-gray-600">Telegram</span>
-                      </div>
-
-                      {/* Email */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <EmailShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          subject={generatedContent.split('\n')[0]}
-                          body={generatedContent}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <EmailIcon size={48} round />
-                        </EmailShareButton>
-                        <span className="text-xs text-gray-600">Email</span>
-                      </div>
+              <div className="space-y-6">
+                {/* Content Preview */}
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <Label className="text-sm font-medium mb-2 block">{t("pages:aiMarketing.generatedContent")}:</Label>
+                  <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap line-clamp-4">
+                    {generatedContent || "Generate content to see a preview here."}
+                  </p>
+                </div>
+                {/* Social Share Buttons */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm">{t("pages:aiMarketing.shareOnSocial")}:</h4>
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {/* Facebook */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <FacebookShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        quote={generatedContent || "Check out this AI-generated content!"}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <FacebookIcon size={48} round />
+                      </FacebookShareButton>
+                      <span className="text-xs text-gray-600">Facebook</span>
+                    </div>
+                    {/* Twitter */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <TwitterShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        title={
+                          generatedContent.length > 0
+                            ? generatedContent.length > 240
+                              ? generatedContent.substring(0, 200) + "..."
+                              : generatedContent
+                            : "Check out this AI-generated content!"
+                        }
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <TwitterIcon size={48} round />
+                      </TwitterShareButton>
+                      <span className="text-xs text-gray-600">Twitter</span>
+                    </div>
+                    {/* LinkedIn */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <LinkedinShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        title={generatedContent.split("\n")[0] || "AI-Generated Content"}
+                        summary={generatedContent || "Check out this AI-generated content!"}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <LinkedinIcon size={48} round />
+                      </LinkedinShareButton>
+                      <span className="text-xs text-gray-600">LinkedIn</span>
+                    </div>
+                    {/* WhatsApp */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <WhatsappShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        title={generatedContent || "Check out this AI-generated content!"}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <WhatsappIcon size={48} round />
+                      </WhatsappShareButton>
+                      <span className="text-xs text-gray-600">WhatsApp</span>
+                    </div>
+                    {/* Telegram */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <TelegramShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        title={generatedContent || "Check out this AI-generated content!"}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <TelegramIcon size={48} round />
+                      </TelegramShareButton>
+                      <span className="text-xs text-gray-600">Telegram</span>
+                    </div>
+                    {/* Email */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <EmailShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        subject={generatedContent.split("\n")[0] || "AI-Generated Content"}
+                        body={`${generatedContent || "Check out this AI-generated content!"}\n\n${generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}`}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <EmailIcon size={48} round />
+                      </EmailShareButton>
+                      <span className="text-xs text-gray-600">Email</span>
                     </div>
                   </div>
-
-                  {/* Additional Share Options */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-sm mb-3">More Sharing Options:</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {/* Reddit */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <RedditShareButton
-                          url={typeof window !== "undefined" ? window.location.href : ""}
-                          title={generatedContent.split('\n')[0]}
-                          className="hover:scale-110 transition-transform"
-                        >
-                          <RedditIcon size={48} round />
-                        </RedditShareButton>
-                        <span className="text-xs text-gray-600">Reddit</span>
-                      </div>
-
-                      {/* Copy Link */}
-                      <div className="flex flex-col items-center space-y-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const url = typeof window !== "undefined" ? window.location.href : "";
-                            navigator.clipboard.writeText(`${generatedContent}\n\n${url}`);
-                            toast({
-                              title: "Copied!",
-                              description: "Content and link copied to clipboard",
-                            });
-                          }}
-                          className="w-12 h-12 rounded-full p-0 hover:scale-110 transition-transform"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <span className="text-xs text-gray-600">Copy</span>
-                      </div>
+                </div>
+                {/* Additional Share Options */}
+                <div className="border-t pt-4">
+                  <h4 className="font-medium text-sm mb-3">More Sharing Options:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Reddit */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <RedditShareButton
+                        url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                        title={generatedContent.split("\n")[0] || "AI-Generated Content"}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <RedditIcon size={48} round />
+                      </RedditShareButton>
+                      <span className="text-xs text-gray-600">Reddit</span>
+                    </div>
+                    {/* Copy Link */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const urlToCopy =
+                            generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")
+                          navigator.clipboard.writeText(
+                            `${generatedContent || "Check out this AI-generated content!"}\n\n${urlToCopy}`,
+                          )
+                          toast({
+                            title: "Copied!",
+                            description: "Content and link copied to clipboard",
+                          })
+                        }}
+                        className="w-12 h-12 rounded-full p-0 hover:scale-110 transition-transform"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-gray-600">Copy</span>
                     </div>
                   </div>
-
-
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Share2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-sm">Generate content first to enable social sharing</p>
-                  <p className="text-xs mt-1">Use the "AI Generator" tab to create content, then return here to share it.</p>
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
-
           {/* Platform-Specific Content Forms */}
           {selectedPlatforms.length > 0 && (
             <div className="space-y-4">
@@ -596,7 +574,6 @@ export default function AIMarketingPage() {
               {selectedPlatforms.map((platformId) => {
                 const platform = platforms.find((p) => p.id === platformId)
                 if (!platform) return null
-
                 return (
                   <Card key={platformId} className={platform.color}>
                     <CardHeader className="pb-4">
@@ -633,7 +610,6 @@ export default function AIMarketingPage() {
                           )}
                         </div>
                       )}
-
                       {/* YouTube specific fields */}
                       {platformId === "youtube" && (
                         <>
@@ -662,7 +638,6 @@ export default function AIMarketingPage() {
                           </div>
                         </>
                       )}
-
                       {/* Media upload */}
                       <div className="space-y-2">
                         <Label htmlFor={`${platformId}-media`} className="flex items-center gap-2">
@@ -694,7 +669,6 @@ export default function AIMarketingPage() {
                           </p>
                         )}
                       </div>
-
                       {/* Platform-specific notes */}
                       {platformId === "instagram" && (
                         <div className="p-3 bg-pink-100 rounded-lg">
@@ -703,7 +677,6 @@ export default function AIMarketingPage() {
                           </p>
                         </div>
                       )}
-
                       {platformId === "youtube" && (
                         <div className="p-3 bg-red-100 rounded-lg">
                           <p className="text-xs text-red-800">
@@ -711,7 +684,6 @@ export default function AIMarketingPage() {
                           </p>
                         </div>
                       )}
-
                       {platformId === "twitter" && (
                         <div className="p-3 bg-sky-100 rounded-lg">
                           <p className="text-xs text-sky-800">
@@ -725,7 +697,6 @@ export default function AIMarketingPage() {
               })}
             </div>
           )}
-
           {/* Location & URL Generation */}
           {selectedPlatforms.length > 0 && (
             <Card>
@@ -737,11 +708,11 @@ export default function AIMarketingPage() {
               </CardHeader>
               <CardContent>
                 <LocationUrlGenerator
-                  postTitle="Legal Marketing Post"
-                  onUrlGenerated={(urls) => setGeneratedUrls(urls)}
-                  onQrGenerated={()=>{}}
+                  postTitle={generatedContent.substring(0, 50).replace(/[^\w\s]/gi, "") || "AI Generated Content"}
+                  onUrlGenerated={setGeneratedUrls}
+                  onQrGenerated={setQrCodeUrl}
+                  onSpatialInfoChange={setSpatialInfo} // Pass the spatial info setter
                 />
-
                 {generatedUrls.full && (
                   <div className="mt-4 space-y-3 p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between">
@@ -751,7 +722,6 @@ export default function AIMarketingPage() {
                       </Button>
                     </div>
                     <p className="text-sm text-blue-600 break-all font-mono">{generatedUrls.full}</p>
-
                     <div className="flex items-center justify-between">
                       <Label>Short URL:</Label>
                       <Button variant="ghost" size="sm" onClick={() => copyToClipboard(generatedUrls.short)}>
@@ -759,17 +729,22 @@ export default function AIMarketingPage() {
                       </Button>
                     </div>
                     <p className="text-sm text-blue-600 break-all font-mono">{generatedUrls.short}</p>
-
-                    <Button variant="outline" size="sm" className="mt-2">
-                      <QrCode className="h-4 w-4 mr-2" />
-                      Generate QR Code
-                    </Button>
+                    {qrCodeUrl && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">QR Code:</Label>
+                        <div className="flex justify-center p-4 bg-white rounded-lg border">
+                          <img src={qrCodeUrl || "/placeholder.svg"} alt="QR Code for post" className="w-32 h-32" />
+                        </div>
+                        <p className="text-xs text-gray-500 text-center">
+                          Scan this QR code to access your post with location data
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
-
           {/* Publish Button */}
           {selectedPlatforms.length > 0 && (
             <Card>
@@ -796,7 +771,6 @@ export default function AIMarketingPage() {
               </CardContent>
             </Card>
           )}
-
           {/* Delivery Status */}
           {deliveryStatus.length > 0 && (
             <Card>
@@ -826,7 +800,6 @@ export default function AIMarketingPage() {
             </Card>
           )}
         </TabsContent>
-
         <TabsContent value="location" className="mt-6 space-y-6">
           {/* Location Input */}
           <Card>
@@ -840,13 +813,15 @@ export default function AIMarketingPage() {
               </p>
             </CardHeader>
             <CardContent>
-              <LocationInput
-                spatialInfo={spatialInfo}
+              {/* Using LocationUrlGenerator directly for all location input methods */}
+              <LocationUrlGenerator
+                postTitle={generatedContent.substring(0, 50).replace(/[^\w\s]/gi, "") || "AI Generated Content"}
+                onUrlGenerated={setGeneratedUrls}
+                onQrGenerated={setQrCodeUrl}
                 onSpatialInfoChange={setSpatialInfo}
               />
             </CardContent>
           </Card>
-
           {/* Content Preview with Location */}
           {generatedContent && (
             <Card>
@@ -862,7 +837,6 @@ export default function AIMarketingPage() {
                     <Label className="text-sm font-medium">Generated Content:</Label>
                     <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{generatedContent}</p>
                   </div>
-                  
                   {spatialInfo && (
                     <div className="border-t pt-3">
                       <Label className="text-sm font-medium">Location Information:</Label>
@@ -876,7 +850,9 @@ export default function AIMarketingPage() {
                         {spatialInfo.latitude && spatialInfo.longitude && (
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            <span>Coordinates: {spatialInfo.latitude}, {spatialInfo.longitude}</span>
+                            <span>
+                              Coordinates: {spatialInfo.latitude}, {spatialInfo.longitude}
+                            </span>
                           </div>
                         )}
                         {spatialInfo.altitude && (
@@ -904,7 +880,6 @@ export default function AIMarketingPage() {
               </CardContent>
             </Card>
           )}
-
           {/* URL Generation and Display */}
           {generatedContent && (
             <Card>
@@ -919,46 +894,36 @@ export default function AIMarketingPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Full URL */}
-                {customUrl && (
+                {generatedUrls.full && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">Full URL:</Label>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => copyToClipboard(customUrl)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(generatedUrls.full)}>
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-blue-600 break-all font-mono">{customUrl}</p>
+                      <p className="text-sm text-blue-600 break-all font-mono">{generatedUrls.full}</p>
                     </div>
                   </div>
                 )}
-
                 {/* Short URL */}
-                {shortUrl && (
+                {generatedUrls.short && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-medium">Short URL:</Label>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => copyToClipboard(shortUrl)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(generatedUrls.short)}>
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-green-600 break-all font-mono">{shortUrl}</p>
+                      <p className="text-sm text-green-600 break-all font-mono">{generatedUrls.short}</p>
                     </div>
                   </div>
                 )}
-
                 {/* Create Post Button */}
                 <div className="pt-4 border-t">
-                  <Button 
+                  <Button
                     onClick={createPostWithLocation}
                     disabled={isCreatingPost || !generatedContent.trim()}
                     className="w-full"
@@ -977,17 +942,12 @@ export default function AIMarketingPage() {
                     )}
                   </Button>
                 </div>
-
                 {/* QR Code Display */}
                 {qrCodeUrl && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">QR Code:</Label>
                     <div className="flex justify-center p-4 bg-white rounded-lg border">
-                      <img 
-                        src={qrCodeUrl} 
-                        alt="QR Code for post" 
-                        className="w-32 h-32"
-                      />
+                      <img src={qrCodeUrl || "/placeholder.svg"} alt="QR Code for post" className="w-32 h-32" />
                     </div>
                     <p className="text-xs text-gray-500 text-center">
                       Scan this QR code to access your post with location data
@@ -997,49 +957,46 @@ export default function AIMarketingPage() {
               </CardContent>
             </Card>
           )}
-
           {/* Social Sharing with Location URLs */}
-          {generatedContent && (customUrl || shortUrl) && (
+          {generatedContent && (generatedUrls.full || generatedUrls.short) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Share2 className="h-5 w-5" />
                   Share with Location URLs
                 </CardTitle>
-                <p className="text-sm text-gray-600">
-                  Share your content using the generated location URLs.
-                </p>
+                <p className="text-sm text-gray-600">Share your content using the generated location URLs.</p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {/* Facebook */}
                   <div className="flex flex-col items-center space-y-2">
                     <FacebookShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
                       className="hover:scale-110 transition-transform"
                     >
                       <FacebookIcon size={48} round />
                     </FacebookShareButton>
                     <span className="text-xs text-gray-600">Facebook</span>
                   </div>
-
                   {/* Twitter */}
                   <div className="flex flex-col items-center space-y-2">
                     <TwitterShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
-                      title={generatedContent.length > 200 ? generatedContent.substring(0, 200) + '...' : generatedContent}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                      title={
+                        generatedContent.length > 200 ? generatedContent.substring(0, 200) + "..." : generatedContent
+                      }
                       className="hover:scale-110 transition-transform"
                     >
                       <TwitterIcon size={48} round />
                     </TwitterShareButton>
                     <span className="text-xs text-gray-600">Twitter</span>
                   </div>
-
                   {/* LinkedIn */}
                   <div className="flex flex-col items-center space-y-2">
                     <LinkedinShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
-                      title={generatedContent.split('\n')[0]}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                      title={generatedContent.split("\n")[0]}
                       summary={generatedContent}
                       className="hover:scale-110 transition-transform"
                     >
@@ -1047,11 +1004,10 @@ export default function AIMarketingPage() {
                     </LinkedinShareButton>
                     <span className="text-xs text-gray-600">LinkedIn</span>
                   </div>
-
                   {/* WhatsApp */}
                   <div className="flex flex-col items-center space-y-2">
                     <WhatsappShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
                       title={generatedContent}
                       className="hover:scale-110 transition-transform"
                     >
@@ -1059,11 +1015,10 @@ export default function AIMarketingPage() {
                     </WhatsappShareButton>
                     <span className="text-xs text-gray-600">WhatsApp</span>
                   </div>
-
                   {/* Telegram */}
                   <div className="flex flex-col items-center space-y-2">
                     <TelegramShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
                       title={generatedContent}
                       className="hover:scale-110 transition-transform"
                     >
@@ -1071,13 +1026,12 @@ export default function AIMarketingPage() {
                     </TelegramShareButton>
                     <span className="text-xs text-gray-600">Telegram</span>
                   </div>
-
                   {/* Email */}
                   <div className="flex flex-col items-center space-y-2">
                     <EmailShareButton
-                      url={customUrl || (typeof window !== "undefined" ? window.location.href : "")}
-                      subject={generatedContent.split('\n')[0]}
-                      body={`${generatedContent}\n\n${customUrl || (typeof window !== "undefined" ? window.location.href : "")}`}
+                      url={generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}
+                      subject={generatedContent.split("\n")[0]}
+                      body={`${generatedContent}\n\n${generatedUrls.full || (typeof window !== "undefined" ? window.location.href : "")}`}
                       className="hover:scale-110 transition-transform"
                     >
                       <EmailIcon size={48} round />
@@ -1088,7 +1042,6 @@ export default function AIMarketingPage() {
               </CardContent>
             </Card>
           )}
-
           {/* Instructions */}
           {!generatedContent && (
             <Card>
@@ -1096,16 +1049,16 @@ export default function AIMarketingPage() {
                 <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Add Location to Your Content</h3>
                 <p className="text-gray-600 mb-4">
-                  First generate content in the AI Generator tab, then return here to add location information and create custom URLs.
+                  First generate content in the AI Generator tab, then return here to add location information and
+                  create custom URLs.
                 </p>
-                <Button variant="outline" onClick={() => {}}>
+                <Button variant="outline" onClick={() => setActiveTab("generate")}>
                   Go to AI Generator
                 </Button>
               </CardContent>
             </Card>
           )}
         </TabsContent>
-
         <TabsContent value="history" className="mt-6">
           <Card>
             <CardHeader>

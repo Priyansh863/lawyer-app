@@ -85,10 +85,10 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
           </CardContent>
           <CardFooter className="p-4 pt-0 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              {/* <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Heart className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-gray-500">{post.likes}</span>
+              </Button> */}
+              {/* <span className="text-sm text-gray-500">{post.likes}</span> */}
               <span className="text-sm text-gray-500 ml-2">{new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
             <DropdownMenu>
