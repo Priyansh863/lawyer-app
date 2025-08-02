@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSelector } from "react-redux"
-import { RootState } from "@/lib/store"
+import type { RootState } from "@/lib/store"
 import TokenBalance from "@/components/token/token-balance"
 import TokenPurchase from "@/components/token/token-purchase"
 import TokenHistory from "@/components/token/token-history"
@@ -26,23 +26,22 @@ export default function TokenPage() {
     try {
       setLoading(true)
       // API call to get current user tokens
-      const response = await fetch('/api/v1/user/tokens', {
+      const response = await fetch("/api/v1/user/tokens", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       })
-      
       if (response.ok) {
         const data = await response.json()
         setCurrentTokens(data.tokens || 0)
       }
     } catch (error) {
-      console.error('Error fetching tokens:', error)
+      console.error("Error fetching tokens:", error)
       toast({
-        title: t('common.error'),
-        description: t('pages:tokens.fetchError'),
-        variant: "destructive"
+        title: t("common.error"),
+        description: t("pages:tokens.fetchError"),
+        variant: "destructive",
       })
     } finally {
       setLoading(false)
@@ -50,28 +49,26 @@ export default function TokenPage() {
   }
 
   const handleTokenPurchaseSuccess = (newTokens: number) => {
-    setCurrentTokens(prev => prev + newTokens)
+    setCurrentTokens((prev) => prev + newTokens)
     toast({
-      title: t('common.success'),
-      description: t('pages:tokens.purchaseSuccess', { tokens: newTokens }),
-      variant: "default"
+      title: t("common.success"),
+      description: t("pages:tokens.purchaseSuccess", { tokens: newTokens }),
+      variant: "default",
     })
   }
 
   return (
-    <div className="space-y-6"style={{ marginTop: "2.25rem" }}>
+    <div className="space-y-6" style={{ marginTop: "2.25rem" }}>
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('pages:tokens.title')}</h1>
-          <p className="text-muted-foreground">
-            {t('pages:tokens.description')}
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("pages:tokens.title")}</h1>
+          <p className="text-muted-foreground">{t("pages:tokens.description")}</p>
         </div>
         <div className="flex items-center gap-2 text-2xl font-bold">
           <Coins className="h-6 w-6 text-yellow-500" />
           <span>{loading ? "..." : currentTokens.toLocaleString()}</span>
-          <span className="text-sm font-normal text-muted-foreground">{t('pages:tokens.tokens')}</span>
+          <span className="text-sm font-normal text-muted-foreground">{t("pages:tokens.tokens")}</span>
         </div>
       </div>
 
@@ -87,7 +84,6 @@ export default function TokenPage() {
             <p className="text-xs text-muted-foreground">Available tokens</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Usage</CardTitle>
@@ -98,7 +94,6 @@ export default function TokenPage() {
             <p className="text-xs text-muted-foreground">Tokens used this month</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Purchased</CardTitle>
@@ -112,18 +107,13 @@ export default function TokenPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        {" "}
+        {/* Changed lg:grid-cols-2 to lg:grid-cols-1 */}
         {/* Token Balance & Usage */}
-        <TokenBalance 
-          currentTokens={currentTokens} 
-          loading={loading}
-          onRefresh={fetchCurrentTokens}
-        />
-
+        <TokenBalance currentTokens={currentTokens} loading={loading} onRefresh={fetchCurrentTokens} />
         {/* Token Purchase */}
-        <TokenPurchase 
-          onPurchaseSuccess={handleTokenPurchaseSuccess}
-        />
+        <TokenPurchase onPurchaseSuccess={handleTokenPurchaseSuccess} />
       </div>
 
       {/* Token History */}

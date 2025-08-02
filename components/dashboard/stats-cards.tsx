@@ -1,10 +1,11 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { FileText, FileArchive, DollarSign, MessageSquare } from "lucide-react"
-import { activityApi, DashboardSummary } from "@/lib/api/activity-api"
+import { FileText, FileArchive, DollarSign, MessageSquare, Users, Home } from "lucide-react" // Added Users and Home icons
+import { activityApi, type DashboardSummary } from "@/lib/api/activity-api"
 import { useSelector } from "react-redux"
-import { RootState } from "@/lib/store"
+import type { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
 
 interface StatCardProps {
@@ -15,14 +16,22 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon }: StatCardProps) {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-gray-100 rounded-md">{icon}</div>
-          <span className="text-sm font-medium text-gray-500">{title}</span>
+    <Card className="relative overflow-hidden">
+      {" "}
+      {/* Added relative and overflow-hidden for the bottom line */}
+      <CardContent className="p-6 pb-4">
+        {" "}
+        {/* Adjusted padding */}
+        <div className="flex items-start justify-between">
+          {" "}
+          {/* Changed to items-start and justify-between */}
+          {/* Removed the p-2 bg-gray-100 rounded-md wrapper */}
+          <span className="text-sm text-gray-500">{title}</span> {/* Adjusted text style */}
+          <div className="text-gray-500">{icon}</div> {/* Icon directly here, adjusted color */}
         </div>
-        <div className="mt-2 text-2xl font-bold">{value}</div>
+        <div className="mt-4 text-3xl font-bold">{value}</div> {/* Adjusted margin and text size */}
       </CardContent>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-600" /> {/* Added the purple bottom line */}
     </Card>
   )
 }
@@ -45,28 +54,27 @@ export default function StatsCards() {
       setLoading(false)
       return
     }
-
     try {
       setLoading(true)
       setError(null)
       const response = await activityApi.getDashboardSummary(userId)
-      
+
       if (response.success && response.data) {
         const statsData = response.data.map((item: DashboardSummary) => ({
           title: item.title,
           value: item.value,
-          icon: getIconForStat(item.icon, item.title)
+          icon: getIconForStat(item.icon, item.title),
         }))
         setStats(statsData)
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error)
-      setError(t('common.error'))
+      setError(t("common.error"))
       // Fallback to default stats
       setStats([
-        { title: t('dashboard.activeCases'), value: 0, icon: <FileText size={18} /> },
-        { title: t('dashboard.inactiveCases'), value: 0, icon: <FileArchive size={18} /> },
-        { title: t('dashboard.todaysChats'), value: 0, icon: <MessageSquare size={18} /> },
+        { title: t("dashboard.activeCases"), value: 0, icon: <FileText size={18} /> },
+        { title: t("dashboard.inactiveCases"), value: 0, icon: <FileArchive size={18} /> },
+        { title: t("dashboard.todaysChats"), value: 0, icon: <MessageSquare size={18} /> },
       ])
     } finally {
       setLoading(false)
@@ -83,14 +91,21 @@ export default function StatsCards() {
         return <MessageSquare size={18} />
       case "DollarSign":
         return <DollarSign size={18} />
+      case "Users": // Added Users icon case
+        return <Users size={18} />
+      case "Home": // Added Home icon case
+        return <Home size={18} />
       default:
         // Fallback based on title
-        if (title.toLowerCase().includes('active')) {
+        if (title.toLowerCase().includes("active")) {
           return <FileText size={18} />
-        } else if (title.toLowerCase().includes('inactive')) {
+        } else if (title.toLowerCase().includes("inactive")) {
           return <FileArchive size={18} />
-        } else if (title.toLowerCase().includes('chat')) {
+        } else if (title.toLowerCase().includes("chat")) {
           return <MessageSquare size={18} />
+        } else if (title.toLowerCase().includes("total")) {
+          // Fallback for 'total' to Users icon
+          return <Users size={18} />
         } else {
           return <FileText size={18} />
         }
@@ -101,16 +116,23 @@ export default function StatsCards() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
+          <Card key={i} className="relative overflow-hidden">
+            {" "}
+            {/* Added relative and overflow-hidden */}
+            <CardContent className="p-6 pb-4">
+              {" "}
+              {/* Adjusted padding */}
               <div className="animate-pulse">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-gray-200 rounded-md"></div>
+                <div className="flex items-start justify-between">
+                  {" "}
+                  {/* Adjusted skeleton layout */}
                   <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
                 </div>
-                <div className="mt-2 h-8 bg-gray-200 rounded w-16"></div>
+                <div className="mt-4 h-8 bg-gray-200 rounded w-16"></div> {/* Adjusted margin and height */}
               </div>
             </CardContent>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200" /> {/* Skeleton for the bottom line */}
           </Card>
         ))}
       </div>

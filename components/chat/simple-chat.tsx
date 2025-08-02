@@ -192,8 +192,8 @@ export function SimpleChat({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-2xl h-[600px] bg-white rounded-lg shadow-xl flex flex-col">
+     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="w-full max-w-2xl h-[530px] bg-white rounded-lg shadow-xl flex flex-col mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-3">
@@ -220,7 +220,7 @@ export function SimpleChat({
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
+          <div className="space-y-2">
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -239,16 +239,16 @@ export function SimpleChat({
                   className={`flex ${message.senderId._id === currentUserId ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
                       message.senderId._id === currentUserId
                         ? 'bg-blue-500 text-white'
                         : 'bg-gray-100 text-gray-900'
                     }`}
                   >
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm break-words">{message.content}</p>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-xs opacity-70">
-                        {new Date(message.createdAt).toLocaleTimeString()}
+                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       {message.tokenCount && (
                         <span className="text-xs opacity-70 ml-2">

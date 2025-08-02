@@ -18,7 +18,7 @@ export default  function CasesHeader() {
        {/* {getGreeting()}, {user?.first_name+ " " + user?.last_name || "User"}! */}
 
       </h1>
-      <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2>
+      {/* <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2> */}
     </div>
   )
 }

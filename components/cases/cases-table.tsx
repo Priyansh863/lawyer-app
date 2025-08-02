@@ -44,7 +44,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   const { t } = useTranslation()
 
   // Search and filter form
-  const searchForm = useForm<SearchFormData>({
+   const searchForm = useForm<SearchFormData>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
       query: searchParams?.get("query") || "",
@@ -152,10 +152,9 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         return <Badge variant="outline">{status}</Badge>
     }
   }
-
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4 mt-6">
         <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2>
         <Button
           onClick={() => router.push('/cases/new')}

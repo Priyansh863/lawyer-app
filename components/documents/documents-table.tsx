@@ -69,21 +69,18 @@ export default function DocumentsTable({ onDocumentUploaded }: DocumentTableProp
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">{t("pages:documents.completed")}</Badge>
-        )
-      case "pending":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">{t("pages:documents.processing")}</Badge>
-        )
-      case "failed":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{t("pages:documents.failed")}</Badge>
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>
-    }
+  switch (status.toLowerCase()) {
+    case "completed":
+      return <Badge variant="completed">{t("pages:documents.completed")}</Badge>
+    case "pending":
+      return <Badge variant="pending">{t("pages:documents.processing")}</Badge>
+    case "failed":
+      return <Badge variant="failed">{t("pages:documents.failed")}</Badge>
+    default:
+      return <Badge variant="neutral">{status}</Badge>
   }
+}
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-GB", {
