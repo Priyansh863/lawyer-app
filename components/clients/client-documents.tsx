@@ -2,33 +2,49 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { FileUploader } from "@/components/ui/file-uploader"
 import { Button } from "@/components/ui/button"
-import { getClientFiles } from "@/lib/api/files-api"
-import { formatBytes, formatDate } from "@/lib/utils"
-import { FileText, Download, Trash } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getClientDocuments, deleteDocument, updateDocumentStatus, type Document } from "@/lib/api/documents-api"
+import { formatDate } from "@/lib/utils"
+import { FileText, Download, Trash, Eye, Upload } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import type { FileMetadata } from "@/types/file"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface ClientDocumentsProps {
   clientId: string
 }
 
 export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
-  const [files, setFiles] = useState<FileMetadata[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [updatingDocuments, setUpdatingDocuments] = useState<Set<string>>(new Set())
   const { toast } = useToast()
 
   useEffect(() => {
-    const loadFiles = async () => {
+    const loadDocuments = async () => {
       try {
         setIsLoading(true)
-        const clientFiles = await getClientFiles(clientId)
-        setFiles(clientFiles)
+        const clientDocuments = await getClientDocuments(clientId)
+        setDocuments(clientDocuments)
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to load client files",
+          description: "Failed to load client documents",
           variant: "destructive",
         })
       } finally {
@@ -36,16 +52,83 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
       }
     }
 
-    loadFiles()
+    loadDocuments()
   }, [clientId, toast])
 
-  const handleFileUploaded = (newFile: FileMetadata) => {
-    setFiles((prevFiles) => [...prevFiles, newFile])
+  const handleDocumentDelete = async (documentId: string) => {
+    try {
+      setUpdatingDocuments((prev) => new Set(prev).add(documentId))
+      await deleteDocument(documentId)
+      setDocuments((prevDocs) => prevDocs.filter((doc) => doc._id !== documentId))
+      toast({
+        title: "Success",
+        description: "Document deleted successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingDocuments((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(documentId)
+        return newSet
+      })
+    }
   }
 
-  const handleFileDelete = async (fileId: string) => {
-    // Implementation would call API to delete file
-    setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId))
+  const handleStatusUpdate = async (documentId: string, status: 'Pending' | 'Approved' | 'Rejected') => {
+    try {
+      setUpdatingDocuments((prev) => new Set(prev).add(documentId))
+      const updatedDocument = await updateDocumentStatus(documentId, status)
+      setDocuments((prevDocs) => 
+        prevDocs.map((doc) => doc._id === documentId ? updatedDocument : doc)
+      )
+      toast({
+        title: "Success",
+        description: "Document status updated successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update document status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingDocuments((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(documentId)
+        return newSet
+      })
+    }
+  }
+
+  // Get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
+            Pending
+          </Badge>
+        )
+      case "Approved":
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+            Approved
+          </Badge>
+        )
+      case "Rejected":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
+            Rejected
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
   }
 
   return (
@@ -53,44 +136,112 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">Client Documents</h3>
-          <FileUploader
-            onFileUploaded={handleFileUploaded}
-            metadata={{ clientId }}
-            allowedTypes={[".pdf", ".doc", ".docx", ".jpg", ".png"]}
-          />
+          {/* <Button size="sm">
+            <Upload size={16} className="mr-2" />
+            Upload Document
+          </Button> */}
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading files...</div>
-        ) : files.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No files uploaded for this client</div>
+          <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
+        ) : documents.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No documents found for this client</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {files.map((file) => (
-              <div key={file.id} className="border rounded-md p-4 flex items-start gap-3">
-                <div className="p-2 bg-gray-100 rounded-md">
-                  <FileText size={24} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium truncate" title={file.fileName}>
-                    {file.fileName}
-                  </h4>
-                  <div className="text-sm text-muted-foreground">
-                    {formatBytes(file.fileSize)} • {formatDate(file.uploadedAt)}
-                  </div>
-                  {file.description && <p className="text-sm text-muted-foreground mt-1">{file.description}</p>}
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" title="Download">
-                    <Download size={16} />
-                  </Button>
-                  <Button variant="ghost" size="icon" title="Delete" onClick={() => handleFileDelete(file.id)}>
-                    <Trash size={16} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Uploaded Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.map((document) => (
+                <TableRow key={document._id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FileText size={16} className="text-blue-500" />
+                      <span className="font-medium">{document.document_name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(document.status)}</TableCell>
+                  <TableCell>{formatDate(document.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" title="View Document">
+                            <Eye size={16} />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Document Details</DialogTitle>
+                            <DialogDescription>
+                              {document.document_name}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <strong>Status:</strong> {getStatusBadge(document.status)}
+                            </div>
+                            <div>
+                              <strong>Uploaded:</strong> {formatDate(document.createdAt)}
+                            </div>
+                            {document.summary && (
+                              <div>
+                                <strong>Summary:</strong>
+                                <p className="mt-1 text-sm text-muted-foreground">{document.summary}</p>
+                              </div>
+                            )}
+                            <div>
+                              <strong>Update Status:</strong>
+                              <Select
+                                value={document.status}
+                                onValueChange={(value) => 
+                                  handleStatusUpdate(document._id, value as 'Pending' | 'Approved' | 'Rejected')
+                                }
+                                disabled={updatingDocuments.has(document._id)}
+                              >
+                                <SelectTrigger className="mt-2">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Pending">Pending</SelectItem>
+                                  <SelectItem value="Approved">Approved</SelectItem>
+                                  <SelectItem value="Rejected">Rejected</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Download"
+                        onClick={() => window.open(document.link, '_blank')}
+                      >
+                        <Download size={16} />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Delete"
+                        onClick={() => handleDocumentDelete(document._id)}
+                        disabled={updatingDocuments.has(document._id)}
+                      >
+                        <Trash size={16} />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>

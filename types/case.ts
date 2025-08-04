@@ -1,7 +1,8 @@
 export type CaseStatus = "pending" | "approved" | "rejected"
 
 export interface Case {
-  _id: string
+  id: string
+  _id?: string
   case_number: string
   title: string
   description?: string
@@ -13,17 +14,20 @@ export interface Case {
     first_name: string
     last_name?: string
     id: string
-  }
+  } | string
   lawyer_id: {
     _id: string
     first_name: string
     last_name?: string
     id: string
-  }
+  } | string
   files: any[]
+  important_dates?: { event: string; date: string }[]
   created_at: string
   updated_at: string
-  __v: number
+  createdAt: string
+  updatedAt: string
+  __v?: number
   // Legacy fields for backward compatibility
   clientName?: string
   clientId?: string

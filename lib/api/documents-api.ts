@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { RootState } from '@/lib/store'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -29,8 +29,13 @@ export interface DocumentUploadData {
 export interface Document {
   _id: string
   document_name: string
-  status: 'Pending' | 'Completed' | 'Failed'
-  uploaded_by: string
+  status: 'Pending' | 'Approved' | 'Rejected'
+  uploaded_by: {
+    _id: string
+    first_name: string
+    last_name: string
+    email: string
+  } | string
   link: string
   summary?: string
   createdAt: string
@@ -135,5 +140,78 @@ export const getDocumentStatus = async (documentId: string): Promise<DocumentRes
   } catch (error: any) {
     console.error('Get document status error:', error)
     throw new Error(error.response?.data?.message || 'Failed to get document status')
+  }
+}
+
+/**
+ * Get documents for a specific client
+ */
+export const getClientDocuments = async (clientId: string): Promise<Document[]> => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/document/client/${clientId}`,
+      {
+        headers: getAuthHeaders()
+      }
+    )
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch client documents')
+    }
+    
+    return response.data.data || []
+  } catch (error: any) {
+    console.error('Get client documents error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to fetch client documents')
+  }
+}
+
+/**
+ * Get document by ID
+ */
+export const getDocumentById = async (documentId: string): Promise<Document> => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/document/${documentId}`,
+      {
+        headers: getAuthHeaders()
+      }
+    )
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch document')
+    }
+    
+    return response.data.data
+  } catch (error: any) {
+    console.error('Get document by ID error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to fetch document')
+  }
+}
+
+/**
+ * Update document status
+ */
+export const updateDocumentStatus = async (
+  documentId: string, 
+  status: 'Pending' | 'Approved' | 'Rejected'
+): Promise<Document> => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/document/${documentId}/status`,
+      { status },
+      {
+        headers: getAuthHeaders()
+      }
+    )
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update document status')
+    }
+    
+    return response.data.data
+  } catch (error: any) {
+    console.error('Update document status error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to update document status')
   }
 }

@@ -15,6 +15,7 @@ export default async function DashboardPage() {
         <StatsCards />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <RecentActivity />
+          <QuickActions />
         </div>
       </div>
     </DashboardLayout>

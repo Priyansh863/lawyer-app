@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Eye, Plus } from "lucide-react"
-import { getClientCases } from "@/lib/api/clients-api"
+import { getClientCases } from "@/lib/api/cases-api"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Case } from "@/types/case"
@@ -27,6 +27,7 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
       try {
         setIsLoading(true)
         const clientCases = await getClientCases(clientId)
+        
         setCases(clientCases)
       } catch (error) {
         toast({
@@ -87,9 +88,10 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Case ID</TableHead>
+                <TableHead>Case Number</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Description</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead>Action</TableHead>
@@ -97,10 +99,15 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
             </TableHeader>
             <TableBody>
               {cases.map((caseItem, index) => (
-                <TableRow key={caseItem.id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <TableCell>{caseItem.id}</TableCell>
-                  <TableCell>{caseItem.title}</TableCell>
+                <TableRow key={caseItem.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <TableCell className="font-medium">{caseItem.case_number}</TableCell>
+                  <TableCell className="max-w-[200px] truncate" title={caseItem.title}>
+                    {caseItem.title}
+                  </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
+                  <TableCell className="max-w-[300px] truncate" title={caseItem.description}>
+                    {caseItem.description || 'No description'}
+                  </TableCell>
                   <TableCell>{formatDate(caseItem.createdAt)}</TableCell>
                   <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
                   <TableCell>

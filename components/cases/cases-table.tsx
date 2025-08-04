@@ -35,7 +35,6 @@ interface CasesTableProps {
 
 export default function CasesTable({ initialCases }: CasesTableProps) {
   const [cases, setCases] = useState<Case[]>(initialCases || [])
-  const [filteredCases, setFilteredCases] = useState<Case[]>(initialCases || [])
   const [isLoading, setIsLoading] = useState(false)
 
   const router = useRouter()
@@ -63,7 +62,6 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
           query: formData.query || undefined,
         })
         setCases(fetchedCases.cases || [])
-        setFilteredCases(fetchedCases.cases || [])
       } catch (error) {
         toast({
           title: t('common.error'),
@@ -76,32 +74,36 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
     }
 
     fetchCases()
-  }, [searchParams, toast, searchForm])
+  }, [searchForm.watch('query'), searchForm.watch('status'), toast, searchForm])
 
-  // Real-time frontend search
-  useEffect(() => {
-    const query = searchForm.watch('query') || ''
-    const status = searchForm.watch('status')
+  // Remove the frontend filtering since we're now doing API-based filtering
+  // useEffect(() => {
+  //   const query = searchForm.watch('query') || ''
+  //   const status = searchForm.watch('status')
     
-    let filtered = cases
+  //   let filtered = cases
     
-    // Filter by search query
-    if (query.trim()) {
-      filtered = filtered.filter(caseItem => 
-        caseItem.title?.toLowerCase().includes(query.toLowerCase()) ||
-        caseItem.case_number?.toLowerCase().includes(query.toLowerCase()) ||
-        `${caseItem.client_id?.first_name || ''} ${caseItem.client_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase()) ||
-        `${caseItem.lawyer_id?.first_name || ''} ${caseItem.lawyer_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase())
-      )
-    }
+  //   // Filter by search query
+  //   if (query.trim()) {
+  //     filtered = filtered.filter(caseItem => 
+  //       caseItem.title?.toLowerCase().includes(query.toLowerCase()) ||
+  //       caseItem.case_number?.toLowerCase().includes(query.toLowerCase()) ||
+  //       (typeof caseItem.client_id === 'object' && caseItem.client_id !== null
+  //         ? `${caseItem.client_id.first_name || ''} ${caseItem.client_id.last_name || ''}`.toLowerCase().includes(query.toLowerCase())
+  //         : false) ||
+  //       (typeof caseItem.lawyer_id === 'object' && caseItem.lawyer_id !== null
+  //         ? `${caseItem.lawyer_id.first_name || ''} ${caseItem.lawyer_id.last_name || ''}`.toLowerCase().includes(query.toLowerCase())
+  //         : false)
+  //     )
+  //   }
     
-    // Filter by status
-    if (status && status !== 'all') {
-      filtered = filtered.filter(caseItem => caseItem.status === status)
-    }
+  //   // Filter by status
+  //   if (status && status !== 'all') {
+  //     filtered = filtered.filter(caseItem => caseItem.status === status)
+  //   }
     
-    setFilteredCases(filtered)
-  }, [searchForm.watch('query'), searchForm.watch('status'), cases])
+  //   setFilteredCases(filtered)
+  // }, [searchForm.watch('query'), searchForm.watch('status'), cases])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -214,10 +216,6 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   <select
                     {...field}
                     className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
-                    onChange={e => {
-                      field.onChange(e);
-                      searchForm.handleSubmit(onSearchSubmit)(); // auto-submit on change
-                    }}
                   >
                     <option value="all">{t('common.filter')}</option>
                     <option value="pending">{t('pages:cases.pending')}</option>
@@ -245,25 +243,25 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCases.length === 0 ? (
+            {cases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                   {isLoading ? t('common.loading') : t('pages:cases.title')}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredCases.map((caseItem, index) => (
+              cases.map((caseItem, index) => (
                 <TableRow key={caseItem._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                   <TableCell className="font-mono">{caseItem.case_number}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
                   <TableCell>
-                    {caseItem.client_id ? 
+                    {caseItem.client_id && typeof caseItem.client_id === 'object' ? 
                       `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ''}`.trim() 
                       : 'N/A'
                     }
                   </TableCell>
                   <TableCell>
-                    {caseItem.lawyer_id ? 
+                    {caseItem.lawyer_id && typeof caseItem.lawyer_id === 'object' ? 
                       `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ''}`.trim() 
                       : 'N/A'
                     }

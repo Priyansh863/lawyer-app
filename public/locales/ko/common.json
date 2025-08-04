@@ -44,7 +44,21 @@
     "english": "영어",
     "korean": "한국어",
     "actions": "작업",
-    "you": "나"
+    "you": "나",
+    "name": "이름",
+    "email": "이메일",
+    "phone": "전화번호",
+    "address": "주소",
+    "activeCases": "활성 사건",
+    "lastContact": "마지막 연락",
+    "allStatuses": "모든 상태",
+    "active": "활성",
+    "inactive": "비활성",
+    "pending": "대기 중",
+    "noClientsFound": "고객이 없습니다",
+    "addFavorite": "즐겨찾기에 추가",
+    "removeFavorite": "즐겨찾기에서 제거",
+    "viewDetails": "상세 보기"
   },
   "auth": {
     "login": "로그인",

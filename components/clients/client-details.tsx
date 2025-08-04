@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Star, Ban, MessageSquare, Phone, Calendar, Loader2 } from "lucide-react"
+import { MessageSquare, Calendar, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
-import { updateClientStatus, toggleFavorite, toggleBlocked, updateClientNotes } from "@/lib/api/clients-api"
+import { updateClientStatus, updateClientNotes } from "@/lib/api/clients-api"
 import { createMeeting } from "@/lib/api/meeting-api"
 import { useToast } from "@/hooks/use-toast"
 import type { RootState } from "@/lib/store"
@@ -41,44 +41,6 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   const router = useRouter()
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
-
-  // Toggle favorite status
-  const handleToggleFavorite = async () => {
-    try {
-      const updatedClient = await toggleFavorite(client.id, !client.isFavorite)
-      setClient(updatedClient)
-      toast({
-        title: updatedClient.isFavorite ? "Added to favorites" : "Removed from favorites",
-        description: `${updatedClient.first_name} has been ${
-          updatedClient.isFavorite ? "added to" : "removed from"
-        } favorites`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update favorite status",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Toggle blocked status
-  const handleToggleBlocked = async () => {
-    try {
-      const updatedClient = await toggleBlocked(client.id, !client.isBlocked)
-      setClient(updatedClient)
-      toast({
-        title: updatedClient.isBlocked ? "Client blocked" : "Client unblocked",
-        description: `${updatedClient.first_name} has been ${updatedClient.isBlocked ? "blocked" : "unblocked"}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update blocked status",
-        variant: "destructive",
-      })
-    }
-  }
 
   // Handle meeting scheduling
   const handleScheduleMeeting = async () => {
@@ -133,24 +95,6 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   const [showChat, setShowChat] = useState(false)
   const handleCreateChat = () => {
     setShowChat(true)
-  }
-
-  // Handle direct call (placeholder)
-  const handleDirectCall = () => {
-    toast({
-      title: "Call Feature",
-      description: "Direct call feature is not yet implemented.",
-      variant: "default",
-    })
-  }
-
-  // Handle video call (placeholder)
-  const handleVideoCall = () => {
-    toast({
-      title: "Video Call Feature",
-      description: "Video call feature is not yet implemented.",
-      variant: "default",
-    })
   }
 
   // Update client status
@@ -236,44 +180,14 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
               <CardTitle className="text-xl">{client.first_name}</CardTitle>
               <div className="flex items-center gap-2 mt-1">
                 {getStatusBadge(client.status)}
-                {client.isBlocked && (
-                  <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                    Blocked
-                  </Badge>
-                )}
-                {client.isFavorite && (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
-                    Favorite
-                  </Badge>
-                )}
               </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-2">
             {/* Action Buttons */}
-            <Button
-              variant="outline"
-              onClick={handleToggleFavorite}
-              title={client.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-            >
-              <Star className={`mr-2 ${client.isFavorite ? "text-yellow-500" : ""}`} size={16} />
-              Favorite
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleToggleBlocked}
-              title={client.isBlocked ? "Unblock Client" : "Block Client"}
-            >
-              <Ban className={`mr-2 ${client.isBlocked ? "text-red-500" : ""}`} size={16} />
-              Block
-            </Button>
             <Button variant="outline" onClick={handleCreateChat} title="Create Chat">
               <MessageSquare className="mr-2" size={16} />
               Chat
-            </Button>
-            <Button variant="outline" onClick={handleDirectCall} title="Direct Call">
-              <Phone className="mr-2" size={16} />
-              Call
             </Button>
             {/* Schedule Meeting Button with Dialog */}
             <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>

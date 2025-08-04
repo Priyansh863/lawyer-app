@@ -44,7 +44,21 @@
     "english": "English",
     "korean": "Korean",
     "actions": "Actions",
-    "you": "You"
+    "you": "You",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "activeCases": "Active Cases",
+    "lastContact": "Last Contact",
+    "allStatuses": "All Statuses",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "noClientsFound": "No clients found",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites",
+    "viewDetails": "View details"
   },
   "auth": {
     "login": "Login",

@@ -46,28 +46,39 @@ export const casesApi = {
     limit = 10,
   }: GetCasesParams = {}): Promise<CasesApiResponse> => {
     try {
-      const params: any = {
-        page: page.toString(),
-        limit: limit.toString()
-      }
+      const params: any = {}
       
       if (status && status !== "all") {
-        params.status = status
+        // Convert frontend status to backend status
+        const statusMap: { [key: string]: string } = {
+          'pending': 'Pending',
+          'approved': 'Approved', 
+          'rejected': 'Rejected'
+        }
+        params.status = statusMap[status] || status
       }
       
       if (query && query.trim()) {
-        params.query = query.trim()
+        params.search = query.trim()
+      }
+      
+      if (page) {
+        params.page = page.toString()
+      }
+      
+      if (limit) {
+        params.limit = limit.toString()
       }
 
-      const response = await axios.get(`${API_BASE_URL}/user/cases`, {
+      const response = await axios.get(`${API_BASE_URL}/case/list`, {
         headers: getAuthHeaders(),
         params
       })
 
       return {
         success: response.data.success || true,
-        cases: response.data.cases || [],
-        total: response.data.total,
+        cases: response.data.data || [],
+        total: response.data.pagination?.total,
         page: page,
         limit: limit
       }
@@ -128,5 +139,48 @@ export const casesApi = {
 export const getCases = casesApi.getCases
 export const createCase = casesApi.createCase
 export const updateCaseStatus = casesApi.updateCaseStatus
+
+/**
+ * Get cases for a specific client
+ */
+export async function getClientCases(clientId: string): Promise<Case[]> {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/case/client/${clientId}`, {
+      headers: getAuthHeaders(),
+    })
+
+    console.log('Client cases response:', response.data)
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch client cases')
+    }
+
+    const cases = response.data.data || []
+    return cases.map((caseData: any) => ({
+      id: caseData._id,
+      case_number: caseData.case_number,
+      title: caseData.title,
+      description: caseData.description,
+      summary: caseData.summary,
+      key_points: caseData.key_points || [],
+      status: caseData.status.toLowerCase(),
+      client_id: caseData.client_id,
+      lawyer_id: caseData.lawyer_id,
+      files: caseData.files || [],
+      important_dates: caseData.important_dates || [],
+      createdAt: caseData.created_at || new Date().toISOString(),
+      updatedAt: caseData.updated_at || caseData.created_at || new Date().toISOString(),
+      created_at: caseData.created_at || new Date().toISOString(),
+      updated_at: caseData.updated_at || caseData.created_at || new Date().toISOString(),
+      // Legacy fields
+      clientName: caseData.client_id ? `${caseData.client_id.first_name} ${caseData.client_id.last_name || ''}`.trim() : '',
+      clientId: caseData.client_id?._id,
+      assignedTo: caseData.lawyer_id ? [`${caseData.lawyer_id.first_name} ${caseData.lawyer_id.last_name || ''}`.trim()] : [],
+    }))
+  } catch (error) {
+    console.error('Error fetching client cases:', error)
+    throw error
+  }
+}
 
 

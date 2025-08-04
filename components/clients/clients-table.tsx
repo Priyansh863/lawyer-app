@@ -8,12 +8,8 @@ import { z } from "zod"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Star, Ban, MessageSquare, Loader2 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
 import { getClients, updateClientStatus, toggleFavorite, toggleBlocked } from "@/lib/api/clients-api"
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
@@ -45,6 +41,9 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [updatingClients, setUpdatingClients] = useState<Set<string>>(new Set())
   const profile = useSelector((state: RootState) => state.auth.user)
+
+
+  console.log("clientsclientsclientsclientsclients:", clients)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -269,7 +268,26 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
             />
           </div>
 
-        
+          <FormField
+            control={searchForm.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <select
+                    {...field}
+                    className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
+                  >
+                    <option value="all">{t('common.allStatuses') || 'All Status'}</option>
+                    <option value="active">{t('common.active') || 'Active'}</option>
+                    <option value="inactive">{t('common.inactive') || 'Inactive'}</option>
+                    <option value="pending">{t('common.pending') || 'Pending'}</option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </form>
       </Form>
 
@@ -277,35 +295,64 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-  {profile?.account_type === "lawyer"
-    ? "Lawyer"
-    : t('pages:clients.clientDetails')}
-</TableHead>
-
-              <TableHead>{t('pages:cases.caseTitle')}</TableHead>
-              <TableHead>{t('pages:clients.contactInformation')}</TableHead>
-              <TableHead>{t('pages:clients.notes')}</TableHead>
+              <TableHead>{t('common.name') || 'Name'}</TableHead>
+              <TableHead>{t('common.email') || 'Email'}</TableHead>
+              <TableHead>{t('common.phone') || 'Phone'}</TableHead>
+              <TableHead>{t('common.address') || 'Address'}</TableHead>
+              <TableHead>{t('common.activeCases') || 'Active Cases'}</TableHead>
+              <TableHead>{t('common.lastContact') || 'Last Contact'}</TableHead>
+              <TableHead>{t('common.actions') || 'Actions'}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredClients.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {isLoading ? t('common.loading') : t('pages:clients.title')}
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  {isLoading ? t('common.loading') : t('common.noClientsFound') || 'No clients found'}
                 </TableCell>
               </TableRow>
             ) : (
               filteredClients.map((client, index) => (
                 <TableRow
                   key={client.id}
-                  className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}
+                  className={`hover:bg-muted/50 cursor-pointer ${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
                   onClick={() => viewClientDetails(client)}
                 >
-                  <TableCell className="font-medium">{client.first_name}{" "}{client.last_name}</TableCell>
-                  <TableCell className="font-mono">{client.caseId}</TableCell>
-                  <TableCell>{client.email}</TableCell>
-                  {/* <TableCell>{formatDate(client.lastContactDate)}</TableCell> */}
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{client.first_name} {client.last_name}</span>
+                      {client.isFavorite && (
+                        <span className="text-yellow-500">⭐</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{client.email || 'N/A'}</TableCell>
+                  <TableCell>{client.phone || 'N/A'}</TableCell>
+                  <TableCell className="max-w-[150px] truncate" title={client.address}>
+                    {client.address || 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+                      {client.activeCases || 0}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {client.lastContactDate ? new Date(client.lastContactDate).toLocaleDateString() : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          viewClientDetails(client)
+                        }}
+                        className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+                        title={t('common.viewDetails') || 'View details'}
+                      >
+                        {t('common.view') || 'View'}
+                      </button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
