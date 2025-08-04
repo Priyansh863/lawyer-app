@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Zap, Star, Crown, Share2, Plus, Languages, Video, LifeBuoy, Briefcase, Gift } from "lucide-react" // Added Gift icon
 import { toast } from "@/hooks/use-toast"
+import axios from "axios"
+
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:';
+
 
 interface TokenPurchaseProps {
   onPurchaseSuccess: (tokensPurchased: number) => void
@@ -199,25 +204,24 @@ export default function TokenPurchase({ onPurchaseSuccess }: TokenPurchaseProps)
         onPurchaseSuccess(0) // Notify parent, 0 tokens for trial
       } else {
         // Create Stripe checkout session for paid plans/add-ons
-        const response = await fetch("/api/v1/stripe/create-checkout-session", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        // Import axios at the top of your file: import axios from "axios"
+        const response = await axios.post(
+        `${BACKEND_URL}/stripe/create-checkout-session`,
+          {
             packageId: packageData.id,
-            tokens: packageData.tokens, // This will be the dummy '1' for plans/add-ons
-            amount: packageData.price * 100, // Convert to cents
+            tokens: packageData.tokens,
+            amount: packageData.price * 100,
             packageName: packageData.name,
-          }),
-        })
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        )
 
-        if (!response.ok) {
-          throw new Error("Failed to create checkout session")
-        }
-
-        const { sessionUrl } = await response.json()
+        const { sessionUrl } = response.data
         // Redirect to Stripe Checkout
         window.location.href = sessionUrl
       }

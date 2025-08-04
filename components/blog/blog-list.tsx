@@ -106,7 +106,6 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
                   <Link href={`/blog/${post._id}/preview`}>Preview</Link>
                 </DropdownMenuItem> */}
                 <DropdownMenuItem onClick={() => handleDelete(post._id)}>Delete</DropdownMenuItem>
-                <DropdownMenuItem>{post.status === "published" ? "Unpublish" : "Publish"}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </CardFooter>

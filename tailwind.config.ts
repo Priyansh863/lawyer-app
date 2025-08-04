@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
 
 const config: Config = {
-  darkMode: "class", 
+  darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -57,6 +57,13 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Custom colors for status badges
+        statusPendingBg: "#FFFBEB",
+        statusPendingText: "#F59E0B",
+        statusPendingBorder: "#FDE68A",
+        statusNeutralBg: "#F3F4F6", // Equivalent to gray-100
+        statusNeutralText: "#374151", // Equivalent to gray-800
+        statusNeutralBorder: "#E5E7EB", // Equivalent to gray-200
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -78,20 +78,42 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     setFilteredMeetings(meetings)
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return <Badge className="bg-blue-100 text-blue-800">Scheduled</Badge>
-      case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>
-      case "completed":
-        return <Badge className="bg-gray-100 text-gray-800">Completed</Badge>
-      case "cancelled":
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>
-      default:
-        return <Badge variant="secondary">{status}</Badge>
-    }
+  
+const getStatusBadge = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "scheduled":
+      return (
+        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          Scheduled
+          {/* or t("meetings:scheduled") if using translations */}
+        </Badge>
+      )
+    case "active":
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          Active
+        </Badge>
+      )
+    case "completed":
+      return (
+        <Badge className="bg-green-100 text-gray-800 hover:bg-gray-100">
+          Completed
+        </Badge>
+      )
+    case "cancelled":
+      return (
+        <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+          Cancelled
+        </Badge>
+      )
+    default:
+      return (
+        <Badge variant="secondary">
+          {status}
+        </Badge>
+      )
   }
+}
 
   const handleConnectToMeeting = (meeting: Meeting) => {
     if (meeting.meetingLink) {
