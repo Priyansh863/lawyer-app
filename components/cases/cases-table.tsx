@@ -1,6 +1,6 @@
 "use client"
-import type { Case, CaseStatus } from "@/types/case"
 
+import type { Case, CaseStatus } from "@/types/case"
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -14,19 +14,18 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { getCases } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
+import { Eye } from "lucide-react"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
   status: z.enum(["all", "pending", "approved", "rejected"]).default("all"),
 })
-
 type SearchFormData = z.infer<typeof searchFormSchema>
 
 const statusUpdateSchema = z.object({
   caseId: z.string(),
   status: z.enum(["pending", "approved", "rejected"]),
 })
-
 type StatusUpdateData = z.infer<typeof statusUpdateSchema>
 
 interface CasesTableProps {
@@ -37,14 +36,13 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   const [cases, setCases] = useState<Case[]>(initialCases || [])
   const [filteredCases, setFilteredCases] = useState<Case[]>(initialCases || [])
   const [isLoading, setIsLoading] = useState(false)
-
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { t } = useTranslation()
 
   // Search and filter form
-   const searchForm = useForm<SearchFormData>({
+  const searchForm = useForm<SearchFormData>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
       query: searchParams?.get("query") || "",
@@ -66,59 +64,57 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         setFilteredCases(fetchedCases.cases || [])
       } catch (error) {
         toast({
-          title: t('common.error'),
-          description: t('common.error'),
+          title: t("common.error"),
+          description: t("common.error"),
           variant: "destructive",
         })
       } finally {
         setIsLoading(false)
       }
     }
-
     fetchCases()
   }, [searchParams, toast, searchForm])
 
   // Real-time frontend search
   useEffect(() => {
-    const query = searchForm.watch('query') || ''
-    const status = searchForm.watch('status')
-    
+    const query = searchForm.watch("query") || ""
+    const status = searchForm.watch("status")
+
     let filtered = cases
-    
     // Filter by search query
     if (query.trim()) {
-      filtered = filtered.filter(caseItem => 
-        caseItem.title?.toLowerCase().includes(query.toLowerCase()) ||
-        caseItem.case_number?.toLowerCase().includes(query.toLowerCase()) ||
-        `${caseItem.client_id?.first_name || ''} ${caseItem.client_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase()) ||
-        `${caseItem.lawyer_id?.first_name || ''} ${caseItem.lawyer_id?.last_name || ''}`.toLowerCase().includes(query.toLowerCase())
+      filtered = filtered.filter(
+        (caseItem) =>
+          caseItem.title?.toLowerCase().includes(query.toLowerCase()) ||
+          caseItem.case_number?.toLowerCase().includes(query.toLowerCase()) ||
+          `${caseItem.client_id?.first_name || ""} ${caseItem.client_id?.last_name || ""}`
+            .toLowerCase()
+            .includes(query.toLowerCase()) ||
+          `${caseItem.lawyer_id?.first_name || ""} ${caseItem.lawyer_id?.last_name || ""}`
+            .toLowerCase()
+            .includes(query.toLowerCase()),
       )
     }
-    
+
     // Filter by status
-    if (status && status !== 'all') {
-      filtered = filtered.filter(caseItem => caseItem.status === status)
+    if (status && status !== "all") {
+      filtered = filtered.filter((caseItem) => caseItem.status === status)
     }
-    
+
     setFilteredCases(filtered)
-  }, [searchForm.watch('query'), searchForm.watch('status'), cases])
+  }, [searchForm.watch("query"), searchForm.watch("status"), cases])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
     const params = new URLSearchParams()
-
     if (data.query) {
       params.set("query", data.query)
     }
-
     if (data.status !== "all") {
       params.set("status", data.status)
     }
-
     router.push(`/cases?${params.toString()}`)
   }
-
-
 
   // View case details
   const viewCaseDetails = (caseItem: Case) => {
@@ -128,39 +124,39 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   }
 
   // Get status badge
-  const getStatusBadge = (status: CaseStatus) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
-            Pending
-          </Badge>
-        )
-      case "approved":
-        return (
-          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-            Approved
-          </Badge>
-        )
-      case "rejected":
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-            Rejected
-          </Badge>
-        )
-      default:
-        return <Badge variant="outline">{status}</Badge>
-    }
+  const STATUS_CONFIG = {
+    pending: {
+      label: "Pending",
+      className: "bg-yellow-50 text-yellow-600 border-yellow-200",
+    },
+    approved: {
+      label: "Approved",
+      className: "bg-green-50 text-green-600 border-green-200",
+    },
+    rejected: {
+      label: "Rejected",
+      className: "bg-red-50 text-red-600 border-red-200",
+    },
+  } as const
+
+  const getStatusBadge = (status: string) => {
+    // Normalize the status and fallback to "pending" if invalid
+    const normalizedStatus = (
+      ["pending", "approved", "rejected"].includes(status.toLowerCase()) ? status.toLowerCase() : "pending"
+    ) as CaseStatus
+    return (
+      <Badge variant="outline" className={STATUS_CONFIG[normalizedStatus].className}>
+        {STATUS_CONFIG[normalizedStatus].label}
+      </Badge>
+    )
   }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4 mt-6">
-        <h2 className="text-xl font-semibold">{t('pages:cases.title')}</h2>
-        <Button
-          onClick={() => router.push('/cases/new')}
-          className="bg-[#0f0921] hover:bg-[#0f0921]/90"
-        >
-          {t('pages:cases.newCase')}
+        <h2 className="text-xl font-semibold">{t("pages:cases.title")}</h2>
+        <Button onClick={() => router.push("/cases/new")} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
+          {t("pages:cases.newCase")}
         </Button>
       </div>
       <Form {...searchForm}>
@@ -177,7 +173,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   <FormControl>
                     <div className="relative">
                       <Input
-                        placeholder={t('common.search')}
+                        placeholder={t("common.search")}
                         {...field}
                         value={field.value || ""}
                         className="bg-[#F5F5F5] border-gray-200 pl-10"
@@ -204,7 +200,6 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               )}
             />
           </div>
-
           <FormField
             control={searchForm.control}
             name="status"
@@ -214,15 +209,15 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   <select
                     {...field}
                     className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
-                    onChange={e => {
-                      field.onChange(e);
-                      searchForm.handleSubmit(onSearchSubmit)(); // auto-submit on change
+                    onChange={(e) => {
+                      field.onChange(e)
+                      searchForm.handleSubmit(onSearchSubmit)() // auto-submit on change
                     }}
                   >
-                    <option value="all">{t('common.filter')}</option>
-                    <option value="pending">{t('pages:cases.pending')}</option>
-                    <option value="approved">{t('pages:cases.active')}</option>
-                    <option value="rejected">{t('pages:cases.closed')}</option>
+                    <option value="all">{t("common.filter")}</option>
+                    <option value="pending">{t("pages:cases.pending")}</option>
+                    <option value="approved">{t("pages:cases.active")}</option>
+                    <option value="rejected">{t("pages:cases.closed")}</option>
                   </select>
                 </FormControl>
                 <FormMessage />
@@ -231,24 +226,23 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
           />
         </form>
       </Form>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('pages:cases.caseTitle')}</TableHead>
-              <TableHead>{t('pages:cases.caseDescription')}</TableHead>
-              <TableHead>{t('pages:cases.clientName')}</TableHead>
-              <TableHead>{t('pages:cases.assignedLawyer')}</TableHead>
-              <TableHead>{t('pages:cases.status')}</TableHead>
-              <TableHead>{t('common.view')}</TableHead>
+              <TableHead>{t("pages:cases.caseTitle")}</TableHead>
+              <TableHead>{t("pages:cases.caseDescription")}</TableHead>
+              <TableHead>{t("pages:cases.clientName")}</TableHead>
+              <TableHead>{t("pages:cases.assignedLawyer")}</TableHead>
+              <TableHead>{t("pages:cases.status")}</TableHead>
+              <TableHead>{t("common.view")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  {isLoading ? t('common.loading') : t('pages:cases.title')}
+                  {isLoading ? t("common.loading") : t("pages:cases.title")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -257,25 +251,20 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   <TableCell className="font-mono">{caseItem.case_number}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
                   <TableCell>
-                    {caseItem.client_id ? 
-                      `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ''}`.trim() 
-                      : 'N/A'
-                    }
+                    {caseItem.client_id
+                      ? `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ""}`.trim()
+                      : "N/A"}
                   </TableCell>
                   <TableCell>
-                    {caseItem.lawyer_id ? 
-                      `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ''}`.trim() 
-                      : 'N/A'
-                    }
+                    {caseItem.lawyer_id
+                      ? `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ""}`.trim()
+                      : "N/A"}
                   </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewCaseDetails(caseItem)}
-                    >
-                      {t('common.view')}
+                    <Button variant="ghost" size="icon" onClick={() => viewCaseDetails(caseItem)} className="h-8 w-8">
+                      <Eye className="h-4 w-4" />
+                      <span className="sr-only">{t("common.view")}</span>
                     </Button>
                   </TableCell>
                 </TableRow>

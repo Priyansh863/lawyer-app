@@ -29,7 +29,8 @@ export interface DocumentUploadData {
 export interface Document {
   _id: string
   document_name: string
-  status: 'Pending' | 'Completed' | 'Failed'
+    status: 'Pending' | 'Approved' | 'Rejected'  // Updated to match backend
+
   uploaded_by: string
   link: string
   summary?: string

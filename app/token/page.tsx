@@ -10,14 +10,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Coins, CreditCard, TrendingUp } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
-
+import AddToken from "@/components/token/add-token"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 export default function TokenPage() {
   const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
   const token = useSelector((state: RootState) => state.auth.token)
   const [currentTokens, setCurrentTokens] = useState(0)
   const [loading, setLoading] = useState(true)
-
+  const [showAddTokens, setShowAddTokens] = useState(false)
   useEffect(() => {
     fetchCurrentTokens()
   }, [])
@@ -107,13 +108,24 @@ export default function TokenPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-        {" "}
-        {/* Changed lg:grid-cols-2 to lg:grid-cols-1 */}
-        {/* Token Balance & Usage */}
-        <TokenBalance currentTokens={currentTokens} loading={loading} onRefresh={fetchCurrentTokens} />
-        {/* Token Purchase */}
-        <TokenPurchase onPurchaseSuccess={handleTokenPurchaseSuccess} />
+      <div className="grid grid-cols-1 gap-6">
+        <TokenBalance
+          currentTokens={currentTokens}
+          loading={loading}
+          onRefresh={fetchCurrentTokens}
+          onAddTokens={() => setShowAddTokens(true)}
+        />
+        {showAddTokens && (
+          <Dialog open={showAddTokens} onOpenChange={setShowAddTokens}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add Tokens</DialogTitle>
+              </DialogHeader>
+              <AddToken onPaymentSuccess={handleTokenPurchaseSuccess} />
+            </DialogContent>
+          </Dialog>
+        )}
+        <TokenPurchase onPurchaseSuccess={handleTokenPurchaseSuccess} /> 
       </div>
 
       {/* Token History */}
@@ -121,3 +133,4 @@ export default function TokenPage() {
     </div>
   )
 }
+{/* <TokenPurchase onPurchaseSuccess={handleTokenPurchaseSuccess} /> */}
