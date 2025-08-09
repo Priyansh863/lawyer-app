@@ -148,7 +148,13 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   }
 
   return (
-    <div className="flex flex-col space-y-6 min-h-screen md:min-h-0">
+    <div className="space-y-6">
+      {/* Voice Summary Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Voice Summary</h1>
+        <p className="text-gray-600 dark:text-gray-400">Listen to AI-generated document summaries</p>
+      </div>
+
       {/* Search Bar and Language Selector */}
       <div className="flex items-center space-x-2 mt-4 md:mt-0">
         <div className="relative flex-1">
@@ -236,17 +242,17 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                       <span>•</span>
                       <span>Uploaded: {formatDate(summary.createdAt)}</span>
                       <span>•</span>
-                      <span>By: {summary.uploadedBy}</span>
-                      <span>•</span>
                       <span>{summary.wordCount} words</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
+        
                     <Button
                       variant={playingId === summary.id ? "secondary" : "outline"}
                       size="sm"
                       onClick={() => handlePlaySummary(summary)}
-                      disabled={summary.status !== "ready"}
+                      disabled={summary.status === "Rejected"}
+                      title={summary.status === "Rejected" ? "Voice playback not available for rejected documents" : "Play voice summary"}
                     >
                       {playingId === summary.id ? (
                         isPaused ? (
@@ -276,13 +282,13 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                 </div>
                 {/* Summary Text */}
                 <div className="bg-muted/30 rounded-lg p-4 mb-4">
-                  {summary.status === "error" ? (
+                  {summary.status === "Rejected" ? (
                     <p className="text-sm leading-relaxed text-red-600">
-                      Processing failed: Failed to generate summary....
+                      Document rejected: This document has been rejected and voice summary is not available.
                     </p>
                   ) : (
-                    <p className="text-sm leading-relaxed">
-                      {summary.summary || "Processing..."}
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {summary.summary || `Document status: ${summary.status} - Summary available for voice playback.`}
                     </p>
                   )}
                 </div>

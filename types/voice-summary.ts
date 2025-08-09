@@ -19,7 +19,7 @@ export interface DocumentSummary {
   caseId?: string
   createdAt: string
   uploadedBy: string
-  status: "ready" | "processing" | "error"
+  status: string
 }
 
 export interface Document {
@@ -27,7 +27,7 @@ export interface Document {
   name: string
   type: string
   size: number
-  status: "processed" | "processing" | "failed" | "pending"
+  status: string
   caseTitle?: string
   caseId?: string
   uploadedBy: string

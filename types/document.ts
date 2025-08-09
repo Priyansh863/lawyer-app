@@ -60,12 +60,6 @@ export const documentSchema = {
       maxLength: 500,
     },
   },
-  uploaded_by: {
-    label: "Uploaded By",
-    type: "select",
-    required: true,
-    options: "api:users", // Would be populated from API
-  },
 }
 
 // Field mapping for API requests

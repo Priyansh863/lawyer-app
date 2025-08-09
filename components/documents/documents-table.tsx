@@ -342,9 +342,7 @@ export default function DocumentsTable({
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Privacy
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Uploaded By
-                  </th>
+                 
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
@@ -379,9 +377,6 @@ export default function DocumentsTable({
                     </td>
                     <td className="px-6 py-4">
                       {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {getUploaderName(doc.uploaded_by)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {formatDistanceToNow(new Date(doc.created_at || doc.createdAt), { addSuffix: true })}
