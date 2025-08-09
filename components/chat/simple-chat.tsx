@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { X, Send, Loader2, MessageSquare, Trash2 } from "lucide-react" // Added Send back
+import { X, Send, Loader2, MessageSquare, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input" // Added Input
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form" // Added Form components
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
@@ -33,7 +33,7 @@ interface SimpleChatProps {
   clientId?: string
   clientName?: string
   clientAvatar?: string
-  chatId?: string // If we already have a chatId
+  chatId?: string
 }
 
 export function SimpleChat({
@@ -52,7 +52,11 @@ export function SimpleChat({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
 
-  // Message form
+  // 🔹 Drag state
+  const [position, setPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 520 })
+  const dragOffset = useRef({ x: 0, y: 0 })
+  const isDragging = useRef(false)
+
   const messageForm = useForm<MessageFormData>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
@@ -60,18 +64,13 @@ export function SimpleChat({
     },
   })
 
-  // Initialize chat (either create new or use existing)
   useEffect(() => {
     const initializeChat = async () => {
       if (!clientId && !initialChatId) return
-
       setIsInitializing(true)
       try {
         let chatData: Chat
-
         if (initialChatId) {
-          // If we have chatId, we need to get chat details
-          // For now, we'll create a minimal chat object
           chatData = {
             _id: initialChatId,
             lawyer_id: {
@@ -92,19 +91,14 @@ export function SimpleChat({
             updatedAt: new Date().toISOString(),
           }
         } else if (clientId) {
-          // Create or get existing chat with client
           chatData = await createOrGetChat(clientId)
         } else {
           return
         }
-
         setChat(chatData)
-
-        // Load messages
         const chatMessages = await getChatMessages(chatData._id)
         setMessages(chatMessages)
       } catch (error) {
-        console.error("Error initializing chat:", error)
         toast({
           title: "Error",
           description: "Failed to load chat",
@@ -115,9 +109,8 @@ export function SimpleChat({
       }
     }
     initializeChat()
-  }, [clientId, initialChatId, clientName, clientAvatar, toast]) // All dependencies declared [^2]
+  }, [clientId, initialChatId, clientName, clientAvatar, toast])
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
       setTimeout(() => {
@@ -126,22 +119,14 @@ export function SimpleChat({
     }
   }, [messages])
 
-  // Handle sending message
   const handleSendMessage = async (data: MessageFormData) => {
     if (!chat || !data.content.trim()) return
-
     setIsSending(true)
     try {
       const newMessage = await sendChatMessage(chat._id, data.content.trim())
       setMessages((prev) => [...prev, newMessage])
       messageForm.reset()
-
-      toast({
-        title: "Message sent",
-        description: "Your message has been delivered",
-      })
     } catch (error) {
-      console.error("Failed to send message:", error)
       toast({
         title: "Error",
         description: "Failed to send message",
@@ -152,10 +137,8 @@ export function SimpleChat({
     }
   }
 
-  // Handle deleting chat
   const handleDeleteChat = async () => {
     if (!chat) return
-
     try {
       await deleteChat(chat._id)
       toast({
@@ -163,8 +146,7 @@ export function SimpleChat({
         description: "The chat has been deleted successfully",
       })
       onClose()
-    } catch (error) {
-      console.error("Failed to delete chat:", error)
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete chat",
@@ -173,29 +155,68 @@ export function SimpleChat({
     }
   }
 
-  // Get participant info (determine if current user is lawyer or client)
-  const currentUserId = "current_user" // This should come from Redux/auth state
+  // 🔹 Drag handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("input, textarea, button")) return // Don't drag when clicking input/buttons
+    isDragging.current = true
+    dragOffset.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    }
+  }
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging.current) return
+    setPosition({
+      x: e.clientX - dragOffset.current.x,
+      y: e.clientY - dragOffset.current.y,
+    })
+  }
+
+  const handleMouseUp = () => {
+    isDragging.current = false
+  }
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [])
+
+  const currentUserId = "current_user"
   const participant = chat?.lawyer_id?._id === currentUserId ? chat?.client_id : chat?.lawyer_id
   const participantName = participant ? `${participant.first_name} ${participant.last_name}`.trim() : clientName
 
   if (isInitializing) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        <div className="w-[360px] h-[500px] bg-white rounded-lg shadow-xl flex flex-col items-center justify-center">
-          <div className="flex items-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Loading chat...</span>
-          </div>
+        <div className="w-[360px] h-[500px] bg-white rounded-lg shadow-xl flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <div className="w-[360px] h-[500px] bg-white rounded-lg shadow-xl flex flex-col">
+    <div
+      className="z-50"
+      style={{
+        position: "fixed",
+        top: position.y,
+        left: position.x,
+        width: 360,
+        height: 500,
+      }}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl flex flex-col w-full h-full"
+        onMouseDown={handleMouseDown} // Drag starts here
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b cursor-move">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
               <AvatarImage
@@ -237,10 +258,8 @@ export function SimpleChat({
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-gray-500">
-                <div className="text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>No messages yet. Start the conversation!</p>
-                </div>
+                <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>No messages yet. Start the conversation!</p>
               </div>
             ) : (
               messages.map((message) => (
@@ -250,18 +269,15 @@ export function SimpleChat({
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                      message.senderId._id === currentUserId ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
+                      message.senderId._id === currentUserId
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-gray-900"
                     }`}
                   >
                     <p className="text-sm break-words">{message.content}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs opacity-70">
-                        {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      {message.tokenCount && (
-                        <span className="text-xs opacity-70 ml-2">{message.tokenCount} tokens</span>
-                      )}
-                    </div>
+                    <span className="text-xs opacity-70">
+                      {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
                   </div>
                 </div>
               ))
@@ -271,7 +287,7 @@ export function SimpleChat({
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 bg-white">
           <Form {...messageForm}>
             <form onSubmit={messageForm.handleSubmit(handleSendMessage)} className="flex space-x-2">
               <FormField
@@ -286,7 +302,6 @@ export function SimpleChat({
                   </FormItem>
                 )}
               />
-
               <Button type="submit" size="sm" disabled={!messageForm.watch("content")?.trim() || isSending}>
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>

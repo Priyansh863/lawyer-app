@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +13,8 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { MapPin, Navigation, Search, Map, Smartphone, QrCode, Copy, Info, Crosshair, Globe } from "lucide-react"
+import { MapPin, Navigation, Search, Map, Smartphone, QrCode, Copy, Info, Crosshair, Globe } from 'lucide-react'
+import { useTranslation } from "@/hooks/useTranslation"
 
 const locationSchema = z.object({
   planet: z.string().default("Earth"),
@@ -31,7 +33,7 @@ interface LocationUrlGeneratorProps {
   postTitle: string
   onUrlGenerated: (urls: { full: string; short: string }) => void
   onQrGenerated: (qrUrl: string) => void
-  onSpatialInfoChange: (info: LocationFormData) => void // Added prop
+  onSpatialInfoChange: (info: LocationFormData) => void
 }
 
 export default function LocationUrlGenerator({
@@ -40,6 +42,7 @@ export default function LocationUrlGenerator({
   onQrGenerated,
   onSpatialInfoChange,
 }: LocationUrlGeneratorProps) {
+  const { t } = useTranslation()
   const [currentAltitude, setCurrentAltitude] = useState<number | null>(null)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
@@ -54,47 +57,46 @@ export default function LocationUrlGenerator({
 
   const watchedValues = form.watch()
 
-  // Generate URLs and update spatial info whenever form values change
   useEffect(() => {
     if (watchedValues.latitude && watchedValues.longitude) {
       const urls = generateCustomUrl(watchedValues, postTitle)
       onUrlGenerated(urls)
       generateQRCode(urls.short)
     } else {
-      // Clear URLs if lat/lng are removed
       onUrlGenerated({ full: "", short: "" })
       onQrGenerated("")
     }
-    // Always update spatial info in parent
     onSpatialInfoChange(watchedValues)
-  }, [watchedValues, postTitle, onUrlGenerated, onQrGenerated, onSpatialInfoChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedValues, postTitle])
 
   const generateCustomUrl = (location: LocationFormData, title: string) => {
-    const baseUrl = `https://yourapp.com/${title.toLowerCase().replace(/\s+/g, "-")}`
+    const baseSlug = title.toLowerCase().replace(/\s+/g, "-")
+    const baseUrl = `https://yourapp.com/${baseSlug}`
+
     if (!location.latitude || !location.longitude) {
-      return { full: baseUrl, short: `https://yourapp.com/l/${title.toLowerCase().replace(/\s+/g, "-")}` }
+      return { full: baseUrl, short: `https://yourapp.com/l/${baseSlug}` }
     }
 
-    // Full URL format
     const params = new URLSearchParams()
     params.set("planet", location.planet || "Earth")
     params.set("lat", location.latitude.toString())
     params.set("lng", location.longitude.toString())
-    if (location.altitude) params.set("altitude", location.altitude.toString())
+    if (location.altitude !== undefined) params.set("altitude", location.altitude.toString())
     if (location.timestamp) params.set("timestamp", location.timestamp)
-    if (location.floor) params.set("floor", location.floor.toString())
+    if (location.floor !== undefined) params.set("floor", location.floor.toString())
+
     const fullUrl = `${baseUrl}?${params.toString()}`
 
-    // Short URL format
     const parts = [
       location.planet || "Earth",
       location.latitude,
       location.longitude,
-      location.altitude || "",
-      location.timestamp || "",
-      location.floor || "",
+      location.altitude ?? "",
+      location.timestamp ?? "",
+      location.floor ?? "",
     ]
-    const shortUrl = `https://yourapp.com/l/${title.toLowerCase().replace(/\s+/g, "-")}?${parts.join(",")}`
+    const shortUrl = `https://yourapp.com/l/${baseSlug}?${parts.join(",")}`
 
     return { full: fullUrl, short: shortUrl }
   }
@@ -108,13 +110,12 @@ export default function LocationUrlGenerator({
     onQrGenerated(qrUrl)
   }
 
-  // Method 1: Address Input with Google Places API
+  // Address Input
   const searchAddresses = async (query: string) => {
     if (query.length < 3) {
       setAddressSuggestions([])
       return
     }
-    // Simulate Google Places API call
     const mockAddresses = [
       { description: "123 Main Street, New York, NY, USA", lat: 40.7128, lng: -74.006 },
       { description: "456 Broadway, New York, NY, USA", lat: 40.7589, lng: -73.9851 },
@@ -123,13 +124,11 @@ export default function LocationUrlGenerator({
     setAddressSuggestions(mockAddresses)
   }
 
-  // Method 2: Place Name Input with Google Places API
   const searchPlaces = async (query: string) => {
     if (query.length < 3) {
       setPlaceSuggestions([])
       return
     }
-    // Simulate Google Places API call
     const mockPlaces = [
       { name: "Central Park", lat: 40.7829, lng: -73.9654 },
       { name: "Times Square", lat: 40.758, lng: -73.9855 },
@@ -138,16 +137,13 @@ export default function LocationUrlGenerator({
     setPlaceSuggestions(mockPlaces)
   }
 
-  // Method 3: Map Click (simulated)
   const handleMapClick = () => {
-    // Simulate map click - in real implementation, this would open a map interface
     const mockLat = 40.7128 + (Math.random() - 0.5) * 0.01
     const mockLng = -74.006 + (Math.random() - 0.5) * 0.01
     form.setValue("latitude", Number.parseFloat(mockLat.toFixed(6)))
     form.setValue("longitude", Number.parseFloat(mockLng.toFixed(6)))
   }
 
-  // Method 4: Automatic GPS Location
   const getCurrentLocation = () => {
     setIsGettingLocation(true)
     if (navigator.geolocation) {
@@ -155,7 +151,6 @@ export default function LocationUrlGenerator({
         (position) => {
           form.setValue("latitude", Number.parseFloat(position.coords.latitude.toFixed(6)))
           form.setValue("longitude", Number.parseFloat(position.coords.longitude.toFixed(6)))
-          // Simulate altitude measurement
           setCurrentAltitude(Math.round(position.coords.altitude || Math.random() * 100))
           setIsGettingLocation(false)
         },
@@ -165,7 +160,6 @@ export default function LocationUrlGenerator({
         },
       )
     } else {
-      // Fallback: simulate location
       form.setValue("latitude", 40.7128)
       form.setValue("longitude", -74.006)
       setCurrentAltitude(27)
@@ -188,7 +182,8 @@ export default function LocationUrlGenerator({
   }
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+    if (!text) return
+    navigator.clipboard.writeText(text).catch(() => {})
   }
 
   return (
@@ -197,37 +192,37 @@ export default function LocationUrlGenerator({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            Location & Custom URL Generation
+            {t("pages:location.cardTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <Form {...form}>
-            {/* Location Input Methods */}
             <Tabs defaultValue="address" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="address" className="text-xs">
                   <Search className="h-3 w-3 mr-1" />
-                  Address
+                  {t("pages:location.tabs.address")}
                 </TabsTrigger>
                 <TabsTrigger value="place" className="text-xs">
                   <MapPin className="h-3 w-3 mr-1" />
-                  Place
+                  {t("pages:location.tabs.place")}
                 </TabsTrigger>
                 <TabsTrigger value="map" className="text-xs">
                   <Map className="h-3 w-3 mr-1" />
-                  Map
+                  {t("pages:location.tabs.map")}
                 </TabsTrigger>
                 <TabsTrigger value="gps" className="text-xs">
                   <Smartphone className="h-3 w-3 mr-1" />
-                  GPS
+                  {t("pages:location.tabs.gps")}
                 </TabsTrigger>
               </TabsList>
+
               <TabsContent value="address" className="space-y-3">
                 <div>
-                  <Label htmlFor="address-search">Address Search</Label>
+                  <Label htmlFor="address-search">{t("pages:location.addressLabel")}</Label>
                   <Input
                     id="address-search"
-                    placeholder="Enter address..."
+                    placeholder={t("pages:location.addressPlaceholder")}
                     onChange={(e) => searchAddresses(e.target.value)}
                   />
                   {addressSuggestions.length > 0 && (
@@ -246,12 +241,13 @@ export default function LocationUrlGenerator({
                   )}
                 </div>
               </TabsContent>
+
               <TabsContent value="place" className="space-y-3">
                 <div>
-                  <Label htmlFor="place-search">Place Name Search</Label>
+                  <Label htmlFor="place-search">{t("pages:location.placeLabel")}</Label>
                   <Input
                     id="place-search"
-                    placeholder="Enter place name..."
+                    placeholder={t("pages:location.placePlaceholder")}
                     onChange={(e) => searchPlaces(e.target.value)}
                   />
                   {placeSuggestions.length > 0 && (
@@ -270,31 +266,33 @@ export default function LocationUrlGenerator({
                   )}
                 </div>
               </TabsContent>
+
               <TabsContent value="map" className="space-y-3">
                 <div className="text-center">
                   <Button type="button" variant="outline" onClick={handleMapClick}>
                     <Crosshair className="h-4 w-4 mr-2" />
-                    Click to Select Location on Map
+                    {t("pages:location.mapClick")}
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">Simulated map click - would open interactive map</p>
+                  <p className="text-xs text-gray-500 mt-2">{t("pages:location.mapHelper")}</p>
                 </div>
               </TabsContent>
+
               <TabsContent value="gps" className="space-y-3">
                 <div className="text-center">
                   <Button type="button" variant="outline" onClick={getCurrentLocation} disabled={isGettingLocation}>
                     {isGettingLocation ? (
                       <>
                         <Navigation className="h-4 w-4 mr-2 animate-spin" />
-                        Getting Location...
+                        {t("pages:location.gpsGetting")}
                       </>
                     ) : (
                       <>
                         <Navigation className="h-4 w-4 mr-2" />
-                        Get Current Location
+                        {t("pages:location.gpsButton")}
                       </>
                     )}
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2">Uses device GPS to get current coordinates</p>
+                  <p className="text-xs text-gray-500 mt-2">{t("pages:location.gpsHelper")}</p>
                 </div>
               </TabsContent>
             </Tabs>
@@ -306,17 +304,17 @@ export default function LocationUrlGenerator({
                 name="latitude"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Latitude</FormLabel>
+                    <FormLabel>{t("pages:location.latLabel")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.000001"
-                        placeholder="37.566123"
+                        placeholder={t("pages:location.latPlaceholder")}
                         {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || undefined)}
+                        onChange={(e) => field.onChange(Number.isFinite(Number.parseFloat(e.target.value)) ? Number.parseFloat(e.target.value) : undefined)}
                       />
                     </FormControl>
-                    <p className="text-xs text-gray-500">5-7 decimal places</p>
+                    <p className="text-xs text-gray-500">{t("pages:location.latHelper")}</p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -326,22 +324,22 @@ export default function LocationUrlGenerator({
                 name="longitude"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Longitude</FormLabel>
+                    <FormLabel>{t("pages:location.lngLabel")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.000001"
-                        placeholder="126.978456"
+                        placeholder={t("pages:location.lngPlaceholder")}
                         {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || undefined)}
+                        onChange={(e) => field.onChange(Number.isFinite(Number.parseFloat(e.target.value)) ? Number.parseFloat(e.target.value) : undefined)}
                       />
                     </FormControl>
-                    <p className="text-xs text-gray-500">5-7 decimal places</p>
+                    <p className="text-xs text-gray-500">{t("pages:location.lngHelper")}</p>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {/* Additional fields only enabled when lat/lng are provided */}
+
               {watchedValues.latitude && watchedValues.longitude && (
                 <>
                   <FormField
@@ -350,13 +348,13 @@ export default function LocationUrlGenerator({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          Altitude (meters)
+                          {t("pages:location.altLabel")}
                           <Tooltip>
                             <TooltipTrigger>
                               <Info className="h-3 w-3" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Enter the altitude above sea level in meters (e.g., 27.5m)</p>
+                              <p>{t("pages:location.altHelper")}</p>
                             </TooltipContent>
                           </Tooltip>
                         </FormLabel>
@@ -364,25 +362,22 @@ export default function LocationUrlGenerator({
                           <Input
                             type="number"
                             step="0.1"
-                            placeholder="27.5"
+                            placeholder={t("pages:location.altPlaceholder")}
                             {...field}
-                            onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || undefined)}
+                            onChange={(e) => field.onChange(Number.isFinite(Number.parseFloat(e.target.value)) ? Number.parseFloat(e.target.value) : undefined)}
                           />
                         </FormControl>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <span>Range: -500 to 9000 meters</span>
-                          {currentAltitude && (
+                          <span>{t("pages:location.altRange")}</span>
+                          {currentAltitude !== null && (
                             <Tooltip>
                               <TooltipTrigger>
                                 <Badge variant="outline" className="text-xs">
-                                  Current: {currentAltitude}m
+                                  {t("pages:location.altCurrent", { value: currentAltitude })}
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>
-                                  The current altitude is automatically measured and displayed for reference. This value
-                                  is not automatically input.
-                                </p>
+                                <p>{t("pages:location.altCurrentHelper")}</p>
                               </TooltipContent>
                             </Tooltip>
                           )}
@@ -397,25 +392,22 @@ export default function LocationUrlGenerator({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          Floor
+                          {t("pages:location.floorLabel")}
                           <Tooltip>
                             <TooltipTrigger>
                               <Info className="h-3 w-3" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>
-                                Enter the building floor as a number. Use negative numbers for basement floors (e.g., 5
-                                → '5', Basement 1 → '-1').
-                              </p>
+                              <p>{t("pages:location.floorHelper")}</p>
                             </TooltipContent>
                           </Tooltip>
                         </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="5 (or -1 for basement)"
+                            placeholder={t("pages:location.floorPlaceholder")}
                             {...field}
-                            onChange={(e) => field.onChange(Number.parseInt(e.target.value) || undefined)}
+                            onChange={(e) => field.onChange(Number.isFinite(Number.parseInt(e.target.value)) ? Number.parseInt(e.target.value) : undefined)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -427,11 +419,11 @@ export default function LocationUrlGenerator({
                     name="timestamp"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Specific Time (ISO 8601)</FormLabel>
+                        <FormLabel>{t("pages:location.timeLabel")}</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} />
                         </FormControl>
-                        <p className="text-xs text-gray-500">Independent of post creation date</p>
+                        <p className="text-xs text-gray-500">{t("pages:location.timeHelper")}</p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -441,11 +433,11 @@ export default function LocationUrlGenerator({
                     name="planet"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Planet</FormLabel>
+                        <FormLabel>{t("pages:location.planetLabel")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Earth" {...field} />
+                          <Input placeholder={t("pages:location.planetPlaceholder")} {...field} />
                         </FormControl>
-                        <p className="text-xs text-gray-500">Default: Earth</p>
+                        <p className="text-xs text-gray-500">{t("pages:location.planetHelper")}</p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -457,10 +449,10 @@ export default function LocationUrlGenerator({
             {/* Generated URLs Display */}
             {watchedValues.latitude && watchedValues.longitude && (
               <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900">Generated URLs</h4>
+                <h4 className="font-medium text-blue-900">{t("pages:location.generatedUrls")}</h4>
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-sm font-medium text-blue-800">Full URL:</Label>
+                    <Label className="text-sm font-medium text-blue-800">{t("pages:location.fullUrlLabel")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="flex-1 p-2 bg-white rounded text-xs break-all">
                         {generateCustomUrl(watchedValues, postTitle).full}
@@ -476,7 +468,7 @@ export default function LocationUrlGenerator({
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-blue-800">Short URL:</Label>
+                    <Label className="text-sm font-medium text-blue-800">{t("pages:location.shortUrlLabel")}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="flex-1 p-2 bg-white rounded text-xs break-all">
                         {generateCustomUrl(watchedValues, postTitle).short}
@@ -499,7 +491,7 @@ export default function LocationUrlGenerator({
                       onClick={() => generateQRCode(generateCustomUrl(watchedValues, postTitle).short)}
                     >
                       <QrCode className="h-4 w-4 mr-2" />
-                      Generate QR Code
+                      {t("pages:location.qrButton")}
                     </Button>
                   </div>
                 </div>

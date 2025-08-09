@@ -150,9 +150,7 @@ export default function QAList() {
                 <Badge variant={item.answer ? "default" : "outline"}>
                   {item.answer ? "Answered" : "Pending"}
                 </Badge>
-                <span className="text-sm text-gray-500">
-                  {item.userId?.first_name || "Anonymous"} {item.userId?.last_name || ""} • {formatDate(item.createdAt)}
-                </span>
+              
               </div>
               <AccordionTrigger className="hover:no-underline p-0">
                 <p className="text-left font-normal">{item.question}</p>

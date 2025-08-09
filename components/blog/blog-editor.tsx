@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import { createBlogPost, updateBlogPost, deleteBlogPost, getBlogPost, BlogPost } from "@/lib/api/blog-api"
+import { useTranslation } from "@/hooks/useTranslation" // ✅ add translation hook
 
 const EMPTY_POST = {
   title: "",
@@ -25,6 +26,7 @@ const EMPTY_POST = {
 
 export default function BlogEditor({ postId }: { postId?: string }) {
   const router = useRouter()
+  const { t } = useTranslation() // ✅ translation instance
   const [post, setPost] = useState<BlogPost | typeof EMPTY_POST>(EMPTY_POST)
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -37,19 +39,19 @@ export default function BlogEditor({ postId }: { postId?: string }) {
     const newErrors: Record<string, string> = {}
     
     if (!post.title.trim()) {
-      newErrors.title = 'Title is required'
+      newErrors.title = t('pages:blog.validation.titleRequired')
     }
     
     if (!post.content.trim()) {
-      newErrors.content = 'Content is required'
+      newErrors.content = t('pages:blog.validation.contentRequired')
     } else if (post.content.trim().length < 25) {
-      newErrors.content = 'Content must be at least 25 characters long'
+      newErrors.content = t('pages:blog.validation.contentTooShort')
     }
     
     if (!post.excerpt.trim()) {
-      newErrors.excerpt = 'Excerpt is required'
+      newErrors.excerpt = t('pages:blog.validation.excerptRequired')
     } else if (post.excerpt.length > 160) {
-      newErrors.excerpt = 'Excerpt should be 160 characters or less'
+      newErrors.excerpt = t('pages:blog.validation.excerptTooLong')
     }
     
     setErrors(newErrors)
@@ -68,7 +70,6 @@ export default function BlogEditor({ postId }: { postId?: string }) {
 
   useEffect(() => {
     if (postId) {
-      // Fetch the post data from API
       const fetchPost = async () => {
         try {
           const data = await getBlogPost(postId)
@@ -86,20 +87,18 @@ export default function BlogEditor({ postId }: { postId?: string }) {
   }
 
   const handleSave = async (newStatus?: "draft" | "published") => {
-    // Always validate required fields, regardless of draft or publish
     if (!validateForm()) {
       toast({
-        title: 'Validation Error',
+        title: t('pages:blog.validation.errorTitle'),
         description: newStatus === 'published' 
-          ? 'Please fix the errors before publishing' 
-          : 'Please fill in all required fields',
+          ? t('pages:blog.validation.errorPublish')
+          : t('pages:blog.validation.errorDraft'),
         variant: 'error',
       })
       return
     }
     
     setIsSaving(true)
-
     try {
       const blogData = {
         title: post.title.trim(),
@@ -111,15 +110,11 @@ export default function BlogEditor({ postId }: { postId?: string }) {
         status: newStatus || post.status,
       }
 
-     
-
       if (postId) {
         await updateBlogPost(postId, blogData)
       } else {
         await createBlogPost(blogData)
       }
-
-      // Navigate back to blog list after saving
       router.push("/blog")
     } catch (error) {
       console.error("Error saving post:", error)
@@ -129,8 +124,7 @@ export default function BlogEditor({ postId }: { postId?: string }) {
   }
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return
-
+    if (!confirm(t('pages:blog.confirmDelete'))) return
     try {
       await deleteBlogPost(postId as string)
       router.push("/blog")
@@ -148,7 +142,6 @@ export default function BlogEditor({ postId }: { postId?: string }) {
     if (!file) return
 
     setIsUploading(true)
-
     const reader = new FileReader()
     reader.onloadend = async () => {
       try {
@@ -157,20 +150,19 @@ export default function BlogEditor({ postId }: { postId?: string }) {
           data: reader.result,
           format: imageFormat,
         }
-
         const objectUrl = await getUploadFileUrl(user?._id as string, imageData)
         if (objectUrl) {
           handleChange("image", objectUrl)
           toast({
-            title: "Image uploaded",
-            description: "Your image has been uploaded successfully.",
+            title: t("pages:blog.imageUploaded"),
+            description: t("pages:blog.imageUploadSuccess"),
             variant: "success",
           })
         }
       } catch (err) {
         toast({
-          title: "Error",
-          description: "Failed to upload image. Try again.",
+          title: t("pages:blog.imageUploadError"),
+          description: t("pages:blog.imageUploadFailed"),
           variant: "error",
         })
       } finally {
@@ -184,7 +176,7 @@ export default function BlogEditor({ postId }: { postId?: string }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="space-y-1">
-          <Label htmlFor="post-title">Title</Label>
+          <Label htmlFor="post-title">{t("pages:blog.titleLabel")}</Label>
           <Input
             id="post-title"
             value={post.title}
@@ -192,13 +184,12 @@ export default function BlogEditor({ postId }: { postId?: string }) {
               handleChange("title", e.target.value)
               clearError('title')
             }}
-            placeholder="Enter post title"
+            placeholder={t("pages:blog.titlePlaceholder")}
             className={`max-w-2xl ${errors.title ? 'border-red-500' : ''}`}
           />
           {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
         </div>
         <div className="flex items-center gap-2 mt-6">
-
           <Button
             variant="outline"
             size="sm"
@@ -207,7 +198,7 @@ export default function BlogEditor({ postId }: { postId?: string }) {
             className="flex items-center gap-2"
           >
             <Save size={16} />
-            Save Draft
+            {t("pages:blog.saveDraft")}
           </Button>
           <Button
             size="sm"
@@ -216,12 +207,12 @@ export default function BlogEditor({ postId }: { postId?: string }) {
             className="flex items-center gap-2"
           >
             <Send size={16} />
-            Publish
+            {t("pages:blog.publish")}
           </Button>
           {postId && (
             <Button variant="destructive" size="sm" onClick={handleDelete} className="flex items-center gap-2">
               <Trash2 size={16} />
-              Delete
+              {t("pages:blog.delete")}
             </Button>
           )}
         </div>
@@ -235,7 +226,7 @@ export default function BlogEditor({ postId }: { postId?: string }) {
               handleChange("content", e.target.value)
               clearError('content')
             }}
-            placeholder="Write your blog post content here..."
+            placeholder={t("pages:blog.contentPlaceholder")}
             className={`min-h-[400px] ${errors.content ? 'border-red-500' : ''}`}
           />
           {errors.content && <p className="text-sm text-red-500 mt-1">{errors.content}</p>}
@@ -243,20 +234,20 @@ export default function BlogEditor({ postId }: { postId?: string }) {
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="post-excerpt">Excerpt</Label>
+            <Label htmlFor="post-excerpt">{t("pages:blog.excerptLabel")}</Label>
             <Textarea
               id="post-excerpt"
               value={post.excerpt}
               onChange={(e) => handleChange("excerpt", e.target.value)}
-              placeholder="Brief summary of your post"
+              placeholder={t("pages:blog.excerptPlaceholder")}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="post-image">Featured Image</Label>
+            <Label htmlFor="post-image">{t("pages:blog.featuredImage")}</Label>
             <div className="border rounded-md overflow-hidden">
-              <img src={post.image || "/placeholder.svg"} alt="Featured" className="w-full h-40 object-cover" />
+              <img src={post.image || "/placeholder.svg"} alt={t("pages:blog.featuredImageAlt")} className="w-full h-40 object-cover" />
             </div>
             <div className="mt-2">
               <Button 
@@ -265,7 +256,7 @@ export default function BlogEditor({ postId }: { postId?: string }) {
                 className="w-full"
                 disabled={isUploading}
               >
-                {isUploading ? "Uploading..." : "Upload Image"}
+                {isUploading ? t("pages:blog.uploading") : t("pages:blog.uploadImage")}
               </Button>
               <input
                 type="file"
@@ -278,17 +269,16 @@ export default function BlogEditor({ postId }: { postId?: string }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="post-category">Category</Label>
-            <Select value={post.category} onValueChange={(value) =>{
-               handleChange("category", value)}}>
+            <Label htmlFor="post-category">{t("pages:blog.category")}</Label>
+            <Select value={post.category} onValueChange={(value) => handleChange("category", value)}>
               <SelectTrigger id="post-category">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t("pages:blog.selectCategory")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="legal-advice">Legal Advice</SelectItem>
-                <SelectItem value="case-studies">Case Studies</SelectItem>
-                <SelectItem value="law-updates">Law Updates</SelectItem>
-                <SelectItem value="firm-news">Firm News</SelectItem>
+                <SelectItem value="legal-advice">{t("pages:blog.legalAdvice")}</SelectItem>
+                <SelectItem value="case-studies">{t("pages:blog.caseStudies")}</SelectItem>
+                <SelectItem value="law-updates">{t("pages:blog.lawUpdates")}</SelectItem>
+                <SelectItem value="firm-news">{t("pages:blog.firmNews")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

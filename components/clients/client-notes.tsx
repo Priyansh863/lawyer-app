@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { useTranslation } from "@/hooks/useTranslation"  // <-- add translation hook
 
 interface ClientNotesProps {
   clientId: string
@@ -17,6 +18,7 @@ export default function ClientNotes({ clientId, notes: initialNotes, onSave }: C
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [editableNotes, setEditableNotes] = useState(initialNotes)
+  const { t } = useTranslation() // <-- translation instance
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -45,24 +47,24 @@ export default function ClientNotes({ clientId, notes: initialNotes, onSave }: C
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Client Notes</h3>
+          <h3 className="text-lg font-medium">{t("pages:clientNotes.title")}</h3>
           {!isEditing ? (
             <Button size="sm" onClick={handleEdit}>
-              Edit Notes
+              {t("pages:clientNotes.edit")}
             </Button>
           ) : (
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handleCancel} disabled={isSaving}>
-                Cancel
+                {t("pages:clientNotes.cancel")}
               </Button>
               <Button size="sm" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 size={16} className="mr-2 animate-spin" />
-                    Saving...
+                    {t("pages:clientNotes.saving")}
                   </>
                 ) : (
-                  "Save"
+                  t("pages:clientNotes.save")
                 )}
               </Button>
             </div>
@@ -73,7 +75,7 @@ export default function ClientNotes({ clientId, notes: initialNotes, onSave }: C
           <Textarea
             value={editableNotes}
             onChange={(e) => setEditableNotes(e.target.value)}
-            placeholder="Add notes about this client..."
+            placeholder={t("pages:clientNotes.placeholder")}
             className="min-h-[200px]"
             disabled={isSaving}
           />
@@ -82,7 +84,7 @@ export default function ClientNotes({ clientId, notes: initialNotes, onSave }: C
             {notes ? (
               <p className="whitespace-pre-wrap">{notes}</p>
             ) : (
-              <p className="text-muted-foreground">No notes yet. Click Edit Notes to add some.</p>
+              <p className="text-muted-foreground">{t("pages:clientNotes.noNotes")}</p>
             )}
           </div>
         )}

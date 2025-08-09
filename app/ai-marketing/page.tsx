@@ -803,15 +803,16 @@ export default function AIMarketingPage() {
         <TabsContent value="location" className="mt-6 space-y-6">
           {/* Location Input */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Add Location to Your Content
-              </CardTitle>
-              <p className="text-sm text-gray-600">
-                Add spatial metadata to your content to create custom location URLs for sharing.
-              </p>
-            </CardHeader>
+           <CardHeader>
+  <CardTitle className="flex items-center gap-2">
+    <MapPin className="h-5 w-5" />
+    {t("pages:aiMarketing.addLocationTitle")}
+  </CardTitle>
+  <p className="text-sm text-gray-600">
+    {t("pages:aiMarketing.addLocationSubtitle")}
+  </p>
+</CardHeader>
+
             <CardContent>
               {/* Using LocationUrlGenerator directly for all location input methods */}
               <LocationUrlGenerator
@@ -1044,31 +1045,35 @@ export default function AIMarketingPage() {
           )}
           {/* Instructions */}
           {!generatedContent && (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Add Location to Your Content</h3>
-                <p className="text-gray-600 mb-4">
-                  First generate content in the AI Generator tab, then return here to add location information and
-                  create custom URLs.
-                </p>
-                <Button variant="outline" onClick={() => setActiveTab("generate")}>
-                  Go to AI Generator
-                </Button>
-              </CardContent>
-            </Card>
+           <Card>
+  <CardContent className="p-6 text-center">
+    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+    <h3 className="text-lg font-medium text-gray-900 mb-2">
+      {t('pages:aiMarketing.addLocationTitle')}
+    </h3>
+    <p className="text-gray-600 mb-4">
+      {t('pages:aiMarketing.addLocationDescription')}
+    </p>
+    <Button variant="outline" onClick={() => setActiveTab("generate")}>
+      {t('pages:aiMarketing.goToGenerator')}
+    </Button>
+  </CardContent>
+</Card>
           )}
         </TabsContent>
         <TabsContent value="history" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Post History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500 text-center py-8">No posts published yet. Create your first post above!</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+  <Card>
+    <CardHeader>
+      <CardTitle>{t("pages:aiMarketing.postHistoryTitle")}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-gray-500 text-center py-8">
+        {t("pages:aiMarketing.noPostsMessage")}
+      </p>
+    </CardContent>
+  </Card>
+</TabsContent>
+
       </Tabs>
     </div>
   )
