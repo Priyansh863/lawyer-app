@@ -94,7 +94,6 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
                 <TableHead>Description</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Updated</TableHead>
-                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,14 +110,6 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
                   <TableCell>{formatDate(caseItem.createdAt)}</TableCell>
                   <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => router.push(`/cases/${caseItem.id}`)}
-                      title="View Case"
-                    >
-                      <Eye size={16} />
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

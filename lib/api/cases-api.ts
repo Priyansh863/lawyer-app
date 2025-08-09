@@ -46,39 +46,28 @@ export const casesApi = {
     limit = 10,
   }: GetCasesParams = {}): Promise<CasesApiResponse> => {
     try {
-      const params: any = {}
+      const params: any = {
+        page: page.toString(),
+        limit: limit.toString()
+      }
       
       if (status && status !== "all") {
-        // Convert frontend status to backend status
-        const statusMap: { [key: string]: string } = {
-          'pending': 'Pending',
-          'approved': 'Approved', 
-          'rejected': 'Rejected'
-        }
-        params.status = statusMap[status] || status
+        params.status = status
       }
       
       if (query && query.trim()) {
-        params.search = query.trim()
-      }
-      
-      if (page) {
-        params.page = page.toString()
-      }
-      
-      if (limit) {
-        params.limit = limit.toString()
+        params.query = query.trim()
       }
 
-      const response = await axios.get(`${API_BASE_URL}/case/list`, {
+      const response = await axios.get(`${API_BASE_URL}/user/cases`, {
         headers: getAuthHeaders(),
         params
       })
 
       return {
         success: response.data.success || true,
-        cases: response.data.data || [],
-        total: response.data.pagination?.total,
+        cases: response.data.cases || [],
+        total: response.data.total,
         page: page,
         limit: limit
       }

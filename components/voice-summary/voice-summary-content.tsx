@@ -4,12 +4,13 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
-import { Mic, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react"
+import { Mic, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Volume } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDuration, formatDate } from "@/lib/utils"
 import { recordVoice, downloadSummary } from "@/lib/api/voice-summary-api"
 import type { VoiceRecording } from "@/types/voice-summary"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import TextToSpeech from "react-text-to-speech"
 
 interface VoiceSummaryContentProps {
   initialRecordings: VoiceRecording[]
@@ -32,32 +33,38 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
   const simulationTimerRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
-  // Initialize TTS availability for each recording
   useEffect(() => {
+    preloadVoices
     const initialTtsState: Record<string, boolean> = {}
     recordings.forEach((recording) => {
-      // Simulate checking if summary is stored locally
-      initialTtsState[recording.id] = recording.id !== "rec_3" // Disable TTS for rec_3 to simulate local storage
+      initialTtsState[recording.id] = recording.id !== "rec_3"
     })
     setTtsEnabled(initialTtsState)
   }, [recordings])
 
-  // Create audio element on mount
+  const preloadVoices = () => {
+    return new Promise<void>((resolve) => {
+      let voices = speechSynthesis.getVoices()
+      if (voices.length !== 0) {
+        resolve()
+      } else {
+        speechSynthesis.onvoiceschanged = () => {
+          voices = speechSynthesis.getVoices()
+          resolve()
+        }
+      }
+    })
+  }
+
   useEffect(() => {
-    // Create a hidden audio element that we'll control programmatically
     const audioElement = document.createElement("audio")
     audioElement.style.display = "none"
     document.body.appendChild(audioElement)
     audioElementRef.current = audioElement
 
-    // Clean up on unmount
     return () => {
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current)
-      }
-      if (simulationTimerRef.current) {
-        clearInterval(simulationTimerRef.current)
-      }
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current)
+      if (simulationTimerRef.current) clearInterval(simulationTimerRef.current)
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
         mediaRecorderRef.current.stop()
       }
@@ -68,7 +75,6 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
     }
   }, [])
 
-  // Set up audio event listeners
   useEffect(() => {
     const audioElement = audioElementRef.current
     if (!audioElement) return
@@ -88,17 +94,12 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
       setIsSimulatedPlayback(false)
       setPlaybackProgress((prev) => {
         if (!playingId) return prev
-        return {
-          ...prev,
-          [playingId]: 0,
-        }
+        return { ...prev, [playingId]: 0 }
       })
     }
 
     const handleError = (e: Event) => {
       console.error("Audio playback error:", e)
-
-      // If we have a playing ID, switch to simulated playback
       if (playingId) {
         toast({
           title: "Playback error",
@@ -121,13 +122,9 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
 
   const handleStartRecording = async () => {
     try {
-      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      // Create media recorder
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
-
       const audioChunks: Blob[] = []
 
       mediaRecorder.ondataavailable = (event) => {
@@ -135,31 +132,20 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
       }
 
       mediaRecorder.onstop = async () => {
-        // Create audio blob
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" })
-
-        // Reset recording state
         setIsRecording(false)
         setRecordingTime(0)
 
         try {
-          // Upload recording and get transcription
           const result = await recordVoice(audioBlob)
-
-          // Add new recording to the list
           setRecordings((prev) => [result, ...prev])
-
-          // Enable TTS for the new recording
-          setTtsEnabled((prev) => ({
-            ...prev,
-            [result.id]: true,
-          }))
+          setTtsEnabled((prev) => ({ ...prev, [result.id]: true }))
 
           toast({
             title: "Recording saved",
             description: "Your voice recording has been saved and transcribed.",
           })
-        } catch (error) {
+        } catch {
           toast({
             title: "Error",
             description: "Failed to save recording",
@@ -168,11 +154,8 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
         }
       }
 
-      // Start recording
       mediaRecorder.start()
       setIsRecording(true)
-
-      // Start timer
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime((prev) => prev + 1)
       }, 1000)
@@ -194,11 +177,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop()
-
-      // Stop all tracks in the stream
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
-
-      // Clear timer
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current)
         recordingTimerRef.current = null
@@ -207,7 +186,6 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
   }
 
   const handlePlayRecording = (recording: VoiceRecording) => {
-    // If already playing this recording, pause it
     if (playingId === recording.id) {
       if (isSimulatedPlayback) {
         stopSimulatedPlayback()
@@ -218,7 +196,6 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
       return
     }
 
-    // If playing another recording, stop it first
     if (playingId) {
       if (isSimulatedPlayback) {
         stopSimulatedPlayback()
@@ -228,47 +205,26 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
       setPlayingId(null)
     }
 
-    // Start playback
     setPlayingId(recording.id)
-
-    // Always use simulated playback for demo purposes
-    // In a real app, you would try to play the actual audio first
     startSimulatedPlayback(recording.id)
   }
 
   const startSimulatedPlayback = (recordingId: string) => {
-    // Stop any existing simulation
     stopSimulatedPlayback()
-
-    // Set simulated playback state
     setIsSimulatedPlayback(true)
+    setPlaybackProgress((prev) => ({ ...prev, [recordingId]: 0 }))
 
-    // Reset progress
-    setPlaybackProgress((prev) => ({
-      ...prev,
-      [recordingId]: 0,
-    }))
-
-    // Simulate a 30-second playback
     let progress = 0
     simulationTimerRef.current = setInterval(() => {
       progress += 0.5
-
       if (progress > 100) {
         stopSimulatedPlayback()
         setPlayingId(null)
-        setPlaybackProgress((prev) => ({
-          ...prev,
-          [recordingId]: 0,
-        }))
+        setPlaybackProgress((prev) => ({ ...prev, [recordingId]: 0 }))
         return
       }
-
-      setPlaybackProgress((prev) => ({
-        ...prev,
-        [recordingId]: progress,
-      }))
-    }, 150) // Update every 150ms for a total of 30 seconds
+      setPlaybackProgress((prev) => ({ ...prev, [recordingId]: progress }))
+    }, 150)
   }
 
   const stopSimulatedPlayback = () => {
@@ -281,76 +237,40 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
 
   const handleSliderChange = (recordingId: string, values: number[]) => {
     if (isSimulatedPlayback && playingId === recordingId) {
-      // For simulated playback, just update the progress
-      setPlaybackProgress((prev) => ({
-        ...prev,
-        [recordingId]: values[0],
-      }))
+      setPlaybackProgress((prev) => ({ ...prev, [recordingId]: values[0] }))
     } else if (audioElementRef.current && playingId === recordingId) {
-      // For real audio playback
-      if (
-        audioElementRef.current.duration &&
-        isFinite(audioElementRef.current.duration) &&
-        audioElementRef.current.duration > 0
-      ) {
+      if (audioElementRef.current.duration && isFinite(audioElementRef.current.duration) && audioElementRef.current.duration > 0) {
         const newTime = (values[0] / 100) * audioElementRef.current.duration
-        if (isFinite(newTime)) {
-          audioElementRef.current.currentTime = newTime
-        }
+        if (isFinite(newTime)) audioElementRef.current.currentTime = newTime
       }
-
-      // Also update the progress state
-      setPlaybackProgress((prev) => ({
-        ...prev,
-        [recordingId]: values[0],
-      }))
+      setPlaybackProgress((prev) => ({ ...prev, [recordingId]: values[0] }))
     }
   }
 
   const handleSkipBackward = () => {
     if (isSimulatedPlayback && playingId) {
-      // For simulated playback, just update the progress
       setPlaybackProgress((prev) => {
         const currentProgress = prev[playingId] || 0
-        const newProgress = Math.max(0, currentProgress - 10)
-        return {
-          ...prev,
-          [playingId]: newProgress,
-        }
+        return { ...prev, [playingId]: Math.max(0, currentProgress - 10) }
       })
     } else if (audioElementRef.current && playingId) {
-      // For real audio playback
-      if (isFinite(audioElementRef.current.duration) && audioElementRef.current.duration > 0) {
-        const newTime = Math.max(0, audioElementRef.current.currentTime - 10)
-        audioElementRef.current.currentTime = newTime
-      }
+      audioElementRef.current.currentTime = Math.max(0, audioElementRef.current.currentTime - 10)
     }
   }
 
   const handleSkipForward = () => {
     if (isSimulatedPlayback && playingId) {
-      // For simulated playback, just update the progress
       setPlaybackProgress((prev) => {
         const currentProgress = prev[playingId] || 0
-        const newProgress = Math.min(100, currentProgress + 10)
-        return {
-          ...prev,
-          [playingId]: newProgress,
-        }
+        return { ...prev, [playingId]: Math.min(100, currentProgress + 10) }
       })
     } else if (audioElementRef.current && playingId) {
-      // For real audio playback
-      if (isFinite(audioElementRef.current.duration) && audioElementRef.current.duration > 0) {
-        const newTime = Math.min(audioElementRef.current.duration, audioElementRef.current.currentTime + 10)
-        audioElementRef.current.currentTime = newTime
-      }
+      audioElementRef.current.currentTime = Math.min(audioElementRef.current.duration, audioElementRef.current.currentTime + 10)
     }
   }
 
   const toggleMute = () => {
-    if (audioElementRef.current) {
-      audioElementRef.current.muted = !isMuted
-    }
+    if (audioElementRef.current) audioElementRef.current.muted = !isMuted
     setIsMuted(!isMuted)
   }
 
@@ -362,7 +282,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
         title: "Summary downloaded",
         description: "The summary has been downloaded successfully.",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Download failed",
         description: "Failed to download the summary.",
@@ -375,7 +295,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Left side - Recording UI */}
+      {/* Left side */}
       <Card className="p-4 flex flex-col items-center justify-center">
         <div className="text-center mb-4">
           <h2 className="text-xl font-semibold mb-2">The quick way to escape from reading text</h2>
@@ -383,11 +303,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
         </div>
 
         <div className="relative mb-4 -mt-2">
-          <div
-            className={`w-40 h-40 rounded-full flex items-center justify-center border-4 ${
-              isRecording ? "border-red-500 animate-pulse" : "border-gray-200"
-            }`}
-          >
+          <div className={`w-40 h-40 rounded-full flex items-center justify-center border-4 ${isRecording ? "border-red-500 animate-pulse" : "border-gray-200"}`}>
             <Mic className={`h-16 w-16 ${isRecording ? "text-red-500" : "text-gray-700"}`} />
           </div>
           {isRecording && (
@@ -405,7 +321,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
         </Button>
       </Card>
 
-      {/* Right side - Recordings list */}
+      {/* Right side */}
       <div className="space-y-4">
         {recordings.length === 0 ? (
           <Card className="p-6 text-center">
@@ -446,23 +362,13 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
 
                 {playingId === recording.id && (
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSkipBackward}
-                      disabled={!ttsEnabled[recording.id]}
-                    >
+                    <Button variant="ghost" size="icon" onClick={handleSkipBackward} disabled={!ttsEnabled[recording.id]}>
                       <SkipBack className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" onClick={toggleMute} disabled={!ttsEnabled[recording.id]}>
                       {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleSkipForward}
-                      disabled={!ttsEnabled[recording.id]}
-                    >
+                    <Button variant="ghost" size="icon" onClick={handleSkipForward} disabled={!ttsEnabled[recording.id]}>
                       <SkipForward className="h-4 w-4" />
                     </Button>
                   </div>
@@ -476,7 +382,18 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
                   </Alert>
                 )}
 
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-2 gap-2">
+                  {ttsEnabled[recording.id] && recording.summary && (
+                    <TextToSpeech
+                      text={recording.summary}
+                      rate={1}
+                      pitch={1}
+                      volume={1}
+                    >
+                   
+                    </TextToSpeech>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"

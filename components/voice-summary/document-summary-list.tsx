@@ -3,12 +3,18 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Play, Pause, Search, FileText, Loader2, Volume2 } from "lucide-react"
+import { Play, Pause, Search, FileText, Loader2, Volume2, Square } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
 import { getDocumentSummaries } from "@/lib/api/voice-summary-api"
 import type { DocumentSummary } from "@/types/voice-summary"
-import { useSpeech } from "react-text-to-speech"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DocumentSummaryListProps {
   initialSummaries: DocumentSummary[]
@@ -20,24 +26,17 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   const [searchQuery, setSearchQuery] = useState("")
   const [playingId, setPlayingId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [currentSummary, setCurrentSummary] = useState<DocumentSummary | null>(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [selectedLang, setSelectedLang] = useState("en-US")
   const { toast } = useToast()
 
-  // Initialize TTS for the current summary
-  const {
-    Text,
-    speechStatus,
-    isInQueue,
-    start: startSpeech,
-    pause: pauseSpeech,
-    stop: stopSpeech,
-  } = useSpeech({
-    text: currentSummary?.summary || "",
-    volume: 0.8,
-    rate: 1.0,
-    pitch: 1.0,
-    lang: "en-US",
-  })
+  const languages = [
+    { value: "en-US", label: "English" },
+    { value: "ko-KR", label: "한국어" },
+    { value: "ja-JP", label: "日本語" },
+    { value: "zh-CN", label: "中文" }
+  ]
 
   // Fetch documents from backend on component mount
   useEffect(() => {
@@ -77,42 +76,80 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
     }
   }, [searchQuery, summaries])
 
-  // Handle play/pause summary
+  // Handle play/pause summary with multi-language support
   const handlePlaySummary = (summary: DocumentSummary) => {
     if (playingId === summary.id) {
-      // If already playing this summary, pause it
-      if (speechStatus === "started") {
-        pauseSpeech()
+      // If already playing this summary, handle pause/resume/stop
+      if (isSpeaking && !isPaused) {
+        handlePause()
+      } else if (isPaused) {
+        handleResume()
       } else {
-        stopSpeech()
-        setPlayingId(null)
-        setCurrentSummary(null)
+        handleStop()
       }
       return
     }
+
     // Start playing new summary
+    handleStop() // Stop any current playback
     setPlayingId(summary.id)
-    setCurrentSummary(summary)
-    // Start speech after setting the summary
-    setTimeout(() => {
-      startSpeech()
-    }, 100)
-    toast({
-      title: "Playing Summary",
-      description: `Now playing: ${summary.documentName}`,
-    })
+    
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(summary.summary)
+      utterance.lang = selectedLang
+      utterance.rate = 0.9
+      utterance.pitch = 1
+      
+      utterance.onstart = () => {
+        setIsSpeaking(true)
+        setIsPaused(false)
+      }
+      
+      utterance.onend = () => {
+        setIsSpeaking(false)
+        setIsPaused(false)
+        setPlayingId(null)
+      }
+      
+      speechSynthesis.speak(utterance)
+      
+      toast({
+        title: "Playing Summary",
+        description: `Now playing: ${summary.documentName}`,
+      })
+    } else {
+      toast({
+        title: "Error",
+        description: "Speech synthesis not supported in this browser.",
+        variant: "destructive",
+      })
+    }
   }
 
-  // Stop all playback
-  const stopPlayback = () => {
-    stopSpeech()
+  const handlePause = () => {
+    if (speechSynthesis.speaking && !speechSynthesis.paused) {
+      speechSynthesis.pause()
+      setIsPaused(true)
+    }
+  }
+
+  const handleResume = () => {
+    if (speechSynthesis.paused) {
+      speechSynthesis.resume()
+      setIsPaused(false)
+    }
+  }
+
+  const handleStop = () => {
+    speechSynthesis.cancel()
+    setIsSpeaking(false)
+    setIsPaused(false)
     setPlayingId(null)
-    setCurrentSummary(null)
   }
 
   return (
     <div className="flex flex-col space-y-6 min-h-screen md:min-h-0">
-      {/* Search Bar */}
+      {/* Search Bar and Language Selector */}
       <div className="flex items-center space-x-2 mt-4 md:mt-0">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -123,7 +160,54 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
             className="pl-10"
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium">Language:</span>
+          <Select value={selectedLang} onValueChange={setSelectedLang}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.value} value={lang.value}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* Global TTS Controls */}
+      {playingId && (
+        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Volume2 className="h-4 w-4" />
+            <span className="text-sm">Playing audio in {languages.find(l => l.value === selectedLang)?.label}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isSpeaking ? (
+              <Button size="sm" onClick={() => {
+                const summary = summaries.find(s => s.id === playingId)
+                if (summary) handlePlaySummary(summary)
+              }}>
+                <Play className="w-4 h-4 mr-1" /> Play
+              </Button>
+            ) : isPaused ? (
+              <Button size="sm" onClick={handleResume}>
+                <Play className="w-4 h-4 mr-1" /> Resume
+              </Button>
+            ) : (
+              <Button size="sm" onClick={handlePause}>
+                <Pause className="w-4 h-4 mr-1" /> Pause
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={handleStop}>
+              <Square className="w-4 h-4 mr-1" /> Stop
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Loading State */}
       {isLoading && (
         <div className="flex items-center justify-center py-8">
@@ -165,10 +249,22 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                       disabled={summary.status !== "ready"}
                     >
                       {playingId === summary.id ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-1" />
-                          Pause
-                        </>
+                        isPaused ? (
+                          <>
+                            <Play className="h-4 w-4 mr-1" />
+                            Resume
+                          </>
+                        ) : isSpeaking ? (
+                          <>
+                            <Pause className="h-4 w-4 mr-1" />
+                            Pause
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4 mr-1" />
+                            Play
+                          </>
+                        )
                       ) : (
                         <>
                           <Play className="h-4 w-4 mr-1" />
@@ -180,22 +276,17 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                 </div>
                 {/* Summary Text */}
                 <div className="bg-muted/30 rounded-lg p-4 mb-4">
-                  {summary.status === "failed" ? (
-                    <p className="text-sm leading-relaxed text-red-600 truncate max-w-[calc(100%-2rem)]">
+                  {summary.status === "error" ? (
+                    <p className="text-sm leading-relaxed text-red-600">
                       Processing failed: Failed to generate summary....
                     </p>
                   ) : (
-                    <p className="text-sm leading-relaxed truncate max-w-[calc(100%-2rem)]">
+                    <p className="text-sm leading-relaxed">
                       {summary.summary || "Processing..."}
                     </p>
                   )}
                 </div>
-                {/* TTS Element (hidden but functional) */}
-                {playingId === summary.id && currentSummary && (
-                  <div className="hidden">
-                    <Text />
-                  </div>
-                )}
+
                 {/* Status Badge */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -203,23 +294,14 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         summary.status === "ready"
                           ? "bg-green-100 text-green-800"
-                          : summary.status === "failed"
+                          : summary.status === "error"
                             ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {summary.status === "ready" ? "Ready" : summary.status === "failed" ? "Failed" : "Processing"}
+                      {summary.status === "ready" ? "Ready" : summary.status === "error" ? "Failed" : "Processing"}
                     </span>
                   </div>
-                  {playingId === summary.id && (
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Volume2 className="h-4 w-4" />
-                      <span>Playing audio...</span>
-                      <Button variant="ghost" size="sm" onClick={stopPlayback} className="text-xs">
-                        Stop
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

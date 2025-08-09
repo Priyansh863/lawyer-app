@@ -116,7 +116,7 @@ export const useChat = ({
     
     try {
       const response = await getChats({ page, limit })
-      const chatSummaries = response.data.chats.map(chat => 
+      const chatSummaries = response.data.chats.map((chat: any) => 
         transformChatToSummary(chat, profile._id as string)
       )
       

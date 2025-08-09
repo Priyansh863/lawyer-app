@@ -67,12 +67,12 @@ export const uploadFileOnS3 = async (
       filePath
     )) as string;
     return fileUrl;
- }
+}
 
- /**
-   * getting upload file url for documents (PDFs, etc.) without compression
-   */
- export const getUploadDocumentUrl = async (userId: string, item: any) => {
+/**
+ * getting upload file url for documents (PDFs, etc.) without compression
+ */
+export const getUploadDocumentUrl = async (userId: string, item: any) => {
     const filePath = `ai-lawyer-development-assets/${new Date().getTime()}-${userId}.${item.format}`;
     
     // Convert data URL to blob without image compression
@@ -84,4 +84,40 @@ export const uploadFileOnS3 = async (
       filePath
     )) as string;
     return fileUrl;
- } 
+ }
+
+/**
+ * Universal file upload function for all file types (PDF, images, videos)
+ */
+export const uploadUniversalFile = async (userId: string, file: File): Promise<string> => {
+  const timestamp = new Date().getTime();
+  const fileExtension = file.name.split('.').pop() || 'bin';
+  const filePath = `ai-lawyer-development-assets/${timestamp}-${userId}.${fileExtension}`;
+  
+  // Check if file is an image and should be compressed
+  const isImage = file.type.startsWith('image/');
+  
+  if (isImage) {
+    // For images, use compression
+    const options = {
+      maxSizeMB: 5, // 5MB limit
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+    
+    try {
+      const compressedImage = await imageCompression(file, options);
+      const fileUrl = await uploadFileOnS3(compressedImage, filePath) as string;
+      return fileUrl;
+    } catch (error) {
+      console.warn('Image compression failed, uploading original:', error);
+      // Fallback to original file if compression fails
+      const fileUrl = await uploadFileOnS3(file, filePath) as string;
+      return fileUrl;
+    }
+  } else {
+    // For non-images (PDF, videos, etc.), upload directly without compression
+    const fileUrl = await uploadFileOnS3(file, filePath) as string;
+    return fileUrl;
+  }
+} 

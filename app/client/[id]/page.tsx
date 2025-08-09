@@ -13,12 +13,11 @@ interface ClientPageProps {
 }
 
 export default async function ClientDetailPage({ params, searchParams }: ClientPageProps) {
-  const resolvedSearchParams = await searchParams
   let clientData: Client | null = null
   
-  if (resolvedSearchParams.data) {
+  if (searchParams.data) {
     try {
-      clientData = JSON.parse(decodeURIComponent(resolvedSearchParams.data)) as Client
+      clientData = JSON.parse(decodeURIComponent(searchParams.data)) as Client
     } catch (error) {
       console.error("Failed to parse client data from URL:", error)
     }

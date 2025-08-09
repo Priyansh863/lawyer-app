@@ -17,7 +17,10 @@ export default function DocumentsPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <DocumentsHeader onDocumentUploaded={handleDocumentUploaded} />
-        <DocumentsTable key={refreshTrigger} onDocumentUploaded={handleDocumentUploaded} />
+        <DocumentsTable
+          refreshTrigger={refreshTrigger}
+          onDocumentUpdate={handleDocumentUploaded} 
+        />
       </div>
     </DashboardLayout>
   )

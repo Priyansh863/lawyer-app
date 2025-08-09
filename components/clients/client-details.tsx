@@ -273,14 +273,10 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">Cases</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="notes">Notes</TabsTrigger>
             </TabsList>
             <TabsContent value="cases" className="mt-4">
               <ClientCases clientId={client.id} />
-            </TabsContent>
-            <TabsContent value="documents" className="mt-4">
-              <ClientDocuments clientId={client.id} />
             </TabsContent>
             <TabsContent value="notes" className="mt-4">
               <ClientNotes clientId={client.id} notes={client.notes || ""} onSave={handleNotesUpdate} />

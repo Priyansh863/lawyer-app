@@ -1,268 +1,288 @@
-"use client"
-import { useState, useRef, useEffect } from "react"
-import type React from "react"
+'use client'
 
-import { useSelector } from "react-redux"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Upload, FileText, X, Loader2 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { uploadPDFToS3, validatePDFFile } from "@/lib/helpers/pdf-upload"
-import { uploadDocument } from "@/lib/api/documents-api"
-import type { RootState } from "@/lib/store"
-import MultiSelect from "@/components/ui/multi-select" // <-- import
+import React, { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Progress } from '@/components/ui/progress'
+import { Upload, FileText, Lock, Globe, AlertCircle } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/lib/store'
+import { uploadPDFToS3, validatePDFFile } from '@/lib/helpers/pdf-upload'
+import { uploadDocument } from '@/lib/api/documents-api'
+import { toast } from 'sonner'
 
-interface PDFUploadProps {
-  onUploadSuccess?: () => void
-  trigger?: React.ReactNode
+interface PDFUploadEnhancedProps {
+  isOpen: boolean
+  onClose: () => void
+  onUploadSuccess: () => void
 }
 
-export function PDFUpload({ onUploadSuccess, trigger }: PDFUploadProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
+export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploadEnhancedProps) {
+  const [file, setFile] = useState<File | null>(null)
+  const [privacy, setPrivacy] = useState<'public' | 'private'>('public')
+  const [processWithAI, setProcessWithAI] = useState(true)
+  const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [open, setOpen] = useState(false)
-  const [privacySetting, setPrivacySetting] = useState<"private" | "public">("private")
-  const [allowedUsers, setAllowedUsers] = useState<string[]>([]) // user _id array
-  const [userOptions, setUserOptions] = useState<{ label: string; value: string }[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const { toast } = useToast()
-  const profile = useSelector((state: RootState) => state.auth.user)
+  const [dragActive, setDragActive] = useState(false)
 
-  // Fetch user list for sharing (lawyers/clients)
-  useEffect(() => {
-    async function fetchUsers() {
-      const res = await fetch("/api/user/all-users");
-      const data = await res.json();
-      setUserOptions(data.users.map((u: any) => ({
-        label: `${u.first_name} ${u.last_name} (${u.email})`,
-        value: u._id
-      })));
-    }
-    if (privacySetting === "public") {
-      fetchUsers();
-    }
-  }, [privacySetting]);
+  // Get user from Redux store
+  const user = useSelector((state: RootState) => state.auth.user)
+  const isLawyer = user?.account_type === 'lawyer'
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const validation = validatePDFFile(file)
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelection(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleFileSelection = (selectedFile: File) => {
+    const validation = validatePDFFile(selectedFile)
     if (!validation.isValid) {
-      toast({
-        title: "Invalid File",
-        description: validation.error,
-        variant: "destructive",
-      })
+      toast.error(validation.error)
       return
     }
-    setSelectedFile(file)
+    setFile(selectedFile)
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileSelection(e.target.files[0])
+    }
   }
 
   const handleUpload = async () => {
-    if (!selectedFile || !profile?._id) {
-      toast({
-        title: "Error",
-        description: "Please select a file and ensure you're logged in",
-        variant: "destructive",
-      })
+    if (!file || !user?._id) {
+      toast.error('Please select a file and ensure you are logged in')
       return
     }
-    if (privacySetting === "public" && allowedUsers.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select users to share with",
-        variant: "destructive",
-      })
+
+    // Lawyers cannot upload private documents
+    if (isLawyer && privacy === 'private') {
+      toast.error('Lawyers can only upload public documents')
       return
     }
+
+    setIsUploading(true)
+    setUploadProgress(0)
 
     try {
-      setUploading(true)
-      setUploadProgress(10)
-      toast({
-        title: "Uploading...",
-        description: "Uploading your PDF document",
-      })
+      // Step 1: Upload to S3 (50% progress)
+      setUploadProgress(25)
+      const fileUrl = await uploadPDFToS3(file, user._id)
 
-      setUploadProgress(30)
-      const fileUrl = await uploadPDFToS3(selectedFile, profile._id)
-      if (!fileUrl) throw new Error("Failed to upload file to storage")
-      setUploadProgress(70)
-
-      const documentData = {
-        userId: profile._id,
-        fileUrl: fileUrl,
-        fileName: selectedFile.name,
-        isPublic: privacySetting === "public",
-        allowedUsers: privacySetting === "public" ? allowedUsers : [],
+      // Step 2: Save to backend (50% progress)
+      setUploadProgress(50)
+      const uploadData = {
+        userId: user._id,
+        fileUrl,
+        fileName: file.name
       }
-      const response = await uploadDocument(documentData)
-      if (!response.success) throw new Error(response.message || "Failed to save document")
-      setUploadProgress(100)
 
-      toast({
-        title: "Success!",
-        description: "PDF uploaded successfully. AI processing started in background.",
-        variant: "default",
-      })
+      setUploadProgress(75)
+      const result = await uploadDocument(uploadData as any)
 
-      setSelectedFile(null)
-      setUploadProgress(0)
-      setOpen(false)
-      if (fileInputRef.current) fileInputRef.current.value = ""
-      onUploadSuccess?.()
-      setAllowedUsers([])
+      if (result.success) {
+        setUploadProgress(100)
+        toast.success(`Document uploaded successfully as ${privacy}`)
+        
+        // Reset form
+        setFile(null)
+        setPrivacy('public')
+        setProcessWithAI(true)
+        
+        // Close dialog and refresh documents
+        onClose()
+        onUploadSuccess()
+      } else {
+        throw new Error(result.message || 'Upload failed')
+      }
     } catch (error: any) {
-      console.error("Upload error:", error)
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload PDF document",
-        variant: "destructive",
-      })
-      setUploadProgress(0)
+      console.error('Upload error:', error)
+      toast.error(error.message || 'Failed to upload document')
     } finally {
-      setUploading(false)
+      setIsUploading(false)
+      setUploadProgress(0)
     }
   }
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null)
-    if (fileInputRef.current) fileInputRef.current.value = ""
+  const resetForm = () => {
+    setFile(null)
+    setPrivacy('public')
+    setProcessWithAI(true)
+    setUploadProgress(0)
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+  const handleClose = () => {
+    if (!isUploading) {
+      resetForm()
+      onClose()
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload PDF
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload PDF Document</DialogTitle>
-          <DialogDescription>Upload a PDF document for AI processing and legal analysis.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Upload Document
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          {/* File Input */}
-          <div className="space-y-2">
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileSelect}
-              disabled={uploading}
-              className="cursor-pointer"
-            />
-            <p className="text-xs text-muted-foreground">Only PDF files are allowed. Maximum size: 10MB</p>
-          </div>
 
-          {/* Selected File Display */}
-          {selectedFile && (
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4 text-red-600" />
+        <div className="space-y-6">
+          {/* File Upload Area */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+              dragActive
+                ? 'border-blue-500 bg-blue-50'
+                : file
+                ? 'border-green-500 bg-green-50'
+                : 'border-gray-300 hover:border-gray-400'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            {file ? (
+              <div className="flex items-center justify-center gap-2 text-green-600">
+                <FileText className="h-8 w-8" />
                 <div>
-                  <p className="text-sm font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+                  <p className="font-medium">{file.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
               </div>
-              {!uploading && (
-                <Button variant="ghost" size="sm" onClick={handleRemoveFile} className="h-8 w-8 p-0">
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Document Visibility */}
-          <div className="space-y-2">
-            <Label htmlFor="privacy">Document Visibility</Label>
-            <RadioGroup
-              defaultValue="private"
-              onValueChange={(value: "private" | "public") => setPrivacySetting(value)}
-              className="flex space-x-4"
-              id="privacy"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="private" id="private" />
-                <Label htmlFor="private">Private</Label>
+            ) : (
+              <div className="space-y-2">
+                <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                <p className="text-gray-600">
+                  Drag and drop your PDF here, or{' '}
+                  <label className="text-blue-600 hover:text-blue-700 cursor-pointer underline">
+                    browse
+                    <Input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileInputChange}
+                      className="hidden"
+                    />
+                  </label>
+                </p>
+                <p className="text-xs text-gray-500">PDF files only, max 10MB</p>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="public" id="public" />
-                <Label htmlFor="public">Public</Label>
-              </div>
-            </RadioGroup>
-            <p className="text-xs text-muted-foreground">
-              Private documents are only visible to you. Public documents can be shared.
-            </p>
+            )}
           </div>
 
-          {/* Multi-select for Allowed Users If Public */}
-          {privacySetting === "public" && (
-            <div className="space-y-2">
-              <Label htmlFor="allowed-users">Select users to share with</Label>
-              <MultiSelect
-                options={userOptions}
-                value={allowedUsers}
-                onChange={setAllowedUsers}
-                placeholder="Choose clients or lawyers"
-                id="allowed-users"
-                disabled={uploading}
-              />
-              <p className="text-xs text-muted-foreground">
-                Select users who can view this document. (You will always have access.)
-              </p>
-            </div>
-          )}
+          {/* Privacy Settings */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Document Privacy</Label>
+            <RadioGroup
+              value={privacy}
+              onValueChange={(value: 'public' | 'private') => setPrivacy(value)}
+              className="space-y-2"
+            >
+              <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                <RadioGroupItem value="public" id="public" />
+                <Globe className="h-4 w-4 text-green-600" />
+                <div className="flex-1">
+                  <Label htmlFor="public" className="font-medium">
+                    Public
+                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Visible to you and can be accessed by lawyers
+                  </p>
+                </div>
+              </div>
+              
+              <div className={`flex items-center space-x-2 p-3 border rounded-lg ${
+                isLawyer ? 'opacity-50 cursor-not-allowed' : ''
+              }`}>
+                <RadioGroupItem 
+                  value="private" 
+                  id="private" 
+                  disabled={isLawyer}
+                />
+                <Lock className="h-4 w-4 text-blue-600" />
+                <div className="flex-1">
+                  <Label htmlFor="private" className="font-medium">
+                    Private
+                  </Label>
+                  <p className="text-xs text-gray-500">
+                    Only visible to you. You can share with specific lawyers later.
+                  </p>
+                </div>
+              </div>
+            </RadioGroup>
+
+            {isLawyer && (
+              <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <p className="text-xs text-amber-700">
+                  Lawyers can only upload public documents
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* AI Processing Option */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="processWithAI"
+              checked={processWithAI}
+              onChange={(e) => setProcessWithAI(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="processWithAI" className="text-sm">
+              Process with AI for automatic summary generation
+            </Label>
+          </div>
 
           {/* Upload Progress */}
-          {uploading && (
+          {isUploading && (
             <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Uploading...</span>
+                <span>{Math.round(uploadProgress)}%</span>
+              </div>
               <Progress value={uploadProgress} className="w-full" />
-              <p className="text-xs text-center text-muted-foreground">Uploading... {uploadProgress}%</p>
             </div>
           )}
 
-          {/* Upload Button */}
+          {/* Action Buttons */}
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isUploading}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpload} disabled={!selectedFile || uploading}>
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload PDF
-                </>
-              )}
+            <Button
+              onClick={handleUpload}
+              disabled={!file || isUploading}
+              className="min-w-[100px]"
+            >
+              {isUploading ? 'Uploading...' : 'Upload'}
             </Button>
           </div>
         </div>

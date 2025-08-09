@@ -119,7 +119,7 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
                     </SelectItem>
                   ) : (
                     cases.map((caseItem) => (
-                      <SelectItem key={caseItem._id} value={caseItem._id}>
+                      <SelectItem key={caseItem._id} value={caseItem._id as string}>
                         {caseItem.title}
                       </SelectItem>
                     ))
