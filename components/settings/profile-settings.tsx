@@ -47,7 +47,7 @@ const profileFormSchema = z.object({
     "intellectual",
     "real-estate",
   ]),
-  experience: z.enum(["1", "3", "6", "10"]),
+  experience: z.enum(["1", "3", "6", "10"]).optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileFormSchema>
@@ -101,26 +101,14 @@ export default function ProfileSettings() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      dispatch(logout())
-      router.push("/login")
-      toast({
-        title: "Logged out.",
-        description: "You have been logged out successfully.",
-        variant: "success",
-      })
-    } catch (error) {
-      toast({
-        title: "Logout error.",
-        description: "An error occurred while logging out.",
-        variant: "error",
-      })
-    }
-  }
-
-  const handleAvatarChange = () => {
-    fileInputRef.current?.click()
+  const handleLogout = () => {
+    dispatch(logout())
+    router.push("/login")
+    toast({
+      title: "Logged out.",
+      description: "You have been logged out successfully.",
+      variant: "success",
+    })
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +133,7 @@ export default function ProfileSettings() {
             variant: "success",
           })
         }
-      } catch (err) {
+      } catch {
         toast({
           title: "Error.",
           description: "An error occurred while updating your profile picture.",
@@ -158,6 +146,7 @@ export default function ProfileSettings() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h3 className="text-xl font-semibold">Profile Settings</h3>
@@ -174,7 +163,9 @@ export default function ProfileSettings() {
         </Button>
       </div>
 
+      {/* Body */}
       <div className="flex flex-col md:flex-row gap-8">
+        {/* Avatar */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <Avatar className="h-24 w-24">
@@ -200,7 +191,6 @@ export default function ProfileSettings() {
               onChange={handleFileChange}
             />
           </div>
-
           <div className="text-center">
             <h4 className="font-medium">
               {form.watch("first_name")} {form.watch("last_name")}
@@ -209,9 +199,11 @@ export default function ProfileSettings() {
           </div>
         </div>
 
+        {/* Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* First Name */}
               <FormField
                 control={form.control}
                 name="first_name"
@@ -225,7 +217,7 @@ export default function ProfileSettings() {
                   </FormItem>
                 )}
               />
-
+              {/* Last Name */}
               <FormField
                 control={form.control}
                 name="last_name"
@@ -239,7 +231,7 @@ export default function ProfileSettings() {
                   </FormItem>
                 )}
               />
-
+              {/* Email */}
               <FormField
                 control={form.control}
                 disabled
@@ -254,7 +246,7 @@ export default function ProfileSettings() {
                   </FormItem>
                 )}
               />
-
+              {/* Phone */}
               <FormField
                 control={form.control}
                 name="phone"
@@ -268,7 +260,7 @@ export default function ProfileSettings() {
                   </FormItem>
                 )}
               />
-
+              {/* About */}
               <FormField
                 control={form.control}
                 name="about"
@@ -282,58 +274,64 @@ export default function ProfileSettings() {
                   </FormItem>
                 )}
               />
+              {/* Practice Area */}
+              {profile?.account_type === "lawyer" && (
+  <FormField
+    control={form.control}
+    name="practice_area"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Practice Area</FormLabel>
+        <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder="Select practice area" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            <SelectItem value="corporate">Corporate</SelectItem>
+            <SelectItem value="family">Family</SelectItem>
+            <SelectItem value="criminal">Criminal</SelectItem>
+            <SelectItem value="immigration">Immigration</SelectItem>
+            <SelectItem value="intellectual">Intellectual</SelectItem>
+            <SelectItem value="real-estate">Real Estate</SelectItem>
+          </SelectContent>
+        </Select>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
 
-              <FormField
-                control={form.control}
-                name="practice_area"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Practice Area</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select practice area" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="corporate">Corporate</SelectItem>
-                        <SelectItem value="family">Family</SelectItem>
-                        <SelectItem value="criminal">Criminal</SelectItem>
-                        <SelectItem value="immigration">Immigration</SelectItem>
-                        <SelectItem value="intellectual">Intellectual</SelectItem>
-                        <SelectItem value="real-estate">Real Estate</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="experience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Experience</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select years" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">1 Year</SelectItem>
-                        <SelectItem value="3">3 Years</SelectItem>
-                        <SelectItem value="6">6 Years</SelectItem>
-                        <SelectItem value="10">10 Years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Experience → visible only for lawyers */}
+              {profile?.account_type === "lawyer" && (
+                <FormField
+                  control={form.control}
+                  name="experience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Experience</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select years" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">1 Year</SelectItem>
+                          <SelectItem value="3">3 Years</SelectItem>
+                          <SelectItem value="6">6 Years</SelectItem>
+                          <SelectItem value="10">10 Years</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
+            {/* Buttons */}
             <div className="mt-6 flex gap-4">
               <Button type="button" variant="outline" className="flex-1" onClick={() => form.reset()}>
                 Cancel

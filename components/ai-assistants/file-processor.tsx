@@ -81,10 +81,22 @@ export default function FileProcessor() {
       color: 'bg-red-100 text-red-800',
       label: 'PDF Document'
     },
+    docx: {
+      extensions: ['.docx', '.doc'],
+      icon: FileText,
+      color: 'bg-blue-100 text-blue-800',
+      label: 'Word Document'
+    },
+    text: {
+      extensions: ['.txt', '.text'],
+      icon: File,
+      color: 'bg-green-100 text-green-800',
+      label: 'Text File'
+    },
     image: {
       extensions: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'],
       icon: Image,
-      color: 'bg-blue-100 text-blue-800',
+      color: 'bg-orange-100 text-orange-800',
       label: 'Image'
     },
     video: {
@@ -118,18 +130,23 @@ export default function FileProcessor() {
     if (!isFileSupported(file)) {
       toast({
         title: "Unsupported file type",
-        description: "Please select a PDF, image, or video file.",
+        description: "Please select a PDF, DOCX, TXT, image, or video file.",
         variant: "destructive"
       })
       return
     }
 
-    // Check file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    // Check file size (max 10MB for documents, 5MB for others)
+    const fileType = getFileType(file.name)
+    const maxSize = (fileType?.type === 'pdf' || fileType?.type === 'docx' || fileType?.type === 'text') 
+      ? 10 * 1024 * 1024 // 10MB for documents
+      : 5 * 1024 * 1024  // 5MB for images/videos
+    
     if (file.size > maxSize) {
+      const sizeLimit = maxSize === 10 * 1024 * 1024 ? '10MB' : '5MB'
       toast({
         title: "File too large",
-        description: "Please select a file smaller than 5MB.",
+        description: `Please select a file smaller than ${sizeLimit}.`,
         variant: "destructive"
       })
       return
@@ -274,7 +291,7 @@ export default function FileProcessor() {
                     ref={fileInputRef}
                     type="file"
                     onChange={handleFileSelect}
-                    accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff,.tif,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.m4v,.3gp,.ogv"
+                    accept=".pdf,.docx,.doc,.txt,.text,.jpg,.jpeg,.png,.gif,.bmp,.webp,.tiff,.tif,.mp4,.avi,.mov,.wmv,.flv,.webm,.mkv,.m4v,.3gp,.ogv"
                     className="hidden"
                   />
                   

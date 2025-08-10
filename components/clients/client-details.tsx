@@ -1,4 +1,5 @@
 "use client"
+
 import type { Client } from "@/types/client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MessageSquare, Calendar, Loader2 } from "lucide-react"
+import { MessageSquare,HelpCircle, Calendar, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { updateClientStatus, updateClientNotes } from "@/lib/api/clients-api"
 import { createMeeting } from "@/lib/api/meeting-api"
@@ -25,15 +26,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ClientCases from "@/components/clients/client-cases"
-import ClientDocuments from "@/components/clients/client-documents"
 import ClientNotes from "@/components/clients/client-notes"
 import { SimpleChat } from "@/components/chat/simple-chat"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface ClientDetailsProps {
   client: Client
 }
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
+  const { t } = useTranslation()
   const [client, setClient] = useState<Client>(initialClient)
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
@@ -41,21 +43,23 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   const router = useRouter()
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
-
+  const user=useSelector((state: any) => state.auth.user)
+  const isLawyer = user?.account_type === "lawyer";
+  //  const lawyerData = !isLawyer ? initialClient?.account_type=== : null;
   // Handle meeting scheduling
   const handleScheduleMeeting = async () => {
     if (!meetingLink.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter a meeting link",
+        title: t("pages:clientDetails.error"),
+        description: t("pleaseEnterMeetingLink"),
         variant: "destructive",
       })
       return
     }
     if (!profile?._id) {
       toast({
-        title: "Error",
-        description: "Please ensure you're logged in",
+        title: t("pages:clientDetails.error"),
+        description: t("pleaseLogin"),
         variant: "destructive",
       })
       return
@@ -70,20 +74,20 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       const response = await createMeeting(meetingData)
       if (response.success) {
         toast({
-          title: "Success!",
-          description: "Meeting scheduled successfully",
+          title: t("pages:clientDetails.success"),
+          description: t("pages:clientDetails.meetingScheduled"),
           variant: "default",
         })
         setMeetingLink("")
         setMeetingDialogOpen(false)
       } else {
-        throw new Error(response.message || "Failed to schedule meeting")
+        throw new Error(response.message || t("pages:clientDetails.failedToScheduleMeeting"))
       }
     } catch (error: any) {
       console.error("Meeting scheduling error:", error)
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule meeting",
+        title: t("pages:clientDetails.error"),
+        description: error.message || t("pages:clientDetails.failedToScheduleMeeting"),
         variant: "destructive",
       })
     } finally {
@@ -103,13 +107,13 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       const updatedClient = await updateClientStatus(client.id, status)
       setClient(updatedClient)
       toast({
-        title: "Status updated",
-        description: `Client status has been updated to ${status}`,
+        title: t("pages:clientDetails.status.statusUpdated"),
+        description: t("pages:clientDetails.status.clientStatusUpdated", { status }),
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update client status",
+        title: t("error"),
+        description: t("pages:clientDetails.failedToUpdateStatus"),
         variant: "destructive",
       })
     }
@@ -121,14 +125,14 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       const updatedClient = await updateClientNotes(client.id, notes)
       setClient(updatedClient)
       toast({
-        title: "Notes updated",
-        description: "Client notes have been updated",
+        title: t("pages:clientDetails.notesUpdated"),
+        description: t("pages:clientDetails.clientNotesUpdated"),
       })
       return true
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to update client notes",
+        title: t("error"),
+        description: t("pages:clientDetails.failedToUpdateNotes"),
         variant: "destructive",
       })
       return false
@@ -141,19 +145,19 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       case "pending":
         return (
           <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
-            Pending
+            {t("pages:clientDetails.status.pending")}
           </Badge>
         )
       case "active":
         return (
           <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-            Active
+            {t("pages:clientDetails.status.active")}
           </Badge>
         )
       case "inactive":
         return (
           <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-            Inactive
+            {t("pages:clientDetails.status.inactive")}
           </Badge>
         )
       default:
@@ -163,12 +167,20 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-bold">Client Details</h1>
-        <Button variant="outline" onClick={() => router.back()}>
-          Back to Client
-        </Button>
-      </div>
+      
+      {/* Header */}
+     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  <h1 className="text-2xl font-bold">
+    {isLawyer ? "Client Details" : "Lawyer Details"}
+  </h1>
+
+  <Button variant="outline" onClick={() => router.back()}>
+    {isLawyer
+      ? t("pages:clientDetails.backToClient")
+      : t("pages:clientDetails.backToLawyer")}
+  </Button>
+</div>
+
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
@@ -184,33 +196,42 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-2">
-            {/* Action Buttons */}
-            <Button variant="outline" onClick={handleCreateChat} title="Create Chat">
+            {user?.account_type !== "lawyer" && (
+  <Button
+    variant="outline"
+    onClick={() => router.push("/qa")}
+    title={t("pages:clientDetails.QA")}
+  >
+     <HelpCircle className="mr-2" size={16} />
+    {t("pages:clientDetails.QA")}
+  </Button>
+)}
+
+            <Button variant="outline" onClick={handleCreateChat} title={t("pages:clientDetails.createChat")}>
               <MessageSquare className="mr-2" size={16} />
-              Chat
+              {t("pages:clientDetails.chat")}
             </Button>
-            {/* Schedule Meeting Button with Dialog */}
             <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" title="Schedule Meeting">
+                <Button variant="outline" title={t("pages:clientDetails.scheduleMeeting")}>
                   <Calendar className="mr-2" size={16} />
-                  Schedule Meeting
+                  {t("pages:clientDetails.scheduleMeeting")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Schedule Meeting</DialogTitle>
+                  <DialogTitle>{t("pages:clientDetails.scheduleMeeting")}</DialogTitle>
                   <DialogDescription>
-                    Schedule a meeting with {client.first_name}. Please provide the meeting link.
+                    {t("pages:clientDetails.scheduleMeetingWith", { name: client.first_name })}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="meetingLink">Meeting Link</Label>
+                    <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
                     <Input
                       id="meetingLink"
                       type="url"
-                      placeholder="https://zoom.us/j/123456789 or https://meet.google.com/abc-defg-hij"
+                      placeholder={t("pages:clientDetails.meetingLinkPlaceholder")}
                       value={meetingLink}
                       onChange={(e) => setMeetingLink(e.target.value)}
                       disabled={isSchedulingMeeting}
@@ -222,18 +243,18 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                       onClick={() => setMeetingDialogOpen(false)}
                       disabled={isSchedulingMeeting}
                     >
-                      Cancel
+                      {t("pages:clientDetails.cancel")}
                     </Button>
                     <Button onClick={handleScheduleMeeting} disabled={!meetingLink.trim() || isSchedulingMeeting}>
                       {isSchedulingMeeting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Scheduling...
+                          {t("pages:clientDetails.scheduling")}
                         </>
                       ) : (
                         <>
                           <Calendar className="mr-2 h-4 w-4" />
-                          Schedule Meeting
+                          {t("pages:clientDetails.scheduleMeeting")}
                         </>
                       )}
                     </Button>
@@ -246,34 +267,34 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Email</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.email")}</h3>
               <p className="text-base">{client.email}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Phone</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.phone")}</h3>
               <p className="text-base">{client.phone}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Address</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.address")}</h3>
               <p className="text-base">{client.address}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Client Since</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.clientSince")}</h3>
               <p className="text-base">{formatDate(client.createdAt)}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Last Contact</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.lastContact")}</h3>
               <p className="text-base">{formatDate(client.lastContactDate)}</p>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Active Cases</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:clientDetails.activeCases")}</h3>
               <p className="text-base">{client.activeCases}</p>
             </div>
           </div>
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
-              <TabsTrigger value="cases">Cases</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
+              <TabsTrigger value="notes">{t("pages:clientDetails.notes")}</TabsTrigger>
             </TabsList>
             <TabsContent value="cases" className="mt-4">
               <ClientCases clientId={client.id} />
@@ -284,7 +305,6 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           </Tabs>
         </CardContent>
       </Card>
-      {/* Simple Chat Modal */}
       {showChat && (
         <SimpleChat
           onClose={() => setShowChat(false)}

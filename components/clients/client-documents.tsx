@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import type { FileMetadata } from "@/types/file"
 
 interface ClientDocumentsProps {
-  clientId: string
+  clientId: string;
 }
 
 export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
@@ -30,11 +30,11 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
           title: "Error",
           description: "Failed to load client files",
           variant: "destructive",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     loadFiles()
   }, [clientId, toast])
@@ -94,5 +94,5 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
