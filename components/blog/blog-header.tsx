@@ -67,17 +67,6 @@ export default function BlogHeader({
             <SelectItem value="insights">{t('pages:blog.insights')}</SelectItem>
           </SelectContent>
         </Select>
-        
-        <Select value={selectedStatus} onValueChange={onStatusFilter}>
-          <SelectTrigger className="w-full sm:w-32">
-            <SelectValue placeholder={t('pages:blog.status')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('pages:blog.allStatus')}</SelectItem>
-            <SelectItem value="published">{t('pages:blog.published')}</SelectItem>
-            <SelectItem value="draft">{t('pages:blog.draft')}</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   )

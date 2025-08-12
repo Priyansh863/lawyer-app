@@ -3,8 +3,20 @@ import { Input } from "@/components/ui/input"
 import { Search, Download, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "@/hooks/useTranslation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PDFUpload from "./pdf-upload"
+import SecureLinkGenerator from "./secure-link-generator"
+import { useSelector } from "react-redux"
+import { RootState } from "@/lib/store"
+import axios from "axios"
+import { getClientsAndLawyers } from "@/lib/api/users-api"
+
+interface Client {
+  _id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
 
 interface DocumentsHeaderProps {
   onDocumentUploaded?: () => void
@@ -13,6 +25,21 @@ interface DocumentsHeaderProps {
 export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
   const { t } = useTranslation()
   const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [clients, setClients] = useState<Client[]>([])
+  const user = useSelector((state: RootState) => state.auth.user)
+  
+  // Fetch clients for lawyers
+  useEffect(() => {
+    const fetchClients = async () => {
+      const res = await getClientsAndLawyers()
+ 
+      setClients(res.clients)
+    };
+
+    
+
+    fetchClients();
+  }, [user]);
   
   const handleUploadSuccess = () => {
     setShowUploadDialog(false)
@@ -26,7 +53,12 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
         <p className="text-muted-foreground">{t('pages:documents.description')}</p>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        {/* Show secure link generator for lawyers */}
+        {(user)?.account_type === 'lawyer' && (
+          <SecureLinkGenerator clients={clients} />
+        )}
+        
         <Button 
           onClick={() => setShowUploadDialog(true)}
           className="bg-gray-900 hover:bg-gray-800"

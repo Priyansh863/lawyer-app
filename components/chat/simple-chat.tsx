@@ -12,6 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
+import { useSelector } from "react-redux"
+import type { RootState } from "@/lib/store"
 
 import {
   createOrGetChat,
@@ -48,6 +50,8 @@ export function SimpleChat({
   const [isLoading, setIsLoading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
+  const profile = useSelector((state: RootState) => state.auth.user)
+const currentUserId = profile?._id
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -186,7 +190,6 @@ export function SimpleChat({
     }
   }, [])
 
-  const currentUserId = "current_user"
   const participant = chat?.lawyer_id?._id === currentUserId ? chat?.client_id : chat?.lawyer_id
   const participantName = participant ? `${participant.first_name} ${participant.last_name}`.trim() : clientName
 

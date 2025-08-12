@@ -26,6 +26,20 @@ export interface Author {
   avatar?: string
 }
 
+export interface SpatialInfo {
+  planet?: string
+  latitude?: number
+  longitude?: number
+  altitude?: number
+  timestamp?: Date
+  floor?: number
+}
+
+export interface Citation {
+  type: 'spatial' | 'user' | 'url'
+  content: string
+}
+
 export interface BlogPost {
   _id: string
   title: string
@@ -39,6 +53,13 @@ export interface BlogPost {
   updatedAt: string
   likes?: number
   views?: number
+  slug?: string
+  spatialInfo?: SpatialInfo
+  citations?: Citation[]
+  hashtag?: string
+  customUrl?: string
+  shortUrl?: string
+  qrCodeUrl?: string
 }
 
 // API Response interfaces
@@ -75,6 +96,9 @@ export const createBlogPost = async (blogData: {
   category: string
   status: 'draft' | 'published'
   image?: string
+  spatialInfo?: SpatialInfo
+  citations?: Citation[]
+  hashtag?: string
 }): Promise<BlogPost> => {
   try {
     const response = await axios.post<ApiResponse<BlogPost>>(
@@ -90,7 +114,7 @@ export const createBlogPost = async (blogData: {
 }
 
 // 2. List All Blogs
-export const getBlogPosts = async (params: BlogListParams = {}): Promise<BlogListResponse> => {
+export const getBlogPosts = async (params: BlogListParams = {})=> {
   try {
     const queryParams = new URLSearchParams()
     if (params.page) queryParams.append('page', params.page.toString())
@@ -101,8 +125,12 @@ export const getBlogPosts = async (params: BlogListParams = {}): Promise<BlogLis
 
     const response = await axios.get<ApiResponse<BlogListResponse>>(
       `${API_BASE_URL}/blog/list?${queryParams.toString()}`
+
+
     )
-    return response.data.data
+
+    console.log(response,"responseresponseresponseresponseresponseresponse")
+    return response.data
   } catch (error) {
     console.error('Error fetching blogs:', error)
     throw error

@@ -2,16 +2,23 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { FileText, FileArchive, DollarSign, MessageSquare, Users, Home } from "lucide-react" // Added Users and Home icons
+import { FileText, FileArchive, DollarSign, MessageSquare, Users, Home, Coins } from "lucide-react" // Added Users, Home, and Coins icons
 import { activityApi, type DashboardSummary } from "@/lib/api/activity-api"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
+import axios from "axios"
 
 interface StatCardProps {
   title: string
   value: string | number
   icon: React.ReactNode
+}
+
+interface TokenBalance {
+  current_balance: number
+  total_purchased: number
+  monthly_usage: number
 }
 
 function StatCard({ title, value, icon }: StatCardProps) {
@@ -40,11 +47,15 @@ export default function StatsCards() {
   const [stats, setStats] = useState<StatCardProps[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [tokenBalance, setTokenBalance] = useState<TokenBalance | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
   const { t } = useTranslation()
 
   useEffect(() => {
     fetchStats()
+    if (profile?.account_type === 'client') {
+      fetchTokenBalance()
+    }
   }, [profile])
 
   async function fetchStats() {
@@ -81,6 +92,37 @@ export default function StatsCards() {
     }
   }
 
+  const getToken = () => {
+    if (typeof window !== "undefined") {
+      const user = localStorage.getItem("user");
+      return user ? JSON.parse(user).token : null;
+    }
+    return null;
+  };
+
+  async function fetchTokenBalance() {
+    try {
+      const token = getToken();
+      if (!token) return;
+
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/user/tokens`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setTokenBalance(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching token balance:', error);
+    }
+  }
+
   const getIconForStat = (iconName: string, title: string) => {
     switch (iconName) {
       case "FileText":
@@ -95,6 +137,8 @@ export default function StatsCards() {
         return <Users size={18} />
       case "Home": // Added Home icon case
         return <Home size={18} />
+      case "Coins": // Added Coins icon case for tokens
+        return <Coins size={18} />
       default:
         // Fallback based on title
         if (title.toLowerCase().includes("active")) {
@@ -151,10 +195,35 @@ export default function StatsCards() {
     )
   }
 
+  // Prepare token stats for client users
+  const tokenStats: StatCardProps[] = [];
+  if (profile?.account_type === 'client' && tokenBalance) {
+    tokenStats.push(
+      {
+        title: 'Available Tokens',
+        value: tokenBalance.current_balance,
+        icon: <Coins size={18} />
+      },
+      {
+        title: 'Total Purchased',
+        value: tokenBalance.total_purchased,
+        icon: <DollarSign size={18} />
+      },
+      {
+        title: 'Monthly Usage',
+        value: tokenBalance.monthly_usage,
+        icon: <MessageSquare size={18} />
+      }
+    );
+  }
+
+  // Combine stats and token stats
+  const allStats = [...stats, ...tokenStats];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat) => (
-        <StatCard key={stat.title} title={stat.title} value={stat.value} icon={stat.icon} />
+      {allStats.map((stat, index) => (
+        <StatCard key={`${stat.title}-${index}`} title={stat.title} value={stat.value} icon={stat.icon} />
       ))}
     </div>
   )

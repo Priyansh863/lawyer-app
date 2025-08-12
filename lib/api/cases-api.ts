@@ -132,9 +132,9 @@ export const updateCaseStatus = casesApi.updateCaseStatus
 /**
  * Get cases for a specific client
  */
-export async function getClientCases(clientId: string): Promise<Case[]> {
+export async function getClientCases(clientId: string,account_type:string): Promise<Case[]> {
   try {
-    const response = await axios.get(`${API_BASE_URL}/case/client/${clientId}`, {
+    const response = await axios.get(`${API_BASE_URL}/case/${account_type}/${clientId}`, {
       headers: getAuthHeaders(),
     })
 

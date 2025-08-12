@@ -40,7 +40,7 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
         if (categoryFilter !== "all") params.category = categoryFilter;
         if (statusFilter !== "all") params.status = statusFilter;
         
-        const response = await getBlogPosts(params);
+        const response:any = await getBlogPosts(params);
         setBlogs(response.blogs);
         setPagination(response.pagination);
       } catch (error) {

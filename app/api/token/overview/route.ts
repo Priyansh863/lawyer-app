@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Forward the request to the backend
-    const response = await fetch(`${BACKEND_URL}/api/v1/token/overview`, {
+    const response = await fetch(`${BACKEND_URL}/token/overview`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader,

@@ -3,6 +3,9 @@ export type PostStatus = "draft" | "published" | "scheduled" | "failed"
 export type ContentType = "social" | "blog" | "newsletter"
 
 export interface LegalPost {
+  spatialInfo: SpatialInfo | undefined
+  citations: Citation[] | undefined
+  hashtag: string | undefined
   id: string
   title: string
   content: string

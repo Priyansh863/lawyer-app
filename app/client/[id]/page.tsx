@@ -4,20 +4,22 @@ import ClientDetails from "@/components/clients/client-details"
 import type { Client } from "@/types/client"
 
 interface ClientPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     data?: string
-  }
+  }>
 }
 
 export default async function ClientDetailPage({ params, searchParams }: ClientPageProps) {
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
   let clientData: Client | null = null
   
-  if (searchParams.data) {
+  if (resolvedSearchParams.data) {
     try {
-      clientData = JSON.parse(decodeURIComponent(searchParams.data)) as Client
+      clientData = JSON.parse(decodeURIComponent(resolvedSearchParams.data)) as Client
     } catch (error) {
       console.error("Failed to parse client data from URL:", error)
     }

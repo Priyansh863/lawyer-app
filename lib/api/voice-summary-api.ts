@@ -46,7 +46,7 @@ export async function getDocumentSummaries(): Promise<DocumentSummary[]> {
       caseId: doc._id,
       createdAt: doc.createdAt || new Date().toISOString(),
       uploadedBy: doc.uploaded_by || 'Unknown',
-      status: doc.status === 'Approved' ? 'ready' : 'processing',
+      status: doc.status,
       link: doc.link
     }))
   } catch (error) {

@@ -14,7 +14,9 @@ import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import { createBlogPost, updateBlogPost, deleteBlogPost, getBlogPost, BlogPost } from "@/lib/api/blog-api"
 import { useTranslation } from "@/hooks/useTranslation" // ✅ add translation hook
-
+import SpatialMetadataInput from '@/components/spatial/spatial-metadata-input'
+import { generateQRCode } from '@/lib/utils/qr-code'
+import { generateCustomUrl, generateShortUrl } from '@/lib/api/spatial-api'
 const EMPTY_POST = {
   title: "",
   content: "",
@@ -34,6 +36,10 @@ export default function BlogEditor({ postId }: { postId?: string }) {
   const [isUploading, setIsUploading] = useState(false)
   const user = useSelector((state: RootState) => state.auth.user)
   const { toast } = useToast()
+
+  const [spatialInfo, setSpatialInfo] = useState({})
+const [citations, setCitations] = useState([])
+const [hashtag, setHashtag] = useState('')
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -87,16 +93,16 @@ export default function BlogEditor({ postId }: { postId?: string }) {
   }
 
   const handleSave = async (newStatus?: "draft" | "published") => {
-    if (!validateForm()) {
-      toast({
-        title: t('pages:blog.validation.errorTitle'),
-        description: newStatus === 'published' 
-          ? t('pages:blog.validation.errorPublish')
-          : t('pages:blog.validation.errorDraft'),
-        variant: 'error',
-      })
-      return
-    }
+    // if (!validateForm()) {
+    //   toast({
+    //     title: t('pages:blog.validation.errorTitle'),
+    //     description: newStatus === 'published' 
+    //       ? t('pages:blog.validation.errorPublish')
+    //       : t('pages:blog.validation.errorDraft'),
+    //     variant: 'error',
+    //   })
+    //   return
+    // }
     
     setIsSaving(true)
     try {
@@ -108,6 +114,9 @@ export default function BlogEditor({ postId }: { postId?: string }) {
         image: post.image,
         category: post.category,
         status: newStatus || post.status,
+        spatialInfo,
+        citations,
+        hashtag,
       }
 
       if (postId) {
@@ -282,6 +291,20 @@ export default function BlogEditor({ postId }: { postId?: string }) {
               </SelectContent>
             </Select>
           </div>
+          {/* Add this after the category Select component */}
+<div className="space-y-4">
+  <SpatialMetadataInput
+    spatialInfo={spatialInfo}
+    citations={citations}
+    hashtag={hashtag}
+    onSpatialInfoChange={setSpatialInfo}
+    onCitationsChange={setCitations}
+    onHashtagChange={setHashtag}
+    generateCustomUrl={(spatial) => generateCustomUrl('blog', post.title?.toLowerCase().replace(/\s+/g, '-') || 'untitled', spatial)}
+    generateShortUrl={(spatial) => generateShortUrl('blog', post.title?.toLowerCase().replace(/\s+/g, '-') || 'untitled', spatial)}
+    generateQrCode={generateQRCode}
+  />
+</div>
         </div>
       </div>
     </div>

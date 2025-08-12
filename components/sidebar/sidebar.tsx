@@ -98,12 +98,11 @@ export default function Sidebar() {
       ? [
           { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
           { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
-          { href: "/ai-marketing", icon: <TrendingUp size={18} />, label: t('navigation.aiMarketing') },
         ]
       : []),
+    { href: "/posts", icon: <FileText size={18} />, label: "Posts & Content" },
     { href: "/chat", icon: <MessageSquare size={18} />, label: t('navigation.chat') },
     { href: "/video-consultations", icon: <Video size={18} />, label: t('navigation.videoConsultations') },
-    { href: "/blog", icon: <BookOpen size={18} />, label: t('navigation.blog') },
     { href: "/qa", icon: <HelpCircle size={18} />, label: t('navigation.qa') },
     { href: "/token", icon: <Coins size={18} />, label: t('navigation.token') },
     { href: "/settings", icon: <Settings size={18} />, label: t('navigation.settings') },

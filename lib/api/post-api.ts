@@ -98,7 +98,7 @@ export const createPost = async (postData: CreatePostRequest): Promise<Post> => 
 
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/v1/post/create`,
+      `${API_BASE_URL}/post/create`,
       postData,
       {
         headers: {

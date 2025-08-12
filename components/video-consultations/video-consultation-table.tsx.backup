@@ -1,0 +1,299 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Video, ExternalLink, Loader2, Calendar, X } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Badge } from "@/components/ui/badge"
+import { formatDate } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { getMeetings, updateMeetingStatus, type Meeting } from "@/lib/api/meeting-api"
+
+const searchFormSchema = z.object({
+  query: z.string(),
+})
+
+type SearchFormData = z.infer<typeof searchFormSchema>
+
+type VideoConsultationTableProps = {}
+
+export default function VideoConsultationTable({}: VideoConsultationTableProps) {
+  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([])
+  const [loading, setLoading] = useState(true)
+  const [updatingMeeting, setUpdatingMeeting] = useState<string | null>(null)
+  const { toast } = useToast()
+
+  const searchForm = useForm<SearchFormData>({
+    resolver: zodResolver(searchFormSchema),
+    defaultValues: {
+      query: "",
+    },
+  })
+
+  useEffect(() => {
+    fetchMeetings()
+  }, [])
+
+  const fetchMeetings = async () => {
+    try {
+      setLoading(true)
+      const response:any = await getMeetings()
+      if (response.success && response.data) {
+        setMeetings(response.data)
+        setFilteredMeetings(response.data)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to fetch meetings",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = (data: SearchFormData) => {
+    const query = data.query.toLowerCase()
+    if (query === "") {
+      setFilteredMeetings(meetings)
+    } else {
+      const filtered = meetings.filter(
+        (meeting) =>
+          (meeting.clientName && meeting.clientName.toLowerCase().includes(query)) ||
+          (meeting.lawyerName && meeting.lawyerName.toLowerCase().includes(query)),
+      )
+      setFilteredMeetings(filtered)
+    }
+  }
+
+  const resetSearch = () => {
+    searchForm.reset()
+    setFilteredMeetings(meetings)
+  }
+
+  
+const getStatusBadge = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "scheduled":
+      return (
+        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          Scheduled
+          {/* or t("meetings:scheduled") if using translations */}
+        </Badge>
+      )
+    case "active":
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          Active
+        </Badge>
+      )
+    case "completed":
+      return (
+        <Badge className="bg-green-100 text-gray-800 hover:bg-gray-100">
+          Completed
+        </Badge>
+      )
+    case "cancelled":
+      return (
+        <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+          Cancelled
+        </Badge>
+      )
+    default:
+      return (
+        <Badge variant="secondary">
+          {status}
+        </Badge>
+      )
+  }
+}
+
+  const handleConnectToMeeting = (meeting: Meeting) => {
+    if (meeting.meetingLink) {
+      window.open(meeting.meetingLink, "_blank")
+      toast({
+        title: "Opening Meeting",
+        description: `Opening meeting with ${meeting.clientName || "client"}`,
+      })
+    } else {
+      toast({
+        title: "No Meeting Link",
+        description: "Meeting link is not available",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCloseMeeting = async (meetingId: string) => {
+    try {
+      setUpdatingMeeting(meetingId)
+      const response = await updateMeetingStatus(meetingId, "completed")
+      if (response.success) {
+        // Update local state
+        setMeetings((prev) =>
+          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
+        )
+        setFilteredMeetings((prev) =>
+          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
+        )
+        toast({
+          title: "Meeting Closed",
+          description: "Meeting has been marked as completed",
+        })
+      } else {
+        throw new Error(response.message || "Failed to close meeting")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to close meeting",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingMeeting(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Search Bar */}
+      <div className="flex w-full max-w-sm items-center space-x-2">
+        <Form {...searchForm}>
+          <FormField
+            control={searchForm.control}
+            name="query"
+            render={({ field }) => (
+              <FormItem className="flex-1 relative">
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      placeholder="Search consultations..."
+                      {...field}
+                      className="bg-[#F5F5F5] border-gray-200 pl-10"
+                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </Form>
+      </div>
+      {/* Consultations Table */}
+      <div className="rounded-md border w-full">
+        {" "}
+        {/* Added w-full here */}
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+          <div className="min-w-[1000px] relative">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[120px]">Client Name</TableHead>
+                  <TableHead className="min-w-[120px]">Lawyer Name</TableHead>
+                  <TableHead className="min-w-[150px]">Scheduled Time</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="min-w-[200px]">Meeting Link</TableHead>
+                  <TableHead className="min-w-[200px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex items-center justify-center space-x-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-gray-500">Loading meetings...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredMeetings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <div className="flex flex-col items-center space-y-2">
+                        <Calendar className="h-8 w-8 text-gray-400" />
+                        <span>No meetings found</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredMeetings.map((meeting: any, index: number) => (
+                    <TableRow key={meeting._id} className={index % 2 === 0 ? "bg-gray-100" : ""}>
+                      <TableCell className="min-w-[120px]">{meeting.client_id.first_name || "Unknown Client"}</TableCell>
+                      <TableCell className="min-w-[120px]">{meeting.lawyer_id.first_name || "Unknown Lawyer"}</TableCell>
+                      <TableCell className="min-w-[150px]">
+                        {meeting.createdAt ? formatDate(meeting.createdAt, true) : "Not scheduled"}
+                      </TableCell>
+                      <TableCell className="min-w-[100px]">{getStatusBadge(meeting.status || "scheduled")}</TableCell>
+                      <TableCell className="min-w-[200px]">
+                        {meeting.meetingLink ? (
+                          <div className="flex items-center space-x-2">
+                            <ExternalLink className="h-3 w-3 text-blue-600" />
+                            <span className="text-xs text-blue-600 truncate max-w-[150px]">{meeting.meetingLink}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">No link provided</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="min-w-[200px]">
+                        <div className="flex gap-1 flex-wrap">
+                          {meeting.status !== "completed" && meeting.meetingLink && (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+                              onClick={() => handleConnectToMeeting(meeting)}
+                            >
+                              <Video className="h-3 w-3 mr-1" />
+                              Connect
+                            </Button>
+                          )}
+                          {meeting.status !== "completed" && meeting.status !== "cancelled" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 bg-transparent"
+                              onClick={() => handleCloseMeeting(meeting._id)}
+                              disabled={updatingMeeting === meeting._id}
+                            >
+                              {updatingMeeting === meeting._id ? (
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ) : (
+                                <X className="h-3 w-3 mr-1" />
+                              )}
+                              Close
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

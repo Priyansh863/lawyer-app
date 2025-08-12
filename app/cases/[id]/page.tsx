@@ -4,21 +4,23 @@ import CaseDetails from "@/components/cases/case-details"
 import { Case } from "@/types/case"
 
 interface CasePageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     data?: string
-  }
+  }>
 }
 
 export default async function CasePage({ params, searchParams }: CasePageProps) {
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
   let caseData: Case | null = null
 
   // Try to get case data from URL search params
-  if (searchParams.data) {
+  if (resolvedSearchParams.data) {
     try {
-      caseData = JSON.parse(decodeURIComponent(searchParams.data)) as Case
+      caseData = JSON.parse(decodeURIComponent(resolvedSearchParams.data)) as Case
     } catch (error) {
       console.error("Failed to parse case data from URL:", error)
     }

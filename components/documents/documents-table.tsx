@@ -43,6 +43,8 @@ import { getDocuments, deleteDocument } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 
+import { ShareWithLawyerDialog } from '@/components/documents/share-with-lawyer-dialog'
+
 interface Document {
   _id: string
   document_name: string
@@ -59,12 +61,7 @@ interface Document {
   privacy?: 'public' | 'private'
   file_size?: number
   file_type?: string
-  shared_with?: {
-    _id: string
-    first_name: string
-    last_name: string
-    email: string
-  }[]
+  shared_with?: any[]
   is_shared?: boolean
   created_at?: string
   updated_at?: string
@@ -88,6 +85,8 @@ export default function DocumentsTable({
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Completed' | 'Failed' | 'Rejected' | 'Approved' | 'Processing' | 'Cancelled'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
   // Get user from Redux store
   const user = useSelector((state: RootState) => state.auth.user)
@@ -211,6 +210,28 @@ export default function DocumentsTable({
       </Badge>
     )
   }
+
+  // Handle share with lawyer
+const handleShareWithLawyer = (document: Document) => {
+  setSelectedDocument(document)
+  setShareDialogOpen(true)
+}
+
+// Handle share update
+const handleShareUpdate = (updatedDocument: any) => {
+  // Update the document in both allDocuments and documents arrays
+  setAllDocuments(prevDocs => 
+    prevDocs.map(doc => 
+      doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+    )
+  )
+  setDocuments(prevDocs => 
+    prevDocs.map(doc => 
+      doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+    )
+  )
+  toast.success('Document sharing updated successfully')
+}
 
   // Privacy badge
   const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
@@ -398,11 +419,14 @@ export default function DocumentsTable({
                           </DropdownMenuItem>
                           
                           {isClient && doc.privacy === 'private' && (
-                            <DropdownMenuItem className="flex items-center gap-2">
-                              <Share2 className="h-4 w-4" />
-                              Share with Lawyer
-                            </DropdownMenuItem>
-                          )}
+  <DropdownMenuItem 
+    onClick={() => handleShareWithLawyer(doc)}
+    className="flex items-center gap-2"
+  >
+    <Share2 className="h-4 w-4" />
+    Share with Lawyer
+  </DropdownMenuItem>
+)}
                           
                           <DropdownMenuSeparator />
                           
@@ -425,8 +449,24 @@ export default function DocumentsTable({
                 ))}
               </tbody>
             </table>
+            
           </div>
+          
         </div>
+      )}
+            {/* Share with Lawyer Dialog */}
+            {selectedDocument && (
+        <ShareWithLawyerDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          document={{
+            id: selectedDocument._id,
+            document_name: selectedDocument.document_name,
+            privacy: selectedDocument.privacy || 'public',
+            shared_with: selectedDocument.shared_with || []
+          }}
+          onShareUpdate={handleShareUpdate}
+        />
       )}
     </div>
   )

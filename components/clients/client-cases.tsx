@@ -12,6 +12,8 @@ import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import type { Case } from "@/types/case"
 import { useTranslation } from "@/hooks/useTranslation"
+import { useSelector } from "react-redux"
+import { RootState } from "@/lib/store"
 
 interface ClientCasesProps {
   clientId: string
@@ -23,12 +25,14 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { t } = useTranslation()
+  const profile = useSelector((state: RootState) => state.auth.user)
+
 
   useEffect(() => {
     const loadCases = async () => {
       try {
         setIsLoading(true)
-        const clientCases = await getClientCases(clientId)
+        const clientCases = await getClientCases(clientId,profile?.account_type==="lawyer" ? "client" : "lawyer")
         console.log("Fetched cases:", clientCases) // Debug log
         setCases(clientCases || [])
       } catch (error) {
@@ -47,6 +51,14 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
       loadCases()
     }
   }, [clientId]) // ✅ Only run when clientId changes
+
+
+  const viewCaseDetails = (caseItem: Case) => {
+    // Encode case data as URL search params to pass to details page
+    const caseData = encodeURIComponent(JSON.stringify(caseItem))
+    console.log(caseItem,"caseItemcaseItemcaseItemcaseItemcaseItemcaseItem")
+    router.push(`/cases/${caseItem._id}?data=${caseData}`)
+  }
 
   const getStatusBadge = (status: string) => {
     const statusKey = status.toLowerCase() as "pending" | "approved" | "rejected"
@@ -67,10 +79,12 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">{t("pages:clientCases.title")}</h3>
-          <Button size="sm" onClick={() => router.push(`/cases/new?clientId=${clientId}`)}>
-            <Plus size={16} className="mr-2" />
-            {t("pages:clientCases.newCase")}
-          </Button>
+          {profile?.account_type === 'lawyer' && (
+    <Button onClick={() => router.push(`/cases/new?clientId=${clientId}`)} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
+      {t("pages:cases.newCase")}
+    </Button>
+  )}
+
         </div>
 
         {isLoading ? (
@@ -111,13 +125,9 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
                   <TableCell>{formatDate(caseItem.createdAt)}</TableCell>
                   <TableCell>{formatDate(caseItem.updatedAt)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => router.push(`/cases/${caseItem.id}`)}
-                      title={t("pages:clientCases.viewCase")}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => viewCaseDetails(caseItem)} className="h-8 w-8">
                       <Eye size={16} />
+                      <span className="sr-only">{t("common.view")}</span>
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -29,6 +29,7 @@ import ClientCases from "@/components/clients/client-cases"
 import ClientNotes from "@/components/clients/client-notes"
 import { SimpleChat } from "@/components/chat/simple-chat"
 import { useTranslation } from "@/hooks/useTranslation"
+import ClientDocuments from "./client-documents"
 
 interface ClientDetailsProps {
   client: Client
@@ -36,6 +37,7 @@ interface ClientDetailsProps {
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
   const { t } = useTranslation()
+  console.log("initialClientinitialClientinitialClient",initialClient)
   const [client, setClient] = useState<Client>(initialClient)
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
@@ -64,11 +66,16 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       })
       return
     }
+    let lawyer_id=profile.account_type==="lawyer" ? profile._id : client._id
+    let client_id=profile.account_type==="client" ? profile._id : client._id
+
+    console.log("lawyer_id",lawyer_id,profile.account_type)
+    console.log("client_id",client_id,client.account_type)
     try {
       setIsSchedulingMeeting(true)
       const meetingData = {
-        lawyerId: profile._id,
-        clientId: client.id,
+        lawyerId: lawyer_id,
+        clientId: client_id,
         meetingLink: meetingLink.trim(),
       }
       const response = await createMeeting(meetingData)
@@ -294,13 +301,14 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
               <TabsTrigger value="notes">{t("pages:clientDetails.notes")}</TabsTrigger>
             </TabsList>
             <TabsContent value="cases" className="mt-4">
               <ClientCases clientId={client.id} />
             </TabsContent>
-            <TabsContent value="notes" className="mt-4">
-              <ClientNotes clientId={client.id} notes={client.notes || ""} onSave={handleNotesUpdate} />
+            <TabsContent value="documents" className="mt-4">
+              <ClientDocuments clientId={client.id} />
             </TabsContent>
           </Tabs>
         </CardContent>

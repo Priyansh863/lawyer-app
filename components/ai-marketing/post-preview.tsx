@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import type { LegalPost } from "@/types/marketing"
 import { formatDate } from "@/lib/utils"
+import SpatialDisplay from '@/components/spatial/spatial-display'
+
 
 interface PostPreviewProps {
   post: LegalPost
@@ -41,6 +43,12 @@ export default function PostPreview({ post }: PostPreviewProps) {
                 ))}
               </div>
             )}
+            <SpatialDisplay
+  spatialInfo={post.spatialInfo}
+  citations={post.citations}
+  hashtag={post.hashtag}
+  compact={true}  // Use compact mode for previews
+/>
           </div>
         </div>
       </CardContent>

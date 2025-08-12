@@ -234,7 +234,9 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           filteredSummaries.map((summary) => (
             <Card key={summary.id} className="overflow-hidden mb-4">
               <CardContent className="p-6">
+               
                 <div className="flex items-start justify-between mb-4">
+             
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-2">{summary.documentName}</h3>
                     <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted-foreground mb-3">
@@ -298,14 +300,14 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                   <div className="flex items-center space-x-2">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        summary.status === "ready"
+                        summary.status === "Completed"
                           ? "bg-green-100 text-green-800"
                           : summary.status === "error"
                             ? "bg-red-100 text-red-800"
                             : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {summary.status === "ready" ? "Ready" : summary.status === "error" ? "Failed" : "Processing"}
+                      {summary.status === "Completed" ? "Completed" : summary.status === "error" ? "Failed" : "Processing"}
                     </span>
                   </div>
                 </div>

@@ -1,0 +1,323 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
+
+import PostCreator from "@/components/posts/post-creator";
+import { 
+  getPosts, 
+  type Post 
+} from "@/lib/api/posts-api";
+import { 
+  FileText, 
+  Plus, 
+  Share2, 
+
+  Copy,
+  Calendar,
+  User,
+  MapPin,
+  Hash,
+  Wand2
+} from "lucide-react";
+
+export default function PostsPage() {
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  
+  // State
+  const [activeTab, setActiveTab] = useState<'list' | 'create'>('list');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Fetch posts
+  const fetchPosts = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await getPosts(page, 10, "published");
+      
+      setPosts(response.data.posts || []);
+      setTotalPages(response.data.totalPages || 1);
+      setCurrentPage(page);
+    } catch (error: any) {
+      toast({
+        title: "Failed to fetch posts",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load posts on component mount
+  useEffect(() => {
+    fetchPosts(1);
+  }, []);
+
+  // Handle post creation
+  const handlePostCreated = (post: Post) => {
+    setPosts(prev => [post, ...prev]);
+    // Don't switch tabs - let user review the generated post
+    toast({
+      title: "Post created",
+      description: "Your post has been added to the list",
+      variant: "default",
+    });
+  };
+
+
+
+  // Copy URL to clipboard
+  const copyUrl = (url: string, type: string) => {
+    navigator.clipboard.writeText(url);
+    toast({
+      title: "URL copied",
+      description: `${type} URL copied to clipboard`,
+      variant: "default",
+    });
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="px-6 py-4 border-b">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          Posts & Content
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
+          Create, manage, and share your legal content with AI assistance and spatial metadata
+        </p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            My Posts
+          </TabsTrigger>
+          <TabsTrigger value="create" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create New
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Posts List */}
+        <TabsContent value="list" className="space-y-6">
+
+
+          {/* Posts Grid */}
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts found</h3>
+                <p className="text-gray-600 mb-4">
+                  You haven't created any posts yet
+                </p>
+                <Button onClick={() => setActiveTab('create')}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Post
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {posts.map((post) => (
+                <Card key={post._id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg line-clamp-2">{post.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+
+                          {post.isAiGenerated && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Wand2 className="h-3 w-3" />
+                              AI Generated
+                            </Badge>
+                          )}
+                          {post.spatialInfo?.latitude && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              Location
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Post Image */}
+                    {post.image && (
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+                        <img
+                          src={post.image}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="text-sm text-gray-600">
+                      <div 
+                        dangerouslySetInnerHTML={{
+                          __html: post.content
+                            .replace(/\n/g, '<br>')
+                            .replace(/### (.*?)\n/g, '<h3 class="text-base font-bold mt-3 mb-2">$1</h3>')
+                            .replace(/#### (.*?)\n/g, '<h4 class="text-sm font-semibold mt-2 mb-1">$1</h4>')
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/- (.*?)\n/g, '<li class="ml-4 mb-1">$1</li>')
+                        }}
+                      />
+                    </div>
+
+                    {/* Display hashtags */}
+                    {(post.hashtags && post.hashtags.length > 0) ? (
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <Hash className="h-3 w-3 text-blue-500" />
+                        {post.hashtags.map((tag, index) => (
+                          <span key={index} className="text-sm text-blue-500">
+                            {tag}{index < post.hashtags!.length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    ) : post.hashtag && (
+                      <div className="flex items-center gap-1">
+                        <Hash className="h-3 w-3 text-blue-500" />
+                        <span className="text-sm text-blue-500">{post.hashtag}</span>
+                      </div>
+                    )}
+
+                    {post.citations && post.citations.length > 0 && (
+                      <div className="text-xs text-gray-500">
+                        {post.citations.length} citation{post.citations.length > 1 ? 's' : ''}
+                      </div>
+                    )}
+
+                    {/* Display useful links */}
+                    {post.usefulLinks && post.usefulLinks.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-gray-700">Useful Resources:</div>
+                        {post.usefulLinks.slice(0, 2).map((link, index) => (
+                          <div key={index} className="text-xs">
+                            <a 
+                              href={link.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {link.title}
+                            </a>
+                            {link.description && (
+                              <span className="text-gray-500 ml-1">- {link.description}</span>
+                            )}
+                          </div>
+                        ))}
+                        {post.usefulLinks.length > 2 && (
+                          <div className="text-xs text-gray-500">+{post.usefulLinks.length - 2} more resources</div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(post.createdAt)}
+                      <User className="h-3 w-3 ml-2" />
+                      {post.author.first_name} {post.author.last_name}
+                    </div>
+
+                    {/* URLs */}
+                    {post.customUrl && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium">Custom URL:</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyUrl(post.customUrl!, 'Custom')}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="text-xs bg-gray-50 p-2 rounded break-all">
+                          <a 
+                            href={post.customUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            {post.customUrl}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => fetchPosts(currentPage - 1)}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => fetchPosts(currentPage + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Create Post */}
+        <TabsContent value="create">
+          <PostCreator onPostCreated={handlePostCreated} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

@@ -1,4 +1,9 @@
 export interface FileMetadata {
+  shared_with: any
+  privacy: string
+  createdAt: string | Iterable<string>
+  document_name: string | undefined
+  summary: string
   id: string
   fileName: string
   fileSize: number
@@ -11,6 +16,11 @@ export interface FileMetadata {
   storageLocation: "s3" | "local"
   encryptionType?: string
   url: string
+  link: string
+  status?: string
+  isPrivate?: boolean
+  tags?: string[]
+  uploadedByName?: string
 }
 
 // Schema for file upload

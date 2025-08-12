@@ -15,6 +15,8 @@ import { getCases } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import { Eye } from "lucide-react"
+import { useSelector } from "react-redux"
+import { RootState } from "@/lib/store"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -34,6 +36,8 @@ interface CasesTableProps {
 
 export default function CasesTable({ initialCases }: CasesTableProps) {
   const [cases, setCases] = useState<Case[]>(initialCases || [])
+  const profile = useSelector((state: RootState) => state.auth.user)
+
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -153,9 +157,11 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4 mt-6">
         <h2 className="text-xl font-semibold">{t("pages:cases.title")}</h2>
-        <Button onClick={() => router.push("/cases/new")} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
-          {t("pages:cases.newCase")}
-        </Button>
+        {profile?.account_type === 'lawyer' && (
+    <Button onClick={() => router.push("/cases/new")} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
+      {t("pages:cases.newCase")}
+    </Button>
+  )}
       </div>
       <Form {...searchForm}>
         <form

@@ -252,11 +252,13 @@ export async function updateClientStatus(id: string, status: ClientStatus): Prom
  */
 export async function updateClientNotes(id: string, notes: string): Promise<Client> {
   try {
-    const response = await axios.patch(`${API_BASE_URL}/user/${id}`, {
+    const response = await axios.put(`${API_BASE_URL}/client/${id}/notes`, {
       notes,
     }, {
       headers: getAuthHeaders(),
     })
+
+    console.log(response)
 
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to update client')
