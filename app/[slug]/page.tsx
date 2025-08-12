@@ -90,7 +90,7 @@ export default function PostPage() {
             throw new Error('Authentication required');
           }
           
-          response = await fetch(`${baseUrl}/api/v1/post/id/${postId}`, {
+          response = await fetch(`${baseUrl}/post/id/${postId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
