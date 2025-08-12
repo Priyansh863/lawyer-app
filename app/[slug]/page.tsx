@@ -82,7 +82,7 @@ export default function PostPage() {
         let response;
         if (postId) {
           // Fetch by ID if available
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
           const user = localStorage.getItem('user');
           const token = user ? JSON.parse(user).token : null;
           
