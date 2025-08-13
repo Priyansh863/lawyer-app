@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { 
   createPost, 
   generateAiPost, 
@@ -51,6 +52,7 @@ interface PostCreatorProps {
 
 export default function PostCreator({ onPostCreated, initialData }: PostCreatorProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   // Form state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual');
@@ -95,8 +97,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const addCitation = () => {
     if (!newCitation.content.trim()) {
       toast({
-        title: "Citation required",
-        description: "Please enter citation content",
+        title: t('pages:creator.post.citations.toast.required'),
+        description: t('pages:creator.post.citations.toast.requiredDesc'),
         variant: "destructive",
       });
       return;
@@ -177,18 +179,18 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       if (imageUrl) {
         setPostData(prev => ({ ...prev, image: imageUrl }));
         toast({
-          title: "Image uploaded successfully",
-          description: "Your image has been uploaded and will be included in the post",
+          title: t('pages:creator.post.image.toast.success'),
+          description: t('pages:creator.post.image.toast.successDesc'),
           variant: "default",
         });
       } else {
-        throw new Error('Failed to get image URL');
+        throw new Error(t('pages:creator.post.image.toast.failed'));
       }
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
-        title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        title: t('pages:creator.post.image.toast.failed'),
+        description: t('pages:creator.post.image.toast.failedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -201,8 +203,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const handleCreatePost = async () => {
     if (!postData.title.trim() || !postData.content.trim()) {
       toast({
-        title: "Missing required fields",
-        description: "Title and content are required",
+        title: t('pages:creator.post.toast.requiredFields'),
+        description: t('pages:creator.post.toast.requiredFieldsDesc'),
         variant: "destructive",
       });
       return;
@@ -217,8 +219,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       onPostCreated?.(post);
       
       toast({
-        title: "Post created successfully",
-        description: `Your post "${post.title}" has been created`,
+        title: t('pages:creator.post.toast.created'),
+        description: t('pages:creator.post.toast.createdDesc', { title: post.title }),
         variant: "default",
       });
 
@@ -237,8 +239,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
     } catch (error: any) {
       toast({
-        title: "Failed to create post",
-        description: error.message || "Something went wrong",
+        title: t('pages:creator.post.toast.failed'),
+        description: error.message || t('pages:creator.post.toast.failedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -250,8 +252,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const handleGenerateAiPost = async () => {
     if (!aiData.prompt?.trim() && !aiData.topic?.trim()) {
       toast({
-        title: "Missing input",
-        description: "Please provide either a prompt or topic",
+        title: t('pages:creator.post.ai.toast.missingInput'),
+        description: t('pages:creator.post.ai.toast.missingInputDesc'),
         variant: "destructive",
       });
       return;
@@ -273,8 +275,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       onPostCreated?.(post);
       
       toast({
-        title: "AI post generated successfully",
-        description: `Generated post: "${post.title}"`,
+        title: t('pages:creator.post.ai.toast.generated'),
+        description: t('pages:creator.post.ai.toast.generatedDesc', { title: post.title }),
         variant: "default",
       });
 
@@ -295,8 +297,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
     } catch (error: any) {
       toast({
-        title: "Failed to generate AI post",
-        description: error.message || "Something went wrong",
+        title: t('pages:creator.post.ai.toast.failed'),
+        description: error.message || t('pages:creator.post.ai.toast.failedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -312,8 +314,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       const response = await generateQrCode(createdPost.slug);
       
       toast({
-        title: "QR code generated",
-        description: "QR code has been generated for your post",
+        title: t('pages:creator.post.qr.toast.generated'),
+        description: t('pages:creator.post.qr.toast.generatedDesc'),
         variant: "default",
       });
 
@@ -322,8 +324,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
     } catch (error: any) {
       toast({
-        title: "Failed to generate QR code",
-        description: error.message || "Something went wrong",
+        title: t('pages:creator.post.qr.toast.failed'),
+        description: error.message || t('pages:creator.post.qr.toast.failedDesc'),
         variant: "destructive",
       });
     }
@@ -333,8 +335,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const copyUrl = (url: string, type: string) => {
     navigator.clipboard.writeText(url);
     toast({
-      title: "URL copied",
-      description: `${type} URL copied to clipboard`,
+      title: t('pages:creator.post.url.toast.copied'),
+      description: t('pages:creator.post.url.toast.copiedDesc', { type }),
       variant: "default",
     });
   };
@@ -347,7 +349,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Create New Post
+            {t('pages:creator.post.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -355,44 +357,44 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="manual" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Manual Post
+                {t('pages:creator.post.tabs.manual')}
               </TabsTrigger>
               <TabsTrigger value="ai" className="flex items-center gap-2">
                 <Wand2 className="h-4 w-4" />
-                AI Generated
+                {t('pages:creator.post.tabs.ai')}
               </TabsTrigger>
             </TabsList>
 
             {/* Manual Post Creation */}
             <TabsContent value="manual" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title">{t('pages:creator.post.fields.title')}</Label>
                 <Input
                   id="title"
                   value={postData.title}
                   onChange={(e) => setPostData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter post title..."
+                  placeholder={t('pages:creator.post.placeholders.title')}
                   maxLength={200}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
+                <Label htmlFor="content">{t('pages:creator.post.fields.content')}</Label>
                 <Textarea
                   id="content"
                   value={postData.content}
                   onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write your post content..."
+                  placeholder={t('pages:creator.post.placeholders.content')}
                   rows={8}
                   maxLength={5000}
                 />
                 <div className="text-xs text-gray-500 text-right">
-                  {postData.content.length}/5000 characters
+                  {postData.content.length}/5000 {t('pages:creator.post.characters')}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image">Image (optional)</Label>
+                <Label htmlFor="image">{t('pages:creator.post.fields.image')}</Label>
                 <Input
                   id="image"
                   type="file"
@@ -412,7 +414,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-blue-600">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading image... {uploadProgress}%
+                      {t('pages:creator.post.image.uploading', { progress: uploadProgress })}
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -426,12 +428,12 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {postData.image && !isUploadingImage && (
                   <div className="space-y-2">
                     <div className="text-xs text-green-600">
-                      ✅ Image uploaded successfully
+                      {t('post.image.success')}
                     </div>
                     <div className="relative">
                       <img 
                         src={postData.image} 
-                        alt="Uploaded preview" 
+                        alt={t('pages:creator.post.image.alt')} 
                         className="w-full max-w-xs h-32 object-cover rounded-lg border"
                       />
                       <Button
@@ -452,7 +454,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hashtag">Hashtag (optional)</Label>
+                <Label htmlFor="hashtag">{t('pages:creator.post.fields.hashtag')}</Label>
                 <Input
                   id="hashtag"
                   value={postData.hashtag}
@@ -463,12 +465,10 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                     }
                     setPostData(prev => ({ ...prev, hashtag: value }));
                   }}
-                  placeholder="#LegalAdvice"
+                  placeholder={t('pages:creator.post.placeholders.hashtag')}
                   maxLength={100}
                 />
               </div>
-
-
 
               <Button 
                 onClick={handleCreatePost} 
@@ -478,12 +478,12 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Post...
+                    {t('pages:creator.post.buttons.creating')}
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Create Post
+                    {t('pages:creator.post.buttons.create')}
                   </>
                 )}
               </Button>
@@ -493,24 +493,24 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
             <TabsContent value="ai" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="prompt">AI Prompt</Label>
+                  <Label htmlFor="prompt">{t('pages:creator.post.ai.fields.prompt')}</Label>
                   <Textarea
                     id="prompt"
                     value={aiData.prompt}
                     onChange={(e) => setAiData(prev => ({ ...prev, prompt: e.target.value }))}
-                    placeholder="Describe what you want the AI to write about..."
+                    placeholder={t('pages:creator.post.ai.placeholders.prompt')}
                     rows={3}
                     maxLength={500}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="topic">Or Topic</Label>
+                  <Label htmlFor="topic">{t('pages:creator.post.ai.fields.topic')}</Label>
                   <Input
                     id="topic"
                     value={aiData.topic}
                     onChange={(e) => setAiData(prev => ({ ...prev, topic: e.target.value }))}
-                    placeholder="Contract Law Basics"
+                    placeholder={t('pages:creator.post.ai.placeholders.topic')}
                     maxLength={200}
                   />
                 </div>
@@ -518,7 +518,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Tone</Label>
+                  <Label>{t('pages:creator.post.ai.fields.tone')}</Label>
                   <Select 
                     value={aiData.tone} 
                     onValueChange={(value: any) => setAiData(prev => ({ ...prev, tone: value }))}
@@ -527,16 +527,16 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="casual">Casual</SelectItem>
-                      <SelectItem value="formal">Formal</SelectItem>
-                      <SelectItem value="friendly">Friendly</SelectItem>
+                      <SelectItem value="professional">{t('pages:creator.post.ai.options.tone.professional')}</SelectItem>
+                      <SelectItem value="casual">{t('pages:creator.post.ai.options.tone.casual')}</SelectItem>
+                      <SelectItem value="formal">{t('pages:creator.post.ai.options.tone.formal')}</SelectItem>
+                      <SelectItem value="friendly">{t('pages:creator.post.ai.options.tone.friendly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Length</Label>
+                  <Label>{t('pages:creator.post.ai.fields.length')}</Label>
                   <Select 
                     value={aiData.length} 
                     onValueChange={(value: any) => setAiData(prev => ({ ...prev, length: value }))}
@@ -545,14 +545,14 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="short">Short (400-600 words)</SelectItem>
-                      <SelectItem value="long">Long (800-1200 words)</SelectItem>
+                      <SelectItem value="short">{t('pages:creator.post.ai.options.length.short')}</SelectItem>
+                      <SelectItem value="long">{t('pages:creator.post.ai.options.length.long')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Include Hashtags</Label>
+                  <Label>{t('pages:creator.post.ai.fields.hashtags')}</Label>
                   <Select 
                     value={aiData.includeHashtags ? 'yes' : 'no'} 
                     onValueChange={(value) => setAiData(prev => ({ ...prev, includeHashtags: value === 'yes' }))}
@@ -561,8 +561,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="yes">Yes</SelectItem>
-                      <SelectItem value="no">No</SelectItem>
+                      <SelectItem value="yes">{t('pages:creator.post.ai.options.yes')}</SelectItem>
+                      <SelectItem value="no">{t('pages:creator.post.ai.options.no')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -570,7 +570,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
               {/* Image Upload for AI */}
               <div className="space-y-2">
-                <Label htmlFor="ai-image">Image (optional)</Label>
+                <Label htmlFor="ai-image">{t('pages:creator.post.fields.image')}</Label>
                 <Input
                   id="ai-image"
                   type="file"
@@ -590,7 +590,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-blue-600">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading image... {uploadProgress}%
+                      {t('pages:creator.post.image.uploading', { progress: uploadProgress })}
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -604,12 +604,12 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {postData.image && !isUploadingImage && (
                   <div className="space-y-2">
                     <div className="text-xs text-green-600">
-                      ✅ Image uploaded successfully
+                      {t('pages:creator.post.image.success')}
                     </div>
                     <div className="relative">
                       <img 
                         src={postData.image} 
-                        alt="Uploaded preview" 
+                        alt={t('pages:creator.post.image.alt')} 
                         className="w-full max-w-xs h-32 object-cover rounded-lg border"
                       />
                       <Button
@@ -637,12 +637,12 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {isGeneratingAi ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating AI Post...
+                    {t('pages:creator.post.ai.buttons.generating')}
                   </>
                 ) : (
                   <>
                     <Wand2 className="h-4 w-4 mr-2" />
-                    Generate AI Post
+                    {t('pages:creator.post.ai.buttons.generate')}
                   </>
                 )}
               </Button>
@@ -656,7 +656,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Link className="h-5 w-5" />
-            Citations
+            {t('pages:creator.post.citations.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -670,9 +670,9 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="spatial">Spatial Info</SelectItem>
-                <SelectItem value="user">User (@mention)</SelectItem>
-                <SelectItem value="url">URL</SelectItem>
+                <SelectItem value="spatial">{t('pages:creator.post.citations.types.spatial')}</SelectItem>
+                <SelectItem value="user">{t('pages:creator.post.citations.types.user')}</SelectItem>
+                <SelectItem value="url">{t('pages:creator.post.citations.types.url')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -680,23 +680,23 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               value={newCitation.content}
               onChange={(e) => setNewCitation(prev => ({ ...prev, content: e.target.value }))}
               placeholder={
-                newCitation.type === 'user' ? '@username' :
-                newCitation.type === 'url' ? 'https://example.com' :
-                'Spatial reference'
+                newCitation.type === 'user' ? t('pages:creator.post.citations.placeholders.user') :
+                newCitation.type === 'url' ? t('pages:creator.post.citations.placeholders.url') :
+                t('pages:creator.post.citations.placeholders.spatial')
               }
               className="md:col-span-2"
             />
 
             <Button onClick={addCitation} size="sm">
               <Plus className="h-4 w-4 mr-1" />
-              Add
+              {t('pages:creator.post.citations.buttons.add')}
             </Button>
           </div>
 
           {/* Citations List */}
           {currentCitations && currentCitations.length > 0 && (
             <div className="space-y-2">
-              <Label>Added Citations</Label>
+              <Label>{t('pages:creator.post.citations.added')}</Label>
               {currentCitations.map((citation, index) => (
                 <div key={index} className="flex items-center justify-between p-2 border rounded">
                   <div className="flex items-center gap-2">
@@ -704,7 +704,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                       {citation.type === 'spatial' && <MapPin className="h-3 w-3 mr-1" />}
                       {citation.type === 'user' && <User className="h-3 w-3 mr-1" />}
                       {citation.type === 'url' && <Link className="h-3 w-3 mr-1" />}
-                      {citation.type}
+                      {t(`pages:creator.post.citations.types.${citation.type}`)}
                     </Badge>
                     <span className="text-sm">{citation.content}</span>
                   </div>
@@ -734,7 +734,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Created Post
+              {t('pages:creator.post.created.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -751,15 +751,15 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
             {createdPost.customUrl && (
               <div className="space-y-2">
-                <Label>Generated URLs</Label>
+                <Label>{t('pages:creator.post.created.urls')}</Label>
                 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Custom URL:</span>
+                    <span className="text-sm font-medium">{t('pages:creator.post.created.customUrl')}:</span>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => copyUrl(createdPost.customUrl!, 'Custom')}
+                      onClick={() => copyUrl(createdPost.customUrl!, t('pages:creator.post.created.customUrl'))}
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -772,11 +772,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {createdPost.shortUrl && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Short URL:</span>
+                      <span className="text-sm font-medium">{t('pages:creator.post.created.shortUrl')}:</span>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => copyUrl(createdPost.shortUrl!, 'Short')}
+                        onClick={() => copyUrl(createdPost.shortUrl!, t('pages:creator.post.created.shortUrl'))}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>

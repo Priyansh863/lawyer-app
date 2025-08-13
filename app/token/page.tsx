@@ -76,32 +76,32 @@ interface PaymentSession {
 }
 
 // Token packages configuration - synced with backend
-const TOKEN_PACKAGES = {
+const TOKEN_PACKAGES = (t: any) => ({
   starter: {
     id: 'starter',
-    name: 'Starter Pack',
+    name: t('pages:tok.token.purchase.packages.starter.name'),
     tokens: 1000,
     price: 9.99,
-    description: '1,000 AI tokens for basic usage',
+     description: t('pages:tok.token.purchase.packages.starter.description'),
     popular: false
   },
   professional: {
     id: 'professional',
-    name: 'Professional Pack',
+    name: t('pages:tok.token.purchase.packages.professional.name'),
     tokens: 5000,
     price: 39.99,
-    description: '5,000 AI tokens with 20% bonus (6,000 total)',
+    description: t('pages:tok.token.purchase.packages.professional.description'),
     popular: true
   },
   enterprise: {
     id: 'enterprise',
-    name: 'Enterprise Pack',
+    name: t('pages:tok.token.purchase.packages.enterprise.name'),
     tokens: 15000,
     price: 99.99,
-    description: '15,000 AI tokens with 50% bonus (22,500 total)',
+     description: t('pages:tok.token.purchase.packages.enterprise.description'),
     popular: false
   }
-}
+})
 
 // API Functions
 const getAuthHeaders = (token: string) => ({
@@ -191,6 +191,9 @@ export default function TokenPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
+  // Get token packages with translations
+  const tokenPackages = TOKEN_PACKAGES(t)
+
   // Check for payment success/error on page load
   useEffect(() => {
     const success = searchParams.get('success')
@@ -201,10 +204,10 @@ export default function TokenPage() {
       handlePaymentSuccess(sessionId)
     } else if (cancelled === 'true' || success === 'false') {
       setPaymentStatus('error')
-      setPaymentMessage('Payment was cancelled or failed. Please try again.')
+      setPaymentMessage(t('pages:tok.token.payment.cancelled'))
       toast({
-        title: "Payment Cancelled",
-        description: "Your payment was cancelled. No charges were made.",
+        title: t('pages:tok.token.toast.payment.cancelled.title'),
+        description: t('pages:tok.token.toast.payment.cancelled.description'),
         variant: "destructive",
       })
     }
@@ -214,7 +217,7 @@ export default function TokenPage() {
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
     }
-  }, [searchParams, token])
+  }, [searchParams, token, t])
 
   // Fetch initial data
   useEffect(() => {
@@ -236,8 +239,8 @@ export default function TokenPage() {
     } catch (error) {
       console.error('Error fetching token data:', error)
       toast({
-        title: "Error",
-        description: "Failed to load token data. Please refresh the page.",
+        title: t('pages:tok.token.toast.error.title'),
+        description: t('pages:tok.token.toast.error.description'),
         variant: "destructive",
       })
     } finally {
@@ -293,30 +296,30 @@ export default function TokenPage() {
       if (paymentSession.paymentStatus === 'paid') {
         setPaymentStatus('success')
         const tokensAdded = paymentSession.transaction?.amount || 0
-        setPaymentMessage(`Payment successful! ${tokensAdded.toLocaleString()} tokens have been added to your account.`)
+        setPaymentMessage(t('pages:tok.token.payment.success', { tokens: tokensAdded.toLocaleString() }))
         
         // Refresh data to show updated balance
         await fetchAllData()
         
         toast({
-          title: "Payment Successful! 🎉",
-          description: `${tokensAdded.toLocaleString()} tokens have been added to your account.`,
+          title: t('pages:tok.token.toast.payment.success.title'),
+          description: t('pages:tok.token.toast.payment.success.description', { tokens: tokensAdded.toLocaleString() }),
         })
       } else {
         setPaymentStatus('error')
-        setPaymentMessage('Payment verification failed. Please contact support if tokens were not added.')
+        setPaymentMessage(t('pages:tok.token.payment.verificationFailed'))
         toast({
-          title: "Payment Verification Failed",
-          description: "Please contact support if you were charged but tokens were not added.",
+          title: t('pages:tok.token.toast.payment.verificationFailed.title'),
+          description: t('pages:tok.token.toast.payment.verificationFailed.description'),
           variant: "destructive",
         })
       }
     } catch (error: any) {
       setPaymentStatus('error')
-      setPaymentMessage(error.message || 'Failed to verify payment. Please contact support.')
+      setPaymentMessage(error.message || t('pages:tok.token.payment.genericError'))
       toast({
-        title: "Verification Error",
-        description: error.message || 'Failed to verify payment. Please contact support.',
+        title: t('token.toast.payment.error.title'),
+        description: error.message || t('pages:tok.token.toast.payment.error.description'),
         variant: "destructive",
       })
     } finally {
@@ -327,8 +330,8 @@ export default function TokenPage() {
   const handlePurchaseTokens = async (packageId: string) => {
     if (!profile || !token) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to purchase tokens.",
+        title: t('pages:tok.token.toast.auth.title'),
+        description: t('pages:tok.token.toast.auth.description'),
         variant: "destructive",
       })
       return
@@ -345,13 +348,13 @@ export default function TokenPage() {
         // Redirect to Stripe checkout
         window.location.href = url
       } else {
-        throw new Error('No checkout URL received')
+        throw new Error(t('pages:tok.token.payment.noCheckoutUrl'))
       }
     } catch (error: any) {
       console.error('Checkout error:', error)
       toast({
-        title: "Checkout Error",
-        description: error.message || "Failed to create checkout session. Please try again.",
+        title: t('pages:tok.token.toast.checkoutError.title'),
+        description: error.message || t('token.toast.checkoutError.description'),
         variant: "destructive",
       })
     } finally {
@@ -374,13 +377,13 @@ export default function TokenPage() {
       URL.revokeObjectURL(url)
       
       toast({
-        title: "Export Successful",
-        description: "Transaction history has been downloaded.",
+        title: t('pages:tok.token.toast.export.success.title'),
+        description: t('pages:tok.token.toast.export.success.description'),
       })
     } catch (error: any) {
       toast({
-        title: "Export Failed",
-        description: error.message || "Failed to export transactions",
+        title: t('pages:tok.token.toast.export.failed.title'),
+        description: error.message || t('pages:tok.pages:tok.token.toast.export.failed.description'),
         variant: "destructive",
       })
     }
@@ -420,7 +423,7 @@ export default function TokenPage() {
     
     return (
       <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {t(`pages:tok.token.transactionStatus.${status}`)}
       </Badge>
     )
   }
@@ -430,7 +433,7 @@ export default function TokenPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading token data...</span>
+        <span className="ml-2">{t('pages:tok.token.loading')}</span>
       </div>
     )
   }
@@ -454,12 +457,12 @@ export default function TokenPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Token Management</h1>
-          <p className="text-muted-foreground">Manage your AI tokens and purchase history</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('pages:tok.token.title')}</h1>
+          <p className="text-muted-foreground">{t('pages:tok.token.subtitle')}</p>
         </div>
         <Button onClick={() => fetchAllData()} variant="outline" className="gap-2">
           <RefreshCw className="h-4 w-4" />
-          Refresh
+          {t('pages:tok.token.refresh')}
         </Button>
       </div>
 
@@ -467,34 +470,34 @@ export default function TokenPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.balance.title')}</CardTitle>
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tokenBalance?.current_balance?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Available tokens</p>
+            <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.balance.description')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Purchased</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.purchased.title')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tokenBalance?.total_purchased?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">Lifetime purchases</p>
+            <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.purchased.description')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Usage</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.usage.title')}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{tokenBalance?.monthly_usage?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.usage.description')}</p>
           </CardContent>
         </Card>
       </div>
@@ -504,16 +507,16 @@ export default function TokenPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Purchase Tokens
+            {t('pages:tok.token.purchase.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.values(TOKEN_PACKAGES).map((pkg) => (
+            {Object.values(tokenPackages).map((pkg) => (
               <Card key={pkg.id} className={`relative ${pkg.popular ? 'border-primary' : ''}`}>
                 {pkg.popular && (
                   <Badge className="absolute -top-2 left-4 bg-primary">
-                    Most Popular
+                    {t('pages:tok.token.purchase.popular')}
                   </Badge>
                 )}
                 <CardHeader className="text-center">
@@ -530,12 +533,12 @@ export default function TokenPage() {
                     {purchaseLoading === pkg.id ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Redirecting to Stripe...
+                        {t('pages:tok.token.purchase.button.loading')}
                       </>
                     ) : (
                       <>
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Buy {pkg.tokens.toLocaleString()} Tokens
+                        {t('pages:tok.token.purchase.button.default', { tokens: pkg.tokens.toLocaleString() })}
                       </>
                     )}
                   </Button>
@@ -549,23 +552,23 @@ export default function TokenPage() {
       {/* Transaction History */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Transaction History</CardTitle>
+          <CardTitle>{t('pages:tok.token.transactions.title')}</CardTitle>
           <Button onClick={handleExportTransactions} variant="outline" size="sm" className="gap-2">
             <Download className="h-4 w-4" />
-            Export CSV
+            {t('pages:tok.token.transactions.export')}
           </Button>
         </CardHeader>
         <CardContent>
           {transactionsLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span>Loading transactions...</span>
+              <span>{t('pages:tok.token.transactions.loading')}</span>
             </div>
           ) : transactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No transactions found</p>
-              <p className="text-sm">Purchase tokens to see your transaction history</p>
+              <p>{t('pages:tok.token.transactions.empty.title')}</p>
+              <p className="text-sm">{t('pages:tok.token.transactions.empty.description')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -586,7 +589,7 @@ export default function TokenPage() {
                       <div className={`font-medium ${
                         transaction.type === 'usage' ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} tokens
+                        {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} {t('token.tokens')}
                       </div>
                       <div className="text-sm text-muted-foreground">{transaction.category}</div>
                     </div>
@@ -603,17 +606,17 @@ export default function TokenPage() {
                     disabled={currentPage === 1 || transactionsLoading}
                     variant="outline"
                   >
-                    Previous
+                    {t('pages:tok.token.transactions.pagination.previous')}
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    {t('pages:tok.token.transactions.pagination.page', { current: currentPage, total: totalPages })}
                   </span>
                   <Button 
                     onClick={() => fetchTransactions(currentPage + 1)}
                     disabled={currentPage === totalPages || transactionsLoading}
                     variant="outline"
                   >
-                    Next
+                    {t('pages:tok.token.transactions.pagination.next')}
                   </Button>
                 </div>
               )}

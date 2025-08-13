@@ -676,6 +676,288 @@
   "statusFailed": "Failed",
   "statusProcessing": "Processing"
 },
+
+"locla" :{
+  "location": {
+    "title": "Location Information",
+    "inputMethod": "Input Method",
+    "methods": {
+      "manual": "Manual Coordinates",
+      "address": "Address Search",
+      "place": "Place Search",
+      "auto": "Auto-detect"
+    },
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "altitude": "Altitude (meters)",
+    "floor": "Floor Level",
+    "specificTime": "Specific Time",
+    "addressSearch": "Search by Address",
+    "placeSearch": "Search by Place Name",
+    "getCurrentLocation": "Get Current Location",
+    "currentAltitude": "Current altitude: {altitude} meters",
+    "searchResults": "Search Results",
+    "generatedUrls": "Generated URLs",
+    "fullUrl": "Full URL",
+    "shortUrl": "Short URL",
+    "applyLocation": "Apply Location",
+    "placeholders": {
+      "latitude": "e.g. 40.7128",
+      "longitude": "e.g. -74.0060",
+      "altitude": "e.g. 100",
+      "floor": "e.g. 5",
+      "address": "Enter an address...",
+      "place": "Enter a place name..."
+    },
+    "tooltips": {
+      "altitude": "Height above sea level in meters",
+      "floor": "Building floor level (optional)"
+    },
+    "defaultPlaces": {
+      "timesSquare": "Times Square, New York, NY",
+      "centralPark": "Central Park, New York, NY"
+    },
+    "toast": {
+      "geolocationNotSupported": "Geolocation not supported",
+      "browserNotSupported": "Your browser doesn't support geolocation",
+      "locationObtained": "Location obtained",
+      "coordinates": "Coordinates",
+      "locationError": "Location error",
+      "searchFailed": "Search failed",
+      "searchFailedDesc": "Could not fetch location results",
+      "locationSelected": "Location selected",
+      "dataSaved": "Location saved",
+      "dataSavedDesc": "Location information has been saved",
+      "invalidLatitude": "Invalid latitude",
+      "invalidLatitudeDesc": "Latitude must be between -90 and 90",
+      "invalidLongitude": "Invalid longitude",
+      "invalidLongitudeDesc": "Longitude must be between -180 and 180",
+      "urlCopied": "URL copied",
+      "urlCopiedDesc": "has been copied to clipboard"
+    }
+  }
+},
+
+  "meeting": {
+     "header": {
+      "title": "Meeting Management",
+      "description": "Manage your scheduled meetings, connect to video calls, and track meeting status."
+    },
+    "search": {
+      "placeholder": "Search consultations..."
+    },
+    "table": {
+      "client": "Client Name",
+      "lawyer": "Lawyer Name",
+      "charges": "Charges",
+      "time": "Scheduled Time",
+      "status": "Status",
+      "link": "Meeting Link",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected",
+      "scheduled": "Scheduled"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "connect": "Connect",
+      "close": "Close"
+    },
+    "time": {
+      "scheduled": "{date} at {time}",
+      "notScheduled": "Not scheduled"
+    },
+    "unknown": {
+      "client": "Unknown Client",
+      "lawyer": "Unknown Lawyer"
+    },
+    "noLink": "No link available",
+    "loading": "Loading meetings...",
+    "empty": "No meetings found",
+    "toast": {
+      "error": {
+        "title": "Error",
+        "description": "Failed to fetch meetings"
+      },
+      "connect": {
+        "title": "Opening Meeting",
+        "description": "Opening meeting with {name}"
+      },
+      "noLink": {
+        "title": "No Meeting Link",
+        "description": "Meeting link is not available"
+      },
+      "closed": {
+        "title": "Meeting Closed",
+        "description": "Meeting has been marked as completed"
+      },
+      "approved": {
+        "title": "Meeting Approved",
+        "description": "Meeting has been approved and meeting link has been generated"
+      },
+      "rejected": {
+        "title": "Meeting Rejected",
+        "description": "Meeting has been rejected"
+      }
+    },
+    "errors": {
+      "closeFailed": "Failed to close meeting",
+      "approveFailed": "Failed to approve meeting",
+      "rejectFailed": "Failed to reject meeting",
+      "generic": "An error occurred"
+    }
+  },
+
+"tok": {
+  "token": {
+    "title": "Token Management",
+    "subtitle": "Manage AI tokens and purchase history",
+    "refresh": "Refresh",
+    "loading": "Loading token data...",
+    "tokens": "Tokens",
+    "cards": {
+      "balance": {
+        "title": "Current Balance",
+        "description": "Available tokens"
+      },
+      "purchased": {
+        "title": "Total Purchased",
+        "description": "Cumulative purchases"
+      },
+      "usage": {
+        "title": "Monthly Usage",
+        "description": "This month"
+      }
+    },
+    "purchase": {
+      "title": "Purchase Tokens",
+      "popular": "Popular Packages",
+      "button": {
+        "loading": "Redirecting to Stripe...",
+        "default": "Purchase {tokens} tokens"
+      },
+      "packages": {
+        "starter": {
+          "name": "Starter Pack",
+          "description": "1,000 AI tokens for basic use",
+          "price": "$9.99",
+          "bonus": ""
+        },
+        "professional": {
+          "name": "Professional Pack",
+          "description": "5,000 AI tokens (includes 20% bonus, total 6,000 tokens)",
+          "price": "$39.99",
+          "bonus": "20% Bonus"
+        },
+        "enterprise": {
+          "name": "Enterprise Pack",
+          "description": "15,000 AI tokens (includes 50% bonus, total 22,500 tokens)",
+          "price": "$99.99",
+          "bonus": "50% Bonus"
+        }
+      }
+    },
+    "transactions": {
+      "title": "Transaction History",
+      "export": "Export CSV",
+      "loading": "Loading transaction history...",
+      "empty": {
+        "title": "No transactions found",
+        "description": "Purchase tokens to see your transaction history"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "page": "{current} / {total} pages"
+      },
+      "types": {
+        "purchase": "Purchase",
+        "usage": "Usage",
+        "refund": "Refund",
+        "bonus": "Bonus"
+      }
+    },
+    "payment": {
+      "success": "Payment successful! {tokens} tokens have been added to your account.",
+      "cancelled": "Payment was cancelled or failed. Please try again.",
+      "verificationFailed": "Payment verification failed. If tokens were not added, please contact support.",
+      "genericError": "Payment verification failed. Please contact support.",
+      "noCheckoutUrl": "Did not receive checkout URL"
+    },
+    "transactionStatus": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "toast": {
+      "error": {
+        "title": "Error",
+        "description": "Failed to load token data. Please refresh the page."
+      },
+      "auth": {
+        "title": "Authentication Required",
+        "description": "Please log in to purchase tokens."
+      },
+      "checkoutError": {
+        "title": "Checkout Error",
+        "description": "Failed to create checkout session. Please try again."
+      },
+      "export": {
+        "success": {
+          "title": "Export Successful",
+          "description": "Transaction history has been downloaded."
+        },
+        "failed": {
+          "title": "Export Failed",
+          "description": "Failed to export transaction history."
+        }
+      },
+      "payment": {
+        "success": {
+          "title": "Payment Successful! 🎉",
+          "description": "{tokens} tokens have been added to your account."
+        },
+        "cancelled": {
+          "title": "Payment Cancelled",
+          "description": "Payment has been cancelled. No charges were made."
+        },
+        "verificationFailed": {
+          "title": "Payment Verification Failed",
+          "description": "You have been charged but tokens were not added. Please contact support."
+        },
+        "error": {
+          "title": "Verification Error",
+          "description": "Payment verification failed. Please contact support."
+        }
+      }
+    },
+    "actions": {
+      "buy": "Buy",
+      "viewDetails": "View Details",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "labels": {
+      "tokenBalance": "Token Balance",
+      "totalSpent": "Total Spent",
+      "lastPurchase": "Last Purchase Date",
+      "expiryDate": "Expiry Date"
+    },
+    "tooltips": {
+      "refresh": "Refresh data",
+      "buyTokens": "Purchase tokens",
+      "viewAll": "View all"
+    }
+  }
+},
   "tokens": {
     "title": "Token Management",
     "description": "Manage your AI tokens and purchase additional credits",

@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import { getMeetings, updateMeetingStatus, approveMeeting, rejectMeeting, type Meeting } from "@/lib/api/meeting-api"
 
 const searchFormSchema = z.object({
@@ -23,6 +24,7 @@ type SearchFormData = z.infer<typeof searchFormSchema>
 type VideoConsultationTableProps = {}
 
 export default function VideoConsultationTable({}: VideoConsultationTableProps) {
+  const { t } = useTranslation()
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([])
   const [loading, setLoading] = useState(true)
@@ -70,8 +72,8 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch meetings",
+        title: t('pages:meeting.toast.error.title'),
+        description: error.message || t('pages:meeting.toast.error.description'),
         variant: "destructive",
       })
     } finally {
@@ -80,63 +82,43 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            Pending
-          </Badge>
-        )
-      case "approved":
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-            Approved
-          </Badge>
-        )
-      case "active":
-        return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-            Active
-          </Badge>
-        )
-      case "completed":
-        return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-800 border-gray-200">
-            Completed
-          </Badge>
-        )
-      case "cancelled":
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-            Cancelled
-          </Badge>
-        )
-      case "rejected":
-        return (
-          <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-            Rejected
-          </Badge>
-        )
-      default:
-        return (
-          <Badge variant="secondary">
-            {status}
-          </Badge>
-        )
+    const statusKey = status.toLowerCase()
+    const variants = {
+      pending: 'secondary',
+      approved: 'secondary',
+      active: 'secondary',
+      completed: 'secondary',
+      cancelled: 'secondary',
+      rejected: 'secondary'
+    } as const
+    
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      approved: 'bg-green-100 text-green-800 border-green-200',
+      active: 'bg-blue-100 text-blue-800 border-blue-200',
+      completed: 'bg-gray-100 text-gray-800 border-gray-200',
+      cancelled: 'bg-red-100 text-red-800 border-red-200',
+      rejected: 'bg-red-100 text-red-800 border-red-200'
     }
+
+    return (
+      <Badge variant={variants[statusKey as keyof typeof variants] || 'secondary'} className={colors[statusKey as keyof typeof colors]}>
+        {t(`pages:meeting.status.${statusKey}`)}
+      </Badge>
+    )
   }
 
   const handleConnectToMeeting = (meeting: Meeting) => {
     if (meeting.meeting_link) {
       window.open(meeting.meeting_link, "_blank")
       toast({
-        title: "Opening Meeting",
-        description: `Opening meeting with ${meeting.client_id?.first_name} ${meeting.client_id?.last_name}`,
+        title: t('pages:meeting.toast.connect.title'),
+        description: t('pages:meeting.toast.connect.description', { name: getClientName(meeting) }),
       })
     } else {
       toast({
-        title: "No Meeting Link",
-        description: "Meeting link is not available",
+        title: t('pages:meeting.toast.noLink.title'),
+        description: t('pages:meeting.toast.noLink.description'),
         variant: "destructive",
       })
     }
@@ -147,7 +129,6 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
       setUpdatingMeeting(meetingId)
       const response = await updateMeetingStatus(meetingId, "completed")
       if (response.success) {
-        // Update local state
         setMeetings((prev) =>
           prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
         )
@@ -155,16 +136,16 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "completed" as const } : meeting)),
         )
         toast({
-          title: "Meeting Closed",
-          description: "Meeting has been marked as completed",
+          title: t('pages:meeting.toast.closed.title'),
+          description: t('pages:meeting.toast.closed.description'),
         })
       } else {
-        throw new Error(response.message || "Failed to close meeting")
+        throw new Error(response.message || t('pages:meeting.errors.closeFailed'))
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to close meeting",
+        title: t('pages:meeting.toast.error.title'),
+        description: error.message || t('pages:meeting.errors.generic'),
         variant: "destructive",
       })
     } finally {
@@ -177,7 +158,6 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
       setApprovingMeeting(meetingId)
       const response = await approveMeeting(meetingId)
       if (response.success) {
-        // Update local state
         setMeetings((prev) =>
           prev.map((meeting) => 
             meeting._id === meetingId 
@@ -193,16 +173,16 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           ),
         )
         toast({
-          title: "Meeting Approved",
-          description: "Meeting has been approved and meeting link has been generated",
+          title: t('pages:meeting.toast.approved.title'),
+          description: t('pages:meeting.toast.approved.description'),
         })
       } else {
-        throw new Error(response.message || "Failed to approve meeting")
+        throw new Error(response.message || t('pages:meeting.errors.approveFailed'))
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to approve meeting",
+        title: t('pages:meeting.toast.error.title'),
+        description: error.message || t('pages:meeting.errors.generic'),
         variant: "destructive",
       })
     } finally {
@@ -215,7 +195,6 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
       setRejectingMeeting(meetingId)
       const response = await rejectMeeting(meetingId)
       if (response.success) {
-        // Update local state
         setMeetings((prev) =>
           prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "rejected" as const } : meeting)),
         )
@@ -223,16 +202,16 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "rejected" as const } : meeting)),
         )
         toast({
-          title: "Meeting Rejected",
-          description: "Meeting has been rejected",
+          title: t('pages:meeting.toast.rejected.title'),
+          description: t('pages:meeting.toast.rejected.description'),
         })
       } else {
-        throw new Error(response.message || "Failed to reject meeting")
+        throw new Error(response.message || t('pages:meeting.errors.rejectFailed'))
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to reject meeting",
+        title: t('pages:meeting.toast.error.title'),
+        description: error.message || t('pages:meeting.errors.generic'),
         variant: "destructive",
       })
     } finally {
@@ -242,27 +221,28 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
 
   const formatScheduledTime = (meeting: Meeting) => {
     if (meeting.date && meeting.time) {
-      // Combine date and time for better display
-      const dateStr = new Date(meeting.date).toLocaleDateString()
-      return `${dateStr} at ${meeting.time}`
+      return t('pages:meeting.time.scheduled', {
+        date: new Date(meeting.date).toLocaleDateString(),
+        time: meeting.time
+      })
     } else if (meeting.createdAt) {
       return formatDate(meeting.createdAt, true)
     }
-    return "Not scheduled"
+    return t('pages:meeting.time.notScheduled')
   }
 
   const getClientName = (meeting: Meeting) => {
     if (meeting.client_id && typeof meeting.client_id === 'object') {
-      return `${meeting.client_id.first_name || ''} ${meeting.client_id.last_name || ''}`.trim() || "Unknown Client"
+      return `${meeting.client_id.first_name || ''} ${meeting.client_id.last_name || ''}`.trim() || t('pages:meeting.unknown.client')
     }
-    return "Unknown Client"
+    return t('meeting.unknown.client')
   }
 
   const getLawyerName = (meeting: Meeting) => {
     if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object') {
-      return `${meeting.lawyer_id.first_name || ''} ${meeting.lawyer_id.last_name || ''}`.trim() || "Unknown Lawyer"
+      return `${meeting.lawyer_id.first_name || ''} ${meeting.lawyer_id.last_name || ''}`.trim() || t('pages:meeting.unknown.lawyer')
     }
-    return "Unknown Lawyer"
+    return t('pages:meeting.unknown.lawyer')
   }
 
   const getLawyerCharges = (meeting: Meeting) => {
@@ -285,7 +265,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                 <FormControl>
                   <div className="relative">
                     <Input
-                      placeholder="Search consultations..."
+                      placeholder={t('pages:meeting.search.placeholder')}
                       {...field}
                       className="bg-[#F5F5F5] border-gray-200 pl-10"
                     />
@@ -319,13 +299,13 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[120px]">Client Name</TableHead>
-                <TableHead className="min-w-[120px]">Lawyer Name</TableHead>
-                <TableHead className="min-w-[100px]">Charges</TableHead>
-                <TableHead className="min-w-[150px]">Scheduled Time</TableHead>
-                <TableHead className="min-w-[100px]">Status</TableHead>
-                <TableHead className="min-w-[200px]">Meeting Link</TableHead>
-                <TableHead className="min-w-[250px]">Actions</TableHead>
+                <TableHead className="min-w-[120px]">{t('pages:meeting.table.client')}</TableHead>
+                <TableHead className="min-w-[120px]">{t('pages:meeting.table.lawyer')}</TableHead>
+                <TableHead className="min-w-[100px]">{t('pages:meeting.table.charges')}</TableHead>
+                <TableHead className="min-w-[150px]">{t('pages:meeting.table.time')}</TableHead>
+                <TableHead className="min-w-[100px]">{t('pages:meeting.table.status')}</TableHead>
+                <TableHead className="min-w-[200px]">{t('pages:meeting.table.link')}</TableHead>
+                <TableHead className="min-w-[250px]">{t('pages:meeting.table.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -334,7 +314,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                   <TableCell colSpan={7} className="text-center py-8">
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-gray-500">Loading meetings...</span>
+                      <span className="text-gray-500">{t('pages:meeting.loading')}</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -343,7 +323,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                   <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
                       <Calendar className="h-8 w-8 text-gray-400" />
-                      <span>No meetings found</span>
+                      <span>{t('pages:meeting.empty')}</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -386,12 +366,11 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-500">No link available</span>
+                        <span className="text-xs text-gray-500">{t('meeting.noLink')}</span>
                       )}
                     </TableCell>
                     <TableCell className="min-w-[250px]">
                       <div className="flex gap-1 flex-wrap">
-                        {/* Approve/Reject buttons for pending meetings */}
                         {meeting.status === "pending" && (
                           <>
                             <Button
@@ -405,7 +384,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                               ) : (
                                 <Check className="h-3 w-3 mr-1" />
                               )}
-                              Approve
+                              {t('pages:meeting.actions.approve')}
                             </Button>
                             <Button
                               size="sm"
@@ -419,12 +398,11 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                               ) : (
                                 <X className="h-3 w-3 mr-1" />
                               )}
-                              Reject
+                              {t('pages:meeting.actions.reject')}
                             </Button>
                           </>
                         )}
                         
-                        {/* Connect button for approved meetings with links */}
                         {(meeting.status === "approved" || meeting.status === "active") && meeting.meeting_link && (
                           <Button
                             size="sm"
@@ -432,11 +410,10 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                             onClick={() => handleConnectToMeeting(meeting)}
                           >
                             <Video className="h-3 w-3 mr-1" />
-                            Connect
+                            {t('pages:meeting.actions.connect')}
                           </Button>
                         )}
                         
-                        {/* Close button for active meetings */}
                         {meeting.status === "active" && (
                           <Button
                             size="sm"
@@ -450,7 +427,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                             ) : (
                               <X className="h-3 w-3 mr-1" />
                             )}
-                            Close
+                            {t('pages:pages:meeting.actions.close')}
                           </Button>
                         )}
                       </div>
