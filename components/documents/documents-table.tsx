@@ -42,7 +42,7 @@ import { RootState } from '@/lib/store'
 import { getDocuments, deleteDocument } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
-
+import { useTranslation } from "@/hooks/useTranslation"
 import { ShareWithLawyerDialog } from '@/components/documents/share-with-lawyer-dialog'
 
 interface Document {
@@ -78,6 +78,7 @@ export default function DocumentsTable({
   onDocumentUpdate, 
   refreshTrigger 
 }: DocumentsTableProps) {
+  const { t } = useTranslation();
   // Separate state for all documents and filtered documents
   const [allDocuments, setAllDocuments] = useState<Document[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
@@ -86,7 +87,7 @@ export default function DocumentsTable({
   const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Completed' | 'Failed' | 'Rejected' | 'Approved' | 'Processing' | 'Cancelled'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
-const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
   // Get user from Redux store
   const user = useSelector((state: RootState) => state.auth.user)
@@ -117,11 +118,11 @@ const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
         setAllDocuments(sortedDocs)
       } else {
         console.error('Failed to load documents:', response.message)
-        toast.error('Failed to load documents')
+        toast.error(t('pages:documentT.documents.loadFailed'))
       }
     } catch (error) {
       console.error('Error loading documents:', error)
-      toast.error('Error loading documents')
+      toast.error(t('pages:documentT.documents.loadError'))
     } finally {
       setIsLoading(false)
     }
@@ -155,43 +156,43 @@ const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
       'Pending': { 
         color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100', 
         icon: Clock,
-        label: 'Pending',
+        label: t('pages:documentT.status.pending'),
         dotColor: 'bg-amber-500'
       },
       'Completed': { 
         color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100', 
         icon: CheckCircle,
-        label: 'Completed',
+        label: t('pages:documentT.status.completed'),
         dotColor: 'bg-emerald-500'
       },
       'Failed': { 
         color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100', 
         icon: XCircle,
-        label: 'Failed',
+        label: t('pages:documentT.status.failed'),
         dotColor: 'bg-red-500'
       },
       'Rejected': { 
         color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100', 
         icon: Ban,
-        label: 'Rejected',
+        label: t('pages:documentT.status.rejected'),
         dotColor: 'bg-rose-500'
       },
       'Approved': { 
         color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100', 
         icon: CheckCircle,
-        label: 'Approved',
+        label: t('pages:documentT.status.approved'),
         dotColor: 'bg-blue-500'
       },
       'Processing': { 
         color: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100', 
         icon: Loader2,
-        label: 'Processing',
+        label: t('pages:documentT.status.processing'),
         dotColor: 'bg-violet-500'
       },
       'Cancelled': { 
         color: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100', 
         icon: Ban,
-        label: 'Cancelled',
+        label: t('pages:documentT.status.cancelled'),
         dotColor: 'bg-slate-500'
       }
     }
@@ -212,26 +213,26 @@ const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   }
 
   // Handle share with lawyer
-const handleShareWithLawyer = (document: Document) => {
-  setSelectedDocument(document)
-  setShareDialogOpen(true)
-}
+  const handleShareWithLawyer = (document: Document) => {
+    setSelectedDocument(document)
+    setShareDialogOpen(true)
+  }
 
-// Handle share update
-const handleShareUpdate = (updatedDocument: any) => {
-  // Update the document in both allDocuments and documents arrays
-  setAllDocuments(prevDocs => 
-    prevDocs.map(doc => 
-      doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+  // Handle share update
+  const handleShareUpdate = (updatedDocument: any) => {
+    // Update the document in both allDocuments and documents arrays
+    setAllDocuments(prevDocs => 
+      prevDocs.map(doc => 
+        doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+      )
     )
-  )
-  setDocuments(prevDocs => 
-    prevDocs.map(doc => 
-      doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+    setDocuments(prevDocs => 
+      prevDocs.map(doc => 
+        doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
+      )
     )
-  )
-  toast.success('Document sharing updated successfully')
-}
+    toast.success(t('pages:documentT.documents.shareSuccess'))
+  }
 
   // Privacy badge
   const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
@@ -239,35 +240,35 @@ const handleShareUpdate = (updatedDocument: any) => {
       return (
         <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 flex items-center gap-1">
           <Lock className="h-3 w-3" />
-          {isShared ? 'Shared' : 'Private'}
+          {isShared ? t('pages:documentT.privacy.shared') : t('pages:documentT.privacy.private')}
         </Badge>
       )
     }
     return (
       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
         <Globe className="h-3 w-3" />
-        Public
+        {t('pages:documentT.privacy.public')}
       </Badge>
     )
   }
 
   // Handle document deletion
   const handleDelete = async (documentId: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return
+    if (!confirm(t('pages:documentT.documents.deleteConfirm'))) return
     
     setDeletingId(documentId)
     try {
       const response = await deleteDocument(documentId)
       if (response.success) {
-        toast.success('Document deleted successfully')
+        toast.success(t('pages:documentT.documents.deleteSuccess'))
         loadDocuments() // Reload documents
         onDocumentUpdate?.()
       } else {
-        toast.error('Failed to delete document')
+        toast.error(t('pages:documentT.documents.deleteFailed'))
       }
     } catch (error) {
       console.error('Error deleting document:', error)
-      toast.error('Error deleting document')
+      toast.error(t('pages:documentT.documents.deleteError'))
     } finally {
       setDeletingId(null)
     }
@@ -275,13 +276,13 @@ const handleShareUpdate = (updatedDocument: any) => {
 
   // Get uploader name
   const getUploaderName = (uploadedBy: Document['uploaded_by']) => {
-    if (typeof uploadedBy === 'string') return 'Unknown'
+    if (typeof uploadedBy === 'string') return t('pages:documentT.general.unknown')
     return `${uploadedBy.first_name} ${uploadedBy.last_name}`
   }
 
   // Get shared with names
   const getSharedWithNames = (sharedWith: Document['shared_with']) => {
-    if (!sharedWith || sharedWith.length === 0) return 'None'
+    if (!sharedWith || sharedWith.length === 0) return t('pages:documentT.general.none')
     return sharedWith.map(user => `${user.first_name} ${user.last_name}`).join(', ')
   }
 
@@ -289,7 +290,7 @@ const handleShareUpdate = (updatedDocument: any) => {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Loading documents...</span>
+        <span className="ml-2 text-gray-600">{t('pages:documentT.documents.loading')}</span>
       </div>
     )
   }
@@ -298,14 +299,12 @@ const handleShareUpdate = (updatedDocument: any) => {
     <div className="space-y-6">
       {/* Enhanced Header with single search bar and filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-   
-        
         {/* Single search and filter section */}
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search documents..."
+              placeholder={t('pages:documentT.documents.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full sm:w-64"
@@ -315,36 +314,33 @@ const handleShareUpdate = (updatedDocument: any) => {
           <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
             <SelectTrigger className="w-full sm:w-40">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t('pages:documentT.documents.filterStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Processing">Processing</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Failed">Failed</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="all">{t('pages:documentT.status.all')}</SelectItem>
+              <SelectItem value="Pending">{t('pages:documentT.status.pending')}</SelectItem>
+              <SelectItem value="Processing">{t('pages:documentT.status.processing')}</SelectItem>
+              <SelectItem value="Completed">{t('pages:documentT.status.completed')}</SelectItem>
+              <SelectItem value="Approved">{t('pages:documentT.status.approved')}</SelectItem>
+              <SelectItem value="Failed">{t('pages:documentT.status.failed')}</SelectItem>
+              <SelectItem value="Rejected">{t('pages:documentT.status.rejected')}</SelectItem>
+              <SelectItem value="Cancelled">{t('pages:documentT.status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-
-      {/* Results summary */}
-   
 
       {/* Documents Table */}
       {documents.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">
-            {allDocuments.length === 0 ? 'No documents uploaded yet' : 'No documents match your filters'}
+            {allDocuments.length === 0 ? t('pages:documentT.documents.noDocuments') : t('pages:documentT.documents.noMatches')}
           </h3>
           <p className="text-muted-foreground">
             {allDocuments.length === 0 
-              ? 'Upload your first document to get started with AI analysis.'
-              : 'Try adjusting your search terms or filters to find documents.'
+              ? t('pages:documentT.documents.uploadPrompt')
+              : t('pages:documentT.documents.adjustFilters')
             }
           </p>
         </div>
@@ -355,20 +351,19 @@ const handleShareUpdate = (updatedDocument: any) => {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Document
+                    {t('pages:documentT.documents.document')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t('pages:documentT.status.status')}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Privacy
+                    {t('pages:documentT.privacy.privacy')}
                   </th>
-                 
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
+                    {t('pages:documentT.general.date')}
                   </th>
                   <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
+                    {t('pages:documentT.general.actions')}
                   </th>
                 </tr>
               </thead>
@@ -415,18 +410,18 @@ const handleShareUpdate = (updatedDocument: any) => {
                             className="flex items-center gap-2"
                           >
                             <Eye className="h-4 w-4" />
-                            View Document
+                            {t('pages:documentT.actions.view')}
                           </DropdownMenuItem>
                           
                           {isClient && doc.privacy === 'private' && (
-  <DropdownMenuItem 
-    onClick={() => handleShareWithLawyer(doc)}
-    className="flex items-center gap-2"
-  >
-    <Share2 className="h-4 w-4" />
-    Share with Lawyer
-  </DropdownMenuItem>
-)}
+                            <DropdownMenuItem 
+                              onClick={() => handleShareWithLawyer(doc)}
+                              className="flex items-center gap-2"
+                            >
+                              <Share2 className="h-4 w-4" />
+                              {t('pages:documentT.actions.shareWithLawyer')}
+                            </DropdownMenuItem>
+                          )}
                           
                           <DropdownMenuSeparator />
                           
@@ -440,7 +435,7 @@ const handleShareUpdate = (updatedDocument: any) => {
                             ) : (
                               <Trash2 className="h-4 w-4" />
                             )}
-                            Delete
+                            {t('pages:documentT.actions.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -449,13 +444,12 @@ const handleShareUpdate = (updatedDocument: any) => {
                 ))}
               </tbody>
             </table>
-            
           </div>
-          
         </div>
       )}
-            {/* Share with Lawyer Dialog */}
-            {selectedDocument && (
+      
+      {/* Share with Lawyer Dialog */}
+      {selectedDocument && (
         <ShareWithLawyerDialog
           open={shareDialogOpen}
           onOpenChange={setShareDialogOpen}

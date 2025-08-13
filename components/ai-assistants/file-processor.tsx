@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { uploadUniversalFile } from "@/lib/helpers/fileupload"
 import { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 // Enhanced API function for multi-file upload
 const uploadDocumentEnhanced = async (data: {
@@ -60,6 +61,7 @@ interface ProcessedFile {
 }
 
 export default function FileProcessor() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState("upload")
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
@@ -79,31 +81,31 @@ export default function FileProcessor() {
       extensions: ['.pdf'],
       icon: FileText,
       color: 'bg-red-100 text-red-800',
-      label: 'PDF Document'
+      label: t("pages:fileProcessor.fileTypes.pdf")
     },
     docx: {
       extensions: ['.docx', '.doc'],
       icon: FileText,
       color: 'bg-blue-100 text-blue-800',
-      label: 'Word Document'
+      label: t("pages:fileProcessor.fileTypes.docx")
     },
     text: {
       extensions: ['.txt', '.text'],
       icon: File,
       color: 'bg-green-100 text-green-800',
-      label: 'Text File'
+      label: t("pages:fileProcessor.fileTypes.text")
     },
     image: {
       extensions: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'],
       icon: Image,
       color: 'bg-orange-100 text-orange-800',
-      label: 'Image'
+      label: t("pages:fileProcessor.fileTypes.image")
     },
     video: {
       extensions: ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm', '.mkv', '.m4v', '.3gp', '.ogv'],
       icon: Video,
       color: 'bg-purple-100 text-purple-800',
-      label: 'Video'
+      label: t("pages:fileProcessor.fileTypes.video")
     }
   }
 
@@ -129,8 +131,8 @@ export default function FileProcessor() {
 
     if (!isFileSupported(file)) {
       toast({
-        title: "Unsupported file type",
-        description: "Please select a PDF, DOCX, TXT, image, or video file.",
+        title: t("pages:fileProcessor.errors.unsupportedType.title"),
+        description: t("pages:fileProcessor.errors.unsupportedType.description"),
         variant: "destructive"
       })
       return
@@ -145,8 +147,8 @@ export default function FileProcessor() {
     if (file.size > maxSize) {
       const sizeLimit = maxSize === 10 * 1024 * 1024 ? '10MB' : '5MB'
       toast({
-        title: "File too large",
-        description: `Please select a file smaller than ${sizeLimit}.`,
+        title: t("pages:fileProcessor.errors.fileTooLarge.title"),
+        description: t("pages:fileProcessor.errors.fileTooLarge.description", { size: sizeLimit }),
         variant: "destructive"
       })
       return
@@ -158,8 +160,8 @@ export default function FileProcessor() {
   const handleFileUpload = async () => {
     if (!selectedFile || !profile?._id) {
       toast({
-        title: "Error",
-        description: "Please select a file and ensure you're logged in.",
+        title: t("pages:fileProcessor.errors.general.title"),
+        description: t("pages:fileProcessor.errors.general.description"),
         variant: "destructive"
       })
       return
@@ -173,8 +175,8 @@ export default function FileProcessor() {
       // Step 1: Upload file to S3
       setUploadProgress(20)
       toast({
-        title: "Uploading file...",
-        description: "Please wait while we upload your file."
+        title: t("pages:fileProcessor.uploadProgress.uploading.title"),
+        description: t("pages:fileProcessor.uploadProgress.uploading.description")
       })
 
       // Upload file using universal upload function
@@ -184,8 +186,8 @@ export default function FileProcessor() {
       
       // Step 2: Process with AI
       toast({
-        title: "Processing with AI...",
-        description: "Analyzing your file content and generating summary."
+        title: t("pages:fileProcessor.uploadProgress.processing.title"),
+        description: t("pages:fileProcessor.uploadProgress.processing.description")
       })
 
       const fileType = getFileType(selectedFile.name)
@@ -205,7 +207,7 @@ export default function FileProcessor() {
           document_name: result.document.document_name,
           status: result.document.status,
           summary: result.summary,
-          file_type: fileType?.label || 'Unknown',
+          file_type: fileType?.label || t("pages:fileProcessor.unknownFileType"),
           link: result.document.link,
           created_at: result.document.created_at || new Date().toISOString()
         }
@@ -214,18 +216,18 @@ export default function FileProcessor() {
         setActiveTab("results")
         
         toast({
-          title: "Success!",
-          description: `${fileType?.label} processed successfully with AI analysis.`
+          title: t("pages:fileProcessor.success.title"),
+          description: t("pages:fileProcessor.success.description", { type: fileType?.label })
         })
       } else {
-        throw new Error(result.message || 'Processing failed')
+        throw new Error(result.message || t("pages:fileProcessor.errors.processingFailed"))
       }
 
     } catch (error: any) {
       console.error('Upload/processing error:', error)
       toast({
-        title: "Processing failed",
-        description: error.message || "There was an error processing your file.",
+        title: t("pages:fileProcessor.errors.processingFailed"),
+        description: error.message || t("pages:fileProcessor.errors.generalProcessingError"),
         variant: "destructive"
       })
     } finally {
@@ -256,12 +258,14 @@ export default function FileProcessor() {
 
   return (
     <div className="space-y-6">
-
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upload">Upload & Process</TabsTrigger>
-          <TabsTrigger value="results">Results ({processedFiles.length})</TabsTrigger>
+          <TabsTrigger value="upload">
+            {t("pages:fileProcessor.tabs.upload")}
+          </TabsTrigger>
+          <TabsTrigger value="results">
+            {t("pages:fileProcessor.tabs.results", { count: processedFiles.length })}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="space-y-6">
@@ -269,7 +273,9 @@ export default function FileProcessor() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Supported File Types</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {t("pages:fileProcessor.supportedTypesTitle")}
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(supportedTypes).map(([type, config]) => {
                       const IconComponent = config.icon
@@ -282,7 +288,7 @@ export default function FileProcessor() {
                     })}
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Maximum file size: 5MB
+                    {t("pages:fileProcessor.maxFileSize")}
                   </p>
                 </div>
 
@@ -298,12 +304,14 @@ export default function FileProcessor() {
                   {!selectedFile ? (
                     <div>
                       <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Select a file to process</h3>
+                      <h3 className="text-lg font-semibold mb-2">
+                        {t("pages:fileProcessor.selectFileTitle")}
+                      </h3>
                       <p className="text-muted-foreground mb-4">
-                        Choose a PDF, image, or video file for AI analysis
+                        {t("pages:fileProcessor.selectFileDescription")}
                       </p>
                       <Button onClick={() => fileInputRef.current?.click()}>
-                        Choose File
+                        {t("pages:fileProcessor.chooseFileButton")}
                       </Button>
                     </div>
                   ) : (
@@ -333,8 +341,9 @@ export default function FileProcessor() {
                         <div className="space-y-2">
                           <Progress value={uploadProgress} className="w-full" />
                           <p className="text-sm text-muted-foreground">
-                            {uploadProgress < 40 ? 'Uploading...' : 
-                             uploadProgress < 100 ? 'Processing with AI...' : 'Complete!'}
+                            {uploadProgress < 40 ? t("pages:fileProcessor.uploadStatus.uploading") : 
+                             uploadProgress < 100 ? t("pages:fileProcessor.uploadStatus.processing") : 
+                             t("pages:fileProcessor.uploadStatus.complete")}
                           </p>
                         </div>
                       )}
@@ -348,12 +357,12 @@ export default function FileProcessor() {
                           {uploading ? (
                             <>
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Processing...
+                              {t("pages:fileProcessor.processingButton")}
                             </>
                           ) : (
                             <>
                               <Upload className="h-4 w-4 mr-2" />
-                              Process with AI
+                              {t("pages:fileProcessor.processWithAIButton")}
                             </>
                           )}
                         </Button>
@@ -362,7 +371,7 @@ export default function FileProcessor() {
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploading}
                         >
-                          Change File
+                          {t("pages:fileProcessor.changeFileButton")}
                         </Button>
                       </div>
                     </div>
@@ -378,9 +387,11 @@ export default function FileProcessor() {
             <Card>
               <CardContent className="p-8 text-center">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No processed files yet</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  {t("pages:fileProcessor.noResultsTitle")}
+                </h3>
                 <p className="text-muted-foreground">
-                  Upload and process files to see results here.
+                  {t("pages:fileProcessor.noResultsDescription")}
                 </p>
               </CardContent>
             </Card>
@@ -411,7 +422,9 @@ export default function FileProcessor() {
                         
                         {file.summary && (
                           <div className="bg-gray-50 p-4 rounded-lg">
-                            <h4 className="font-medium mb-2">AI Summary:</h4>
+                            <h4 className="font-medium mb-2">
+                              {t("pages:fileProcessor.aiSummaryTitle")}:
+                            </h4>
                             <p className="text-sm text-gray-700 whitespace-pre-wrap">
                               {file.summary}
                             </p>
@@ -420,14 +433,14 @@ export default function FileProcessor() {
                         
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <span>
-                            Processed: {new Date(file.created_at).toLocaleString()}
+                            {t("pages:fileProcessor.processedDate")}: {new Date(file.created_at).toLocaleString()}
                           </span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(file.link, '_blank')}
                           >
-                            View File
+                            {t("pages:fileProcessor.viewFileButton")}
                           </Button>
                         </div>
                       </div>

@@ -91,33 +91,324 @@
   "you": "본인",
   "user": "사용자"
 },
+"secureLink" : {
+  "title": "보안 문서 업로드 링크",
+  "description": "고객이 안전하게 문서를 업로드할 수 있도록 비밀번호로 보호된 링크를 생성하세요. 링크는 업로드가 완료되거나 시간 제한이 지나면 만료됩니다.",
+  "generateNewLink": "새 링크 생성",
+  "myLinks": "내 보안 링크",
+  "form": {
+    "clientLabel": "고객 선택",
+    "clientPlaceholder": "고객을 선택하세요",
+    "passwordLabel": "비밀번호",
+    "passwordPlaceholder": "안전한 비밀번호 입력 (최소 6자)",
+    "expiryLabel": "만료 시간"
+  },
+  "expiry": {
+    "1h": "1시간",
+    "6h": "6시간",
+    "12h": "12시간",
+    "24h": "24시간",
+    "48h": "48시간",
+    "72h": "72시간",
+    "1w": "1주일"
+  },
+  "buttons": {
+    "generateLink": "보안 링크 생성",
+    "generating": "생성 중...",
+    "copy": "복사"
+  },
+  "success": {
+    "generatedTitle": "보안 링크 생성됨",
+    "generatedDesc": "{{name}} 님을 위한 링크가 생성되었습니다",
+    "copiedTitle": "링크 복사됨",
+    "copiedDesc": "보안 링크가 클립보드에 복사되었습니다"
+  },
+  "errors": {
+    "missingInfoTitle": "정보 누락",
+    "missingInfoDesc": "고객을 선택하고 비밀번호를 입력해주세요",
+    "shortPasswordTitle": "비밀번호가 너무 짧습니다",
+    "shortPasswordDesc": "비밀번호는 최소 6자 이상이어야 합니다",
+    "errorTitle": "오류",
+    "errorDefault": "보안 링크 생성에 실패했습니다"
+  },
+  "status": {
+    "used": "사용됨",
+    "expired": "만료됨",
+    "active": "활성"
+  },
+  "generatedFor": "{{name}} 님을 위한 생성된 링크",
+  "shareInfo": "이 링크와 비밀번호를 고객과 공유하세요. 업로드 완료 시 링크가 만료됩니다.",
+  "noLinks": "아직 생성된 보안 링크가 없습니다",
+  "clickToView": "눈 아이콘을 클릭하여 보안 링크를 확인하세요",
+  "created": "생성일",
+  "expires": "만료일",
+  "used": "사용일",
+  "documentUploaded": "업로드된 문서:"
+
+},
+ 
+  "voiceSummary": {
+      "title": "음성 요약",
+      "description": "문서 요약을 확인하고 음성으로 들을 수 있습니다.",
+      "searchPlaceholder": "문서나 요약 검색...",
+      "languageLabel": "언어",
+      "playingTitle": "재생 중",
+      "playingDescription": "재생 시작",
+      "playingLanguage": "{{lang}}로 재생 중",
+      "errorTitle": "오류 발생",
+      "errorDescription": "문서 요약을 불러오는 중 문제가 발생했습니다.",
+      "speechNotSupported": "이 브라우저는 음성 합성을 지원하지 않습니다.",
+      "play": "재생",
+      "pause": "일시정지",
+      "resume": "다시 재생",
+      "stop": "정지",
+      "loading": "불러오는 중...",
+      "noResults": "검색 결과가 없습니다.",
+      "caseLabel": "사건명",
+      "uploadedLabel": "업로드일",
+      "words": "단어",
+      "rejectedTooltip": "거부된 문서는 재생할 수 없습니다.",
+      "playTooltip": "요약 음성 재생",
+      "rejectedMessage": "이 문서는 거부되었습니다.",
+      "statusLabel": "상태",
+      "summaryAvailable": "요약이 준비되었습니다.",
+      "statusCompleted": "완료됨",
+      "statusFailed": "실패함",
+      "statusProcessing": "처리 중"
+    },
+  "locla" :{
+  "location": {
+    "title": "위치 정보",
+    "inputMethod": "입력 방법",
+    "methods": {
+      "manual": "수동 좌표 입력",
+      "address": "주소 검색",
+      "place": "장소 검색",
+      "auto": "자동 감지"
+    },
+    "latitude": "위도",
+    "longitude": "경도",
+    "altitude": "고도 (미터)",
+    "floor": "층 수",
+    "specificTime": "특정 시간",
+    "addressSearch": "주소로 검색",
+    "placeSearch": "장소명으로 검색",
+    "getCurrentLocation": "현재 위치 가져오기",
+    "currentAltitude": "현재 고도: {altitude} 미터",
+    "searchResults": "검색 결과",
+    "generatedUrls": "생성된 URL",
+    "fullUrl": "전체 URL",
+    "shortUrl": "짧은 URL",
+    "applyLocation": "위치 적용",
+    "placeholders": {
+      "latitude": "예: 37.5665",
+      "longitude": "예: 126.9780",
+      "altitude": "예: 100",
+      "floor": "예: 5",
+      "address": "주소를 입력하세요...",
+      "place": "장소명을 입력하세요..."
+    },
+    "tooltips": {
+      "altitude": "해발 고도 (미터 단위)",
+      "floor": "건물 층 수 (선택 사항)"
+    },
+    "defaultPlaces": {
+      "timesSquare": "타임스퀘어, 뉴욕",
+      "centralPark": "센트럴 파크, 뉴욕"
+    },
+    "toast": {
+      "geolocationNotSupported": "위치 서비스 지원 안됨",
+      "browserNotSupported": "현재 브라우저는 위치 서비스를 지원하지 않습니다",
+      "locationObtained": "위치 정보 획득",
+      "coordinates": "좌표",
+      "locationError": "위치 오류",
+      "searchFailed": "검색 실패",
+      "searchFailedDesc": "위치 검색 결과를 가져올 수 없습니다",
+      "locationSelected": "위치 선택됨",
+      "dataSaved": "위치 저장됨",
+      "dataSavedDesc": "위치 정보가 저장되었습니다",
+      "invalidLatitude": "잘못된 위도",
+      "invalidLatitudeDesc": "위도는 -90에서 90 사이여야 합니다",
+      "invalidLongitude": "잘못된 경도",
+      "invalidLongitudeDesc": "경도는 -180에서 180 사이여야 합니다",
+      "urlCopied": "URL 복사됨",
+      "urlCopiedDesc": "이 클립보드에 복사되었습니다"
+    }
+  }
+},
+  "fileOutput": {
+    "generateSummary": "요약 생성",
+    "generatingSummary": "요약 생성 중...",
+    "downloadSummary": "요약 다운로드",
+    "downloading": "다운로드 중...",
+    "selectCasePlaceholder": "사건 선택",
+    "loadingCases": "사건 불러오는 중...",
+    "noCasesAvailable": "사용 가능한 사건 없음",
+    "saveToCase": "사건에 저장",
+    "saving": "저장 중...",
+    "tabs": {
+      "originalText": "원본 텍스트",
+      "summary": "요약"
+    },
+    "success": {
+      "download": {
+        "title": "요약 다운로드 완료",
+        "description": "요약이 성공적으로 다운로드되었습니다"
+      },
+      "saveToCase": {
+        "title": "사건에 저장 완료",
+        "description": "요약이 선택한 사건에 저장되었습니다"
+      }
+    },
+    "errors": {
+      "loadCasesFailed": {
+        "title": "사건 불러오기 실패",
+        "description": "서버에서 사건을 불러오지 못했습니다"
+      },
+      "downloadFailed": {
+        "title": "다운로드 실패",
+        "description": "요약 다운로드 중 오류가 발생했습니다"
+      },
+      "saveFailed": {
+        "title": "저장 실패",
+        "description": "사건에 요약 저장 중 오류가 발생했습니다"
+      }
+    }
+  },
 "pdfUpload" :{
-  "triggerUploadPDF": "PDF 업로드",
   "title": "PDF 문서 업로드",
-  "description": "AI 처리 및 법률 분석을 위해 PDF 문서를 업로드하세요.",
-  "pdfRules": "허용되는 파일 형식: PDF. 최대 크기: 10MB.",
-  "invalidFileTitle": "잘못된 파일",
-  "docVisibility": "문서 공개 범위",
-  "private": "비공개",
-  "public": "공개",
-  "privacyHelp": "비공개 문서는 본인만 볼 수 있습니다. 공개 문서는 다른 사용자와 공유할 수 있습니다.",
-  "selectUsersLabel": "공유할 사용자 선택",
-  "selectUsersPlaceholder": "의뢰인 또는 변호사를 선택하세요",
-  "selectUsersHelp": "이 문서를 볼 수 있는 사용자를 선택하세요. (본인은 항상 접근 가능)",
-  "errorTitle": "오류",
-  "selectFileOrLogin": "파일을 선택하고 로그인 상태인지 확인하세요.",
-  "selectShareUsers": "공유할 사용자를 선택하세요.",
-  "successTitle": "성공!",
-  "successDesc": "PDF가 성공적으로 업로드되었습니다. AI 처리가 백그라운드에서 시작됩니다.",
-  "uploading": "업로드 중...",
-  "uploadPDF": "PDF 업로드",
-  "uploadingDesc": "PDF 문서를 업로드 중입니다.",
-  "uploadFailStorage": "파일을 저장소에 업로드하지 못했습니다.",
-  "uploadFailSave": "문서를 저장하지 못했습니다.",
-  "uploadFailedTitle": "업로드 실패",
-  "uploadFailedDesc": "PDF 문서 업로드에 실패했습니다.",
-  "cancel": "취소",
-  "uploadingProgress": "업로드 중... {{progress}}%"
+      "invalidFile": "유효한 PDF 파일을 업로드해 주세요.",
+      "selectFileOrLogin": "파일을 선택하고 로그인 상태인지 확인해 주세요.",
+      "lawyersPublicOnly": "변호사는 공개 문서만 업로드할 수 있습니다.",
+      "uploadFailStorage": "스토리지에 파일 업로드에 실패했습니다.",
+      "uploadFailed": "업로드 실패. 다시 시도해 주세요.",
+      "uploadFailedTitle": "업로드 오류",
+      "successTitle": "업로드 성공!",
+      "dragDropText": "여기에 PDF 파일을 드래그하거나 파일을 선택하세요",
+      "pdfRules": "10MB 이하의 PDF 파일만 허용됩니다.",
+      "selectFile": "PDF 파일 선택",
+      "docVisibility": "문서 공개 설정",
+      "public": "공개",
+      "private": "비공개",
+      "lawyerNote": "변호사는 공개 문서만 업로드할 수 있습니다.",
+      "privateHelp": "비공개 문서는 본인과 권한이 있는 사용자만 볼 수 있습니다.",
+      "publicHelp": "공개 문서는 접근 권한이 있는 모든 사용자가 볼 수 있습니다.",
+      "processWithAI": "AI로 문서 처리하기",
+      "uploading": "업로드 중...",
+      "cancel": "취소",
+      "uploadPDF": "PDF 업로드"
+},
+
+  "fileProcessor": {
+    "tabs": {
+      "upload": "업로드 및 처리",
+      "results": "결과 ({{count}})"
+    },
+    "supportedTypesTitle": "지원되는 파일 형식",
+    "maxFileSize": "최대 파일 크기: 5MB",
+    "selectFileTitle": "처리할 파일 선택",
+    "selectFileDescription": "AI 분석을 위해 PDF, 이미지 또는 동영상 파일을 선택하세요",
+    "chooseFileButton": "파일 선택",
+    "processingButton": "처리 중...",
+    "processWithAIButton": "AI로 처리",
+    "changeFileButton": "파일 변경",
+    "uploadStatus": {
+      "uploading": "업로드 중...",
+      "processing": "AI 처리 중...",
+      "complete": "완료!"
+    },
+    "noResultsTitle": "처리된 파일이 없습니다",
+    "noResultsDescription": "결과를 보려면 파일을 업로드하고 처리하세요.",
+    "aiSummaryTitle": "AI 요약",
+    "processedDate": "처리 일시",
+    "viewFileButton": "파일 보기",
+    "unknownFileType": "알 수 없음",
+    "fileTypes": {
+      "pdf": "PDF 문서",
+      "docx": "워드 문서",
+      "text": "텍스트 파일",
+      "image": "이미지",
+      "video": "동영상"
+    },
+    "errors": {
+      "unsupportedType": {
+        "title": "지원되지 않는 파일 형식",
+        "description": "PDF, DOCX, TXT, 이미지 또는 동영상 파일을 선택해주세요."
+      },
+      "fileTooLarge": {
+        "title": "파일 크기 초과",
+        "description": "{{size}} 이하의 파일을 선택해주세요."
+      },
+      "general": {
+        "title": "오류",
+        "description": "파일을 선택하고 로그인 상태인지 확인해주세요."
+      },
+      "processingFailed": "처리 실패",
+      "generalProcessingError": "파일 처리 중 오류가 발생했습니다."
+    },
+    "uploadProgress": {
+      "uploading": {
+        "title": "파일 업로드 중...",
+        "description": "파일을 업로드 중입니다. 잠시 기다려주세요."
+      },
+      "processing": {
+        "title": "AI 처리 중...",
+        "description": "파일 내용을 분석하고 요약을 생성 중입니다."
+      }
+    },
+    "success": {
+      "title": "성공!",
+      "description": "{{type}} 파일이 AI 분석으로 성공적으로 처리되었습니다."
+    }
+  },
+
+  "documentT": {
+  "documents": {
+    "loadFailed": "문서를 불러오는데 실패했습니다",
+    "loadError": "문서 불러오기 오류",
+    "deleteConfirm": "이 문서를 삭제하시겠습니까?",
+    "deleteSuccess": "문서가 성공적으로 삭제되었습니다",
+    "deleteFailed": "문서 삭제에 실패했습니다",
+    "deleteError": "문서 삭제 중 오류 발생",
+    "shareSuccess": "문서 공유가 성공적으로 업데이트되었습니다",
+    "searchPlaceholder": "문서 검색...",
+    "filterStatus": "상태별 필터",
+    "noDocuments": "업로드된 문서가 없습니다",
+    "noMatches": "필터와 일치하는 문서가 없습니다",
+    "uploadPrompt": "AI 분석을 시작하려면 첫 번째 문서를 업로드하세요.",
+    "adjustFilters": "검색어 또는 필터를 조정해 문서를 찾아보세요.",
+    "document": "문서"
+  },
+  "status": {
+    "all": "모든 상태",
+    "pending": "대기 중",
+    "completed": "완료됨",
+    "failed": "실패",
+    "rejected": "거부됨",
+    "approved": "승인됨",
+    "processing": "처리 중",
+    "cancelled": "취소됨",
+    "status": "상태"
+  },
+  "privacy": {
+    "public": "공개",
+    "private": "비공개",
+    "shared": "공유됨",
+    "privacy": "공개 범위"
+  },
+  "general": {
+    "unknown": "알 수 없음",
+    "none": "없음",
+    "date": "날짜",
+    "actions": "작업",
+    "loading": "문서를 불러오는 중..."
+  },
+  "actions": {
+    "view": "문서 보기",
+    "shareWithLawyer": "변호사와 공유",
+    "delete": "삭제"
+  }
+
 },
   "clients": {
     "title": "고객",
@@ -498,21 +789,7 @@
     "noUpcomingMeetings": "예정된 상담이 없습니다",
     "noPastMeetings": "과거 상담이 없습니다"
   },
-  "voiceSummary": {
-    "title": "음성 요약",
-    "documentSummaries": "문서 요약",
-    "playAudio": "오디오 재생",
-    "pauseAudio": "오디오 일시정지",
-    "stopAudio": "오디오 정지",
-    "searchDocuments": "문서 검색...",
-    "noDocuments": "문서가 없습니다",
-    "summaryPlaying": "요약 재생 중...",
-    "summaryPaused": "요약 일시정지됨",
-    "summaryStopped": "요약 정지됨",
-    "audioError": "오디오 재생 오류",
-    "textToSpeech": "텍스트 음성 변환",
-    "listenToSummary": "요약 듣기"
-  },
+  
   "tokens": {
     "title": "토큰 관리",
     "description": "AI 토큰을 관리하고 추가 크레딧을 구매하세요",

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
 import { getDocumentSummaries } from "@/lib/api/voice-summary-api"
 import type { DocumentSummary } from "@/types/voice-summary"
+import { useTranslation } from "@/hooks/useTranslation"
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
   const [isPaused, setIsPaused] = useState(false)
   const [selectedLang, setSelectedLang] = useState("en-US")
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   const languages = [
     { value: "en-US", label: "English" },
@@ -151,8 +153,8 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
     <div className="space-y-6">
       {/* Voice Summary Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Voice Summary</h1>
-        <p className="text-gray-600 dark:text-gray-400">Listen to AI-generated document summaries</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t("pages:voiceSummary.title")}</h1>
+        <p className="text-gray-600 dark:text-gray-400">{t("pages:voiceSummary.description")}</p>
       </div>
 
       {/* Search Bar and Language Selector */}
@@ -160,14 +162,14 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search document summaries..."
+             placeholder={t("pages:voiceSummary.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm font-medium">Language:</span>
+         <span className="text-sm font-medium">{t("pages:voiceSummary.languageLabel")}:</span>
           <Select value={selectedLang} onValueChange={setSelectedLang}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -188,7 +190,10 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
           <div className="flex items-center space-x-2">
             <Volume2 className="h-4 w-4" />
-            <span className="text-sm">Playing audio in {languages.find(l => l.value === selectedLang)?.label}</span>
+            <span className="text-sm">{t("pages:voiceSummary.playingLanguage", {
+                lang: languages.find(l => l.value === selectedLang)?.label
+              })}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {!isSpeaking ? (
@@ -196,19 +201,19 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                 const summary = summaries.find(s => s.id === playingId)
                 if (summary) handlePlaySummary(summary)
               }}>
-                <Play className="w-4 h-4 mr-1" /> Play
+                <Play className="w-4 h-4 mr-1" /> {t("pages:voiceSummary.play")}
               </Button>
             ) : isPaused ? (
               <Button size="sm" onClick={handleResume}>
-                <Play className="w-4 h-4 mr-1" /> Resume
+                <Play className="w-4 h-4 mr-1" /> {t("pages:voiceSummary.resume")}
               </Button>
             ) : (
               <Button size="sm" onClick={handlePause}>
-                <Pause className="w-4 h-4 mr-1" /> Pause
+                <Pause className="w-4 h-4 mr-1" /> {t("pages:voiceSummary.pause")}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={handleStop}>
-              <Square className="w-4 h-4 mr-1" /> Stop
+              <Square className="w-4 h-4 mr-1" />{t("pages:voiceSummary.stop")}
             </Button>
           </div>
         </div>
@@ -270,13 +275,13 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                         ) : (
                           <>
                             <Play className="h-4 w-4 mr-1" />
-                            Play
+                            {t("pages:voiceSummary.play")}
                           </>
                         )
                       ) : (
                         <>
                           <Play className="h-4 w-4 mr-1" />
-                          Play
+                          {t("pages:voiceSummary.play")}
                         </>
                       )}
                     </Button>
@@ -286,7 +291,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                 <div className="bg-muted/30 rounded-lg p-4 mb-4">
                   {summary.status === "Rejected" ? (
                     <p className="text-sm leading-relaxed text-red-600">
-                      Document rejected: This document has been rejected and voice summary is not available.
+                     {t("pages:voiceSummary.rejectedMessage")}
                     </p>
                   ) : (
                     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -307,7 +312,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
                             : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {summary.status === "Completed" ? "Completed" : summary.status === "error" ? "Failed" : "Processing"}
+                      {summary.status === "Completed" ? t("pages:voiceSummary.statusCompleted") : summary.status === "error" ? t("pages:voiceSummary.statusFailed") : t("pages:voiceSummary.statusProcessing")}
                     </span>
                   </div>
                 </div>

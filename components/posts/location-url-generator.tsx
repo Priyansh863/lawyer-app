@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
+
 import { 
   MapPin, 
   Globe, 
@@ -34,12 +36,10 @@ interface LocationUrlGeneratorProps {
   initialData?: SpatialInfo;
 }
 
-// Google Places API implementation
-const searchPlacesAPI = async (query: string) => {
+const searchPlacesAPI = async (query: string, t: any) => {
   if (!query.trim()) return [];
   
   try {
-    // Use Google Places API Text Search
     const response = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
     
     if (!response.ok) {
@@ -56,17 +56,16 @@ const searchPlacesAPI = async (query: string) => {
     })) || [];
   } catch (error) {
     console.error('Places search error:', error);
-    // Fallback to mock data if API fails
     return [
       {
         place_id: '1',
-        description: 'Times Square, New York, NY, USA',
+        description: t('location.defaultPlaces.timesSquare'),
         lat: 40.758896,
         lng: -73.985130
       },
       {
         place_id: '2', 
-        description: 'Central Park, New York, NY, USA',
+        description: t('location.defaultPlaces.centralPark'),
         lat: 40.785091,
         lng: -73.968285
       }
@@ -76,8 +75,8 @@ const searchPlacesAPI = async (query: string) => {
 
 export default function LocationUrlGenerator({ onLocationSelect, initialData }: LocationUrlGeneratorProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   
-  // Form state
   const [spatialInfo, setSpatialInfo] = useState<SpatialInfo>({
     planet: 'Earth',
     latitude: undefined,
@@ -88,7 +87,6 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     ...initialData
   });
 
-  // UI state
   const [addressQuery, setAddressQuery] = useState("");
   const [placeQuery, setPlaceQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -97,12 +95,11 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
   const [currentAltitude, setCurrentAltitude] = useState<number | null>(null);
   const [inputMethod, setInputMethod] = useState<'manual' | 'address' | 'place' | 'map' | 'auto'>('manual');
 
-  // Get current location
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast({
-        title: "Geolocation not supported",
-        description: "Your browser doesn't support geolocation",
+        title: t('pages:locla.location.toast.geolocationNotSupported'),
+        description: t('pages:locla.location.toast.browserNotSupported'),
         variant: "destructive",
       });
       return;
@@ -119,20 +116,19 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           longitude: lng
         }));
 
-        // Get altitude if available
         if (position.coords.altitude) {
           setCurrentAltitude(Math.round(position.coords.altitude));
         }
 
         toast({
-          title: "Location obtained",
-          description: `Coordinates: ${lat}, ${lng}`,
+          title: t('pages:locla.location.toast.locationObtained'),
+          description: `${t('pages:locla.location.toast.coordinates')}: ${lat}, ${lng}`,
           variant: "default",
         });
       },
       (error) => {
         toast({
-          title: "Location error",
+          title: t('pages:locla.location.toast.locationError'),
           description: error.message,
           variant: "destructive",
         });
@@ -145,18 +141,17 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     );
   };
 
-  // Search places
   const searchPlaces = async (query: string, type: 'address' | 'place') => {
     if (!query.trim()) return;
 
     setIsSearching(true);
     try {
-      const results = await searchPlacesAPI(query);
+      const results = await searchPlacesAPI(query, t);
       setSearchResults(results);
     } catch (error) {
       toast({
-        title: "Search failed",
-        description: "Failed to search places",
+        title: t('pages:locla.location.toast.searchFailed'),
+        description: t('pages:locla.location.toast.searchFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -164,7 +159,6 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     }
   };
 
-  // Select place from search results
   const selectPlace = (place: any) => {
     const lat = parseFloat(place.lat.toFixed(6));
     const lng = parseFloat(place.lng.toFixed(6));
@@ -180,17 +174,16 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     setPlaceQuery("");
 
     toast({
-      title: "Location selected",
+      title: t('pages:locla.location.toast.locationSelected'),
       description: place.description,
       variant: "default",
     });
   };
 
-  // Debounced search for autocomplete
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (addressQuery.trim().length > 2 && inputMethod === 'address') {
-        searchPlacesAPI(addressQuery).then(results => {
+        searchPlacesAPI(addressQuery, t).then(results => {
           setSearchResults(results);
           setShowSuggestions(results.length > 0);
         }).catch(() => {
@@ -201,12 +194,11 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
         setSearchResults([]);
         setShowSuggestions(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [addressQuery, inputMethod]);
+  }, [addressQuery, inputMethod, t]);
 
-  // Handle address input change
   const handleAddressChange = (value: string) => {
     setAddressQuery(value);
     if (value.trim().length > 2) {
@@ -217,7 +209,6 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     }
   };
 
-  // Generate URLs
   const generateCustomUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://yourapp.com';
     let url = `${baseUrl}/post-title`;
@@ -267,14 +258,12 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     return url;
   };
 
-  // Handle form submission
   const handleSubmit = () => {
     if (spatialInfo.latitude && spatialInfo.longitude) {
-      // Validate coordinates
       if (spatialInfo.latitude < -90 || spatialInfo.latitude > 90) {
         toast({
-          title: "Invalid latitude",
-          description: "Latitude must be between -90 and 90",
+          title: t('pages:locla.location.toast.invalidLatitude'),
+          description: t('pages:locla.location.toast.invalidLatitudeDesc'),
           variant: "destructive",
         });
         return;
@@ -282,8 +271,8 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
       if (spatialInfo.longitude < -180 || spatialInfo.longitude > 180) {
         toast({
-          title: "Invalid longitude", 
-          description: "Longitude must be between -180 and 180",
+          title: t('pages:locla.location.toast.invalidLongitude'), 
+          description: t('pages:locla.location.toast.invalidLongitudeDesc'),
           variant: "destructive",
         });
         return;
@@ -293,13 +282,12 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     onLocationSelect(spatialInfo);
     
     toast({
-      title: "Location data saved",
-      description: "Spatial information has been applied to your post",
+      title: t('pages:locla.location.toast.dataSaved'),
+      description: t('pages:locla.location.toast.dataSavedDesc'),
       variant: "default",
     });
   };
 
-  // Reset form
   const resetForm = () => {
     setSpatialInfo({
       planet: 'Earth',
@@ -315,12 +303,11 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
     setCurrentAltitude(null);
   };
 
-  // Copy URL to clipboard
   const copyUrl = (url: string, type: string) => {
     navigator.clipboard.writeText(url);
     toast({
-      title: "URL copied",
-      description: `${type} URL copied to clipboard`,
+      title: t('pages:locla.location.toast.urlCopied'),
+      description: `${type} ${t('pages:locla.location.toast.urlCopiedDesc')}`,
       variant: "default",
     });
   };
@@ -330,31 +317,29 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin className="h-5 w-5" />
-          Location & Spatial Information
+          {t('pages:locla.location.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Input Method Selection */}
         <div className="space-y-2">
-          <Label>Location Input Method</Label>
+          <Label>{t('pages:locla.location.inputMethod')}</Label>
           <Select value={inputMethod} onValueChange={(value: any) => setInputMethod(value)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="manual">Manual Coordinates</SelectItem>
-              <SelectItem value="address">Address Search</SelectItem>
-              <SelectItem value="place">Place Search</SelectItem>
-              <SelectItem value="auto">Auto-detect Location</SelectItem>
+              <SelectItem value="manual">{t('pages:locla.location.methods.manual')}</SelectItem>
+              <SelectItem value="address">{t('pages:locla.location.methods.address')}</SelectItem>
+              <SelectItem value="place">{t('pages:locla.location.methods.place')}</SelectItem>
+              <SelectItem value="auto">{t('pages:locla.location.methods.auto')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Manual Input */}
         {inputMethod === 'manual' && (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude</Label>
+              <Label htmlFor="latitude">{t('pages:locla.location.latitude')}</Label>
               <Input
                 id="latitude"
                 type="number"
@@ -366,11 +351,11 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
                   ...prev,
                   latitude: e.target.value ? parseFloat(e.target.value) : undefined
                 }))}
-                placeholder="37.566123"
+                placeholder={t('pages:locla.location.placeholders.latitude')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude</Label>
+              <Label htmlFor="longitude">{t('pages:locla.location.longitude')}</Label>
               <Input
                 id="longitude"
                 type="number"
@@ -382,26 +367,24 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
                   ...prev,
                   longitude: e.target.value ? parseFloat(e.target.value) : undefined
                 }))}
-                placeholder="126.978456"
+                placeholder={t('pages:locla.location.placeholders.longitude')}
               />
             </div>
           </div>
         )}
 
-        {/* Address Search */}
         {inputMethod === 'address' && (
           <div className="space-y-2">
-            <Label htmlFor="address">Search Address</Label>
+            <Label htmlFor="address">{t('pages:locla.location.addressSearch')}</Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Input
                   id="address"
                   value={addressQuery}
                   onChange={(e) => handleAddressChange(e.target.value)}
-                  placeholder="Enter address..."
+                  placeholder={t('pages:locla.location.placeholders.address')}
                   autoComplete="off"
                 />
-                {/* Autocomplete Suggestions */}
                 {showSuggestions && searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {searchResults.map((place, index) => (
@@ -429,16 +412,15 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           </div>
         )}
 
-        {/* Place Search */}
         {inputMethod === 'place' && (
           <div className="space-y-2">
-            <Label htmlFor="place">Search Place</Label>
+            <Label htmlFor="place">{t('pages:locla.location.placeSearch')}</Label>
             <div className="flex gap-2">
               <Input
                 id="place"
                 value={placeQuery}
                 onChange={(e) => setPlaceQuery(e.target.value)}
-                placeholder="Enter place name..."
+                placeholder={t('pages:locla.location.placeholders.place')}
               />
               <Button 
                 onClick={() => searchPlaces(placeQuery, 'place')}
@@ -450,26 +432,24 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           </div>
         )}
 
-        {/* Auto Location */}
         {inputMethod === 'auto' && (
           <div className="space-y-2">
             <Button onClick={getCurrentLocation} className="w-full">
               <Crosshair className="h-4 w-4 mr-2" />
-              Get Current Location
+              {t('pages:locla.location.getCurrentLocation')}
             </Button>
             {currentAltitude && (
               <div className="text-sm text-gray-600">
                 <Info className="h-4 w-4 inline mr-1" />
-                Current altitude: {currentAltitude}m (for reference)
+                {t('pages:locla.location.currentAltitude', { altitude: currentAltitude })}
               </div>
             )}
           </div>
         )}
 
-        {/* Search Results */}
         {searchResults.length > 0 && (
           <div className="space-y-2">
-            <Label>Search Results</Label>
+            <Label>{t('pages:locla.location.searchResults')}</Label>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {searchResults.map((place) => (
                 <div
@@ -487,14 +467,13 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           </div>
         )}
 
-        {/* Additional Fields (only if coordinates are provided) */}
         {spatialInfo.latitude && spatialInfo.longitude && (
           <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="altitude">
-                  Altitude (meters)
-                  <Info className="h-3 w-3 inline ml-1" title="Enter altitude above sea level in meters (e.g., 27.5m)" />
+                  {t('pages:locla.location.altitude')}
+                  <Info className="h-3 w-3 inline ml-1" title={t('pages:locla.location.tooltips.altitude')} />
                 </Label>
                 <Input
                   id="altitude"
@@ -507,13 +486,13 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
                     ...prev,
                     altitude: e.target.value ? parseFloat(e.target.value) : undefined
                   }))}
-                  placeholder="27.5"
+                  placeholder={t('pages:locla.location.placeholders.altitude')}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="floor">
-                  Floor
-                  <Info className="h-3 w-3 inline ml-1" title="Enter building floor as a number. Use negative numbers for basement floors (e.g., 5 → '5', Basement 1 → '-1')" />
+                  {t('pages:locla.location.floor')}
+                  <Info className="h-3 w-3 inline ml-1" title={t('pages:locla.location.tooltips.floor')} />
                 </Label>
                 <Input
                   id="floor"
@@ -523,14 +502,14 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
                     ...prev,
                     floor: e.target.value ? parseInt(e.target.value) : undefined
                   }))}
-                  placeholder="5 or -1 for basement"
+                  placeholder={t('pages:locla.location.placeholders.floor')}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="timestamp">
-                Specific Time (ISO 8601)
+                {t('pages:locla.location.specificTime')}
               </Label>
               <Input
                 id="timestamp"
@@ -543,17 +522,16 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
               />
             </div>
 
-            {/* URL Preview */}
             <div className="space-y-3">
-              <Label>Generated URLs</Label>
+              <Label>{t('pages:locla.location.generatedUrls')}</Label>
               
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline">Full URL</Badge>
+                  <Badge variant="outline">{t('pages:locla.location.fullUrl')}</Badge>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => copyUrl(generateCustomUrl(), 'Full')}
+                    onClick={() => copyUrl(generateCustomUrl(), t('pages:locla.location.fullUrl'))}
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -565,11 +543,11 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant="outline">Short URL</Badge>
+                  <Badge variant="outline">{t('pages:locla.location.shortUrl')}</Badge>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => copyUrl(generateShortUrl(), 'Short')}
+                    onClick={() => copyUrl(generateShortUrl(), t('pages:locla.location.shortUrl'))}
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -582,11 +560,10 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           </>
         )}
 
-        {/* Action Buttons */}
         <div className="flex gap-2">
           <Button onClick={handleSubmit} className="flex-1">
             <MapPin className="h-4 w-4 mr-2" />
-            Apply Location Data
+            {t('pages:locla.location.applyLocation')}
           </Button>
           <Button onClick={resetForm} variant="outline">
             <RotateCcw className="h-4 w-4" />

@@ -22,8 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { generateSecureLink, getMySecureLinks, type SecureLink } from "@/lib/api/secure-link-api";
-import { Shield, Copy, Clock, CheckCircle, XCircle, Eye, Loader2 } from "lucide-react";
+import { Shield, Copy, Eye, Loader2 } from "lucide-react";
 
 interface Client {
   _id: string;
@@ -38,6 +39,8 @@ interface SecureLinkGeneratorProps {
 
 export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProps) {
   const { toast } = useToast();
+  const { t } = useTranslation("secureLinks");
+  
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
@@ -51,8 +54,8 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
   const handleGenerateLink = async () => {
     if (!selectedClient || !password) {
       toast({
-        title: "Missing Information",
-        description: "Please select a client and enter a password",
+        title: t("pages:secureLink.errors.missingInfoTitle"),
+        description: t("pages:secureLink.errors.missingInfoDesc"),
         variant: "destructive",
       });
       return;
@@ -60,8 +63,8 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
 
     if (password.length < 6) {
       toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long",
+        title: t("pages:secureLink.errors.shortPasswordTitle"),
+        description: t("pages:secureLink.errors.shortPasswordDesc"),
         variant: "destructive",
       });
       return;
@@ -77,19 +80,18 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
 
       setGeneratedLink(response.data.secure_url);
       toast({
-        title: "Secure Link Generated",
-        description: `Link created for ${response.data.client_name}`,
+        title: t("pages:secureLink.success.generatedTitle"),
+        description: t("pages:secureLink.success.generatedDesc", { name: response.data.client_name }),
         variant: "default",
       });
 
-      // Reset form
       setSelectedClient("");
       setPassword("");
       setExpiresIn("24");
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to generate secure link",
+        title: t("pages:secureLink.errors.errorTitle"),
+        description: error.message || t("pages:secureLink.errors.errorDefault"),
         variant: "destructive",
       });
     } finally {
@@ -101,8 +103,8 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
     if (generatedLink) {
       navigator.clipboard.writeText(generatedLink);
       toast({
-        title: "Link Copied",
-        description: "Secure link copied to clipboard",
+        title: t("pages:secureLink.success.copiedTitle"),
+        description: t("pages:secureLink.success.copiedDesc"),
         variant: "default",
       });
     }
@@ -111,13 +113,13 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
   const handleViewMyLinks = async () => {
     try {
       setIsLoadingLinks(true);
-      const response = await getMySecureLinks(1, 20, 'all');
+      const response = await getMySecureLinks(1, 20, "all");
       setMyLinks(response.data.links);
       setShowMyLinks(true);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to load secure links",
+        title: t("pages:secureLink.errors.errorTitle"),
+        description: error.message || t("pages:secureLink.errors.errorDefault"),
         variant: "destructive",
       });
     } finally {
@@ -128,13 +130,13 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
   const getStatusBadge = (link: SecureLink) => {
     const now = new Date();
     const expiresAt = new Date(link.expires_at);
-    
+
     if (link.is_used) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Used</Badge>;
+      return <Badge variant="default" className="bg-green-100 text-green-800">{t("status.used")}</Badge>;
     } else if (expiresAt < now) {
-      return <Badge variant="destructive">Expired</Badge>;
+      return <Badge variant="destructive">{t("pages:secureLink.status.expired")}</Badge>;
     } else {
-      return <Badge variant="secondary">Active</Badge>;
+      return <Badge variant="secondary">{t("pages:secureLink.status.active")}</Badge>;
     }
   };
 
@@ -145,33 +147,46 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
       <DialogTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <Shield className="h-4 w-4" />
-          Generate Secure Link
+          {t("pages:secureLink.buttons.generateLink")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+
+      <DialogContent
+        className="
+          w-full 
+          max-w-[800px] 
+          sm:max-w-[700px] 
+          lg:max-w-[800px] 
+          max-h-[80vh] 
+          overflow-y-auto 
+          mx-auto 
+          ml-0 
+          md:ml-12 
+          lg:ml-16
+        "
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Secure Document Upload Links
+            {t("pages:secureLink.title")}
           </DialogTitle>
           <DialogDescription>
-            Generate password-protected links for clients to upload documents securely.
-            Links expire after successful upload or when the time limit is reached.
+            {t("pages:secureLink.description")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Generate New Link */}
-          <Card>
+          <Card className="w-full">
             <CardHeader>
-              <CardTitle className="text-lg">Generate New Link</CardTitle>
+              <CardTitle className="text-lg">{t("pages:secureLink.generateNewLink")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="client">Select Client</Label>
+                <Label>{t("pages:secureLink.form.clientLabel")}</Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a client" />
+                    <SelectValue placeholder={t("pages:secureLink.form.clientPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => (
@@ -184,31 +199,30 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label>{t("pages:secureLink.form.passwordLabel")}</Label>
                 <Input
-                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter secure password (min 6 characters)"
+                  placeholder={t("pages:secureLink.form.passwordPlaceholder")}
                   minLength={6}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expires">Expires In</Label>
+                <Label>{t("pages:secureLink.form.expiryLabel")}</Label>
                 <Select value={expiresIn} onValueChange={setExpiresIn}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 Hour</SelectItem>
-                    <SelectItem value="6">6 Hours</SelectItem>
-                    <SelectItem value="12">12 Hours</SelectItem>
-                    <SelectItem value="24">24 Hours</SelectItem>
-                    <SelectItem value="48">48 Hours</SelectItem>
-                    <SelectItem value="72">72 Hours</SelectItem>
-                    <SelectItem value="168">1 Week</SelectItem>
+                    <SelectItem value="1">{t("pages:secureLink.expiry.1h")}</SelectItem>
+                    <SelectItem value="6">{t("pages:secureLink.expiry.6h")}</SelectItem>
+                    <SelectItem value="12">{t("pages:secureLink.expiry.12h")}</SelectItem>
+                    <SelectItem value="24">{t("pages:secureLink.expiry.24h")}</SelectItem>
+                    <SelectItem value="48">{t("pages:secureLink.expiry.48h")}</SelectItem>
+                    <SelectItem value="72">{t("pages:secureLink.expiry.72h")}</SelectItem>
+                    <SelectItem value="168">{t("pages:secureLink.expiry.1w")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -221,12 +235,12 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                 {isGenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
+                    {t("pages:secureLink.buttons.generating")}
                   </>
                 ) : (
                   <>
                     <Shield className="h-4 w-4 mr-2" />
-                    Generate Secure Link
+                    {t("pages:secureLink.buttons.generateLink")}
                   </>
                 )}
               </Button>
@@ -235,18 +249,18 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                 <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center justify-between mb-2">
                     <Label className="text-sm font-medium text-green-800">
-                      Generated Link for {selectedClientData?.first_name} {selectedClientData?.last_name}
+                      {t("pages:secureLink.generatedFor", { name: `${selectedClientData?.first_name} ${selectedClientData?.last_name}` })}
                     </Label>
                     <Button size="sm" variant="outline" onClick={handleCopyLink}>
                       <Copy className="h-3 w-3 mr-1" />
-                      Copy
+                      {t("pages:secureLink.buttons.copy")}
                     </Button>
                   </div>
                   <div className="text-xs text-green-700 break-all bg-white p-2 rounded border">
                     {generatedLink}
                   </div>
                   <p className="text-xs text-green-600 mt-2">
-                    Share this link and password with your client. The link will expire after successful upload.
+                    {t("pages:secureLink.shareInfo")}
                   </p>
                 </div>
               )}
@@ -254,10 +268,10 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
           </Card>
 
           {/* My Secure Links */}
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle className="text-lg flex items-center justify-between">
-                My Secure Links
+                {t("pages:secureLink.myLinks")}
                 <Button size="sm" variant="outline" onClick={handleViewMyLinks} disabled={isLoadingLinks}>
                   {isLoadingLinks ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,10 +283,10 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
             </CardHeader>
             <CardContent>
               {showMyLinks ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
                   {myLinks.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">
-                      No secure links generated yet
+                      {t("pages:secureLink.noLinks")}
                     </p>
                   ) : (
                     myLinks.map((link) => (
@@ -282,15 +296,15 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                           {getStatusBadge(link)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          <div>Created: {new Date(link.created_at).toLocaleDateString()}</div>
-                          <div>Expires: {new Date(link.expires_at).toLocaleDateString()}</div>
+                          <div>{t("pages:secureLink.created")}: {new Date(link.created_at).toLocaleDateString()}</div>
+                          <div>{t("pages:secureLink.expires")}: {new Date(link.expires_at).toLocaleDateString()}</div>
                           {link.used_at && (
-                            <div>Used: {new Date(link.used_at).toLocaleDateString()}</div>
+                            <div>{t("pages:secureLink.used")}: {new Date(link.used_at).toLocaleDateString()}</div>
                           )}
                         </div>
                         {link.uploaded_document && (
                           <div className="text-xs bg-blue-50 p-2 rounded">
-                            <div className="font-medium">Document Uploaded:</div>
+                            <div className="font-medium">{t("pages:secureLink.documentUploaded")}</div>
                             <div>{link.uploaded_document.file_name}</div>
                           </div>
                         )}
@@ -300,7 +314,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  Click the eye icon to view your secure links
+                  {t("pages:secureLink.clickToView")}
                 </p>
               )}
             </CardContent>

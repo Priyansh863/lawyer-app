@@ -51,6 +51,109 @@
     }
 
   },
+  "documentT":{
+  "documents": {
+    "loadFailed": "Failed to load documents",
+    "loadError": "Error loading documents",
+    "deleteConfirm": "Are you sure you want to delete this document?",
+    "deleteSuccess": "Document deleted successfully",
+    "deleteFailed": "Failed to delete document",
+    "deleteError": "Error deleting document",
+    "shareSuccess": "Document sharing updated successfully",
+    "searchPlaceholder": "Search documents...",
+    "filterStatus": "Filter by status",
+    "noDocuments": "No documents uploaded yet",
+    "noMatches": "No documents match your filters",
+    "uploadPrompt": "Upload your first document to get started with AI analysis.",
+    "adjustFilters": "Try adjusting your search terms or filters to find documents.",
+    "document": "Document"
+  },
+  "status": {
+    "all": "All Status",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "rejected": "Rejected",
+    "approved": "Approved",
+    "processing": "Processing",
+    "cancelled": "Cancelled",
+    "status": "Status"
+  },
+  "privacy": {
+    "public": "Public",
+    "private": "Private",
+    "shared": "Shared",
+    "privacy": "Privacy"
+  },
+  "general": {
+    "unknown": "Unknown",
+    "none": "None",
+    "date": "Date",
+    "actions": "Actions",
+    "loading": "Loading documents..."
+  },
+  "actions": {
+    "view": "View Document",
+    "shareWithLawyer": "Share with Lawyer",
+    "delete": "Delete"
+  }
+},
+  "secureLink": {
+  "title": "Secure Document Upload Links",
+  "description": "Generate password-protected links for clients to upload documents securely. Links expire after successful upload or when the time limit is reached.",
+  "generateNewLink": "Generate New Link",
+  "myLinks": "My Secure Links",
+  "form": {
+    "clientLabel": "Select Client",
+    "clientPlaceholder": "Choose a client",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter secure password (min 6 characters)",
+    "expiryLabel": "Expires In"
+  },
+  "expiry": {
+    "1h": "1 Hour",
+    "6h": "6 Hours",
+    "12h": "12 Hours",
+    "24h": "24 Hours",
+    "48h": "48 Hours",
+    "72h": "72 Hours",
+    "1w": "1 Week"
+  },
+  "buttons": {
+    "generateLink": "Generate Secure Link",
+    "generating": "Generating...",
+    "copy": "Copy"
+  },
+  "success": {
+    "generatedTitle": "Secure Link Generated",
+    "generatedDesc": "Link created for {{name}}",
+    "copiedTitle": "Link Copied",
+    "copiedDesc": "Secure link copied to clipboard"
+  },
+  "errors": {
+    "missingInfoTitle": "Missing Information",
+    "missingInfoDesc": "Please select a client and enter a password",
+    "shortPasswordTitle": "Password Too Short",
+    "shortPasswordDesc": "Password must be at least 6 characters long",
+    "errorTitle": "Error",
+    "errorDefault": "Failed to generate secure link"
+  },
+  "status": {
+    "used": "Used",
+    "expired": "Expired",
+    "active": "Active"
+  },
+  "generatedFor": "Generated Link for {{name}}",
+  "shareInfo": "Share this link and password with your client. The link will expire after successful upload.",
+  "noLinks": "No secure links generated yet",
+  "clickToView": "Click the eye icon to view your secure links",
+  "created": "Created",
+  "expires": "Expires",
+  "used": "Used",
+  "documentUploaded": "Document Uploaded:"
+
+
+  },
   "newcases": {
   "pageTitle": "Create New Case",
   "pageSubtitle": "Fill in the details below to create a new case for your client.",
@@ -91,33 +194,92 @@
   "you": "You",
   "user": "User"
 },
-"pdfUpload": {
-  "triggerUploadPDF": "Upload PDF",
-  "title": "Upload PDF Document",
-  "description": "Upload a PDF document for AI processing and legal analysis.",
-  "pdfRules": "Only PDF files are allowed. Maximum size: 10MB.",
-  "invalidFileTitle": "Invalid File",
-  "docVisibility": "Document Visibility",
-  "private": "Private",
-  "public": "Public",
-  "privacyHelp": "Private documents are only visible to you. Public documents can be shared.",
-  "selectUsersLabel": "Select users to share with",
-  "selectUsersPlaceholder": "Choose clients or lawyers",
-  "selectUsersHelp": "Select users who can view this document. (You will always have access.)",
-  "errorTitle": "Error",
-  "selectFileOrLogin": "Please select a file and ensure you're logged in.",
-  "selectShareUsers": "Please select users to share with.",
-  "successTitle": "Success!",
-  "successDesc": "PDF uploaded successfully. AI processing started in background.",
-  "uploading": "Uploading...",
-  "uploadPDF": "Upload PDF",
-  "uploadingDesc": "Uploading your PDF document.",
-  "uploadFailStorage": "Failed to upload file to storage.",
-  "uploadFailSave": "Failed to save document.",
-  "uploadFailedTitle": "Upload Failed",
-  "uploadFailedDesc": "Failed to upload PDF document.",
-  "cancel": "Cancel",
-  "uploadingProgress": "Uploading... {{progress}}%"
+
+  "fileProcessor": {
+    "tabs": {
+      "upload": "Upload & Process",
+      "results": "Results ({{count}})"
+    },
+    "supportedTypesTitle": "Supported File Types",
+    "maxFileSize": "Maximum file size: 5MB",
+    "selectFileTitle": "Select a file to process",
+    "selectFileDescription": "Choose a PDF, image, or video file for AI analysis",
+    "chooseFileButton": "Choose File",
+    "processingButton": "Processing...",
+    "processWithAIButton": "Process with AI",
+    "changeFileButton": "Change File",
+    "uploadStatus": {
+      "uploading": "Uploading...",
+      "processing": "Processing with AI...",
+      "complete": "Complete!"
+    },
+    "noResultsTitle": "No processed files yet",
+    "noResultsDescription": "Upload and process files to see results here.",
+    "aiSummaryTitle": "AI Summary",
+    "processedDate": "Processed",
+    "viewFileButton": "View File",
+    "unknownFileType": "Unknown",
+    "fileTypes": {
+      "pdf": "PDF Document",
+      "docx": "Word Document",
+      "text": "Text File",
+      "image": "Image",
+      "video": "Video"
+    },
+    "errors": {
+      "unsupportedType": {
+        "title": "Unsupported file type",
+        "description": "Please select a PDF, DOCX, TXT, image, or video file."
+      },
+      "fileTooLarge": {
+        "title": "File too large",
+        "description": "Please select a file smaller than {{size}}."
+      },
+      "general": {
+        "title": "Error",
+        "description": "Please select a file and ensure you're logged in."
+      },
+      "processingFailed": "Processing failed",
+      "generalProcessingError": "There was an error processing your file."
+    },
+    "uploadProgress": {
+      "uploading": {
+        "title": "Uploading file...",
+        "description": "Please wait while we upload your file."
+      },
+      "processing": {
+        "title": "Processing with AI...",
+        "description": "Analyzing your file content and generating summary."
+      }
+    },
+    "success": {
+      "title": "Success!",
+      "description": "{{type}} processed successfully with AI analysis."
+    }
+  },
+
+  "pdfUpload": {
+      "title": "Upload PDF Document",
+      "invalidFile": "Please upload a valid PDF file.",
+      "selectFileOrLogin": "Please select a file and ensure you are logged in.",
+      "lawyersPublicOnly": "Lawyers can only upload public documents.",
+      "uploadFailStorage": "Failed to upload file to storage.",
+      "uploadFailed": "Upload failed. Please try again.",
+      "uploadFailedTitle": "Upload Error",
+      "successTitle": "Upload Successful!",
+      "dragDropText": "Drag & drop your PDF file here or select a file",
+      "pdfRules": "Only PDF files under 10MB are allowed.",
+      "selectFile": "Select PDF File",
+      "docVisibility": "Document Visibility",
+      "public": "Public",
+      "private": "Private",
+      "lawyerNote": "As a lawyer, you can only upload public documents.",
+      "privateHelp": "Only you and authorized users can see private documents.",
+      "publicHelp": "Public documents are visible to everyone with access.",
+      "processWithAI": "Process document with AI",
+      "uploading": "Uploading...",
+      "cancel": "Cancel",
+      "uploadPDF": "Upload PDF"
 },
   "clients": {
     "title": "Clients",
@@ -486,20 +648,34 @@
     "noPastMeetings": "No past consultations"
   },
   "voiceSummary": {
-    "title": "Voice Summary",
-    "documentSummaries": "Document Summaries",
-    "playAudio": "Play Audio",
-    "pauseAudio": "Pause Audio",
-    "stopAudio": "Stop Audio",
-    "searchDocuments": "Search documents...",
-    "noDocuments": "No documents available",
-    "summaryPlaying": "Playing summary...",
-    "summaryPaused": "Summary paused",
-    "summaryStopped": "Summary stopped",
-    "audioError": "Audio playback error",
-    "textToSpeech": "Text to Speech",
-    "listenToSummary": "Listen to Summary"
-  },
+  "title": "Voice Summary",
+  "description": "View and listen to document summaries.",
+  "searchPlaceholder": "Search documents or summaries...",
+  "languageLabel": "Language",
+  "playingTitle": "Playing",
+  "playingDescription": "Playback started",
+  "playingLanguage": "Playing in {{lang}}",
+  "errorTitle": "Error Occurred",
+  "errorDescription": "There was a problem fetching the document summary.",
+  "speechNotSupported": "This browser does not support speech synthesis.",
+  "play": "Play",
+  "pause": "Pause",
+  "resume": "Resume",
+  "stop": "Stop",
+  "loading": "Loading...",
+  "noResults": "No search results found.",
+  "caseLabel": "Case Name",
+  "uploadedLabel": "Upload Date",
+  "words": "Words",
+  "rejectedTooltip": "Rejected documents cannot be played.",
+  "playTooltip": "Play summary audio",
+  "rejectedMessage": "This document has been rejected.",
+  "statusLabel": "Status",
+  "summaryAvailable": "Summary is available.",
+  "statusCompleted": "Completed",
+  "statusFailed": "Failed",
+  "statusProcessing": "Processing"
+},
   "tokens": {
     "title": "Token Management",
     "description": "Manage your AI tokens and purchase additional credits",

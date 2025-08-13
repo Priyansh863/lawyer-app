@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,8 +10,8 @@ import { downloadSummary, saveToCase } from "@/lib/api/ai-assistants-api"
 import { useToast } from "@/hooks/use-toast"
 import { getCases } from "@/lib/api/cases-api"
 import type { ProcessedFile } from "@/types/ai-assistant"
-import { useEffect } from "react"
 import type { Case } from "@/types/case"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface FileOutputProps {
   processedFile: ProcessedFile
@@ -20,6 +20,7 @@ interface FileOutputProps {
 }
 
 export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSummary }: FileOutputProps) {
+  const { t } = useTranslation()
   const [selectedCaseId, setSelectedCaseId] = useState<string>("")
   const [isSaving, setIsSaving] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -35,13 +36,18 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
         setCases(fetchedCases.cases)
       } catch (error) {
         console.error("Failed to load cases:", error)
+        toast({
+          title: t("pages:fileOutput.errors.loadCasesFailed.title"),
+          description: t("pages:fileOutput.errors.loadCasesFailed.description"),
+          variant: "destructive",
+        })
       } finally {
         setIsLoadingCases(false)
       }
     }
 
     loadCases()
-  }, [])
+  }, [toast, t])
 
   const handleDownloadSummary = async () => {
     if (!processedFile.summary) return
@@ -50,13 +56,13 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
     try {
       await downloadSummary(processedFile.id)
       toast({
-        title: "Summary downloaded",
-        description: "Your summary has been downloaded successfully",
+        title: t("pages:fileOutput.success.download.title"),
+        description: t("pages:fileOutput.success.download.description"),
       })
     } catch (error) {
       toast({
-        title: "Download failed",
-        description: "There was an error downloading the summary",
+        title: t("pages:fileOutput.errors.downloadFailed.title"),
+        description: t("pages:fileOutput.errors.downloadFailed.description"),
         variant: "destructive",
       })
     } finally {
@@ -71,13 +77,13 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
     try {
       await saveToCase(processedFile.id, selectedCaseId)
       toast({
-        title: "Saved to case",
-        description: "Your summary has been saved to the selected case",
+        title: t("pages:fileOutput.success.saveToCase.title"),
+        description: t("pages:fileOutput.success.saveToCase.description"),
       })
     } catch (error) {
       toast({
-        title: "Save failed",
-        description: "There was an error saving the summary to the case",
+        title: t("pages:fileOutput.errors.saveFailed.title"),
+        description: t("pages:fileOutput.errors.saveFailed.description"),
         variant: "destructive",
       })
     } finally {
@@ -93,29 +99,50 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
             {isGeneratingSummary ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Summary...
+                {t("pages:fileOutput.generatingSummary")}
               </>
             ) : (
-              "Generate Summary"
+              t("pages:fileOutput.generateSummary")
             )}
           </Button>
         ) : (
           <>
-           
+            <Button
+              variant="outline"
+              onClick={handleDownloadSummary}
+              disabled={isDownloading}
+              className="whitespace-nowrap"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("pages:fileOutput.downloading")}
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t("pages:fileOutput.downloadSummary")}
+                </>
+              )}
+            </Button>
 
             <div className="flex items-center gap-2">
-              <Select value={selectedCaseId} onValueChange={setSelectedCaseId} disabled={isLoadingCases || isSaving}>
+              <Select 
+                value={selectedCaseId} 
+                onValueChange={setSelectedCaseId} 
+                disabled={isLoadingCases || isSaving}
+              >
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select case" />
+                  <SelectValue placeholder={t("pages:fileOutput.selectCasePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {isLoadingCases ? (
                     <SelectItem value="loading" disabled>
-                      Loading cases...
+                      {t("pages:fileOutput.loadingCases")}
                     </SelectItem>
                   ) : cases.length === 0 ? (
                     <SelectItem value="none" disabled>
-                      No cases available
+                      {t("pages:fileOutput.noCasesAvailable")}
                     </SelectItem>
                   ) : (
                     cases.map((caseItem) => (
@@ -136,12 +163,12 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {t("pages:fileOutput.saving")}
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Save to Case
+                    {t("pages:fileOutput.saveToCase")}
                   </>
                 )}
               </Button>
@@ -152,9 +179,11 @@ export function FileOutput({ processedFile, onGenerateSummary, isGeneratingSumma
 
       <Tabs defaultValue="original" className="mt-4">
         <TabsList>
-          <TabsTrigger value="original">Original Text</TabsTrigger>
+          <TabsTrigger value="original">
+            {t("pages:fileOutput.tabs.originalText")}
+          </TabsTrigger>
           <TabsTrigger value="summary" disabled={!processedFile.summary}>
-            Summary
+            {t("pages:fileOutput.tabs.summary")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="original">
