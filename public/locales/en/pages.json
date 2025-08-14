@@ -257,7 +257,209 @@
       "description": "{{type}} processed successfully with AI analysis."
     }
   },
-
+  "profileD": {
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Update your profile information and settings.",
+    "logout": {
+      "button": "Logout",
+      "success": {
+        "title": "Logged out",
+        "description": "You have been logged out successfully."
+      }
+    },
+    "avatar": {
+      "alt": "Profile picture",
+      "changeButton": "Change profile picture",
+      "success": {
+        "title": "Profile updated successfully",
+        "description": "Your profile picture has been updated."
+      },
+      "error": {
+        "title": "Error",
+        "description": "An error occurred while updating your profile picture."
+      }
+    },
+    "form": {
+      "firstName": {
+        "label": "First Name",
+        "placeholder": "Enter your first name"
+      },
+      "lastName": {
+        "label": "Last Name",
+        "placeholder": "Enter your last name"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "Enter your email"
+      },
+      "phone": {
+        "label": "Phone",
+        "placeholder": "Enter your phone number"
+      },
+      "about": {
+        "label": "About",
+        "placeholder": "Tell us about yourself"
+      },
+      "practiceArea": {
+        "label": "Practice Area",
+        "placeholder": "Select practice area",
+        "options": {
+          "corporate": "Corporate",
+          "family": "Family",
+          "criminal": "Criminal",
+          "immigration": "Immigration",
+          "intellectual": "Intellectual",
+          "realEstate": "Real Estate"
+        }
+      },
+      "experience": {
+        "label": "Experience",
+        "placeholder": "Select years",
+        "options": {
+          "1": "1 Year",
+          "3": "3 Years",
+          "6": "6 Years",
+          "10": "10 Years"
+        }
+      }
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "toast": {
+      "success": {
+        "title": "Profile updated successfully",
+        "description": "Your profile information has been updated."
+      },
+      "error": {
+        "title": "Update failed",
+        "description": "An error occurred while updating your profile."
+      }
+    },
+    "errors": {
+      "firstNameMin": "First name must be at least 2 characters.",
+      "lastNameMin": "Last name must be at least 2 characters.",
+      "invalidEmail": "Invalid email address.",
+      "phoneMin": "Phone number must be at least 10 digits.",
+      "aboutMax": "About section cannot exceed 500 characters."
+    }
+  }
+},
+"questionA" :{
+  "qa": {
+    "loading": "Loading questions...",
+    "empty": "No questions found. Be the first to ask a question!",
+    "unanswered": "This question has not been answered yet.",
+    "status": {
+      "answered": "Answered",
+      "pending": "Pending"
+    },
+    "menu": {
+      "open": "Open menu",
+      "answer": "Answer",
+      "edit": "Edit Answer",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    },
+    "errors": {
+      "fetchFailed": "Failed to load questions. Please try again later.",
+      "deleteFailed": "Failed to delete question. Please try again later."
+    }
+  }
+},
+"chatbox" :{
+  "search": {
+    "placeholder": "Search conversations..."
+  },
+  "loading": "Loading chats...",
+  "noMessages": "No messages yet",
+  "empty": {
+    "default": "No conversations yet",
+    "defaultHint": "Start a conversation with a client from their profile page",
+    "search": "No chats found",
+    "searchHint": "Try adjusting your search terms"
+  },
+  "delete": {
+    "button": "Delete chat",
+    "success": {
+      "title": "Chat deleted",
+      "description": "The chat has been deleted successfully"
+    }
+  },
+  "errors": {
+    "load": {
+      "title": "Error",
+      "description": "Failed to load chats"
+    },
+    "delete": {
+      "title": "Error",
+      "description": "Failed to delete chat"
+    }
+  }
+},
+ "conv" :{
+  "messageCannotBeEmpty": "Message cannot be empty",
+  "messageTooLong": "Message too long",
+  "error": "Error",
+  "failedToLoadChat": "Failed to load chat",
+  "failedToSendMessage": "Failed to send message",
+  "chatDeleted": "Chat deleted",
+  "chatDeletedSuccessfully": "The chat has been deleted successfully",
+  "failedToDeleteChat": "Failed to delete chat",
+  "lawyer": "Lawyer",
+  "user": "User",
+  "client": "Client",
+  "noMessagesYet": "No messages yet. Start the conversation!",
+  "typeYourMessage": "Type your message...",
+  "startConversation": "Start the conversation"
+},
+"stst":{
+  "dashboard": {
+    "activecases": "Active Cases",
+    "inactivecases": "Inactive Cases",
+    "todayschats": "Today's Chats",
+    "availabletokens": "Available Tokens",
+    "totalpurchased": "Total Purchased",
+    "monthlyusage": "Monthly Usage"
+  },
+  "common": {
+    "error": "Failed to load statistics"
+  }
+},
+"quick": {
+  "quickActions": "Quick Actions",
+  "scheduleCall": "Schedule Call",
+  "newCase": "New Case"
+},
+"posts" :{
+  "postsContentTitle": "Posts & Content",
+  "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
+  "myPosts": "My Posts",
+  "createNew": "Create New",
+  "loadingPosts": "Loading posts...",
+  "noPostsFound": "No posts found",
+  "noPostsCreatedYet": "You haven't created any posts yet",
+  "createFirstPost": "Create Your First Post",
+  "aiGenerated": "AI Generated",
+  "location": "Location",
+  "citation": "citation | citations",
+  "usefulResources": "Useful Resources",
+  "moreResources": "more resources",
+  "customUrl": "Custom URL",
+  "custom": "Custom",
+  "previous": "Previous",
+  "next": "Next",
+  "pageInfo": "Page {current} of {total}",
+  "fetchPostsError": "Failed to fetch posts",
+  "somethingWentWrong": "Something went wrong",
+  "postCreated": "Post created",
+  "postAddedToList": "Your post has been added to the list",
+  "urlCopied": "URL copied",
+  "urlCopiedToClipboard": "{type} URL copied to clipboard"
+},
   "pdfUpload": {
       "title": "Upload PDF Document",
       "invalidFile": "Please upload a valid PDF file.",

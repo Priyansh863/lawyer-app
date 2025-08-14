@@ -223,7 +223,8 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
       {isLoading && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          <span>Loading document summaries...</span>
+          <span>{t("pages:voiceSummary.loadingSummaries")}</span>
+
         </div>
       )}
       {/* Document Summaries List */}
@@ -232,7 +233,8 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No document summaries found</p>
+             <p>{t("pages:voiceSummary.noDocumentSummariesFound")}</p>
+
             </CardContent>
           </Card>
         ) : (

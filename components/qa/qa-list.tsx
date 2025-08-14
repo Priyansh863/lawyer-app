@@ -10,6 +10,8 @@ import Link from "next/link"
 import { useSelector } from "react-redux"
 import { useEffect, useState } from "react"
 import endpoints from "@/constant/endpoints"
+import { useTranslation } from "@/hooks/useTranslation"
+
 // Define interface for question object
 interface Question {
   _id: string;
@@ -33,7 +35,8 @@ export default function QAList() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null); // To track which question is being deleted
-  
+  const { t } = useTranslation()
+
   // Get token from localStorage
   const token = typeof window !== "undefined" && localStorage.getItem("user") 
     ? JSON.parse(localStorage.getItem("user") as string).token 
@@ -66,7 +69,7 @@ export default function QAList() {
         }
       } catch (err) {
         console.error("Failed to fetch questions:", err);
-        setError("Failed to load questions. Please try again later.");
+         setError(t("pages:questionA.qa.errors.fetchFailed"))
       } finally {
         setLoading(false);
       }
@@ -101,11 +104,11 @@ export default function QAList() {
         // Remove the deleted question from state
         setQuestions(prevQuestions => prevQuestions.filter(q => q._id !== questionId));
       } else {
-        setError(data.message || "Failed to delete question");
+        setError(data.message || t("pages:questionA.qa.errors.deleteFailed"));
       }
     } catch (err) {
       console.error("Failed to delete question:", err);
-      setError("Failed to delete question. Please try again later.");
+      setError(t("pages:questionA.qa.errors.deleteFailed"))
     } finally {
       setDeleteLoading(null);
     }
@@ -115,7 +118,7 @@ export default function QAList() {
     return (
       <div className="flex justify-center items-center p-10">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        <span className="ml-2">Loading questions...</span>
+        <span className="ml-2">{t("pages:questionA.qa.loading")}</span>
       </div>
     );
   }
@@ -131,7 +134,7 @@ export default function QAList() {
   if (questions.length === 0) {
     return (
       <div className="p-4 border border-gray-200 bg-gray-50 text-gray-700 rounded-md">
-        No questions found. Be the first to ask a question!
+         {t("pages:questionA.qa.empty")}
       </div>
     );
   }
@@ -148,8 +151,7 @@ export default function QAList() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant={item.answer ? "default" : "outline"}>
-                  {item.answer ? "Answered" : "Pending"}
-                </Badge>
+ {item.answer ? t("pages:questionA.qa.status.answered") : t("pages:questionA.qa.status.pending")}                </Badge>
               
               </div>
               <AccordionTrigger className="hover:no-underline p-0">
@@ -169,17 +171,17 @@ export default function QAList() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t("pages:questionA.qa.menu.open")}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {!item.answer ? (
                     <DropdownMenuItem asChild>
-                      <Link href={`/qa/${item._id}/answer`}>Answer</Link>
+                      <Link href={`/qa/${item._id}/answer`}>{t("pages:questionA.qa.menu.answer")}</Link>
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem asChild>
-                      <Link href={`/qa/${item._id}/edit`}>Edit Answer</Link>
+                      <Link href={`/qa/${item._id}/edit`}>{t("pages:questionA.qa.menu.edit")}</Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem 
@@ -190,9 +192,9 @@ export default function QAList() {
                     {deleteLoading === item._id ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                        Deleting...
+                       {t("pages:questionA.qa.menu.deleting")}
                       </>
-                    ) : "Delete"}
+                    ) : t("pages:questionA.qa.menu.delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>}
@@ -202,7 +204,7 @@ export default function QAList() {
             {item.answer ? (
               <div className="mt-2 text-gray-700">{item.answer}</div>
             ) : (
-              <div className="mt-2 italic text-gray-500">This question has not been answered yet.</div>
+              <div className="mt-2 italic text-gray-500">{t("pages:questionA.qa.unanswered")}</div>
             )}
           </AccordionContent>
         </AccordionItem>

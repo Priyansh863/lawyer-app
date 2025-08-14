@@ -25,7 +25,6 @@ import {
   FileText, 
   Plus, 
   Share2, 
-
   Copy,
   Calendar,
   User,
@@ -57,8 +56,8 @@ export default function PostsPage() {
       setCurrentPage(page);
     } catch (error: any) {
       toast({
-        title: "Failed to fetch posts",
-        description: error.message || "Something went wrong",
+        title: t("pages:posts.fetchPostsError"),
+        description: error.message || t("pages:posts.somethingWentWrong"),
         variant: "destructive",
       });
     } finally {
@@ -74,22 +73,19 @@ export default function PostsPage() {
   // Handle post creation
   const handlePostCreated = (post: Post) => {
     setPosts(prev => [post, ...prev]);
-    // Don't switch tabs - let user review the generated post
     toast({
-      title: "Post created",
-      description: "Your post has been added to the list",
+      title: t("pages:posts.postCreated"),
+      description: t("pages:posts.postAddedToList"),
       variant: "default",
     });
   };
-
-
 
   // Copy URL to clipboard
   const copyUrl = (url: string, type: string) => {
     navigator.clipboard.writeText(url);
     toast({
-      title: "URL copied",
-      description: `${type} URL copied to clipboard`,
+      title: t("urlCopied"),
+      description: t("pages:posts.urlCopiedToClipboard", { type }),
       variant: "default",
     });
   };
@@ -109,10 +105,10 @@ export default function PostsPage() {
     <div className="space-y-6">
       <div className="px-6 py-4 border-b">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          Posts & Content
+          {t("pages:posts.postsContentTitle")}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Create, manage, and share your legal content with AI assistance and spatial metadata
+          {t("pages:posts.postsContentDescription")}
         </p>
       </div>
 
@@ -120,35 +116,33 @@ export default function PostsPage() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            My Posts
+            {t("pages:posts.myPosts")}
           </TabsTrigger>
           <TabsTrigger value="create" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Create New
+            {t("pages:posts.createNew")}
           </TabsTrigger>
         </TabsList>
 
         {/* Posts List */}
         <TabsContent value="list" className="space-y-6">
-
-
           {/* Posts Grid */}
           {isLoading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading posts...</p>
+              <p className="mt-2 text-gray-600">{t("pages:posts.loadingPosts")}</p>
             </div>
           ) : posts.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts found</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("noPostsFound")}</h3>
                 <p className="text-gray-600 mb-4">
-                  You haven't created any posts yet
+                  {t("pages:posts.noPostsCreatedYet")}
                 </p>
                 <Button onClick={() => setActiveTab('create')}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Post
+                  {t("pages:posts.createFirstPost")}
                 </Button>
               </CardContent>
             </Card>
@@ -161,17 +155,16 @@ export default function PostsPage() {
                       <div className="flex-1">
                         <CardTitle className="text-lg line-clamp-2">{post.title}</CardTitle>
                         <div className="flex items-center gap-2 mt-2">
-
                           {post.isAiGenerated && (
                             <Badge variant="outline" className="flex items-center gap-1">
                               <Wand2 className="h-3 w-3" />
-                              AI Generated
+                              {t("pages:posts.aiGenerated")}
                             </Badge>
                           )}
                           {post.spatialInfo?.latitude && (
                             <Badge variant="outline" className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              Location
+                              {t("pages:posts.location")}
                             </Badge>
                           )}
                         </div>
@@ -222,14 +215,14 @@ export default function PostsPage() {
 
                     {post.citations && post.citations.length > 0 && (
                       <div className="text-xs text-gray-500">
-                        {post.citations.length} citation{post.citations.length > 1 ? 's' : ''}
+                        {post.citations.length} {t("pages:posts.citation", { count: post.citations.length })}
                       </div>
                     )}
 
                     {/* Display useful links */}
                     {post.usefulLinks && post.usefulLinks.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-xs font-medium text-gray-700">Useful Resources:</div>
+                        <div className="text-xs font-medium text-gray-700">{t("pages:posts.usefulResources")}:</div>
                         {post.usefulLinks.slice(0, 2).map((link, index) => (
                           <div key={index} className="text-xs">
                             <a 
@@ -246,7 +239,7 @@ export default function PostsPage() {
                           </div>
                         ))}
                         {post.usefulLinks.length > 2 && (
-                          <div className="text-xs text-gray-500">+{post.usefulLinks.length - 2} more resources</div>
+                          <div className="text-xs text-gray-500">+{post.usefulLinks.length - 2} {t("pages:posts.moreResources")}</div>
                         )}
                       </div>
                     )}
@@ -262,11 +255,11 @@ export default function PostsPage() {
                     {post.customUrl && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium">Custom URL:</span>
+                          <span className="text-xs font-medium">{t("pages:posts.customUrl")}:</span>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => copyUrl(post.customUrl!, 'Custom')}
+                            onClick={() => copyUrl(post.customUrl!, t("pages:posts.custom"))}
                           >
                             <Copy className="h-3 w-3" />
                           </Button>
@@ -297,17 +290,17 @@ export default function PostsPage() {
                 disabled={currentPage === 1}
                 onClick={() => fetchPosts(currentPage - 1)}
               >
-                Previous
+                {t("pages:posts.previous")}
               </Button>
               <span className="flex items-center px-4">
-                Page {currentPage} of {totalPages}
+                {t("pages:posts.pageInfo", { current: currentPage, total: totalPages })}
               </span>
               <Button
                 variant="outline"
                 disabled={currentPage === totalPages}
                 onClick={() => fetchPosts(currentPage + 1)}
               >
-                Next
+                {t("pages:posts.next")}
               </Button>
             </div>
           )}

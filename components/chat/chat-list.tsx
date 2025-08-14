@@ -84,7 +84,7 @@ export default function ChatList() {
               <div className="relative">
                 <Input
                   type="search"
-                  placeholder="Search conversations..."
+                  placeholder="Search conversations"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="bg-[#F5F5F5] border-gray-200 pl-10 w-full"

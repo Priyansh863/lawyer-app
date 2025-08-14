@@ -147,35 +147,38 @@
 
 },
  
-  "voiceSummary": {
-      "title": "음성 요약",
-      "description": "문서 요약을 확인하고 음성으로 들을 수 있습니다.",
-      "searchPlaceholder": "문서나 요약 검색...",
-      "languageLabel": "언어",
-      "playingTitle": "재생 중",
-      "playingDescription": "재생 시작",
-      "playingLanguage": "{{lang}}로 재생 중",
-      "errorTitle": "오류 발생",
-      "errorDescription": "문서 요약을 불러오는 중 문제가 발생했습니다.",
-      "speechNotSupported": "이 브라우저는 음성 합성을 지원하지 않습니다.",
-      "play": "재생",
-      "pause": "일시정지",
-      "resume": "다시 재생",
-      "stop": "정지",
-      "loading": "불러오는 중...",
-      "noResults": "검색 결과가 없습니다.",
-      "caseLabel": "사건명",
-      "uploadedLabel": "업로드일",
-      "words": "단어",
-      "rejectedTooltip": "거부된 문서는 재생할 수 없습니다.",
-      "playTooltip": "요약 음성 재생",
-      "rejectedMessage": "이 문서는 거부되었습니다.",
-      "statusLabel": "상태",
-      "summaryAvailable": "요약이 준비되었습니다.",
-      "statusCompleted": "완료됨",
-      "statusFailed": "실패함",
-      "statusProcessing": "처리 중"
-    },
+"voiceSummary": {
+  "title": "음성 요약",
+  "description": "문서 요약을 확인하고 음성으로 들을 수 있습니다.",
+  "searchPlaceholder": "문서나 요약 검색...",
+  "languageLabel": "언어",
+  "playingTitle": "재생 중",
+  "playingDescription": "재생 시작",
+  "playingLanguage": "{{lang}}로 재생 중",
+  "errorTitle": "오류 발생",
+  "noDocumentSummariesFound": "문서 요약을 찾을 수 없습니다",
+  "errorDescription": "문서 요약을 불러오는 중 문제가 발생했습니다.",
+  "speechNotSupported": "이 브라우저는 음성 합성을 지원하지 않습니다.",
+  "play": "재생",
+  "pause": "일시정지",
+  "resume": "다시 재생",
+  "stop": "정지",
+  "loading": "불러오는 중...",
+  "loadingSummaries": "문서 요약을 불러오는 중...",
+  "noResults": "검색 결과가 없습니다.",
+  "noSummaries": "문서 요약이 없습니다.",
+  "caseLabel": "사건명",
+  "uploadedLabel": "업로드일",
+  "words": "단어",
+  "rejectedTooltip": "거부된 문서는 재생할 수 없습니다.",
+  "playTooltip": "요약 음성 재생",
+  "rejectedMessage": "이 문서는 거부되었습니다.",
+  "statusLabel": "상태",
+  "summaryAvailable": "요약이 준비되었습니다.",
+  "statusCompleted": "완료됨",
+  "statusFailed": "실패함",
+  "statusProcessing": "처리 중"
+},
   "locla" :{
   "location": {
     "title": "위치 정보",
@@ -720,8 +723,10 @@
     "noMatches": "필터와 일치하는 문서가 없습니다",
     "uploadPrompt": "AI 분석을 시작하려면 첫 번째 문서를 업로드하세요.",
     "adjustFilters": "검색어 또는 필터를 조정해 문서를 찾아보세요.",
-    "document": "문서"
+    "document": "문서",
+    "loading": "문서를 불러오는 중..."
   },
+  
   "status": {
     "all": "모든 상태",
     "pending": "대기 중",
@@ -753,6 +758,17 @@
   }
 
 },
+
+  "dashboard": {
+    "activeCases": "Active Cases",
+    "inactiveCases": "Inactive Cases",
+    "todaysChats": "Today's Chats",
+    "availableTokens": "Available Tokens",
+    "totalPurchased": "Total Purchased",
+    "monthlyUsage": "Monthly Usage",
+    "totalClients": "Total Clients",
+    "totalProperties": "Total Properties"
+  },
   "clients": {
     "title": "고객",
     "newClient": "새 고객",
@@ -817,7 +833,210 @@
     },
     "clientDetails": "고객 세부 정보"
   },
-   
+  "profileD": {
+  "profile": {
+    "title": "프로필 설정",
+    "subtitle": "프로필 정보와 설정을 업데이트하세요.",
+    "logout": {
+      "button": "로그아웃",
+      "success": {
+        "title": "로그아웃 성공",
+        "description": "성공적으로 로그아웃되었습니다."
+      }
+    },
+    "avatar": {
+      "alt": "프로필 사진",
+      "changeButton": "프로필 사진 변경",
+      "success": {
+        "title": "프로필 업데이트 성공",
+        "description": "프로필 사진이 업데이트되었습니다."
+      },
+      "error": {
+        "title": "오류 발생",
+        "description": "프로필 사진 업데이트 중 오류가 발생했습니다."
+      }
+    },
+    "form": {
+      "firstName": {
+        "label": "이름",
+        "placeholder": "이름을 입력하세요"
+      },
+      "lastName": {
+        "label": "성",
+        "placeholder": "성을 입력하세요"
+      },
+      "email": {
+        "label": "이메일",
+        "placeholder": "이메일을 입력하세요"
+      },
+      "phone": {
+        "label": "전화번호",
+        "placeholder": "전화번호를 입력하세요"
+      },
+      "about": {
+        "label": "소개",
+        "placeholder": "자신에 대해 알려주세요"
+      },
+      "practiceArea": {
+        "label": "전문 분야",
+        "placeholder": "전문 분야를 선택하세요",
+        "options": {
+          "corporate": "기업법",
+          "family": "가족법",
+          "criminal": "형사법",
+          "immigration": "이민법",
+          "intellectual": "지적재산권",
+          "realEstate": "부동산"
+        }
+      },
+      "experience": {
+        "label": "경력",
+        "placeholder": "경력을 선택하세요",
+        "options": {
+          "1": "1년",
+          "3": "3년",
+          "6": "6년",
+          "10": "10년"
+        }
+      }
+    },
+    "buttons": {
+      "cancel": "취소",
+      "save": "저장",
+      "saving": "저장 중..."
+    },
+    "toast": {
+      "success": {
+        "title": "프로필 업데이트 성공",
+        "description": "프로필 정보가 업데이트되었습니다."
+      },
+      "error": {
+        "title": "업데이트 실패",
+        "description": "프로필 업데이트 중 오류가 발생했습니다."
+      }
+    },
+    "errors": {
+      "firstNameMin": "이름은 최소 2자 이상이어야 합니다.",
+      "lastNameMin": "성은 최소 2자 이상이어야 합니다.",
+      "invalidEmail": "유효한 이메일 주소를 입력하세요.",
+      "phoneMin": "전화번호는 최소 10자리 이상이어야 합니다.",
+      "aboutMax": "소개는 500자를 초과할 수 없습니다."
+    }
+  }
+},
+"stst" :{
+  "dashboard": {
+    "activecases": "활성 사건",
+    "inactivecases": "비활성 사건",
+    "today'schats": "오늘의 채팅",
+    "availabletokens": "사용 가능 토큰",
+    "totalpurchased": "총 구매량",
+    "monthlyusage": "월간 사용량"
+  },
+  "common": {
+    "error": "통계 로드 실패"
+  }
+},
+"posts":{
+  "postsContentTitle": "게시물 및 콘텐츠",
+  "postsContentDescription": "AI 지원과 공간 메타데이터로 법률 콘텐츠를 생성, 관리 및 공유하세요",
+  "myPosts": "내 게시물",
+  "createNew": "새로 만들기",
+  "loadingPosts": "게시물 로드 중...",
+  "noPostsFound": "게시물을 찾을 수 없음",
+  "noPostsCreatedYet": "아직 게시물을 생성하지 않았습니다",
+  "createFirstPost": "첫 게시물 생성하기",
+  "aiGenerated": "AI 생성",
+  "location": "위치",
+  "citation": "인용 | 인용",
+  "usefulResources": "유용한 자료",
+  "moreResources": "더 많은 자료",
+  "customUrl": "사용자 정의 URL",
+  "custom": "사용자 정의",
+  "previous": "이전",
+  "next": "다음",
+  "pageInfo": "{current} 페이지 / 총 {total} 페이지",
+  "fetchPostsError": "게시물을 불러오지 못했습니다",
+  "somethingWentWrong": "문제가 발생했습니다",
+  "postCreated": "게시물 생성됨",
+  "postAddedToList": "게시물이 목록에 추가되었습니다",
+  "urlCopied": "URL 복사됨",
+  "urlCopiedToClipboard": "{type} URL이 클립보드에 복사되었습니다"
+},
+ "quick": {
+      "quickActions":"빠른 실행",
+      "scheduleCall":"통화 예약",
+      "newCase":"새 사건"
+    },
+
+"conv" :{
+  "messageCannotBeEmpty": "메시지를 입력해주세요",
+  "messageTooLong": "메시지가 너무 깁니다",
+  "error": "오류",
+  "failedToLoadChat": "채팅을 불러오지 못했습니다",
+  "failedToSendMessage": "메시지 전송에 실패했습니다",
+  "chatDeleted": "채팅 삭제됨",
+  "chatDeletedSuccessfully": "채팅이 성공적으로 삭제되었습니다",
+  "failedToDeleteChat": "채팅 삭제에 실패했습니다",
+  "lawyer": "변호사",
+  "user": "사용자",
+  "client": "고객",
+  "noMessagesYet": "아직 메시지가 없습니다. 대화를 시작해보세요!",
+  "typeYourMessage": "메시지를 입력하세요...",
+  "startConversation": "대화 시작하기"
+},
+  "chatbox" :{
+  "search": {
+    "placeholder": "대화 검색..."
+  },
+  "loading": "채팅 불러오는 중...",
+  "noMessages": "아직 메시지가 없습니다",
+  "empty": {
+    "default": "아직 대화가 없습니다",
+    "defaultHint": "프로필 페이지에서 고객과 대화를 시작하세요",
+    "search": "채팅을 찾을 수 없습니다",
+    "searchHint": "검색어를 변경해 보세요"
+  },
+  "delete": {
+    "button": "채팅 삭제",
+    "success": {
+      "title": "채팅 삭제됨",
+      "description": "채팅이 성공적으로 삭제되었습니다"
+    }
+  },
+  "errors": {
+    "load": {
+      "title": "오류",
+      "description": "채팅을 불러오는데 실패했습니다"
+    },
+    "delete": {
+      "title": "오류",
+      "description": "채팅 삭제에 실패했습니다"
+    }
+  }
+},
+   "questionA": {
+  "qa": {
+    "loading": "질문을 불러오는 중...",
+    "empty": "등록된 질문이 없습니다. 첫 번째로 질문해 보세요!",
+    "unanswered": "이 질문은 아직 답변되지 않았습니다.",
+    "status": {
+      "answered": "답변 완료",
+      "pending": "대기 중"
+    },
+    "menu": {
+      "open": "메뉴 열기",
+      "answer": "답변하기",
+      "edit": "답변 수정",
+      "delete": "삭제",
+      "deleting": "삭제 중..."
+    },
+    "errors": {
+      "fetchFailed": "질문을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+      "deleteFailed": "질문을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요."
+    }
+  }
+},
   "clientCases": {
       "title": "고객 사건 목록",
       "newCase": "새 사건",

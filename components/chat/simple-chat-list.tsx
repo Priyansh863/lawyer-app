@@ -14,8 +14,10 @@ import {
   deleteChat as deleteChatAPI, 
   type Chat 
 } from "@/lib/api/simple-chat-api"
+import { useTranslation } from "@/hooks/useTranslation"
 
 export default function SimpleChatList() {
+  const { t } = useTranslation('chat')
   const [chats, setChats] = useState<Chat[]>([])
   const [filteredChats, setFilteredChats] = useState<Chat[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -24,12 +26,10 @@ export default function SimpleChatList() {
   const [showChat, setShowChat] = useState(false)
   const { toast } = useToast()
 
-  // Load chats on component mount
   useEffect(() => {
     loadChats()
   }, [])
 
-  // Filter chats based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredChats(chats)
@@ -55,8 +55,8 @@ export default function SimpleChatList() {
     } catch (error) {
       console.error('Error loading chats:', error)
       toast({
-        title: "Error",
-        description: "Failed to load chats",
+        title: t('pages:chatbox.errors.load.title'),
+        description: t('pages:chatbox.errors.load.description'),
         variant: "destructive",
       })
     } finally {
@@ -65,20 +65,20 @@ export default function SimpleChatList() {
   }
 
   const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent opening chat when delete is clicked
+    e.stopPropagation()
     
     try {
       await deleteChatAPI(chatId)
       setChats(prev => prev.filter(chat => chat._id !== chatId))
       toast({
-        title: "Chat deleted",
-        description: "The chat has been deleted successfully",
+        title: t('pages:chatbox.delete.success.title'),
+        description: t('pages:chatbox.delete.success.description'),
       })
     } catch (error) {
-      console.error('Error deleting chat:', error)
+      console.error('pages:chatbox.Error deleting chat:', error)
       toast({
-        title: "Error",
-        description: "Failed to delete chat",
+        title: t('pages:chatbox.errors.delete.title'),
+        description: t('pages:chatbox.errors.delete.description'),
         variant: "destructive",
       })
     }
@@ -106,7 +106,7 @@ export default function SimpleChatList() {
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-3">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading chats...</span>
+          <span>{t('pages:chatbox.loading')}</span>
         </div>
       </div>
     )
@@ -119,7 +119,7 @@ export default function SimpleChatList() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search conversations..."
+            placeholder={t('pages:chatbox.search.placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -132,25 +132,22 @@ export default function SimpleChatList() {
             <div className="text-center py-12">
               <MessageSquare className="h-12 w-12 mx-auto text-gray-300 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? 'No chats found' : 'No conversations yet'}
+                {searchQuery ? t('pages:chatbox.empty.search') : t('pages:chatbox.empty.default')}
               </h3>
               <p className="text-gray-500">
-                {searchQuery 
-                  ? 'Try adjusting your search terms' 
-                  : 'Start a conversation with a client from their profile page'
-                }
+                {searchQuery ? t('pages:chatbox.empty.searchHint') : t('pages:chatbox.empty.defaultHint')}
               </p>
             </div>
           ) : (
             filteredChats.map((chat) => {
-              const currentUserId = 'current_user' // Should come from Redux/auth
+              const currentUserId = 'current_user'
               const participant = chat.lawyer_id._id === currentUserId ? chat.client_id : chat.lawyer_id
               const participantName = `${participant.first_name} ${participant.last_name}`.trim()
               
               return (
                 <Card 
                   key={chat._id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:shadow-md transition-shadow group"
                   onClick={() => handleChatClick(chat)}
                 >
                   <CardContent className="p-4">
@@ -181,13 +178,14 @@ export default function SimpleChatList() {
                         
                         <div className="flex items-center justify-between mt-1">
                           <p className="text-sm text-gray-600 truncate">
-                            {chat.lastMessage?.content || 'No messages yet'}
+                            {chat.lastMessage?.content || t('pages:chatbox.noMessages')}
                           </p>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => handleDeleteChat(chat._id, e)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label={t('pages:chatbox.delete.button')}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
@@ -208,7 +206,7 @@ export default function SimpleChatList() {
           onClose={() => {
             setShowChat(false)
             setSelectedChat(null)
-            loadChats() // Refresh chats after closing
+            loadChats()
           }}
           chatId={selectedChat._id}
           clientName={

@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
+import { useTranslation } from "@/hooks/useTranslation"
 
 import {
   createOrGetChat,
@@ -45,6 +46,7 @@ export function SimpleChat({
   clientAvatar,
   chatId: initialChatId,
 }: SimpleChatProps) {
+  const { t } = useTranslation()
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -79,8 +81,8 @@ const currentUserId = profile?._id
             _id: initialChatId,
             lawyer_id: {
               _id: "current_user",
-              first_name: "Lawyer",
-              last_name: "User",
+              first_name: t("pages:conv.lawyer"),
+              last_name: t("pages:conv.user"),
               email: "lawyer@example.com",
             },
             client_id: {
@@ -104,8 +106,8 @@ const currentUserId = profile?._id
         setMessages(chatMessages)
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to load chat",
+            title: t("pages:conv.error"),
+          description: t("pages:conv.failedToLoadChat"),
           variant: "destructive",
         })
       } finally {
@@ -132,8 +134,8 @@ const currentUserId = profile?._id
       messageForm.reset()
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to send message",
+        title: t("pages:conv.error"),
+        description: t("pages:conv.failedToSendMessage"),
         variant: "destructive",
       })
     } finally {
@@ -146,14 +148,14 @@ const currentUserId = profile?._id
     try {
       await deleteChat(chat._id)
       toast({
-        title: "Chat deleted",
-        description: "The chat has been deleted successfully",
+        title: t("pages:conv.chatDeleted"),
+        description: t("pages:conv.chatDeletedSuccessfully"),
       })
       onClose()
     } catch {
       toast({
-        title: "Error",
-        description: "Failed to delete chat",
+        title: t("pages:conv.error"),
+description: t("pages:conv.failedToDeleteChat"),
         variant: "destructive",
       })
     }
@@ -239,7 +241,7 @@ const currentUserId = profile?._id
             </Avatar>
             <div>
               <h3 className="font-semibold">{participantName}</h3>
-              <p className="text-sm text-gray-500">{participant?.email || "Client"}</p>
+              <p className="text-sm text-gray-500">{participant?.email || t("pages:conv.client")}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -262,7 +264,7 @@ const currentUserId = profile?._id
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-gray-500">
                 <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                <p>No messages yet. Start the conversation!</p>
+                <p>{t("pages:conv.noMessagesYet")}</p>
               </div>
             ) : (
               messages.map((message) => (
@@ -299,7 +301,7 @@ const currentUserId = profile?._id
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormControl>
-                      <Input placeholder="Type your message..." {...field} disabled={isSending} />
+                      <Input placeholder={t("pages:conv.typeYourMessage")} {...field} disabled={isSending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
