@@ -102,7 +102,7 @@ export default function PostsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-7">
       <div className="px-6 py-4 border-b">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {t("pages:posts.postsContentTitle")}

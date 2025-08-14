@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function NewQuestionPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Add New Question</h1>
+    <div className="space-y-1 mt-14"> {/* Added top margin */}
+     
       <QANewForm />
     </div>
   )

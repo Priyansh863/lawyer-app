@@ -407,7 +407,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                       handleImageUpload(file);
                     }
                   }}
-                  className="file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                  className="file:mr-4 file:py-0 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
                 />
                 
                 {isUploadingImage && (

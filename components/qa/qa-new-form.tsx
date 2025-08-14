@@ -26,6 +26,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const qaSchema = z.object({
   question: z.string().min(10, "Question must be at least 10 characters"),
@@ -102,6 +103,7 @@ export default function QANewFormEnhanced() {
   const router = useRouter()
   const user = useSelector((state: RootState) => state.auth.user)
   const { toast } = useToast()
+  const { t } = useTranslation()
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lawyers, setLawyers] = useState<Lawyer[]>([])
@@ -133,8 +135,8 @@ export default function QANewFormEnhanced() {
     } catch (error) {
       console.error('Error loading lawyers:', error)
       toast({
-        title: "Error",
-        description: "Failed to load lawyers list.",
+        title: t("pages:questionform.error"),
+        description: t("pages:questionform.failed_to_load_lawyers"),
         variant: "destructive"
       })
     } finally {
@@ -145,8 +147,8 @@ export default function QANewFormEnhanced() {
   const onSubmit = async (data: QAFormData) => {
     if (!user?._id) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to submit a question.",
+        title: t("pages:questionform.authentication_required"),
+        description: t("pages:questionform.please_log_in_to_submit_question"),
         variant: "destructive"
       })
       return
@@ -165,8 +167,8 @@ export default function QANewFormEnhanced() {
 
       if (response.success) {
         toast({
-          title: "Question Submitted!",
-          description: "Your question has been posted publicly and lawyers can now respond."
+          title: t("pages:questionform.question_submitted"),
+          description: t("pages:questionform.question_posted_publicly")
         })
         
         // Reset form
@@ -176,13 +178,13 @@ export default function QANewFormEnhanced() {
         // Redirect to Q&A list
         router.push('/qa')
       } else {
-        throw new Error(response.message || 'Submission failed')
+        throw new Error(response.message || t('pages:questionform.submission_failed'))
       }
     } catch (error: any) {
-      console.error('Error submitting Q&A:', error)
+      console.error('pages:questionform.Error submitting Q&A:', error)
       toast({
-        title: "Submission Failed",
-        description: error.message || "Failed to submit question. Please try again.",
+        title: t("pages:questionform.submission_failed"),
+        description: error.message || t("pages:questionform.failed_to_submit_question_try_again"),
         variant: "destructive"
       })
     } finally {
@@ -197,16 +199,16 @@ export default function QANewFormEnhanced() {
   }
 
   const categories = [
-    { value: "general", label: "General Legal" },
-    { value: "criminal", label: "Criminal Law" },
-    { value: "civil", label: "Civil Law" },
-    { value: "family", label: "Family Law" },
-    { value: "business", label: "Business Law" },
-    { value: "property", label: "Property Law" },
-    { value: "employment", label: "Employment Law" },
-    { value: "immigration", label: "Immigration Law" },
-    { value: "tax", label: "Tax Law" },
-    { value: "intellectual-property", label: "Intellectual Property" }
+    { value: "general", label: t("pages:questionform.general_legal") },
+    { value: "criminal", label: t("pages:questionform.criminal_law") },
+    { value: "civil", label: t("pages:questionform.civil_law") },
+    { value: "family", label: t("pages:questionform.family_law") },
+    { value: "business", label: t("pages:questionform.business_law") },
+    { value: "property", label: t("pages:questionform.property_law") },
+    { value: "employment", label: t("pages:questionform.employment_law") },
+    { value: "immigration", label: t("pages:questionform.immigration_law") },
+    { value: "tax", label: t("pages:questionform.tax_law") },
+    { value: "intellectual-property", label: t("pages:questionform.intellectual_property") }
   ]
 
   return (
@@ -215,23 +217,23 @@ export default function QANewFormEnhanced() {
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
           <MessageSquare className="h-8 w-8 text-blue-500" />
-          Ask a Legal Question
+          {t("pages:questionform.ask_legal_question")}
         </h1>
         <p className="text-muted-foreground">
-          Submit your legal question publicly and get answers from qualified lawyers
+          {t("pages:questionform.submit_legal_question_publicly")}
         </p>
         <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Globe className="h-4 w-4 text-green-500" />
-            <span>Public Q&A</span>
+            <span>{t("pages:questionform.public_qa")}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4 text-blue-500" />
-            <span>All Lawyers Can Respond</span>
+            <span>{t("pages:questionform.all_lawyers_can_respond")}</span>
           </div>
           <div className="flex items-center gap-1">
             <CheckCircle className="h-4 w-4 text-emerald-500" />
-            <span>Free to Ask</span>
+            <span>{t("pages:questionform.free_to_ask")}</span>
           </div>
         </div>
       </div>
@@ -243,7 +245,7 @@ export default function QANewFormEnhanced() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Your Question
+                {t("pages:questionform.your_question")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -255,10 +257,10 @@ export default function QANewFormEnhanced() {
                     name="question"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Legal Question *</FormLabel>
+                        <FormLabel>{t("pages:questionform.legal_question")} *</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Describe your legal question in detail. Include relevant facts and circumstances..."
+                            placeholder={t("pages:questionform.describe_legal_question_placeholder")}
                             className="min-h-32"
                             {...field}
                           />
@@ -274,11 +276,11 @@ export default function QANewFormEnhanced() {
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Legal Category *</FormLabel>
+                        <FormLabel>{t("pages:questionform.legal_category")} *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a legal category" />
+                              <SelectValue placeholder={t("pages:questionform.select_legal_category")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -300,10 +302,10 @@ export default function QANewFormEnhanced() {
                     name="tags"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tags (Optional)</FormLabel>
+                        <FormLabel>{t("pages:questionform.tags_optional")}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., contract, dispute, consultation (comma-separated)"
+                            placeholder={t("pages:questionform.tags_placeholder")}
                             {...field}
                           />
                         </FormControl>
@@ -318,15 +320,15 @@ export default function QANewFormEnhanced() {
                     name="selectedLawyer"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Preferred Lawyer (Optional)</FormLabel>
+                        <FormLabel>{t("pages:questionform.preferred_lawyer_optional")}</FormLabel>
                         <Select onValueChange={handleLawyerSelect} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a specific lawyer (optional)" />
+                              <SelectValue placeholder={t("pages:questionform.select_specific_lawyer")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Any Available Lawyer</SelectItem>
+                            <SelectItem value="">{t("pages:questionform.any_available_lawyer")}</SelectItem>
                             {lawyers.map((lawyer) => (
                               <SelectItem key={lawyer._id} value={lawyer._id}>
                                 <div className="flex items-center gap-2">
@@ -355,12 +357,12 @@ export default function QANewFormEnhanced() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Submitting Question...
+                        {t("pages:questionform.submitting_question")}
                       </>
                     ) : (
                       <>
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        Submit Public Question
+                        {t("pages:questionform.submit_public_question")}
                       </>
                     )}
                   </Button>
@@ -376,7 +378,7 @@ export default function QANewFormEnhanced() {
           {selectedLawyer && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Selected Lawyer</CardTitle>
+                <CardTitle className="text-lg">{t("selected_lawyer")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -412,14 +414,14 @@ export default function QANewFormEnhanced() {
                   
                   {selectedLawyer.experience_years && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedLawyer.experience_years} years experience
+                      {selectedLawyer.experience_years} {t("pages:questionform.years_experience")}
                     </p>
                   )}
                   
                   {selectedLawyer.chat_fee && (
                     <div className="bg-blue-50 p-2 rounded">
                       <p className="text-sm">
-                        <strong>Chat Fee:</strong> ${selectedLawyer.chat_fee}/session
+                        <strong>{t("chat_fee")}:</strong> ${selectedLawyer.chat_fee}/session
                       </p>
                     </div>
                   )}
@@ -431,7 +433,7 @@ export default function QANewFormEnhanced() {
           {/* How it Works */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">How Public Q&A Works</CardTitle>
+              <CardTitle className="text-lg">{t("pages:questionform.how_public_qa_works")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
@@ -439,9 +441,9 @@ export default function QANewFormEnhanced() {
                   <span className="text-xs font-medium text-blue-600">1</span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Submit Your Question</p>
+                  <p className="text-sm font-medium">{t("pages:questionform.submit_your_question")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Your question will be posted publicly for all lawyers to see
+                    {t("pages:questionform.question_posted_publicly_description")}
                   </p>
                 </div>
               </div>
@@ -451,9 +453,9 @@ export default function QANewFormEnhanced() {
                   <span className="text-xs font-medium text-blue-600">2</span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Lawyers Respond</p>
+                  <p className="text-sm font-medium">{t("pages:questionform.lawyers_respond")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Qualified lawyers will provide free public answers
+                    {t("pages:questionform.lawyers_provide_free_answers")}
                   </p>
                 </div>
               </div>
@@ -463,9 +465,9 @@ export default function QANewFormEnhanced() {
                   <span className="text-xs font-medium text-blue-600">3</span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Get Detailed Help</p>
+                  <p className="text-sm font-medium">{t("pages:questionform.get_detailed_help")}</p>
                   <p className="text-xs text-muted-foreground">
-                    For private consultation, start a paid chat session
+                    {t("pages:questionform.private_consultation_description")}
                   </p>
                 </div>
               </div>
@@ -477,7 +479,7 @@ export default function QANewFormEnhanced() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Available Lawyers ({lawyers.length})
+                {t("pages:questionform.available_lawyers")} ({lawyers.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -487,7 +489,7 @@ export default function QANewFormEnhanced() {
                 </div>
               ) : lawyers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No lawyers available at the moment
+                  {t("pages:questionform.no_lawyers_available")}
                 </p>
               ) : (
                 <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -516,7 +518,7 @@ export default function QANewFormEnhanced() {
                   ))}
                   {lawyers.length > 5 && (
                     <p className="text-xs text-muted-foreground text-center">
-                      +{lawyers.length - 5} more lawyers available
+                      +{lawyers.length - 5} {t("pages:questionform.more_lawyers_available")}
                     </p>
                   )}
                 </div>

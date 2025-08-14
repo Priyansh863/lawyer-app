@@ -207,7 +207,7 @@ description: t("pages:conv.failedToDeleteChat"),
 
   return (
     <div
-      className="z-50"
+      className="z-[1000]"
       style={{
         position: "fixed",
         top: position.y,

@@ -203,10 +203,10 @@ export default function DocumentsTable({
     return (
       <Badge 
         variant="outline" 
-        className={`${config.color} border-2 flex items-center gap-2 px-3 py-1.5 font-medium transition-colors shadow-sm`}
+        className={`${config.color} border-2 flex items-center gap-2 px-1 py-1.5 font-medium transition-colors shadow-sm w-24`}
       >
         <div className={`w-2 h-2 rounded-full ${config.dotColor} shadow-sm`} />
-        <IconComponent className={`h-3.5 w-3.5 ${status === 'Processing' ? 'animate-spin' : ''}`} />
+        <IconComponent className={`h-3 w-3 ${status === 'Processing' ? 'animate-spin' : ''}`} />
         <span className="text-sm font-medium">{config.label}</span>
       </Badge>
     )
@@ -238,14 +238,14 @@ export default function DocumentsTable({
   const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
     if (privacy === 'private') {
       return (
-        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 flex items-center gap-1">
+        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 flex items-center gap-1 w-20">
           <Lock className="h-3 w-3" />
           {isShared ? t('pages:documentT.privacy.shared') : t('pages:documentT.privacy.private')}
         </Badge>
       )
     }
     return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 w-16">
         <Globe className="h-3 w-3" />
         {t('pages:documentT.privacy.public')}
       </Badge>
