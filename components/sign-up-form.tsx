@@ -14,17 +14,18 @@ import Link from "next/link"
 import { signUp } from "@/services/auth"
 import { useRouter } from "next/navigation"
 import { useToast } from "./ui/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const sign_up_schema = z.object({
-  first_name: z.string().min(2, "First name must be at least 2 characters"),
-  last_name: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  first_name: z.string().min(2, "first_name_error"),
+  last_name: z.string().min(2, "last_name_error"),
+  email: z.string().email("email_error"),
+  password: z.string().min(8, "password_error"),
   account_type: z.enum(["client", "lawyer"]).refine((val) => !!val, {
-    message: "Please select an account type",
+    message: "account_type_error",
   }),
   agree_to_terms: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and conditions",
+    message: "terms_error",
   }),
 })
 
@@ -34,6 +35,7 @@ export default function SignUpForm() {
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { t } = useTranslation()
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(sign_up_schema),
@@ -53,19 +55,18 @@ export default function SignUpForm() {
       const response = await signUp(data)
 
       if (response?.data?.success) {
-        // Redirect to OTP verification page
         router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup`)
       } else {
         toast({
-          title: "Error",
-          description: response?.data?.message ?? "Failed to create account. Please try again.",
+          title: t("pages:signu.error"),
+          description: response?.data?.message ?? t("pages:signu.signup.error"),
           variant: "error",
         })
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error?.response?.data?.message ?? "An unexpected error occurred. Please try again later.",
+        title: t("pages:signu.error"),
+        description: error?.response?.data?.message ?? t("pages:signu.signup.unexpected_error"),
         variant: "error",
       })
     } finally {
@@ -76,11 +77,11 @@ export default function SignUpForm() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
-        <h1 className="text-2xl font-bold font-heading">Create an Account</h1>
+        <h1 className="text-2xl font-bold font-heading">{t("pages:signu.signup.title")}</h1>
         <p className="text-sm text-gray-600">
-          Already have an account?{' '}
+          {t("pages:signu.signup.have_account")}{' '}
           <Link href="/login" className="text-blue-600 hover:underline">
-            Sign in
+            {t("pages:signu.signup.sign_in")}
           </Link>
         </p>
       </CardHeader>
@@ -94,9 +95,13 @@ export default function SignUpForm() {
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>{t("pages:signu.signup.first_name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter first name" className="bg-gray-50" {...field} />
+                      <Input 
+                        placeholder={t("pages:signu.signup.first_name_placeholder")} 
+                        className="bg-gray-50" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -107,23 +112,33 @@ export default function SignUpForm() {
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>{t("pages:signu.signup.last_name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter last name" className="bg-gray-50" {...field} />
+                      <Input 
+                        placeholder={t("pages:signu.signup.last_name_placeholder")} 
+                        className="bg-gray-50" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-<FormField
+
+            <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("pages:signu.signup.email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Enter email" className="bg-gray-50" {...field} />
+                    <Input 
+                      type="email" 
+                      placeholder={t("pages:signu.signup.email_placeholder")} 
+                      className="bg-gray-50" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,9 +150,14 @@ export default function SignUpForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("pages:signu.signup.password")}</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Enter password" className="bg-gray-50" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder={t("pages:signu.signup.password_placeholder")} 
+                      className="bg-gray-50" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -149,15 +169,15 @@ export default function SignUpForm() {
               name="account_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Account Type</FormLabel>
+                  <FormLabel>{t("pages:signu.signup.account_type")}</FormLabel>
                   <FormControl>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
+                        <SelectValue placeholder={t("pages:signu.signup.account_type_placeholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="client">Client</SelectItem>
-                        <SelectItem value="lawyer">Lawyer</SelectItem>
+                        <SelectItem value="client">{t("pages:signu.signup.client")}</SelectItem>
+                        <SelectItem value="lawyer">{t("pages:signu.signup.lawyer")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -176,7 +196,7 @@ export default function SignUpForm() {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-xs text-muted-foreground">
-                      I agree with all conditions terms of Service Privacy Policy and Terms that I have read.
+                      {t("pages:signu.signup.terms_agreement")}
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -189,30 +209,30 @@ export default function SignUpForm() {
               className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Creating Account..." : "Create Account"}
+              {form.formState.isSubmitting ? t("pages:signu.signup.creating_account") : t("pages:signu.signup.create_account")}
             </Button>
           </form>
         </Form>
 
         <div className="text-center text-sm mt-4">
-          Already have an account?{" "}
+          {t("pages:signu.signup.have_account")}{" "}
           <Link href="/login" className="font-medium hover:underline">
-            Sign In
+            {t("pages:signu.signup.sign_in")}
           </Link>
         </div>
       </CardContent>
       <CardFooter className="text-xs text-center text-muted-foreground flex flex-col">
-        <p>This site is protected by reCAPTCHA and the</p>
+        <p>{t("pages:signu.signup.recaptcha_notice")}</p>
         <p>
-          Google{" "}
+          {t("pages:signu.signup.google_policy_prefix")}{" "}
           <Link href="#" className="underline">
-            Privacy Policy
+            {t("pages:signu.signup.privacy_policy")}
           </Link>{" "}
-          and{" "}
+          {t("pages:signu.signup.and")}{" "}
           <Link href="#" className="underline">
-            Terms
+            {t("pages:signu.signup.terms_of_service")}
           </Link>{" "}
-          of service apply.
+          {t("pages:signu.signup.apply")}
         </p>
       </CardFooter>
     </Card>

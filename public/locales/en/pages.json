@@ -460,6 +460,25 @@
   "urlCopied": "URL copied",
   "urlCopiedToClipboard": "{type} URL copied to clipboard"
 },
+"graph":{
+  "analytics": {
+    "activityOverview": "Activity Overview",
+    "cases": "Cases",
+    "meetings": "Meetings",
+    "documents": "Documents",
+    "errors": {
+      "fetchError": "Error fetching analytics data"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun"
+    }
+  }
+},
   "pdfUpload": {
       "title": "Upload PDF Document",
       "invalidFile": "Please upload a valid PDF file.",

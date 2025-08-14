@@ -182,17 +182,17 @@ export default function StatsCards() {
   if (profile?.account_type === 'client' && tokenBalance) {
     tokenStats.push(
       {
-        title: t('dashboard.availabletokens'),
+        title: t('pages:stst.dashboard.availabletokens'),
         value: tokenBalance.current_balance,
         icon: <Coins size={18} />
       },
       {
-        title: t('dashboard.totalpurchased'),
+        title: t('pages:stst.dashboard.totalpurchased'),
         value: tokenBalance.total_purchased,
         icon: <DollarSign size={18} />
       },
       {
-        title: t('dashboard.monthlyusage'),
+        title: t('pages:stst.dashboard.monthlyusage'),
         value: tokenBalance.monthly_usage,
         icon: <MessageSquare size={18} />
       }

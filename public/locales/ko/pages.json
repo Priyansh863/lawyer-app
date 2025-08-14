@@ -985,6 +985,27 @@
   "typeYourMessage": "메시지를 입력하세요...",
   "startConversation": "대화 시작하기"
 },
+"graph":{
+  "analytics": {
+    "activityOverview": "활동 개요",
+    "cases": "사건",
+    "meetings": "회의",
+    "documents": "문서",
+    "errors": {
+      "fetchError": "분석 데이터를 가져오는 중 오류 발생"
+    },
+    "months": {
+      "jan": "1월",
+      "feb": "2월",
+      "mar": "3월",
+      "apr": "4월",
+      "may": "5월",
+      "jun": "6월"
+    }
+  }
+
+
+},
   "chatbox" :{
   "search": {
     "placeholder": "대화 검색..."
@@ -1351,7 +1372,43 @@
     "noUpcomingMeetings": "예정된 상담이 없습니다",
     "noPastMeetings": "과거 상담이 없습니다"
   },
-  
+    "signu": {
+  "signup": {
+    "title": "계정 만들기",
+    "have_account": "이미 계정이 있으신가요?",
+    "sign_in": "로그인",
+    "first_name": "이름",
+    "first_name_placeholder": "이름을 입력하세요",
+    "last_name": "성",
+    "last_name_placeholder": "성을 입력하세요",
+    "email": "이메일",
+    "email_placeholder": "이메일을 입력하세요",
+    "password": "비밀번호",
+    "password_placeholder": "비밀번호를 입력하세요",
+    "account_type": "계정 유형",
+    "account_type_placeholder": "계정 유형을 선택하세요",
+    "client": "클라이언트",
+    "lawyer": "변호사",
+    "terms_agreement": "서비스 약관, 개인정보 처리방침 및 이용 약관에 동의합니다.",
+    "create_account": "계정 만들기",
+    "creating_account": "계정 생성 중...",
+    "recaptcha_notice": "이 사이트는 reCAPTCHA로 보호되며",
+    "google_policy_prefix": "Google",
+    "privacy_policy": "개인정보 처리방침",
+    "terms_of_service": "서비스 약관",
+    "and": "및",
+    "apply": "적용됩니다",
+    "error": "계정 생성에 실패했습니다. 다시 시도해 주세요.",
+    "unexpected_error": "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요."
+  },
+  "error": "오류",
+  "first_name_error": "이름은 최소 2자 이상이어야 합니다",
+  "last_name_error": "성은 최소 2자 이상이어야 합니다",
+  "email_error": "유효한 이메일 주소를 입력해 주세요",
+  "password_error": "비밀번호는 최소 8자 이상이어야 합니다",
+  "account_type_error": "계정 유형을 선택해 주세요",
+  "terms_error": "약관에 동의해야 합니다"
+},
   "tokens": {
     "title": "토큰 관리",
     "description": "AI 토큰을 관리하고 추가 크레딧을 구매하세요",
@@ -1380,4 +1437,5 @@
     "refund": "환불",
     "bonus": "보너스"
   }
+  
  }

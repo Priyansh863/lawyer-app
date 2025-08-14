@@ -13,7 +13,8 @@
     "voiceSummary": "Voice Summary",
     "token": "Tokens",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+     "postsAndContent": "Post and Content"
   },
   "common": {
     "save": "Save",

@@ -98,7 +98,7 @@ export default function Sidebar() {
       ? [
           { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
           { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
-          { href: "/posts", icon: <FileText size={18} />, label: "Posts & Content" },
+          { href: "/posts", icon: <FileText size={18} />, label: t('navigation.postsAndContent') },
 
         ]
       : []),

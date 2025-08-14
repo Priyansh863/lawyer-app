@@ -23,6 +23,7 @@ import {
   FileText
 } from 'lucide-react';
 import axios from 'axios';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TokenUsageData {
   category: string;
@@ -42,6 +43,7 @@ const ClientAnalytics: React.FC = () => {
   const [tokenUsage, setTokenUsage] = useState<TokenUsageData[]>([]);
   const [activityData, setActivityData] = useState<ActivityData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const getToken = () => {
     if (typeof window !== "undefined") {
@@ -77,18 +79,18 @@ const ClientAnalytics: React.FC = () => {
         setTokenUsage(tokenResponse.data.data.usage_breakdown);
       }
 
-      // Set sample activity data (you can replace this with actual API call)
+      // Set sample activity data with translated months
       setActivityData([
-        { month: 'Jan', cases: 2, meetings: 4, documents: 8 },
-        { month: 'Feb', cases: 3, meetings: 6, documents: 12 },
-        { month: 'Mar', cases: 4, meetings: 8, documents: 15 },
-        { month: 'Apr', cases: 2, meetings: 5, documents: 10 },
-        { month: 'May', cases: 5, meetings: 7, documents: 18 },
-        { month: 'Jun', cases: 6, meetings: 9, documents: 22 }
+        { month: t('pages:graph.analytics.months.jan'), cases: 2, meetings: 4, documents: 8 },
+        { month: t('pages:graph.analytics.months.feb'), cases: 3, meetings: 6, documents: 12 },
+        { month: t('pages:graph.analytics.months.mar'), cases: 4, meetings: 8, documents: 15 },
+        { month: t('pages:graph.analytics.months.apr'), cases: 2, meetings: 5, documents: 10 },
+        { month: t('pages:graph.analytics.months.may'), cases: 5, meetings: 7, documents: 18 },
+        { month: t('pages:graph.analytics.months.jun'), cases: 6, meetings: 9, documents: 22 }
       ]);
 
     } catch (error) {
-      console.error('Error fetching analytics data:', error);
+      console.error(t('pages:graph.analytics.errors.fetchError'), error);
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,7 @@ const ClientAnalytics: React.FC = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   if (profile?.account_type !== 'client') {
-    return null; // Don't render for non-client users
+    return null;
   }
 
   if (loading) {
@@ -108,7 +110,7 @@ const ClientAnalytics: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Activity Overview
+              {t('pages:graph.analytics.activityOverview')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -130,12 +132,11 @@ const ClientAnalytics: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Activity Bar Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Activity Overview
+            {t('pages:graph.analytics.activityOverview')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -146,9 +147,9 @@ const ClientAnalytics: React.FC = () => {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="cases" fill="#8884d8" name="Cases" />
-                <Bar dataKey="meetings" fill="#82ca9d" name="Meetings" />
-                <Bar dataKey="documents" fill="#ffc658" name="Documents" />
+                <Bar dataKey="cases" fill="#8884d8" name={t('pages:graph.analytics.cases')} />
+                <Bar dataKey="meetings" fill="#82ca9d" name={t('pages:graph.analytics.meetings')} />
+                <Bar dataKey="documents" fill="#ffc658" name={t('pages:graph.analytics.documents')} />
               </BarChart>
             </ResponsiveContainer>
           </div>

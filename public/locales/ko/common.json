@@ -13,7 +13,8 @@
     "voiceSummary": "음성 요약",
     "token": "토큰",
     "settings": "설정",
-    "logout": "로그아웃"
+    "logout": "로그아웃",
+    "postsAndContent": "게시물 및 콘텐츠"
   },
   "common": {
     "save": "저장",
