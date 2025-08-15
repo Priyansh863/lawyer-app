@@ -613,6 +613,131 @@
       "inactive": "Inactive"
     }
   },
+  
+  "creator": {
+    "post": {
+      "title": "Create New Post",
+      "tabs": {
+        "manual": "Manual Writing",
+        "ai": "AI Generation"
+      },
+      "fields": {
+        "title": "Title",
+        "content": "Content",
+        "image": "Image (Optional)",
+        "hashtag": "Hashtags (Optional)"
+      },
+      "ai": {
+        "fields": {
+          "prompt": "AI Prompt",
+          "topic": "Or Topic",
+          "tone": "Tone",
+          "length": "Length",
+          "hashtags": "Include Hashtags"
+        },
+        "placeholders": {
+          "prompt": "Describe what the AI should write...",
+          "topic": "Basics of Contract Law"
+        },
+        "options": {
+          "tone": {
+            "professional": "Professional",
+            "casual": "Casual",
+            "formal": "Formal",
+            "friendly": "Friendly"
+          },
+          "length": {
+            "short": "Short (400–600 characters)",
+            "long": "Long (800–1200 characters)"
+          },
+          "yes": "Yes",
+          "no": "No"
+        },
+        "buttons": {
+          "generate": "Generate AI Post",
+          "generating": "Generating AI Post..."
+        },
+        "toast": {
+          "missingInput": "Input Required",
+          "missingInputDesc": "Please enter a prompt or topic",
+          "generated": "AI Post Generated Successfully",
+          "generatedDesc": "Generated post: \"{title}\"",
+          "failed": "Failed to Generate AI Post",
+          "failedDesc": "An error occurred"
+        }
+      },
+      "placeholders": {
+        "title": "Enter post title...",
+        "content": "Write post content...",
+        "hashtag": "#LegalAdvice"
+      },
+      "buttons": {
+        "create": "Create Post",
+        "creating": "Creating Post..."
+      },
+      "toast": {
+        "requiredFields": "Missing Required Fields",
+        "requiredFieldsDesc": "Title and content are required",
+        "created": "Post Created Successfully",
+        "createdDesc": "Post \"{title}\" has been created",
+        "failed": "Failed to Create Post",
+        "failedDesc": "An error occurred"
+      },
+      "image": {
+        "uploading": "Uploading image... {progress}%",
+        "success": "✅ Image Uploaded Successfully",
+        "alt": "Upload Preview",
+        "toast": {
+          "success": "Image Upload Successful",
+          "successDesc": "The image has been uploaded and will be included in the post",
+          "failed": "Upload Failed",
+          "failedDesc": "Failed to upload image. Please try again."
+        }
+      },
+      "characters": "characters",
+      "citations": {
+        "title": "References",
+        "types": {
+          "spatial": "Spatial Information",
+          "user": "User",
+          "url": "URL"
+        },
+        "placeholders": {
+          "user": "@username",
+          "url": "https://example.com",
+          "spatial": "Spatial Reference"
+        },
+        "buttons": {
+          "add": "Add"
+        },
+        "added": "Added References",
+        "toast": {
+          "required": "Reference Required",
+          "requiredDesc": "Please enter reference details"
+        }
+      },
+      "created": {
+        "title": "Created Post",
+        "urls": "Generated URLs",
+        "customUrl": "Custom URL",
+        "shortUrl": "Short URL"
+      },
+      "qr": {
+        "toast": {
+          "generated": "QR Code Generated",
+          "generatedDesc": "QR code for the post has been generated",
+          "failed": "Failed to Generate QR Code",
+          "failedDesc": "An error occurred"
+        }
+      },
+      "url": {
+        "toast": {
+          "copied": "URL Copied",
+          "copiedDesc": "{type} URL has been copied to clipboard"
+        }
+      }
+    }
+  },
   "clientCases": {
       "title": "Client Case List",
       "newCase": "New Case",
