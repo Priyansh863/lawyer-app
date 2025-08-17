@@ -40,7 +40,16 @@ const uploadDocumentEnhanced = async (data: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify({
+      user_id: data.userId,
+      link: data.fileUrl,
+      document_name: data.fileName,
+      file_type: data.fileType,
+      privacy: 'public',
+      process_with_ai: true,
+      file_size: 0,
+      case_id: null
+    })
   })
   
   if (!response.ok) {
