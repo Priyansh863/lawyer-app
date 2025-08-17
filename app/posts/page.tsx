@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 
 import PostCreator from "@/components/posts/post-creator";
+import QrCodeGenerator from "@/components/posts/qr-code-generator";
 import { 
   getPosts, 
   type Post 
@@ -30,7 +31,8 @@ import {
   User,
   MapPin,
   Hash,
-  Wand2
+  Wand2,
+  QrCode
 } from "lucide-react";
 
 export default function PostsPage() {
@@ -276,6 +278,19 @@ export default function PostsPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* QR Code Generator */}
+                    <div className="flex justify-end pt-2">
+                      <QrCodeGenerator 
+                        post={post}
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            <QrCode className="h-3 w-3 mr-1" />
+                            QR Code
+                          </Button>
+                        }
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
