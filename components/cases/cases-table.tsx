@@ -14,19 +14,36 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { getCases } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
-import { Eye } from "lucide-react"
+import { Eye, Edit3 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
+import CaseStatusUpdateDialog from "./case-status-update-dialog"
+import { caseTypeConfig, courtTypeConfig } from "@/types/case"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
-  status: z.enum(["all", "pending", "approved", "rejected"]).default("all"),
+  status: z.enum([
+    "all",
+    // Judgment Outcomes (판결 종국)
+    "full_win", "full_loss", "partial_win", "partial_loss", "dismissal", "rejection",
+    // Non-Judgment Outcomes (판결 외 종국)
+    "withdrawal", "mediation", "settlement", "trial_cancellation", "suspension", "closure",
+    // Active case statuses
+    "in_progress", "pending"
+  ]).default("all"),
 })
 type SearchFormData = z.infer<typeof searchFormSchema>
 
 const statusUpdateSchema = z.object({
   caseId: z.string(),
-  status: z.enum(["pending", "approved", "rejected"]),
+  status: z.enum([
+    // Judgment Outcomes (판결 종국)
+    "full_win", "full_loss", "partial_win", "partial_loss", "dismissal", "rejection",
+    // Non-Judgment Outcomes (판결 외 종국)
+    "withdrawal", "mediation", "settlement", "trial_cancellation", "suspension", "closure",
+    // Active case statuses
+    "in_progress", "pending"
+  ]),
 })
 type StatusUpdateData = z.infer<typeof statusUpdateSchema>
 
@@ -39,6 +56,10 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
   const profile = useSelector((state: RootState) => state.auth.user)
 
   const [isLoading, setIsLoading] = useState(false)
+  const [statusUpdateDialog, setStatusUpdateDialog] = useState<{
+    open: boolean
+    case: Case | null
+  }>({ open: false, case: null })
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -127,42 +148,57 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   // Get status badge
   const STATUS_CONFIG = {
-    pending: {
-      label: "Pending",
-      className: "bg-yellow-50 text-yellow-600 border-yellow-200",
-    },
-    approved: {
-      label: "Approved",
-      className: "bg-green-50 text-green-600 border-green-200",
-    },
-    rejected: {
-      label: "Rejected",
-      className: "bg-red-50 text-red-600 border-red-200",
-    },
+    // Judgment Outcomes (판결 종국)
+    full_win: { label: "Full Win (전부 승소)", color: "bg-green-100 text-green-800" },
+    full_loss: { label: "Full Loss (전부 패소)", color: "bg-red-100 text-red-800" },
+    partial_win: { label: "Partial Win (부분 승소)", color: "bg-emerald-100 text-emerald-800" },
+    partial_loss: { label: "Partial Loss (부분 패소)", color: "bg-orange-100 text-orange-800" },
+    dismissal: { label: "Dismissal (기각)", color: "bg-red-200 text-red-900" },
+    rejection: { label: "Rejection (각하)", color: "bg-red-300 text-red-900" },
+    // Non-Judgment Outcomes (판결 외 종국)
+    withdrawal: { label: "Withdrawal (취하)", color: "bg-gray-100 text-gray-800" },
+    mediation: { label: "Mediation (조정)", color: "bg-blue-100 text-blue-800" },
+    settlement: { label: "Settlement (화해)", color: "bg-teal-100 text-teal-800" },
+    trial_cancellation: { label: "Trial Cancellation (공판취소)", color: "bg-purple-100 text-purple-800" },
+    suspension: { label: "Suspension (중지)", color: "bg-yellow-100 text-yellow-800" },
+    closure: { label: "Closure (종결)", color: "bg-slate-100 text-slate-800" },
+    // Active case statuses
+    in_progress: { label: "In Progress (진행 중)", color: "bg-blue-50 text-blue-700" },
+    pending: { label: "Pending (대기 중)", color: "bg-amber-50 text-amber-700" }
   } as const
 
   const getStatusBadge = (status: string) => {
     // Normalize the status and fallback to "pending" if invalid
+    const validStatuses = ["full_win", "full_loss", "partial_win", "partial_loss", "dismissal", "rejection", "withdrawal", "mediation", "settlement", "trial_cancellation", "suspension", "closure", "in_progress", "pending"]
     const normalizedStatus = (
-      ["pending", "approved", "rejected"].includes(status.toLowerCase()) ? status.toLowerCase() : "pending"
-    ) as CaseStatus
+      validStatuses.includes(status.toLowerCase()) ? status.toLowerCase() : "pending"
+    ) as keyof typeof STATUS_CONFIG
     return (
-      <Badge variant="outline" className={STATUS_CONFIG[normalizedStatus].className}>
+      <Badge variant="outline" className={STATUS_CONFIG[normalizedStatus].color}>
         {STATUS_CONFIG[normalizedStatus].label}
       </Badge>
     )
   }
 
+  // Handle opening status update dialog
+  const handleUpdateStatus = (caseItem: Case) => {
+    setStatusUpdateDialog({ open: true, case: caseItem })
+  }
+
+  // Handle status update completion
+  const handleStatusUpdated = (caseId: string, newStatus: CaseStatus) => {
+    setCases(prevCases =>
+      prevCases.map(c =>
+        (c._id || c.id) === caseId
+          ? { ...c, status: newStatus }
+          : c
+      )
+    )
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4 mt-6">
-        <h2 className="text-xl font-semibold">{t("pages:cases.title")}</h2>
-        {profile?.account_type === 'lawyer' && (
-    <Button onClick={() => router.push("/cases/new")} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
-      {t("pages:cases.newCase")}
-    </Button>
-  )}
-      </div>
+    
       <Form {...searchForm}>
         <form
           onSubmit={searchForm.handleSubmit(onSearchSubmit)}
@@ -215,9 +251,32 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                     className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
                   >
                     <option value="all">{t("common.filter")}</option>
-                    <option value="pending">{t("pages:cases.pending")}</option>
-                    <option value="approved">{t("pages:cases.active")}</option>
-                    <option value="rejected">{t("pages:cases.closed")}</option>
+                    
+                    {/* Active Case Statuses */}
+                    <optgroup label="Active Cases">
+                      <option value="open">대기 중 (Pending)</option>
+                      <option value="in_progress">진행 중 (In Progress)</option>
+                    </optgroup>
+                    
+                    {/* Judgment Outcomes (판결 종국) */}
+                    <optgroup label="Judgment Outcomes (판결 종국)">
+                      <option value="full_win">전부 승소 (Full Win)</option>
+                      <option value="full_loss">전부 패소 (Full Loss)</option>
+                      <option value="partial_win">부분 승소 (Partial Win)</option>
+                      <option value="partial_loss">부분 패소 (Partial Loss)</option>
+                      <option value="dismissal">기각 (Dismissal)</option>
+                      <option value="rejection">각하 (Rejection)</option>
+                    </optgroup>
+                    
+                    {/* Non-Judgment Outcomes (판결 외 종국) */}
+                    <optgroup label="Non-Judgment Outcomes (판결 외 종국)">
+                      <option value="withdrawal">취하 (Withdrawal)</option>
+                      <option value="mediation">조정 (Mediation)</option>
+                      <option value="settlement">화해 (Settlement)</option>
+                      <option value="trial_cancellation">공판취소 (Trial Cancellation)</option>
+                      <option value="suspension">중지 (Suspension)</option>
+                      <option value="closure">종결 (Closure)</option>
+                    </optgroup>
                   </select>
                 </FormControl>
                 <FormMessage />
@@ -230,18 +289,20 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Case Number</TableHead>
               <TableHead>{t("pages:cases.caseTitle")}</TableHead>
-              <TableHead>{t("pages:cases.caseDescription")}</TableHead>
               <TableHead>{t("pages:cases.clientName")}</TableHead>
               <TableHead>{t("pages:cases.assignedLawyer")}</TableHead>
+              <TableHead>Case Type</TableHead>
+              <TableHead>Court Type</TableHead>
               <TableHead>{t("pages:cases.status")}</TableHead>
-              <TableHead>{t("common.view")}</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {cases.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   {isLoading ? t("common.loading") : t("pages:cases.title")}
                 </TableCell>
               </TableRow>
@@ -262,12 +323,35 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                       : 'N/A'
                     }
                   </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
+                      {caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.label || caseItem.case_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
+                      {courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.label || caseItem.court_type}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => viewCaseDetails(caseItem)} className="h-8 w-8">
-                      <Eye className="h-4 w-4" />
-                      <span className="sr-only">{t("common.view")}</span>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => viewCaseDetails(caseItem)} className="h-8 w-8">
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">View Details</span>
+                      </Button>
+                      {profile?.account_type === 'lawyer' && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleUpdateStatus(caseItem)} 
+                          className="h-8 w-8"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          <span className="sr-only">Update Status</span>
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -275,6 +359,14 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Status Update Dialog */}
+      <CaseStatusUpdateDialog
+        case={statusUpdateDialog.case}
+        open={statusUpdateDialog.open}
+        onOpenChange={(open) => setStatusUpdateDialog({ open, case: open ? statusUpdateDialog.case : null })}
+        onStatusUpdated={handleStatusUpdated}
+      />
     </div>
   )
 }

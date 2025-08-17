@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { MoreVertical, Share2, Eye, Users } from "lucide-react"
-import { ShareWithLawyerDialog } from "@/components/documents/share-with-lawyer-dialog"
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 
@@ -89,7 +88,7 @@ console.log(selectedDocument,"selectedDocumentselectedDocumentselectedDocumentse
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Client Documents</h3>
+          <h3 className="text-lg font-medium">Documents</h3>
         </div>
 
         {isLoading ? (
@@ -129,11 +128,6 @@ console.log(selectedDocument,"selectedDocumentselectedDocumentselectedDocumentse
                   <Download size={16} />
                 </Button>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" title="More options">
-                      <MoreVertical size={16} />
-                    </Button>
-                  </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleViewDocument(file)}>
                       <Eye className="h-4 w-4 mr-2" />
@@ -141,7 +135,7 @@ console.log(selectedDocument,"selectedDocumentselectedDocumentselectedDocumentse
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleShareWithLawyer(file)}>
                       <Share2 className="h-4 w-4 mr-2" />
-                      Share with Lawyer
+                      Share Document
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -151,19 +145,6 @@ console.log(selectedDocument,"selectedDocumentselectedDocumentselectedDocumentse
         </div>
         )}
       </CardContent>
-      {selectedDocument && (
-  <ShareWithLawyerDialog
-    open={shareDialogOpen}
-    onOpenChange={setShareDialogOpen}
-    document={{
-      id: selectedDocument.id,
-      document_name: selectedDocument.document_name || 'Unknown Document',
-      privacy: selectedDocument.status === 'private' ? 'private' : 'public',
-      shared_with:  selectedDocument.shared_with
-    }}
-    onShareUpdate={handleShareUpdate}
-  />
-)}
     </Card>
   );
 }

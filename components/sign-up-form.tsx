@@ -55,6 +55,21 @@ export default function SignUpForm() {
       const response = await signUp(data)
 
       if (response?.data?.success) {
+        // Show OTP in toast message since email service may not be working
+        if (response?.data?.data?.otp) {
+          toast({
+            title: "Signup OTP Sent",
+            description: response.data.data.message || `Your verification OTP is: ${response.data.data.otp}. This OTP will expire in 10 minutes.`,
+            variant: "success",
+          })
+        } else {
+          toast({
+            title: "Account Created Successfully",
+            description: "Please check your email for the verification OTP.",
+            variant: "success",
+          })
+        }
+        
         router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup`)
       } else {
         toast({

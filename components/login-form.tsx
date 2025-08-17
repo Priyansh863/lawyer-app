@@ -139,6 +139,8 @@ export default function LoginForm() {
               )}
             />
 
+          
+
             <FormField
               control={form.control}
               name="password"
@@ -152,6 +154,15 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
+
+            {/* Forgot Password Link */}
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-sm text-[#0f0921] hover:underline">
+                Forgot your password?
+              </Link>
+            </div>
+
+         
 
             <Button
               type="submit"

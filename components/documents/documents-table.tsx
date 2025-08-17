@@ -35,15 +35,19 @@ import {
   AlertCircle,
   Ban,
   Filter,
-  SortDesc
+  SortDesc,
+  Video,
+  Image,
+  File,
+  Download
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
-import { getDocuments, deleteDocument } from '@/lib/api/documents-api'
+import { getDocuments, deleteDocument, downloadDocumentSummary } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from "@/hooks/useTranslation"
-import { ShareWithLawyerDialog } from '@/components/documents/share-with-lawyer-dialog'
+import { ShareDocumentDialog } from '@/components/documents/share-with-lawyer-dialog'
 
 interface Document {
   _id: string
@@ -58,9 +62,11 @@ interface Document {
   } | string
   link: string
   summary?: string
-  privacy?: 'public' | 'private'
+  privacy?: 'public' | 'private' | 'fully_private'
   file_size?: number
   file_type?: string
+  document_type?: 'case_related' | 'general'
+  case_id?: string
   shared_with?: any[]
   is_shared?: boolean
   created_at?: string
@@ -85,7 +91,10 @@ export default function DocumentsTable({
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Completed' | 'Failed' | 'Rejected' | 'Approved' | 'Processing' | 'Cancelled'>('all')
+  const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private' | 'fully_private'>('all')
+  const [fileTypeFilter, setFileTypeFilter] = useState<'all' | 'PDF' | 'DOCX' | 'TXT' | 'Image' | 'Video'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [downloadingSummaryId, setDownloadingSummaryId] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
@@ -99,10 +108,10 @@ export default function DocumentsTable({
     loadDocuments()
   }, [refreshTrigger])
 
-  // Apply filters when search term or status filter changes
+  // Apply filters when search term or any filter changes
   useEffect(() => {
     applyFilters()
-  }, [searchTerm, statusFilter, allDocuments])
+  }, [searchTerm, statusFilter, privacyFilter, fileTypeFilter, allDocuments])
 
   const loadDocuments = async () => {
     setIsLoading(true)
@@ -128,6 +137,19 @@ export default function DocumentsTable({
     }
   }
 
+  // Get file type icon and color
+  const getFileTypeIcon = (fileType: string | undefined) => {
+    if (!fileType) return { icon: FileText, color: 'text-gray-500' }
+    
+    const type = fileType.toLowerCase()
+    if (type.includes('pdf')) return { icon: FileText, color: 'text-red-500' }
+    if (type.includes('word') || type.includes('docx')) return { icon: FileText, color: 'text-blue-500' }
+    if (type.includes('text') || type.includes('txt')) return { icon: File, color: 'text-green-500' }
+    if (type.includes('image') || type.includes('jpg') || type.includes('png')) return { icon: Image, color: 'text-purple-500' }
+    if (type.includes('video') || type.includes('mp4') || type.includes('avi')) return { icon: Video, color: 'text-orange-500' }
+    return { icon: FileText, color: 'text-gray-500' }
+  }
+
   // Client-side filtering for better performance
   const applyFilters = () => {
     let filteredDocs = [...allDocuments]
@@ -145,6 +167,27 @@ export default function DocumentsTable({
     // Apply status filter
     if (statusFilter !== 'all') {
       filteredDocs = filteredDocs.filter(doc => doc.status === statusFilter)
+    }
+
+    // Apply privacy filter
+    if (privacyFilter !== 'all') {
+      filteredDocs = filteredDocs.filter(doc => doc.privacy === privacyFilter)
+    }
+
+    // Apply file type filter
+    if (fileTypeFilter !== 'all') {
+      filteredDocs = filteredDocs.filter(doc => {
+        if (!doc.file_type) return false
+        const type = doc.file_type.toLowerCase()
+        switch (fileTypeFilter) {
+          case 'PDF': return type.includes('pdf')
+          case 'DOCX': return type.includes('word') || type.includes('docx')
+          case 'TXT': return type.includes('text') || type.includes('txt')
+          case 'Image': return type.includes('image') || type.includes('jpg') || type.includes('png')
+          case 'Video': return type.includes('video') || type.includes('mp4') || type.includes('avi')
+          default: return true
+        }
+      })
     }
 
     setDocuments(filteredDocs)
@@ -234,22 +277,31 @@ export default function DocumentsTable({
     toast.success(t('pages:documentT.documents.shareSuccess'))
   }
 
-  // Privacy badge
+  // Privacy badge with enhanced privacy levels
   const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
-    if (privacy === 'private') {
-      return (
-        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 flex items-center gap-1 w-20">
-          <Lock className="h-3 w-3" />
-          {isShared ? t('pages:documentT.privacy.shared') : t('pages:documentT.privacy.private')}
-        </Badge>
-      )
+    switch (privacy) {
+      case 'fully_private':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800">
+            <Lock className="h-3 w-3" />
+            Fully Private
+          </Badge>
+        )
+      case 'private':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800">
+            <Lock className="h-3 w-3" />
+            {isShared ? 'Shared Private' : 'Private'}
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800">
+            <Globe className="h-3 w-3" />
+            Public
+          </Badge>
+        )
     }
-    return (
-      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 w-16">
-        <Globe className="h-3 w-3" />
-        {t('pages:documentT.privacy.public')}
-      </Badge>
-    )
   }
 
   // Handle document deletion
@@ -271,6 +323,19 @@ export default function DocumentsTable({
       toast.error(t('pages:documentT.documents.deleteError'))
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleDownloadSummary = async (document: Document) => {
+    setDownloadingSummaryId(document._id)
+    try {
+      await downloadDocumentSummary(document._id, document.summary as string, document.document_name)
+      toast.success('Document summary downloaded successfully')
+    } catch (error: any) {
+      console.error('Error downloading document summary:', error)
+      toast.error(error.message || 'Failed to download document summary')
+    } finally {
+      setDownloadingSummaryId(null)
     }
   }
 
@@ -300,33 +365,33 @@ export default function DocumentsTable({
       {/* Enhanced Header with single search bar and filters */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         {/* Single search and filter section */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative">
+        <div className="flex items-center gap-4 mb-6 flex-wrap">
+          <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder={t('pages:documentT.documents.searchPlaceholder')}
+              placeholder="Search documents..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full sm:w-64"
+              className="pl-10"
             />
           </div>
           
           <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-            <SelectTrigger className="w-full sm:w-40">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder={t('pages:documentT.documents.filterStatus')} />
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('pages:documentT.status.all')}</SelectItem>
-              <SelectItem value="Pending">{t('pages:documentT.status.pending')}</SelectItem>
-              <SelectItem value="Processing">{t('pages:documentT.status.processing')}</SelectItem>
-              <SelectItem value="Completed">{t('pages:documentT.status.completed')}</SelectItem>
-              <SelectItem value="Approved">{t('pages:documentT.status.approved')}</SelectItem>
-              <SelectItem value="Failed">{t('pages:documentT.status.failed')}</SelectItem>
-              <SelectItem value="Rejected">{t('pages:documentT.status.rejected')}</SelectItem>
-              <SelectItem value="Cancelled">{t('pages:documentT.status.cancelled')}</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Processing">Processing</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Failed">Failed</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+
         </div>
       </div>
 
@@ -348,37 +413,45 @@ export default function DocumentsTable({
         <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.documents.document')}
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.status.status')}
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.privacy.privacy')}
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.general.date')}
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.general.actions')}
-                  </th>
-                </tr>
-              </thead>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Document
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Privacy
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Uploaded
+                    </th>
+                    <th className="relative px-6 py-3">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {documents.map((doc) => (
                   <tr key={doc._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-8 w-8 text-blue-500 flex-shrink-0" />
+                      <div className="flex items-center">
+                        {(() => {
+                          const { icon: IconComponent, color } = getFileTypeIcon(doc.file_type)
+                          return <IconComponent className={`h-8 w-8 ${color} mr-3`} />
+                        })()}
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {doc.document_name}
                           </p>
-                          {doc.file_type && (
-                            <p className="text-xs text-gray-500">{doc.file_type}</p>
+                          {doc.file_size && (
+                            <p className="text-xs text-gray-500">
+                              {(doc.file_size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           )}
                           {doc.summary && (
                             <p className="text-xs text-gray-600 mt-1 line-clamp-2">
@@ -386,6 +459,17 @@ export default function DocumentsTable({
                             </p>
                           )}
                         </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const { icon: IconComponent, color } = getFileTypeIcon(doc.file_type)
+                          return <IconComponent className={`h-4 w-4 ${color}`} />
+                        })()}
+                        <span className="text-sm text-gray-900">
+                          {doc.file_type || 'Unknown'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -406,37 +490,27 @@ export default function DocumentsTable({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem 
-                            onClick={() => window.open(doc.link, '_blank')}
+                            onClick={() => handleDownloadSummary(doc)}
                             className="flex items-center gap-2"
+                            disabled={downloadingSummaryId === doc._id}
                           >
-                            <Eye className="h-4 w-4" />
-                            {t('pages:documentT.actions.view')}
+                            <FileText className="h-4 w-4" />
+                            {downloadingSummaryId === doc._id ? 'Downloading Summary...' : 'Download Summary'}
                           </DropdownMenuItem>
                           
-                          {isClient && doc.privacy === 'private' && (
+                          { (doc.privacy === 'private') && (
                             <DropdownMenuItem 
                               onClick={() => handleShareWithLawyer(doc)}
                               className="flex items-center gap-2"
                             >
                               <Share2 className="h-4 w-4" />
-                              {t('pages:documentT.actions.shareWithLawyer')}
+                              Share Document
                             </DropdownMenuItem>
                           )}
                           
                           <DropdownMenuSeparator />
                           
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(doc._id)}
-                            disabled={deletingId === doc._id}
-                            className="flex items-center gap-2 text-red-600 focus:text-red-600"
-                          >
-                            {deletingId === doc._id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                            {t('pages:documentT.actions.delete')}
-                          </DropdownMenuItem>
+                       
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -448,9 +522,9 @@ export default function DocumentsTable({
         </div>
       )}
       
-      {/* Share with Lawyer Dialog */}
+      {/* Share Document Dialog */}
       {selectedDocument && (
-        <ShareWithLawyerDialog
+        <ShareDocumentDialog
           open={shareDialogOpen}
           onOpenChange={setShareDialogOpen}
           document={{

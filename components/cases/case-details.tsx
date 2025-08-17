@@ -1,6 +1,6 @@
 "use client"
 
-import type { Case } from "@/types/case"
+import type { Case, CaseStatus } from "@/types/case"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,14 +10,14 @@ import { formatDate } from "@/lib/utils"
 import { updateCaseStatus } from "@/lib/api/cases-api"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
+import CaseDocuments from "./case-documents"
 
 interface CaseDetailsProps {
   caseData: Case
 }
 
 export default function CaseDetails({ caseData }: CaseDetailsProps) {
-  const [caseState, setCaseState] = useState<Case>(caseData)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [caseState, setCaseState] = useState<any>(caseData)
   const router = useRouter()
   const { toast } = useToast()
   const { t } = useTranslation()
@@ -34,10 +34,9 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       .replace(/Created at:/gi, t("pages:caseDetails.createdAtLabel"))
   }
 
-  const handleStatusUpdate = async (newStatus: "approved" | "rejected" | "pending") => {
-    setIsUpdating(true)
+  const handleStatusUpdate = async (newStatus: CaseStatus) => {
     try {
-      await updateCaseStatus(caseState._id, newStatus)
+      await updateCaseStatus(caseState._id as string, newStatus)
       setCaseState({ ...caseState, status: newStatus })
       toast({
         title: t("pages:caseDetails.statusUpdated"),
@@ -51,25 +50,91 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
         description: t("pages:caseDetails.failedToUpdate"),
         variant: "destructive"
       })
-    } finally {
-      setIsUpdating(false)
-    }
+    } 
   }
 
   const getStatusBadge = (status: string) => {
-    const statusKey = status.toLowerCase() as "pending" | "approved" | "rejected"
-    let colorClasses =
-      statusKey === "pending"
-        ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-        : statusKey === "approved"
-        ? "bg-green-50 text-green-600 border-green-200"
-        : "bg-red-50 text-red-600 border-red-200"
+    const statusKey = status.toLowerCase()
+    let colorClasses = ""
+    
+    // Judgment Outcomes (판결 종국)
+    if (["full_win", "partial_win"].includes(statusKey)) {
+      colorClasses = "bg-green-50 text-green-600 border-green-200"
+    } else if (["full_loss", "partial_loss", "dismissal"].includes(statusKey)) {
+      colorClasses = "bg-red-50 text-red-600 border-red-200"
+    } else if (statusKey === "rejection") {
+      colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
+    }
+    // Non-Judgment Outcomes (판결 외 종국)
+    else if (["withdrawal", "mediation", "settlement"].includes(statusKey)) {
+      colorClasses = "bg-blue-50 text-blue-600 border-blue-200"
+    } else if (["trial_cancellation", "suspension", "closure"].includes(statusKey)) {
+      colorClasses = "bg-orange-50 text-orange-600 border-orange-200"
+    }
+    // Active case statuses
+    else if (statusKey === "in_progress") {
+      colorClasses = "bg-indigo-50 text-indigo-600 border-indigo-200"
+    } else if (statusKey === "pending") {
+      colorClasses = "bg-yellow-50 text-yellow-600 border-yellow-200"
+    } else {
+      colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
+    }
 
     return (
       <Badge variant="outline" className={colorClasses}>
-        {t(`pages:caseDetails.status.${statusKey}`)}
+        {getStatusLabel(statusKey)}
       </Badge>
     )
+  }
+
+
+  console.log(caseState,"caseStatecaseStatecaseStatecaseStatecaseState")
+
+  const getStatusLabel = (status: string) => {
+    const statusLabels: Record<string, string> = {
+      // Judgment Outcomes (판결 종국)
+      "full_win": "전부 승소 (Full Win)",
+      "full_loss": "전부 패소 (Full Loss)",
+      "partial_win": "부분 승소 (Partial Win)", 
+      "partial_loss": "부분 패소 (Partial Loss)",
+      "dismissal": "기각 (Dismissal)",
+      "rejection": "각하 (Rejection)",
+      // Non-Judgment Outcomes (판결 외 종국)
+      "withdrawal": "취하 (Withdrawal)",
+      "mediation": "조정 (Mediation)",
+      "settlement": "화해 (Settlement)",
+      "trial_cancellation": "공판취소 (Trial Cancellation)",
+      "suspension": "중지 (Suspension)",
+      "closure": "종결 (Closure)",
+      // Active case statuses
+      "in_progress": "진행 중 (In Progress)",
+      "pending": "대기 중 (Pending)"
+    }
+    return statusLabels[status] || status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
+  const getStatusDescription = (status: string) => {
+    const descriptions: Record<string, string> = {
+      // Judgment Outcomes
+      "full_win": "Complete victory in court proceedings",
+      "full_loss": "Complete loss in court proceedings", 
+      "partial_win": "Partial victory with some claims granted",
+      "partial_loss": "Partial loss with some claims denied",
+      "dismissal": "Case dismissed by court",
+      "rejection": "Case rejected without merit review",
+      // Non-Judgment Outcomes
+      "withdrawal": "Case withdrawn by plaintiff",
+      "mediation": "Resolved through court mediation",
+      "settlement": "Settled out of court",
+      "trial_cancellation": "Trial cancelled by court",
+      "suspension": "Case proceedings suspended",
+      "closure": "Case formally closed",
+      // Active statuses
+      "in_progress": "Case is actively being processed",
+      "pending": "Case is waiting to begin",
+      "open": "Case is open",
+    }
+    return descriptions[status.toLowerCase()] || "Status information not available"
   }
 
   return (
@@ -87,31 +152,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
             {t("pages:caseDetails.caseNumberWithId", { id: caseState._id })}
           </CardTitle>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            {getStatusBadge(caseState.status)}
-            {caseState.status === "pending" && (
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-green-600"
-                  onClick={() => handleStatusUpdate("approved")}
-                  disabled={isUpdating}
-                >
-                  {t("pages:caseDetails.approve")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600"
-                  onClick={() => handleStatusUpdate("rejected")}
-                  disabled={isUpdating}
-                >
-                  {t("pages:caseDetails.reject")}
-                </Button>
-              </div>
-            )}
-          </div>
+        
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -166,12 +207,41 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
               <p>{formatDate(caseState.updated_at)}</p>
             </div>
 
-            {/* Added: Status Label */}
+            {/* Case Type */}
             <div>
               <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.statusLabel", "Status")}
+                Case Type
               </h3>
-              <p>{t(`pages:caseDetails.status.${caseState.status.toLowerCase()}`)}</p>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-200">
+                  {caseState.case_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* Court Type */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">
+                Court Type
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700 border border-purple-200">
+                  {caseState.court_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'N/A'}
+                </span>
+              </div>
+            </div>
+
+            {/* Enhanced Case Status */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">
+                Case Status
+              </h3>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(caseState.status)}
+                <span className="text-sm text-gray-600">
+                  {getStatusDescription(caseState.status)}
+                </span>
+              </div>
             </div>
 
             {/* Added: Created By */}
@@ -219,7 +289,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                 {t("pages:caseDetails.keyPoints")}
               </h3>
               <ul className="mt-1 list-disc list-inside space-y-1">
-                {caseState.key_points.map((point, index) => (
+                {caseState.key_points.map((point: string, index: number) => (
                   <li key={index} className="text-sm">
                     {translateEmbeddedText(point)}
                   </li>
@@ -229,6 +299,9 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* Case Documents Section */}
+      <CaseDocuments caseId={caseState._id} caseTitle={caseState.title} />
     </div>
   )
 }

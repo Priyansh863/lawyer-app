@@ -11,6 +11,8 @@ import { recordVoice, downloadSummary } from "@/lib/api/voice-summary-api"
 import type { VoiceRecording } from "@/types/voice-summary"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import TextToSpeech from "react-text-to-speech"
+import { downloadDocumentSummary } from "@/lib/api/documents-api"
+import { FileText, Download } from "lucide-react"
 
 interface VoiceSummaryContentProps {
   initialRecordings: VoiceRecording[]
@@ -25,6 +27,7 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
   const [isMuted, setIsMuted] = useState(false)
   const [ttsEnabled, setTtsEnabled] = useState<Record<string, boolean>>({})
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isDownloadingDocument, setIsDownloadingDocument] = useState(false)
   const [isSimulatedPlayback, setIsSimulatedPlayback] = useState(false)
 
   const audioElementRef = useRef<HTMLAudioElement | null>(null)
@@ -293,6 +296,25 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
     }
   }
 
+  const handleDownloadDocumentSummary = async (documentId: string, documentName: string) => {
+    setIsDownloadingDocument(true)
+    try {
+      await downloadDocumentSummary(documentId, documentName)
+      toast({
+        title: "Document summary downloaded",
+        description: "The document summary has been downloaded as a text file.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message || "Failed to download document summary.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDownloadingDocument(false)
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Left side */}
@@ -407,6 +429,35 @@ export default function VoiceSummaryContent({ initialRecordings }: VoiceSummaryC
             </Card>
           ))
         )}
+        
+        {/* Document Summaries Section */}
+        <Card className="mt-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">Document Summaries</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Download AI-generated summaries of your uploaded documents as text files.
+            </p>
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <Download className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                <p className="text-gray-500 mb-4">
+                  Document summaries can be downloaded from the Documents page
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/documents'}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Go to Documents
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

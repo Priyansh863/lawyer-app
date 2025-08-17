@@ -9,38 +9,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Link from "next/link"
 import { useSelector } from "react-redux"
 import { useEffect, useState } from "react"
-import endpoints from "@/constant/endpoints"
 import { useTranslation } from "@/hooks/useTranslation"
-
-// Define interface for question object
-interface Question {
-  _id: string;
-  question: string;
-  answer?: string;
-  userId: {
-    _id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-  likes?: number;
-}
+import { getQAItems, deleteQuestion, type QAQuestion } from "@/lib/api/qa-api"
 
 export default function QAList() {
   const user = useSelector((state: any) => state.auth.user);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<QAQuestion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null); // To track which question is being deleted
   const { t } = useTranslation()
-
-  // Get token from localStorage
-  const token = typeof window !== "undefined" && localStorage.getItem("user") 
-    ? JSON.parse(localStorage.getItem("user") as string).token 
-    : null;
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -48,35 +26,19 @@ export default function QAList() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(endpoints.question.GET_QUESTIONS, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : ""
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("Questions data:", data);
-        if (data.success && data.data && data.data.questions) {
-          setQuestions(data.data.questions);
-        } else {
-          setQuestions([]);
-        }
+        const questionsData = await getQAItems();
+        console.log(questionsData,"questionsDataquestionsDataquestionsDataquestionsData");
+        setQuestions(questionsData);
       } catch (err) {
         console.error("Failed to fetch questions:", err);
-         setError(t("pages:questionA.qa.errors.fetchFailed"))
+        setError("Failed to load questions. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchQuestions();
-  }, [token]);
+  }, []);
 
   const formatDate = (dateString: string) => {
     try {
@@ -90,25 +52,17 @@ export default function QAList() {
     try {
       setDeleteLoading(questionId);
       
-      const response = await fetch(`${endpoints.question.GET_QUESTIONS}/${questionId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        }
-      });
-
-      const data = await response.json();
+      const success = await deleteQuestion(questionId);
       
-      if (data.success) {
+      if (success) {
         // Remove the deleted question from state
         setQuestions(prevQuestions => prevQuestions.filter(q => q._id !== questionId));
       } else {
-        setError(data.message || t("pages:questionA.qa.errors.deleteFailed"));
+        setError("Failed to delete question");
       }
     } catch (err) {
       console.error("Failed to delete question:", err);
-      setError(t("pages:questionA.qa.errors.deleteFailed"))
+      setError("Failed to delete question. Please try again.");
     } finally {
       setDeleteLoading(null);
     }
@@ -151,8 +105,11 @@ export default function QAList() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant={item.answer ? "default" : "outline"}>
- {item.answer ? t("pages:questionA.qa.status.answered") : t("pages:questionA.qa.status.pending")}                </Badge>
-              
+                  {item.answer ? "Answered" : "Pending"}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}
+                </span>
               </div>
               <AccordionTrigger className="hover:no-underline p-0">
                 <p className="text-left font-normal">{item.question}</p>

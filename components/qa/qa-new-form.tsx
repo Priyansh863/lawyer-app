@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
+import { createQuestion, getLawyers, type CreateQAData } from "@/lib/api/qa-api"
 
 const qaSchema = z.object({
   question: z.string().min(10, "Question must be at least 10 characters"),
@@ -50,54 +51,7 @@ interface Lawyer {
   is_available?: boolean
 }
 
-// API functions
-const submitQA = async (data: {
-  question: string
-  category: string
-  tags?: string
-  selectedLawyer?: string
-  clientId: string
-}) => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  const token = localStorage.getItem('authToken')
-  
-  const response = await fetch(`${API_BASE_URL}/qa/submit-public`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      ...data,
-      isPublic: true, // All Q&As are now public by default
-      isAnonymous: false // Remove anonymous option
-    })
-  })
-  
-  if (!response.ok) {
-    throw new Error(`Submission failed: ${response.statusText}`)
-  }
-  
-  return response.json()
-}
-
-const getLawyers = async () => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  const token = localStorage.getItem('authToken')
-  
-  const response = await fetch(`${API_BASE_URL}/lawyers/list`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch lawyers: ${response.statusText}`)
-  }
-  
-  return response.json()
-}
+// No local API functions needed - using centralized API service
 
 export default function QANewFormEnhanced() {
   const router = useRouter()
@@ -128,15 +82,15 @@ export default function QANewFormEnhanced() {
   const loadLawyers = async () => {
     try {
       setLoadingLawyers(true)
-      const response = await getLawyers()
-      if (response.success) {
-        setLawyers(response.lawyers || [])
-      }
+      const lawyersData = await getLawyers()
+      setLawyers(lawyersData || [])
     } catch (error) {
       console.error('Error loading lawyers:', error)
+      // Set empty array to prevent UI issues
+      setLawyers([])
       toast({
-        title: t("pages:questionform.error"),
-        description: t("pages:questionform.failed_to_load_lawyers"),
+        title: "Unable to load lawyers",
+        description: "The Q&A system will still work without lawyer selection.",
         variant: "destructive"
       })
     } finally {
@@ -157,13 +111,18 @@ export default function QANewFormEnhanced() {
     try {
       setIsSubmitting(true)
       
-      const response = await submitQA({
+      const questionData: CreateQAData = {
+        title: data.question.substring(0, 100), // Use first 100 chars as title
         question: data.question,
         category: data.category,
-        tags: data.tags,
-        selectedLawyer: data.selectedLawyer,
-        clientId: user._id as string
-      })
+        tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
+        selectedLawyer: data.selectedLawyer || undefined,
+        clientId: user._id as string,
+        isPublic: true,
+        isAnonymous: false
+      }
+
+      const response = await createQuestion(questionData)
 
       if (response.success) {
         toast({
@@ -181,7 +140,7 @@ export default function QANewFormEnhanced() {
         throw new Error(response.message || t('pages:questionform.submission_failed'))
       }
     } catch (error: any) {
-      console.error('pages:questionform.Error submitting Q&A:', error)
+      console.error('Error submitting Q&A:', error)
       toast({
         title: t("pages:questionform.submission_failed"),
         description: error.message || t("pages:questionform.failed_to_submit_question_try_again"),
@@ -314,39 +273,7 @@ export default function QANewFormEnhanced() {
                     )}
                   />
 
-                  {/* Lawyer Selection */}
-                  <FormField
-                    control={form.control}
-                    name="selectedLawyer"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("pages:questionform.preferred_lawyer_optional")}</FormLabel>
-                        <Select onValueChange={handleLawyerSelect} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("pages:questionform.select_specific_lawyer")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="">{t("pages:questionform.any_available_lawyer")}</SelectItem>
-                            {lawyers.map((lawyer) => (
-                              <SelectItem key={lawyer._id} value={lawyer._id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{lawyer.first_name} {lawyer.last_name}</span>
-                                  {lawyer.specialization && lawyer.specialization.length > 0 && (
-                                    <span className="text-xs text-muted-foreground">
-                                      ({lawyer.specialization[0]})
-                                    </span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+               
 
                   {/* Submit Button */}
                   <Button 

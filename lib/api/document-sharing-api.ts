@@ -18,9 +18,17 @@ export interface Lawyer {
   account_type: 'lawyer'
 }
 
+export interface Client {
+  _id: string
+  first_name: string
+  last_name: string
+  email: string
+  account_type: 'client'
+}
+
 export interface ShareDocumentRequest {
   documentId: string
-  lawyerIds: string[]
+  userIds: string[]
   userId: string
 }
 
@@ -54,11 +62,34 @@ export async function getAvailableLawyers(): Promise<Lawyer[]> {
 }
 
 /**
+ * Get all available clients to share documents with
+ */
+export async function getAvailableClients(): Promise<Client[]> {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/user/clients-list`,
+      {
+        headers: getAuthHeaders(),
+      }
+    )
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch clients')
+    }
+
+    return response.data.clients || []
+  } catch (error) {
+    console.error('Error fetching clients:', error)
+    throw error
+  }
+}
+
+/**
  * Share a document with specific lawyers
  */
 export async function shareDocumentWithLawyers({
   documentId,
-  lawyerIds,
+  userIds,
   userId
 }: ShareDocumentRequest): Promise<any> {
   try {
@@ -66,7 +97,7 @@ export async function shareDocumentWithLawyers({
       `${API_BASE_URL}/document/${documentId}/share`,
       {
         userId,
-        lawyerIds
+        userIds
       },
       {
         headers: getAuthHeaders(),

@@ -1,86 +1,224 @@
-import type { QAItem } from "@/types/qa"
+import { Console } from "node:console"
 
-// This is a mock API service for the Q&A functionality
-// these functions would make actual API calls
+// Q&A API Service - Real Backend Integration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
-// Mock data
-const QA_ITEMS: QAItem[] = [
-  {
-    id: "1",
-    question:
-      "Lorem ipsum is placeholder text commonly used in the graphic, print, and publishing industries for previewing layouts and visual mockups.",
-    answer:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    client: {
-      id: "client1",
-      name: "Anonymous",
-      isAnonymous: true,
-    },
-    date: "2025-05-15",
-    status: "answered",
-    likes: 12,
-    category: "family-law",
-    tags: ["divorce", "custody"],
-  },
+// Helper function to get auth headers
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
+
+const getAuthHeaders = () => {
+  const token = getToken()
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+}
+
+// Interfaces for API responses
+export interface QAQuestion {
+  _id: string
+  title: string
+  question: string
+  answer?: string
+  category: string
+  tags: string[]
+  userId: {
+    _id: string
+    first_name: string
+    last_name: string
+    email: string
+  }
+  selectedLawyer?: string
+  isPublic: boolean
+  isAnonymous: boolean
+  likes?: number
+  status?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateQAData {
+  title: string
+  question: string
+  category: string
+  tags?: string[]
+  selectedLawyer?: string
+  clientId: string
+  isPublic?: boolean
+  isAnonymous?: boolean
+}
+
+export interface QAListResponse {
+  success: boolean
+  data?: QAQuestion[]
+  questions?: QAQuestion[]
+  message?: string
+}
+
+export interface QAResponse {
+  success: boolean
+  data?: QAQuestion
+  question?: QAQuestion
+  message?: string
+}
+
+// API Functions
+export async function createQuestion(data: CreateQAData): Promise<QAResponse> {
+  const response = await fetch(`${API_BASE_URL}/question/`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      ...data,
+      isPublic: data.isPublic ?? true,
+      isAnonymous: data.isAnonymous ?? false
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to create question: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+export async function getQAItems(): Promise<QAQuestion[]> {
+  const response = await fetch(`${API_BASE_URL}/question/`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch questions: ${response.statusText}`)
+  }
+
+  const data: any = await response.json()
+
+  console.log(data,"datadatadatadatadatadatadatadatadatadata")
   
-]
-
-export async function getQAItems(): Promise<QAItem[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return QA_ITEMS
+  if (data.success) {
+    return data.data.questions 
+  }
+  
+  throw new Error(data.message || 'Failed to fetch questions')
 }
 
-export async function getQAItem(id: string): Promise<QAItem | null> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return QA_ITEMS.find((item) => item.id === id) || null
+export async function getQAItem(id: string): Promise<QAQuestion | null> {
+  const response = await fetch(`${API_BASE_URL}/question/${id}`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) return null
+    throw new Error(`Failed to fetch question: ${response.statusText}`)
+  }
+
+  const data: QAResponse = await response.json()
+
+  console.log(data,"datadatadatadatadatadatadatadatadatadatadata")  
+  
+  if (data.success) {
+    return data.data || data.question || null
+  }
+  
+  return null
 }
 
-export async function answerQuestion(id: string, answer: string): Promise<QAItem> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+export async function answerQuestion(id: string, answer: string): Promise<QAQuestion> {
+  const response = await fetch(`${API_BASE_URL}/question/answer/${id}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ answer })
+  })
 
-  const item = QA_ITEMS.find((item) => item.id === id)
-  if (!item) {
-    throw new Error(`Question with ID ${id} not found`)
+  if (!response.ok) {
+    throw new Error(`Failed to answer question: ${response.statusText}`)
   }
 
-  const updatedItem = {
-    ...item,
-    answer,
-    status: "answered" as const,
+  const data: QAResponse = await response.json()
+  
+  if (data.success && (data.data || data.question)) {
+    return data.data || data.question!
   }
-
-  return updatedItem
+  
+  throw new Error(data.message || 'Failed to answer question')
 }
 
-export async function updateAnswer(id: string, answer: string): Promise<QAItem> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+export async function updateAnswer(id: string, answer: string): Promise<QAQuestion> {
+  const response = await fetch(`${API_BASE_URL}/question/answer/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ answer })
+  })
 
-  const item = QA_ITEMS.find((item) => item.id === id)
-  if (!item) {
-    throw new Error(`Question with ID ${id} not found`)
+  if (!response.ok) {
+    throw new Error(`Failed to update answer: ${response.statusText}`)
   }
 
-  const updatedItem = {
-    ...item,
-    answer,
+  const data: QAResponse = await response.json()
+  
+  if (data.success && (data.data || data.question)) {
+    return data.data || data.question!
+  }
+  
+  throw new Error(data.message || 'Failed to update answer')
+}
+
+export async function deleteQuestion(id: string): Promise<boolean> {
+  const response = await fetch(`${API_BASE_URL}/question/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete question: ${response.statusText}`)
   }
 
-  return updatedItem
+  const data = await response.json()
+  return data.success || false
 }
 
 export async function likeAnswer(id: string): Promise<{ likes: number }> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  const response = await fetch(`${API_BASE_URL}/question/${id}/like`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  })
 
-  const item = QA_ITEMS.find((item) => item.id === id)
-  if (!item) {
-    throw new Error(`Question with ID ${id} not found`)
+  if (!response.ok) {
+    throw new Error(`Failed to like answer: ${response.statusText}`)
   }
 
-  const newLikes = item.likes + 1
-  return { likes: newLikes }
+  const data = await response.json()
+  
+  if (data.success) {
+    return { likes: data.likes || 0 }
+  }
+  
+  throw new Error(data.message || 'Failed to like answer')
+}
+
+// Get available lawyers for Q&A
+export async function getLawyers(): Promise<any[]> {
+  const response = await fetch(`${API_BASE_URL}/user/clients-and-lawyers`, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch lawyers: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  
+  if (data.success) {
+    return data.lawyers || data.data?.lawyers || []
+  }
+  
+  return []
 }

@@ -125,7 +125,7 @@ export const generateQRCode = async (slug: string): Promise<{ qrCodeUrl: string 
 
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/v1/post/${slug}/qr-code`,
+      `${API_BASE_URL}/post/${slug}/qr-code`,
       {},
       {
         headers: {

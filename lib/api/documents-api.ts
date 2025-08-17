@@ -2,11 +2,25 @@ import axios from 'axios'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
-// Get auth headers
+// Get auth headers with improved token handling
 const getAuthHeaders = () => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+  if (typeof window !== 'undefined') {
+    // Try to get token from Redux state first, then localStorage
+    const authData = localStorage.getItem('authUser')
+    if (authData) {
+      try {
+        const user = JSON.parse(authData)
+        const token = user.token || localStorage.getItem('authToken')
+        return {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      } catch (error) {
+        console.error('Error parsing auth user:', error)
+      }
+    }
+  }
   return {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   }
 }
@@ -157,7 +171,49 @@ export const deleteDocument = async (documentId: string): Promise<DocumentRespon
   }
 }
 
-// Upload document with privacy settings
+// Enhanced document upload with full feature support
+export const uploadDocumentEnhanced = async (data: {
+  userId: string
+  fileUrl: string
+  fileName: string
+  privacy: 'public' | 'private' | 'fully_private'
+  processWithAI: boolean
+  fileSize: number
+  fileType: string
+  caseId?: string
+  documentType?: 'case_related' | 'general'
+}) => {
+  try {
+    console.log('📤 Uploading document (enhanced):', data)
+    
+    const uploadPayload = {
+      user_id: data.userId,
+      document_name: data.fileName,
+      link: data.fileUrl,
+      privacy: data.privacy,
+      process_with_ai: data.processWithAI,
+      file_size: data.fileSize,
+      file_type: data.fileType,
+      document_type: data.documentType || 'general',
+      case_id: data.caseId
+    }
+    
+    const response = await axios.post(`${API_BASE_URL}/document/upload-enhanced`, uploadPayload, {
+      headers: getAuthHeaders()
+    })
+    
+    console.log('✅ Enhanced upload response:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Enhanced upload error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to upload document'
+    }
+  }
+}
+
+// Upload document with privacy settings (legacy support)
 export const uploadDocumentWithPrivacy = async (data: any) => {
   try {
     console.log('📤 Uploading document with privacy:', data)
@@ -168,7 +224,10 @@ export const uploadDocumentWithPrivacy = async (data: any) => {
     return response.data
   } catch (error: any) {
     console.error('❌ Upload document with privacy error:', error)
-    throw new Error(error.response?.data?.message || 'Failed to upload document')
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to upload document'
+    }
   }
 }
 
@@ -184,5 +243,76 @@ export const uploadDocument = async (data: any) => {
   } catch (error: any) {
     console.error('❌ Upload document error:', error)
     throw new Error(error.response?.data?.message || 'Failed to upload document')
+  }
+}
+
+// Download document summary as text file
+export const downloadDocumentSummary = async (documentId: string, summary: string, documentName: string) => {
+  try {
+    console.log('📥 Downloading document summary:', documentId)
+
+    
+    // Create and download text file
+    const blob = new Blob([summary], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${documentName.replace(/\.[^/.]+$/, '')}_summary.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    console.log('✅ Document summary downloaded successfully')
+    return { success: true, message: 'Summary downloaded successfully' }
+  } catch (error: any) {
+    console.error('❌ Download document summary error:', error)
+    throw new Error(error.response?.data?.message || 'Failed to download document summary')
+  }
+}
+
+// Get documents for a specific case
+export const getCaseDocuments = async (caseId: string): Promise<DocumentResponse> => {
+  try {
+    console.log('📥 Fetching case documents for case:', caseId)
+    
+    const headers = getAuthHeaders()
+    const response = await axios.get(`${API_BASE_URL}/document/case/${caseId}`, { headers })
+    
+    console.log('✅ Success fetching case documents:', response.data)
+
+    if (response.data.success) {
+      const documents = response.data.documents || []
+      console.log(`📄 Found ${documents.length} documents for case ${caseId}`)
+      
+      return {
+        success: true,
+        documents: documents.map((doc: any) => ({
+          _id: doc._id,
+          document_name: doc.document_name,
+          status: doc.status,
+          uploaded_by: doc.uploaded_by,
+          link: doc.link,
+          file_type: doc.file_type,
+          document_type: doc.document_type,
+          privacy: doc.privacy,
+          file_size: doc.file_size,
+          summary: doc.summary,
+          created_at: doc.created_at,
+          updated_at: doc.updated_at,
+          shared_with: doc.shared_with || [],
+          case_id: doc.case_id
+        }))
+      }
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch case documents')
+    }
+  } catch (error: any) {
+    console.error('❌ Get case documents error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch case documents',
+      documents: []
+    }
   }
 }

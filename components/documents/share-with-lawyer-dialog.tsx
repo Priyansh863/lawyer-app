@@ -16,58 +16,56 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Users, Share2, X } from "lucide-react"
-import {
-  getAvailableLawyers,
-  shareDocumentWithLawyers,
-  unshareDocumentFromLawyer,
-  type Lawyer
-} from "@/lib/api/document-sharing-api"
+import { getAvailableLawyers, getAvailableClients, shareDocumentWithLawyers, unshareDocumentFromLawyer } from '@/lib/api/document-sharing-api'
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
 
-interface ShareWithLawyerDialogProps {
+interface ShareDocumentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   document: {
     id: string
     document_name: string
     privacy: string
-    shared_with?: Lawyer[]
+    shared_with?: any[]
   }
   onShareUpdate?: (updatedDocument: any) => void
 }
 
-export function ShareWithLawyerDialog({
+export function ShareDocumentDialog({
   open,
   onOpenChange,
   document,
   onShareUpdate
-}: ShareWithLawyerDialogProps) {
-  const [lawyers, setLawyers] = useState<Lawyer[]>([])
-  const [selectedLawyers, setSelectedLawyers] = useState<string[]>([])
+}: ShareDocumentDialogProps) {
+  const [users, setUsers] = useState<any[]>([])
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
+  const isClient = profile?.account_type === 'client'
 
   useEffect(() => {
     if (open) {
-      fetchLawyers()
-      // Pre-select already shared lawyers
-      const sharedLawyerIds = document.shared_with?.map(lawyer => lawyer._id) || []
-      setSelectedLawyers(sharedLawyerIds)
+      fetchUsers()
+      // Pre-select already shared users
+      const sharedUserIds = document.shared_with?.map((user: any) => user._id) || []
+      setSelectedUsers(sharedUserIds)
     }
   }, [open, document.shared_with])
 
-  const fetchLawyers = async () => {
+  const fetchUsers = async () => {
     setIsFetching(true)
     try {
-      const availableLawyers = await getAvailableLawyers()
-      setLawyers(availableLawyers)
+      const availableUsers = isClient 
+        ? await getAvailableLawyers() 
+        : await getAvailableClients()
+      setUsers(availableUsers)
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to load lawyers",
+        description: `Failed to load ${isClient ? 'lawyers' : 'clients'}`,
         variant: "destructive"
       })
     } finally {
@@ -75,11 +73,11 @@ export function ShareWithLawyerDialog({
     }
   }
 
-  const handleLawyerToggle = (lawyerId: string) => {
-    setSelectedLawyers(prev => 
-      prev.includes(lawyerId)
-        ? prev.filter(id => id !== lawyerId)
-        : [...prev, lawyerId]
+  const handleUserToggle = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
     )
   }
 
@@ -95,24 +93,24 @@ export function ShareWithLawyerDialog({
 
     setIsLoading(true)
     try {
-      const currentlyShared = document.shared_with?.map(lawyer => lawyer._id) || []
-      const toShare = selectedLawyers.filter(id => !currentlyShared.includes(id))
-      const toUnshare = currentlyShared.filter(id => !selectedLawyers.includes(id))
+      const currentlyShared = document.shared_with?.map((user: any) => user._id) || []
+      const toShare = selectedUsers.filter((id: string) => !currentlyShared.includes(id))
+      const toUnshare = currentlyShared.filter((id: string) => !selectedUsers.includes(id))
 
-      // Share with new lawyers
+      // Share with new users
       if (toShare.length > 0) {
         await shareDocumentWithLawyers({
           documentId: document.id,
-          lawyerIds: toShare,
+          userIds: toShare,
           userId: profile._id
         })
       }
 
-      // Unshare from removed lawyers
-      for (const lawyerId of toUnshare) {
+      // Unshare from removed users
+      for (const userId of toUnshare) {
         await unshareDocumentFromLawyer({
           documentId: document.id,
-          lawyerId,
+          lawyerId: userId,
           userId: profile._id
         })
       }
@@ -124,7 +122,7 @@ export function ShareWithLawyerDialog({
 
       // Update parent component
       if (onShareUpdate) {
-        const updatedSharedWith = lawyers.filter(lawyer => selectedLawyers.includes(lawyer._id))
+        const updatedSharedWith = users.filter((user: any) => selectedUsers.includes(user._id))
         onShareUpdate({
           ...document,
           shared_with: updatedSharedWith
@@ -155,13 +153,13 @@ export function ShareWithLawyerDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Share with Lawyer
+            Share with {isClient ? 'Lawyers' : 'Clients'}
           </DialogTitle>
           <DialogDescription>
-            Share "{document.document_name}" with lawyers in your network.
+            Share "{document.document_name}" with {isClient ? 'lawyers' : 'clients'} in your network.
             {!isPrivateDocument && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                Note: Only private documents can be shared with lawyers.
+                Note: Only private documents can be shared with {isClient ? 'lawyers' : 'clients'}.
               </div>
             )}
           </DialogDescription>
@@ -177,41 +175,41 @@ export function ShareWithLawyerDialog({
             {isFetching ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Loading lawyers...</span>
+                <span className="ml-2">Loading {isClient ? 'lawyers' : 'clients'}...</span>
               </div>
-            ) : lawyers.length === 0 ? (
+            ) : users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No lawyers available</p>
+                <p>No {isClient ? 'lawyers' : 'clients'} available</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-60 overflow-y-auto">
-                {lawyers.map((lawyer) => {
-                  const isSelected = selectedLawyers.includes(lawyer._id)
-                  const wasOriginallyShared = document.shared_with?.some(l => l._id === lawyer._id)
+                {users.map((user: any) => {
+                  const isSelected = selectedUsers.includes(user._id)
+                  const wasOriginallyShared = document.shared_with?.some((l: any) => l._id === user._id)
                   
                   return (
                     <div
-                      key={lawyer._id}
+                      key={user._id}
                       className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handleLawyerToggle(lawyer._id)}
+                      onClick={() => handleUserToggle(user._id)}
                     >
                       <Checkbox
                         checked={isSelected}
-                        onChange={() => handleLawyerToggle(lawyer._id)}
+                        onChange={() => handleUserToggle(user._id)}
                       />
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={`/placeholder.svg?height=40&width=40&query=${encodeURIComponent(`${lawyer.first_name} ${lawyer.last_name}`)}`} />
+                        <AvatarImage src={`/placeholder.svg?height=40&width=40&query=${encodeURIComponent(`${user.first_name} ${user.last_name}`)}`} />
                         <AvatarFallback>
-                          {getInitials(lawyer.first_name, lawyer.last_name)}
+                          {getInitials(user.first_name, user.last_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">
-                          {lawyer.first_name} {lawyer.last_name}
+                          {user.first_name} {user.last_name}
                         </p>
                         <p className="text-sm text-gray-500 truncate">
-                          {lawyer.email}
+                          {user.email}
                         </p>
                       </div>
                       {wasOriginallyShared && (
@@ -223,22 +221,6 @@ export function ShareWithLawyerDialog({
                   )
                 })}
               </div>
-            )}
-
-            {document.shared_with && document.shared_with.length > 0 && (
-              <>
-                <Separator className="my-4" />
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Currently shared with:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {document.shared_with.map((lawyer) => (
-                      <Badge key={lawyer._id} variant="outline" className="text-xs">
-                        {lawyer.first_name} {lawyer.last_name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </>
             )}
           </div>
         )}

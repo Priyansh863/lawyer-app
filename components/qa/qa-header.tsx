@@ -18,7 +18,7 @@ export default function QAHeader() {
         <h1 className="text-2xl font-semibold">{t('pages:qa.title')}</h1>
         <p className="text-sm text-gray-500">{t('pages:qa.description')}</p>
       </div>
-      {user?.account_type ==="client" && <Button onClick={() => router.push("/qa/new-question/new")} className="flex items-center gap-2">
+      {user?.account_type ==="client" && <Button onClick={() => router.push("/qa/new/form")} className="flex items-center gap-2">
         <PlusCircle size={16} />
         <span>{t('pages:qa.addQuestion')}</span>
       </Button>}

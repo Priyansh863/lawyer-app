@@ -43,7 +43,7 @@ export const clientNotesApi = {
   getClientNotes: async (clientId: string): Promise<{ success: boolean; data?: ClientNotes; message?: string }> => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/v1/user/client/${clientId}/notes`,
+        `${API_BASE_URL}/user/client/${clientId}/notes`,
         { headers: getAuthHeaders() }
       );
       return response.data;

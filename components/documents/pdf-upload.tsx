@@ -6,33 +6,105 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
-import { Upload, FileText, Lock, Globe, AlertCircle } from 'lucide-react'
+import { Upload, FileText, Lock, Globe, AlertCircle, Video, Image, File } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { uploadPDFToS3, validatePDFFile } from '@/lib/helpers/pdf-upload'
-import { uploadDocument } from '@/lib/api/documents-api'
+import { uploadDocumentEnhanced } from '@/lib/api/documents-api'
 import { useTranslation } from '@/hooks/useTranslation'
 import { toast } from 'sonner'
+import { casesApi } from '@/lib/api/cases-api'
+import type { Case } from '@/types/case'
 
 interface PDFUploadEnhancedProps {
   isOpen: boolean
   onClose: () => void
   onUploadSuccess: () => void
+  caseId?: string
 }
 
-export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploadEnhancedProps) {
+interface FileTypeConfig {
+  extensions: string[]
+  icon: any
+  color: string
+  label: string
+  maxSize: number
+}
+
+const FILE_TYPES: Record<string, FileTypeConfig> = {
+  pdf: {
+    extensions: ['.pdf'],
+    icon: FileText,
+    color: 'bg-red-100 text-red-800',
+    label: 'PDF Document',
+    maxSize: 10 * 1024 * 1024 // 10MB
+  },
+  docx: {
+    extensions: ['.docx', '.doc'],
+    icon: FileText,
+    color: 'bg-blue-100 text-blue-800',
+    label: 'Word Document',
+    maxSize: 10 * 1024 * 1024 // 10MB
+  },
+  text: {
+    extensions: ['.txt', '.text'],
+    icon: File,
+    color: 'bg-green-100 text-green-800',
+    label: 'Text File',
+    maxSize: 10 * 1024 * 1024 // 10MB
+  },
+  image: {
+    extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+    icon: Image,
+    color: 'bg-purple-100 text-purple-800',
+    label: 'Image',
+    maxSize: 5 * 1024 * 1024 // 5MB
+  },
+  video: {
+    extensions: ['.mp4', '.avi', '.mov', '.wmv', '.flv'],
+    icon: Video,
+    color: 'bg-orange-100 text-orange-800',
+    label: 'Video',
+    maxSize: 50 * 1024 * 1024 // 50MB
+  }
+}
+
+export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: PDFUploadEnhancedProps) {
   const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)
-  const [privacy, setPrivacy] = useState<'public' | 'private'>('public')
+  const [privacy, setPrivacy] = useState<'public' | 'private' | 'fully_private'>('public')
   const [processWithAI, setProcessWithAI] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragActive, setDragActive] = useState(false)
-
-  // Get user from Redux store
+  const [fileTypeInfo, setFileTypeInfo] = useState<FileTypeConfig | null>(null)
+  const [selectedCaseId, setSelectedCaseId] = useState<string>(caseId || '')
+  const [availableCases, setAvailableCases] = useState<Case[]>([])
+  const [loadingCases, setLoadingCases] = useState(false)
   const user = useSelector((state: RootState) => state.auth.user)
   const isLawyer = user?.account_type === 'lawyer'
+
+  // Fetch available cases when dialog opens
+  React.useEffect(() => {
+    if (isOpen && user) {
+      fetchAvailableCases()
+    }
+  }, [isOpen, user])
+
+  const fetchAvailableCases = async () => {
+    setLoadingCases(true)
+    try {
+      const response = await casesApi.getCases({ limit: 100 })
+      setAvailableCases(response.cases || [])
+    } catch (error) {
+      console.error('Error fetching cases:', error)
+      toast.error('Failed to load available cases')
+    } finally {
+      setLoadingCases(false)
+    }
+  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -54,13 +126,34 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
     }
   }
 
+  const getFileType = (fileName: string): FileTypeConfig | null => {
+    const extension = '.' + fileName.split('.').pop()?.toLowerCase()
+    for (const [type, config] of Object.entries(FILE_TYPES)) {
+      if (config.extensions.includes(extension)) {
+        return config
+      }
+    }
+    return null
+  }
+
   const handleFileSelection = (selectedFile: File) => {
-    const validation = validatePDFFile(selectedFile)
-    if (!validation.isValid) {
-      toast.error(t("pages:pdfUpload.invalidFile"))
+    const fileType = getFileType(selectedFile.name)
+    
+    if (!fileType) {
+      toast.error('Unsupported file type. Please upload PDF, DOCX, TXT, image, or video files.')
       return
     }
+    
+    if (selectedFile.size > fileType.maxSize) {
+      const maxSizeMB = Math.round(fileType.maxSize / (1024 * 1024))
+      toast.error(`File size exceeds ${maxSizeMB}MB limit for ${fileType.label}`)
+      return
+    }
+    
     setFile(selectedFile)
+    setFileTypeInfo(fileType)
+    
+    // Case ID handling is now done in privacy selection
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,13 +164,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
 
   const handleUpload = async () => {
     if (!file || !user?._id) {
-      toast.error(t("pages:pdfUpload.selectFileOrLogin"))
-      return
-    }
-
-    // Lawyers cannot upload private documents
-    if (isLawyer && privacy === 'private') {
-      toast.error(t("pages:pdfUpload.lawyersPublicOnly"))
+      toast.error('Please select a file and ensure you are logged in')
       return
     }
 
@@ -85,43 +172,46 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
     setUploadProgress(0)
 
     try {
-      // Step 1: Upload to S3 (50% progress)
+      // Step 1: Upload to S3 (25% progress)
       setUploadProgress(25)
       const fileUrl = await uploadPDFToS3(file, user._id)
 
       if (!fileUrl) {
-        throw new Error(t("pages:pdfUpload.uploadFailStorage"))
+        throw new Error('Failed to upload file to storage')
       }
 
-      // Step 2: Save to database (75% progress)
+      // Step 2: Save to database with enhanced data (75% progress)
+      setUploadProgress(75)
       const uploadData = {
         userId: user._id,
         fileUrl: fileUrl,
         fileName: file.name,
+        fileType: fileTypeInfo?.label || 'Document',
         privacy: privacy,
         processWithAI: processWithAI,
         fileSize: file.size,
-        fileType: 'PDF'
+        documentType: 'general' as const,
+        caseId: privacy === 'private' && selectedCaseId ? selectedCaseId : undefined
       }
 
-      setUploadProgress(75)
-      const result = await uploadDocument(uploadData as any)
+      const result = await uploadDocumentEnhanced(uploadData)
 
       if (result.success) {
         setUploadProgress(100)
-        toast.success(t("pages:pdfUpload.successTitle"))
+        toast.success('Document uploaded successfully!')
         
         // Reset form
         setFile(null)
+        setFileTypeInfo(null)
         setUploadProgress(0)
         onUploadSuccess()
         onClose()
       } else {
-        throw new Error(result.message || t("pages:pdfUpload.uploadFailed"))
+        throw new Error(result.message || 'Upload failed')
       }
     } catch (error: any) {
       console.error('Upload error:', error)
-      toast.error(t("pages:pdfUpload.uploadFailedTitle"))
+      toast.error('Failed to upload document')
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
@@ -131,6 +221,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
   const handleClose = () => {
     if (!isUploading) {
       setFile(null)
+      setFileTypeInfo(null)
       setUploadProgress(0)
       onClose()
     }
@@ -163,12 +254,21 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
           >
             {file ? (
               <div className="space-y-2">
-                <FileText className="h-8 w-8 mx-auto text-green-600" />
+                {fileTypeInfo && (
+                  <div className="flex items-center justify-center">
+                    <fileTypeInfo.icon className="h-8 w-8 text-green-600" />
+                  </div>
+                )}
                 <div>
                   <p className="font-medium text-green-700">{file.name}</p>
                   <p className="text-sm text-green-600">
                     {(file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
+                  {fileTypeInfo && (
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${fileTypeInfo.color}`}>
+                      {fileTypeInfo.label}
+                    </span>
+                  )}
                 </div>
               </div>
             ) : (
@@ -176,10 +276,10 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
                 <Upload className="h-8 w-8 mx-auto text-gray-400" />
                 <div>
                   <p className="text-sm font-medium text-gray-700">
-                    {t("pages:pdfUpload.dragDropText")}
+                    Drag and drop your file here, or click to select
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {t("pages:pdfUpload.pdfRules")}
+                    Supports PDF, DOCX, TXT, images (JPG, PNG), and videos (MP4, AVI)
                   </p>
                 </div>
               </div>
@@ -187,7 +287,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
 
             <Input
               type="file"
-              accept=".pdf"
+              accept=".pdf,.docx,.doc,.txt,.text,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.flv"
               onChange={handleFileInputChange}
               className="hidden"
               id="file-upload"
@@ -199,52 +299,83 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
                 htmlFor="file-upload"
                 className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer mt-4"
               >
-                {t("pages:pdfUpload.selectFile")}
+                Select File
               </Label>
             )}
           </div>
 
+          {/* Case Selection - Only for Private Documents */}
+          {privacy === 'private' && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Associate with Case (Optional)</Label>
+              <Select 
+                value={selectedCaseId} 
+                onValueChange={setSelectedCaseId}
+                disabled={loadingCases}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingCases ? "Loading cases..." : "Select a case (optional)"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No case association</SelectItem>
+                  {availableCases.map((caseItem) => (
+                    <SelectItem key={caseItem.id} value={caseItem.id}>
+                      {caseItem.case_number} - {caseItem.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCaseId && (
+                <p className="text-xs text-gray-500">
+                  This document will be associated with the selected case.
+                </p>
+              )}
+            </div>
+          )}
+
+
+
           {/* Privacy Settings */}
           <div className="space-y-3">
             <Label className="text-sm font-medium flex items-center gap-2">
-              {privacy === 'private' ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-              {t("pages:pdfUpload.docVisibility")}
+              {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+              Document Privacy
             </Label>
             <RadioGroup
               value={privacy}
-              onValueChange={(value: 'public' | 'private') => setPrivacy(value)}
-              className="flex space-x-6"
-              disabled={isLawyer} // Lawyers can only upload public documents
+              onValueChange={(value: 'public' | 'private' | 'fully_private') => {
+                setPrivacy(value)
+                // Clear case selection if not private
+                if (value !== 'private') {
+                  setSelectedCaseId('')
+                }
+              }}
+              className="space-y-2"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="public" id="public" />
                 <Label htmlFor="public" className="text-sm">
                   <Globe className="h-4 w-4 inline mr-1" />
-                  {t("pages:pdfUpload.public")}
+                  Public - Visible to all authenticated users
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="private" id="private" disabled={isLawyer} />
-                <Label htmlFor="private" className={`text-sm ${isLawyer ? 'opacity-50' : ''}`}>
+                <RadioGroupItem value="private" id="private" />
+                <Label htmlFor="private" className="text-sm">
                   <Lock className="h-4 w-4 inline mr-1" />
-                  {t("pages:pdfUpload.private")}
+                  Private - Visible to you and shared users (can be associated with cases)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="fully_private" id="fully_private" />
+                <Label htmlFor="fully_private" className="text-sm">
+                  <Lock className="h-4 w-4 inline mr-1" />
+                  Fully Private - Visible only to you
                 </Label>
               </div>
             </RadioGroup>
             
-            {isLawyer && (
-              <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
-                <AlertCircle className="h-4 w-4" />
-                {t("pages:pdfUpload.lawyerNote")}
-              </div>
-            )}
-            
-            <p className="text-xs text-muted-foreground">
-              {privacy === 'private' 
-                ? t("pages:pdfUpload.privateHelp")
-                : t("pages:pdfUpload.publicHelp")
-              }
-            </p>
+      
           </div>
 
           {/* AI Processing Option */}
@@ -258,7 +389,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
               disabled={isUploading}
             />
             <Label htmlFor="processWithAI" className="text-sm font-medium">
-              {t("pages:pdfUpload.processWithAI")}
+              Process with AI (automatic summarization for text documents)
             </Label>
           </div>
 
@@ -266,7 +397,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
           {isUploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>{t("pages:pdfUpload.uploading")}</span>
+                <span>Uploading document...</span>
                 <span>{Math.round(uploadProgress)}%</span>
               </div>
               <Progress value={uploadProgress} className="w-full" />
@@ -281,14 +412,14 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess }: PDFUploa
               onClick={handleClose}
               disabled={isUploading}
             >
-              {t("pages:pdfUpload.cancel")}
+              Cancel
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!file || isUploading}
               className="min-w-[100px]"
             >
-              {isUploading ? t("pages:pdfUpload.uploading") : t("pages:pdfUpload.uploadPDF")}
+              {isUploading ? 'Uploading...' : 'Upload Document'}
             </Button>
           </div>
         </div>
