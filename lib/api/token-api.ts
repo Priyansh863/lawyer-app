@@ -156,10 +156,23 @@ export async function useTokens(token: string, amount: number, category: string,
   }
 }
 
+// Get token analytics data
+export async function getTokenAnalytics(token: string): Promise<TokenStats> {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/user/token-stats`, {
+      headers: getAuthHeaders(token)
+    })
+    return response.data.data
+  } catch (error: any) {
+    console.error('Error fetching token analytics:', error)
+    throw new Error(error.response?.data?.message || 'Failed to fetch token analytics')
+  }
+}
+
 // Export token transactions as CSV
 export async function exportTokenTransactions(): Promise<Blob> {
   try {
-    const { transactions } = await getTokenTransactions(1, 1000) // Get all transactions
+    const { transactions } = await getTokenTransactions('', 1, 1000) // Get all transactions
     
     const csvContent = [
       'Date,Type,Amount,Description,Status,Package',
