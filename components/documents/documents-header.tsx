@@ -102,14 +102,16 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col xs:flex-row items-start xs:items-center gap-3 w-full sm:w-auto">
           {user?.account_type === 'lawyer' && (
-            <SecureLinkGenerator clients={clients} />
+            <div className="w-full xs:w-auto">
+              <SecureLinkGenerator clients={clients} />
+            </div>
           )}
           
           <Button 
             onClick={() => setShowUploadDialog(true)}
-            className="bg-gray-900 hover:bg-gray-800"
+            className="bg-gray-900 hover:bg-gray-800 w-full xs:w-auto"
           >
             <Upload className="mr-2 h-4 w-4" />
             {t('pages:headDo.documents.upload.button')}

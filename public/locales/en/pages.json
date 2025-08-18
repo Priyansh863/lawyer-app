@@ -1059,6 +1059,7 @@
   "title": "Questions & Answers",
   "description": "Browse common questions and their answers about our services.",
   "loading": "Loading questions...",
+  "addQuestion": "Add Question",
   "empty": "No questions available",
   "unanswered": "This question has not been answered yet",
   "anonymous": "Anonymous",

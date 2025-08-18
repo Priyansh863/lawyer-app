@@ -550,80 +550,91 @@ export default function TokenPage() {
       </Card>
 
       {/* Transaction History */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t('pages:tok.token.transactions.title')}</CardTitle>
-          <Button onClick={handleExportTransactions} variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
-            {t('pages:tok.token.transactions.export')}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {transactionsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" />
-              <span>{t('pages:tok.token.transactions.loading')}</span>
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t('pages:tok.token.transactions.empty.title')}</p>
-              <p className="text-sm">{t('pages:tok.token.transactions.empty.description')}</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {transactions.map((transaction) => (
-                <div key={transaction._id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getTransactionIcon(transaction.type)}
-                    <div>
-                      <div className="font-medium">{transaction.description}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(transaction.created_at)}
-                        {transaction.package_name && ` • ${transaction.package_name}`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className={`font-medium ${
-                        transaction.type === 'usage' ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} {t('token.tokens')}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{transaction.category}</div>
-                    </div>
-                    {getStatusBadge(transaction.status)}
-                  </div>
+      <Card className="w-full max-w-full overflow-x-auto">
+  <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+    <CardTitle className="text-lg sm:text-xl">{t('pages:tok.token.transactions.title')}</CardTitle>
+    <Button 
+      onClick={handleExportTransactions} 
+      variant="outline" 
+      size="sm" 
+      className="gap-2 self-start sm:self-auto"
+    >
+      <Download className="h-4 w-4" />
+      {t('pages:tok.token.transactions.export')}
+    </Button>
+  </CardHeader>
+
+  <CardContent className="px-0 sm:px-4">
+    {transactionsLoading ? (
+      <div className="flex flex-col sm:flex-row items-center justify-center py-8 gap-2">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span>{t('pages:tok.token.transactions.loading')}</span>
+      </div>
+    ) : transactions.length === 0 ? (
+      <div className="text-center py-8 text-muted-foreground">
+        <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p>{t('pages:tok.token.transactions.empty.title')}</p>
+        <p className="text-sm">{t('pages:tok.token.transactions.empty.description')}</p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {transactions.map((transaction) => (
+          <div 
+            key={transaction._id} 
+            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3"
+          >
+            <div className="flex items-center gap-3">
+              {getTransactionIcon(transaction.type)}
+              <div>
+                <div className="font-medium text-sm sm:text-base">{transaction.description}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {formatDate(transaction.created_at)}
+                  {transaction.package_name && ` • ${transaction.package_name}`}
                 </div>
-              ))}
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <Button 
-                    onClick={() => fetchTransactions(currentPage - 1)}
-                    disabled={currentPage === 1 || transactionsLoading}
-                    variant="outline"
-                  >
-                    {t('pages:tok.token.transactions.pagination.previous')}
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {t('pages:tok.token.transactions.pagination.page', { current: currentPage, total: totalPages })}
-                  </span>
-                  <Button 
-                    onClick={() => fetchTransactions(currentPage + 1)}
-                    disabled={currentPage === totalPages || transactionsLoading}
-                    variant="outline"
-                  >
-                    {t('pages:tok.token.transactions.pagination.next')}
-                  </Button>
-                </div>
-              )}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+              <div className="text-right">
+                <div className={`font-medium text-sm sm:text-base ${
+                  transaction.type === 'usage' ? 'text-red-600' : 'text-green-600'
+                }`}>
+                  {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} {t('pages:token.tokens')}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{transaction.category}</div>
+              </div>
+              {getStatusBadge(transaction.status)}
+            </div>
+          </div>
+        ))}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-2 sm:gap-0">
+            <Button 
+              onClick={() => fetchTransactions(currentPage - 1)}
+              disabled={currentPage === 1 || transactionsLoading}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              {t('pages:tok.token.transactions.pagination.previous')}
+            </Button>
+            <span className="text-sm text-muted-foreground">{t('pages:tok.token.transactions.pagination.page', { current: currentPage, total: totalPages })}</span>
+            <Button 
+              onClick={() => fetchTransactions(currentPage + 1)}
+              disabled={currentPage === totalPages || transactionsLoading}
+              variant="outline"
+              className="w-full sm:w-auto"
+            >
+              {t('pages:tok.token.transactions.pagination.next')}
+            </Button>
+          </div>
+        )}
+      </div>
+    )}
+  </CardContent>
+</Card>
+
     </div>
   )
 }
