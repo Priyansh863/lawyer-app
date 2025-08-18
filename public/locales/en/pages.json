@@ -1,3 +1,4 @@
+
 {
   "common": {
     "error": "Error",
@@ -467,6 +468,35 @@
   "na": "Not Available"
 },
 
+  "pagesa": {
+    "clientDetailsa": {
+      "documents": "Documents",
+      "loading": "Loading...",
+      "noFiles": "No documents uploaded for this client",
+      "private": "Private",
+      "view": "View"
+    },
+    "clientDocumentsa": {
+      "failedToLoad": "Failed to load client documents",
+      "sharedWith": "lawyers shared"
+    }
+  },
+  "commone": {
+    "share": "Share"
+  },
+  "prdoc":{
+  "documents": "Documents",
+  "loadingFiles": "Loading files...",
+  "noFilesUploaded": "No files uploaded for this client",
+  "error": "Error",
+  "failedToLoadClientFiles": "Failed to load client files",
+  "sharedWith": "Shared with {{count}} lawyer",
+  "sharedWith_plural": "Shared with {{count}} lawyers",
+  "private": "Private",
+  "download": "Download",
+  "viewDocument": "View Document",
+  "shareDocument": "Share Document"
+},
  "documentT": {
       "documents": {
         "loadFailed": "Failed to load documents",
@@ -978,11 +1008,40 @@
   "typeYourMessage": "Type your message...",
   "startConversation": "Start the conversation"
 },
+ "authf": {
+      "forgotPassword": {
+        "title": "Forgot Password?",
+        "checkEmail": "Check Your Email",
+        "instructions": "Enter your email address and we'll send you an OTP to reset your password.",
+        "otpSentMessage": "We've sent a password reset OTP to your email address.",
+        "otpSuccess": "OTP sent successfully! Check the notification above for your OTP code.",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "Enter your email address",
+        "sendOtpButton": "Send Reset OTP",
+        "sendingOtp": "Sending OTP...",
+        "continueButton": "Continue to Reset Password",
+        "sendAnotherOtp": "Send Another OTP",
+        "rememberPassword": "Remember your password? Sign in",
+        "backToLogin": "Back to Login",
+        "otpSent": {
+          "title": "Password Reset OTP",
+          "description": "Please check your email for the password reset OTP.",
+          "descriptionWithCode": "Your password reset OTP is: {otp}. This OTP will expire in 10 minutes."
+        },
+        "errors": {
+          "sendFailed": "Failed to Send OTP",
+          "tryAgain": "Please try again later.",
+          "networkTitle": "Network Error",
+          "networkError": "Forgot password error:",
+          "checkConnection": "Please check your connection and try again."
+        }
+      }
+      },
 "stst":{
   "dashboard": {
     "activecases": "Active Cases",
     "inactivecases": "Inactive Cases",
-    "todayschats": "Today's Chats",
+    "today'schats": "Today's Chats",
     "availabletokens": "Available Tokens",
     "totalpurchased": "Total Purchased",
     "monthlyusage": "Monthly Usage"
@@ -1020,6 +1079,7 @@
     "deleteFailed": "Failed to delete question. Please try again."
   }
 },
+
 "qas": {
   "loading": "Loading question...",
   "questionNotFound": "Question not found",
@@ -1046,6 +1106,42 @@
   }
 }
 ,
+
+  "resetPassword": {
+    "invalidRequest": {
+      "title": "Invalid Request",
+      "description": "Email parameter is missing. Please start from forgot password page."
+    },
+    "success": {
+      "title": "Password Reset Successful",
+      "description": "Your password has been reset successfully. You can now login with your new password."
+    },
+    "error": {
+      "title": "Password Reset Failed",
+      "description": "Invalid OTP or request. Please try again."
+    },
+    "networkError": {
+      "title": "Network Error",
+      "description": "Please check your connection and try again."
+    },
+    "backLink": "Back to Forgot Password",
+    "title": "Reset Your Password",
+    "subtitle": "Enter the OTP sent to {{email}} and your new password.",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPasswordLabel": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "resetButton": "Reset Password",
+    "resettingButton": "Resetting Password...",
+    "rememberPasswordLink": "Remember your password? Sign in"
+  },
+  "validation": {
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordsDontMatch": "Passwords don't match"
+  },
+  "commonra": {
+    "loading": "Loading..."
+  },
 "posts" :{
   "postsContentTitle": "Posts & Content",
   "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
@@ -1341,7 +1437,7 @@
     "suspension": "Suspended",
     "closure": "Closed",
     "in_progress": "In Progress",
-    "open": "Open"
+    "open": "Panding"
   },
       "viewCase": "View Case"
     },
@@ -1611,21 +1707,24 @@
   },
   "voiceSummary": {
   "title": "Voice Summary",
-  "description": "View and listen to document summaries.",
+  "description": "Check the document summary and listen to it in voice.",
   "searchPlaceholder": "Search documents or summaries...",
   "languageLabel": "Language",
   "playingTitle": "Playing",
   "playingDescription": "Playback started",
   "playingLanguage": "Playing in {{lang}}",
   "errorTitle": "Error Occurred",
-  "errorDescription": "There was a problem fetching the document summary.",
+  "noDocumentSummariesFound": "No document summaries found",
+  "errorDescription": "There was a problem loading the document summaries.",
   "speechNotSupported": "This browser does not support speech synthesis.",
   "play": "Play",
   "pause": "Pause",
   "resume": "Resume",
   "stop": "Stop",
   "loading": "Loading...",
-  "noResults": "No search results found.",
+  "loadingSummaries": "Loading document summaries...",
+  "noResults": "No search results.",
+  "noSummaries": "No document summaries.",
   "caseLabel": "Case Name",
   "uploadedLabel": "Upload Date",
   "words": "Words",
@@ -1633,12 +1732,11 @@
   "playTooltip": "Play summary audio",
   "rejectedMessage": "This document has been rejected.",
   "statusLabel": "Status",
-  "summaryAvailable": "Summary is available.",
+  "summaryAvailable": "Summary is ready.",
   "statusCompleted": "Completed",
   "statusFailed": "Failed",
   "statusProcessing": "Processing"
 },
-
 "locla" :{
   "location": {
     "title": "Location Information",
@@ -1949,3 +2047,4 @@
     "bonus": "Bonus"
   }
 }
+

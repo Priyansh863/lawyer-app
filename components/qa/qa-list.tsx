@@ -105,7 +105,7 @@ export default function QAList() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant={item.answer ? "default" : "outline"}>
-                  {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}}
+                  {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}

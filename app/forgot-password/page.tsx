@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Mail } from "lucide-react"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -20,6 +21,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [isOtpSent, setIsOtpSent] = useState(false)
   const router = useRouter()
@@ -50,13 +52,13 @@ export default function ForgotPasswordPage() {
         
         // Show OTP in toast message since email service may not be working
         if (result.data?.otp) {
-          toast.success("Password Reset OTP", {
-            description: result.data.message || `Your password reset OTP is: ${result.data.otp}. This OTP will expire in 10 minutes.`,
+          toast.success(t('pages:auth.forgotPassword.otpSent.title'), {
+            description: result.data.message || t('pages:authf.forgotPassword.otpSent.descriptionWithCode', { otp: result.data.otp }),
             duration: 10000, // Show for 10 seconds
           })
         } else {
-          toast.success("OTP Sent Successfully", {
-            description: "Please check your email for the password reset OTP.",
+          toast.success(t('pages:authf.forgotPassword.otpSent.title'), {
+            description: t('pages:authf.forgotPassword.otpSent.description'),
             duration: 5000,
           })
         }
@@ -66,14 +68,14 @@ export default function ForgotPasswordPage() {
           router.push(`/reset-password?email=${encodeURIComponent(data.email)}`)
         }, 2000)
       } else {
-        toast.error("Failed to Send OTP", {
-          description: result.message || "Please try again later.",
+        toast.error(t('pages:authf.forgotPassword.errors.sendFailed'), {
+          description: result.message || t('pages:authf.forgotPassword.errors.tryAgain'),
         })
       }
     } catch (error) {
-      console.error('Forgot password error:', error)
-      toast.error("Network Error", {
-        description: "Please check your connection and try again.",
+      console.error(t('pages:authf.forgotPassword.errors.networkError'), error)
+      toast.error(t('pages:authf.forgotPassword.errors.networkTitle'), {
+        description: t('pages:authf.forgotPassword.errors.checkConnection'),
       })
     } finally {
       setIsLoading(false)
@@ -81,31 +83,33 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
+    <main className="flex min-h-screen items-center justify-center bg-[url('/background.jpg')] bg-cover bg-center">
+      <div className="max-w-md w-full mx-4">
+        {/* Adjusted back link with negative margin-top */}
+        <div className="text-center mb-6 -mt-6">
           <Link 
             href="/login" 
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8"
+            className="inline-flex items-center text-sm text-white hover:text-gray-200" 
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Login
+            {t('pages:authf.forgotPassword.backToLogin')}
           </Link>
         </div>
 
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
               <Mail className="h-6 w-6 text-blue-600" />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {isOtpSent ? "Check Your Email" : "Forgot Password?"}
+              {isOtpSent 
+                ? t('pages:authf.forgotPassword.checkEmail') 
+                : t('pages:authf.forgotPassword.title')}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-2">
               {isOtpSent 
-                ? "We've sent a password reset OTP to your email address."
-                : "Enter your email address and we'll send you an OTP to reset your password."
-              }
+                ? t('pages:authf.forgotPassword.otpSentMessage')
+                : t('pages:authf.forgotPassword.instructions')}
             </p>
           </CardHeader>
 
@@ -118,12 +122,12 @@ export default function ForgotPasswordPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel>{t('pages:authf.forgotPassword.emailLabel')}</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="Enter your email address"
-                            className="bg-gray-50"
+                            placeholder={t('pages:authf.forgotPassword.emailPlaceholder')}
+                            className="bg-white"
                             {...field}
                           />
                         </FormControl>
@@ -137,7 +141,9 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Sending OTP..." : "Send Reset OTP"}
+                    {isLoading 
+                      ? t('pages:authf.forgotPassword.sendingOtp') 
+                      : t('pages:authf.forgotPassword.sendOtpButton')}
                   </Button>
                 </form>
               </Form>
@@ -145,7 +151,7 @@ export default function ForgotPasswordPage() {
               <div className="text-center space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-sm text-green-800">
-                    OTP sent successfully! Check the notification above for your OTP code.
+                    {t('pages:authf.forgotPassword.otpSuccess')}
                   </p>
                 </div>
                 
@@ -153,7 +159,7 @@ export default function ForgotPasswordPage() {
                   onClick={() => router.push(`/reset-password?email=${encodeURIComponent(form.getValues('email'))}`)}
                   className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
                 >
-                  Continue to Reset Password
+                  {t('pages:authf.forgotPassword.continueButton')}
                 </Button>
                 
                 <Button
@@ -164,19 +170,19 @@ export default function ForgotPasswordPage() {
                   }}
                   className="w-full"
                 >
-                  Send Another OTP
+                  {t('pages:authf.forgotPassword.sendAnotherOtp')}
                 </Button>
               </div>
             )}
 
             <div className="text-center mt-6">
               <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                Remember your password? Sign in
+                {t('pages:authf.forgotPassword.rememberPassword')}
               </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   )
 }

@@ -118,71 +118,75 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
             <QrCode className="h-4 w-4" />
-            {t('pages:qrCode.button')}
+            <span className="hidden sm:inline">{t('pages:qrCode.button')}</span>
           </Button>
         )}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md max-h-[30rem] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
-            {t('pages:qrCode.dialogTitle', { title: post.title })}
+      <DialogContent className="sm:max-w-lg w-[95vw] max-w-[95vw] sm:w-full max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-2 pb-4">
+          <DialogTitle className="flex items-start gap-2 text-left">
+            <QrCode className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <span className="text-sm sm:text-base leading-tight break-words">
+              {t('pages:qrCode.dialogTitle', { title: post.title })}
+            </span>
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           {/* Post Info */}
-          <Card className="border-gray-200">
-            <CardContent className="pt-4">
-              <h3 className="font-medium text-sm mb-2 line-clamp-1">{post.title}</h3>
-              <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                {post.content.substring(0, 100)}...
+          <Card className="border-border">
+            <CardContent className="p-4">
+              <h3 className="font-medium text-sm sm:text-base mb-2 line-clamp-2 break-words">
+                {post.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 line-clamp-3 break-words">
+                {post.content.substring(0, 150)}...
               </p>
-              <div className="flex items-center gap-2 text-xs text-blue-600">
-                <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{postUrl}</span>
+              <div className="flex items-start gap-2 text-xs sm:text-sm text-primary">
+                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 mt-0.5" />
+                <span className="break-all text-xs">{postUrl}</span>
               </div>
             </CardContent>
           </Card>
 
           {/* QR Code Display */}
-          <Card className="border-gray-200">
-            <CardContent className="pt-4">
+          <Card className="border-border">
+            <CardContent className="p-4">
               {qrCodeData ? (
                 <div className="text-center space-y-4">
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 inline-block">
+                  <div className="bg-white p-3 sm:p-4 rounded-lg border border-border inline-block w-full max-w-[280px] mx-auto">
                     <img 
                       src={qrCodeData} 
                       alt={t('pages:qrCode.altText')} 
-                      className="w-48 h-48 mx-auto"
+                      className="w-full h-auto max-w-full mx-auto"
                       style={{ imageRendering: 'crisp-edges' }}
                     />
                   </div>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs sm:text-sm text-muted-foreground px-2">
                     {t('pages:qrCode.scanInstructions')}
                   </p>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <QrCode className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                  <p className="text-sm text-gray-600 mb-4">
+                <div className="text-center py-6 sm:py-8">
+                  <QrCode className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-muted-foreground/50 mb-4" />
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6 px-2">
                     {t('pages:qrCode.generatePrompt')}
                   </p>
                   <Button 
                     onClick={handleGenerateQrCode}
                     disabled={isGenerating}
-                    className="w-full gap-2"
+                    className="w-full max-w-xs gap-2"
                   >
                     {isGenerating ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                        {t('pages:qrCode.generating')}
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                        <span className="text-sm">{t('pages:qrCode.generating')}</span>
                       </>
                     ) : (
                       <>
                         <QrCode className="h-4 w-4" />
-                        {t('pages:qrCode.generateButton')}
+                        <span className="text-sm">{t('pages:qrCode.generateButton')}</span>
                       </>
                     )}
                   </Button>
@@ -193,49 +197,65 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
 
           {/* Action Buttons */}
           {qrCodeData && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                onClick={handleDownloadQrCode}
-                disabled={isDownloading}
-                className="gap-2"
-              >
-                {isDownloading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    {t('pages:qrCode.downloading')}
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    {t('pages:qrCode.downloadButton')}
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleCopyPostUrl}
-                className="gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                {t('pages:qrCode.copyButton')}
-              </Button>
-              
-              
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3">
+                <Button 
+                  onClick={handleDownloadQrCode}
+                  disabled={isDownloading}
+                  className="w-full gap-2 h-11"
+                >
+                  {isDownloading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                      <span className="text-sm">{t('pages:qrCode.downloading')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      <span className="text-sm">{t('pages:qrCode.downloadButton')}</span>
+                    </>
+                  )}
+                </Button>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCopyPostUrl}
+                    className="gap-2 h-11"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span className="text-sm">{t('pages:qrCode.copyButton')}</span>
+                  </Button>
+
+                  
+                </div>
+              </div>
             </div>
           )}
 
           {/* Instructions */}
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="pt-4">
-              <h4 className="font-medium text-sm mb-2 text-blue-800">
+          <Card className="bg-muted/50 border-border">
+            <CardContent className="p-4">
+              <h4 className="font-medium text-sm sm:text-base mb-3 text-foreground">
                 {t('pages:qrCode.usage.title')}
               </h4>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• {t('pages:qrCode.usage.point1')}</li>
-                <li>• {t('pages:qrCode.usage.point2')}</li>
-                <li>• {t('pages:qrCode.usage.point3')}</li>
-                <li>• {t('pages:qrCode.usage.point4')}</li>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{t('pages:qrCode.usage.point1')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{t('pages:qrCode.usage.point2')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{t('pages:qrCode.usage.point3')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{t('pages:qrCode.usage.point4')}</span>
+                </li>
               </ul>
             </CardContent>
           </Card>

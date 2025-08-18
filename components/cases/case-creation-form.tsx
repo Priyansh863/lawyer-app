@@ -449,7 +449,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("cases.form.priority")}</FormLabel>
+                      <FormLabel>{t("pages:casesD.form.priority")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>

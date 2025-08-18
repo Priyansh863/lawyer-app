@@ -12,19 +12,21 @@ import { toast } from "sonner"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Lock, Eye, EyeOff } from "lucide-react"
+import { useTranslation } from "@/hooks/useTranslation"
 
 const resetPasswordSchema = z.object({
   otp: z.string().optional(),
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
+  newPassword: z.string().min(8, "passwordMinLength"),
+  confirmPassword: z.string().min(8, "passwordMinLength"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "passwordsDontMatch",
   path: ["confirmPassword"],
 })
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
 function ResetPasswordForm() {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -43,12 +45,12 @@ function ResetPasswordForm() {
 
   useEffect(() => {
     if (!email) {
-      toast.error("Invalid Request", {
-        description: "Email parameter is missing. Please start from forgot password page.",
+      toast.error(t("resetPassword.invalidRequest.title"), {
+        description: t("pages:resetPassword.invalidRequest.description"),
       })
       router.push('/forgot-password')
     }
-  }, [email, router])
+  }, [email, router, t])
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
@@ -69,24 +71,23 @@ function ResetPasswordForm() {
       const result = await response.json()
 
       if (result.success) {
-        toast.success("Password Reset Successful", {
-          description: "Your password has been reset successfully. You can now login with your new password.",
+        toast.success(t("pages:resetPassword.success.title"), {
+          description: t("pages:resetPassword.success.description"),
           duration: 5000,
         })
 
-        // Redirect to login page after 2 seconds
         setTimeout(() => {
           router.push('/login')
         }, 2000)
       } else {
-        toast.error("Password Reset Failed", {
-          description: result.message || "Invalid OTP or request. Please try again.",
+        toast.error(t("pages:resetPassword.error.title"), {
+          description: result.message || t("pages:resetPassword.error.description"),
         })
       }
     } catch (error) {
       console.error('Reset password error:', error)
-      toast.error("Network Error", {
-        description: "Please check your connection and try again.",
+      toast.error(t("pages:resetPassword.networkError.title"), {
+        description: t("pages:resetPassword.networkError.description"),
       })
     } finally {
       setIsLoading(false)
@@ -94,67 +95,49 @@ function ResetPasswordForm() {
   }
 
   if (!email) {
-    return null // Will redirect in useEffect
+    return null
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <main className="flex min-h-screen items-center justify-center bg-[url('/background.jpg')] bg-cover bg-center">
+      <div className="max-w-md w-full mx-4">
         <div className="text-center">
           <Link 
             href="/forgot-password" 
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8"
+            className="inline-flex items-center text-sm text-white hover:text-gray-200 mb-8"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Forgot Password
+            {t("pages:resetPassword.backLink")}
           </Link>
         </div>
 
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
               <Lock className="h-6 w-6 text-green-600" />
             </div>
-            <CardTitle className="text-2xl font-bold">Reset Your Password</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              {t("pages:resetPassword.title")}
+            </CardTitle>
             <p className="text-sm text-gray-600 mt-2">
-              Enter the OTP sent to <span className="font-medium">{email}</span> and your new password.
+              {t("pages:resetPassword.subtitle", { email })}
             </p>
           </CardHeader>
 
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {/* <FormField
-                  control={form.control}
-                  name="otp"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>OTP Code</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="Enter 6-digit OTP"
-                          className="bg-gray-50 text-center text-lg tracking-widest"
-                          maxLength={6}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
-
                 <FormField
                   control={form.control}
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>New Password</FormLabel>
+                      <FormLabel>{t("pages:resetPassword.newPasswordLabel")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter new password"
+                            placeholder={t("pages:resetPassword.newPasswordPlaceholder")}
                             className="bg-gray-50 pr-10"
                             {...field}
                           />
@@ -183,12 +166,12 @@ function ResetPasswordForm() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormLabel>{t("pages:resetPassword.confirmPasswordLabel")}</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm new password"
+                            placeholder={t("pages:resetPassword.confirmPasswordPlaceholder")}
                             className="bg-gray-50 pr-10"
                             {...field}
                           />
@@ -217,30 +200,32 @@ function ResetPasswordForm() {
                   className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Resetting Password..." : "Reset Password"}
+                  {isLoading ? t("pages:resetPassword.resettingButton") : t("pages:resetPassword.resetButton")}
                 </Button>
               </form>
             </Form>
 
             <div className="text-center mt-6">
               <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                Remember your password? Sign in
+                {t("pages:resetPassword.rememberPasswordLink")}
               </Link>
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   )
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation()
+  
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-[url('/background.jpg')] bg-cover bg-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f0921] mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
+          <p className="mt-2 text-white">{t("pages:commonra.loading")}</p>
         </div>
       </div>
     }>

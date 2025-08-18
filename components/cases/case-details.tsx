@@ -55,26 +55,28 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
 
   const getStatusBadge = (status: string) => {
     const statusKey = status.toLowerCase()
+    // Treat "open" status as "pending" for display purposes
+    const displayStatus = statusKey === "open" ? "pending" : statusKey
     let colorClasses = ""
 
     // Judgment Outcomes (판결 종국)
-    if (["full_win", "partial_win"].includes(statusKey)) {
+    if (["full_win", "partial_win"].includes(displayStatus)) {
       colorClasses = "bg-green-50 text-green-600 border-green-200"
-    } else if (["full_loss", "partial_loss", "dismissal"].includes(statusKey)) {
+    } else if (["full_loss", "partial_loss", "dismissal"].includes(displayStatus)) {
       colorClasses = "bg-red-50 text-red-600 border-red-200"
-    } else if (statusKey === "rejection") {
+    } else if (displayStatus === "rejection") {
       colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
     }
     // Non-Judgment Outcomes (판결 외 종국)
-    else if (["withdrawal", "mediation", "settlement"].includes(statusKey)) {
+    else if (["withdrawal", "mediation", "settlement"].includes(displayStatus)) {
       colorClasses = "bg-blue-50 text-blue-600 border-blue-200"
-    } else if (["trial_cancellation", "suspension", "closure"].includes(statusKey)) {
+    } else if (["trial_cancellation", "suspension", "closure"].includes(displayStatus)) {
       colorClasses = "bg-orange-50 text-orange-600 border-orange-200"
     }
     // Active case statuses
-    else if (statusKey === "in_progress") {
+    else if (displayStatus === "in_progress") {
       colorClasses = "bg-indigo-50 text-indigo-600 border-indigo-200"
-    } else if (statusKey === "pending") {
+    } else if (displayStatus === "pending") {
       colorClasses = "bg-yellow-50 text-yellow-600 border-yellow-200"
     } else {
       colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
@@ -88,6 +90,10 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   }
 
   const getStatusLabel = (status: string) => {
+    const statusKey = status.toLowerCase()
+    // Treat "open" status as "pending" for display purposes
+    const displayStatus = statusKey === "open" ? "pending" : statusKey
+    
     const statusLabels: Record<string, string> = {
       // Judgment Outcomes (판결 종국)
       full_win: t("pages:caseDetailsq.status.full_win"),
@@ -106,11 +112,16 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       // Active case statuses
       in_progress: t("pages:caseDetailqs.status.in_progress"),
       pending: t("pages:caseDetailsq.status.pending"),
+      open: t("pages:caseDetailsq.status.pending"), // Map "open" to "pending" translation
     }
-    return statusLabels[status] || status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
+    return statusLabels[displayStatus] || displayStatus.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
   const getStatusDescription = (status: string) => {
+    const statusKey = status.toLowerCase()
+    // Treat "open" status as "pending" for display purposes
+    const displayStatus = statusKey === "open" ? "pending" : statusKey
+    
     const descriptions: Record<string, string> = {
       // Judgment Outcomes
       full_win: t("pages:caseDetailsq.statusDescriptions.full_win"),
@@ -129,9 +140,9 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       // Active statuses
       in_progress: t("pages:caseDetailsq.statusDescriptions.in_progress"),
       pending: t("pages:caseDetailsq.statusDescriptions.pending"),
-      open: t("pages:caseDetailsq.statusDescriptions.open"),
+      open: t("pages:caseDetailsq.statusDescriptions.pending"), // Map "open" to "pending" description
     }
-    return descriptions[status.toLowerCase()] || t("pages:caseDetailsq.statusDescriptions.notAvailable")
+    return descriptions[displayStatus] || t("pages:caseDetailsq.statusDescriptions.notAvailable")
   }
 
   return (
@@ -330,13 +341,14 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{t("pages:caseDetailsq.caseType")}:</span>
                   <span className="px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
-          {caseState.case_type ? t(`pages:cases.caseTypes.${caseState.case_type}`) : t("common:na")}
+                    {caseState.case_type ? t(`pages:cases.caseTypes.${caseState.case_type}`) : t("common:na")}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{t("pages:caseDetailsq.courtType")}:</span>
                   <span className="px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
-{caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}                  </span>
+                    {caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}
+                  </span>
                 </div>
               </div>
             </div>

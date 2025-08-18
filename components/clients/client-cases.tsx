@@ -27,12 +27,11 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
   const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
 
-
   useEffect(() => {
     const loadCases = async () => {
       try {
         setIsLoading(true)
-        const clientCases = await getClientCases(clientId,profile?.account_type==="lawyer" ? "client" : "lawyer")
+        const clientCases = await getClientCases(clientId, profile?.account_type === "lawyer" ? "client" : "lawyer")
         console.log("Fetched cases:", clientCases) // Debug log
         setCases(clientCases || [])
       } catch (error) {
@@ -50,26 +49,32 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
     if (clientId) {
       loadCases()
     }
-  }, [clientId]) // ✅ Only run when clientId changes
-
+  }, [clientId])
 
   const viewCaseDetails = (caseItem: Case) => {
-    // Encode case data as URL search params to pass to details page
     const caseData = encodeURIComponent(JSON.stringify(caseItem))
-    console.log(caseItem,"caseItemcaseItemcaseItemcaseItemcaseItemcaseItem")
+    console.log(caseItem, "caseItemcaseItemcaseItemcaseItemcaseItemcaseItem")
     router.push(`/cases/${caseItem._id}?data=${caseData}`)
   }
 
   const getStatusBadge = (status: string) => {
-    const statusKey = status.toLowerCase() as "pending" | "approved" | "rejected"
+    const statusKey = status.toLowerCase()
+    // Treat "open" status as "pending" for display purposes
+    const displayStatus = statusKey === "open" ? "pending" : statusKey
+    
     const badgeMap: Record<string, string> = {
       pending: "bg-yellow-50 text-yellow-600 border-yellow-200",
       approved: "bg-green-50 text-green-600 border-green-200",
       rejected: "bg-red-50 text-red-600 border-red-200",
+      open: "bg-yellow-50 text-yellow-600 border-yellow-200", // Map "open" to same as "pending"
     }
+
+    // Get the translation key - use "pending" for "open" status
+    const translationKey = statusKey === "open" ? "pending" : statusKey
+
     return (
-      <Badge variant="outline" className={badgeMap[statusKey] || ""}>
-        {t(`pages:caseDetails.status.${statusKey}`, status)}
+      <Badge variant="outline" className={badgeMap[displayStatus] || ""}>
+        {t(`pages:caseDetails.status.${translationKey}`, status)}
       </Badge>
     )
   }
@@ -80,11 +85,10 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium">{t("pages:clientCases.title")}</h3>
           {profile?.account_type === 'lawyer' && (
-    <Button onClick={() => router.push(`/cases/new?clientId=${clientId}`)} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
-      {t("pages:cases.newCase")}
-    </Button>
-  )}
-
+            <Button onClick={() => router.push(`/cases/new?clientId=${clientId}`)} className="bg-[#0f0921] hover:bg-[#0f0921]/90">
+              {t("pages:cases.newCase")}
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -127,7 +131,7 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => viewCaseDetails(caseItem)} className="h-8 w-8">
                       <Eye size={16} />
-                      <span className="sr-only">{t("common.view")}</span>
+                      <span className="sr-only">{t("pages:clientCases.viewCase")}</span>
                     </Button>
                   </TableCell>
                 </TableRow>
