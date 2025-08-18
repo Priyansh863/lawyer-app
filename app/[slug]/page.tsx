@@ -449,7 +449,7 @@ export default function PostPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <QrCode className="h-5 w-5" />
-                QR Code
+                 {t('pages:posts.buttonLabel')}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">

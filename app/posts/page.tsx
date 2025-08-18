@@ -138,7 +138,7 @@ export default function PostsPage() {
             <Card>
               <CardContent className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("noPostsFound")}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("pages:posts:noPostsFound")}</h3>
                 <p className="text-gray-600 mb-4">
                   {t("pages:posts.noPostsCreatedYet")}
                 </p>
@@ -285,9 +285,9 @@ export default function PostsPage() {
                         post={post}
                         trigger={
                           <Button variant="outline" size="sm">
-                            <QrCode className="h-3 w-3 mr-1" />
-                            QR Code
-                          </Button>
+  <QrCode className="h-3 w-3 mr-1" />
+  {t('pages:posts.buttonLabel')}
+</Button>
                         }
                       />
                     </div>

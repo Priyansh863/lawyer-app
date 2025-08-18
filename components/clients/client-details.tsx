@@ -173,12 +173,12 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 mt-8">
       
       {/* Header */}
      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
   <h1 className="text-2xl font-bold">
-    {isLawyer ? "Client Details" : "Lawyer Details"}
+    {isLawyer ? "" : "Lawyer Details"}
   </h1>
 
   <Button variant="outline" onClick={() => router.back()}>
@@ -301,7 +301,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="documents">{t("pages:clientDetails.documents")}</TabsTrigger>
               <TabsTrigger value="notes">{t("pages:clientDetails.notes")}</TabsTrigger>
             </TabsList>
             <TabsContent value="cases" className="mt-4">

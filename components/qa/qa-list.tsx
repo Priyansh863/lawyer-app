@@ -72,7 +72,7 @@ export default function QAList() {
     return (
       <div className="flex justify-center items-center p-10">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        <span className="ml-2">{t("pages:questionA.qa.loading")}</span>
+        <span className="ml-2">{t("pages:qa.loading")}</span>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function QAList() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <Badge variant={item.answer ? "default" : "outline"}>
-                  {item.answer ? "Answered" : "Pending"}
+                  {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}
@@ -128,17 +128,17 @@ export default function QAList() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">{t("pages:questionA.qa.menu.open")}</span>
+                    <span className="sr-only">{t("pages:qa.menu.open")}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {!item.answer ? (
                     <DropdownMenuItem asChild>
-                      <Link href={`/qa/${item._id}/answer`}>{t("pages:questionA.qa.menu.answer")}</Link>
+                      <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer")}</Link>
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem asChild>
-                      <Link href={`/qa/${item._id}/edit`}>{t("pages:questionA.qa.menu.edit")}</Link>
+                      <Link href={`/qa/${item._id}/edit`}> {t("pages:qa.menu.edit")}</Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem 
@@ -149,9 +149,10 @@ export default function QAList() {
                     {deleteLoading === item._id ? (
                       <>
                         <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                       {t("pages:questionA.qa.menu.deleting")}
+                       {t("pages:qa.menu.deleting")}
+
                       </>
-                    ) : t("pages:questionA.qa.menu.delete")}
+                    ) : t("pages:qa.menu.delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>}
@@ -161,7 +162,7 @@ export default function QAList() {
             {item.answer ? (
               <div className="mt-2 text-gray-700">{item.answer}</div>
             ) : (
-              <div className="mt-2 italic text-gray-500">{t("pages:questionA.qa.unanswered")}</div>
+              <div className="mt-2 italic text-gray-500">{t("pages:qa.unanswered")}</div>
             )}
           </AccordionContent>
         </AccordionItem>

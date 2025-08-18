@@ -20,7 +20,7 @@ export default function CasesHeader({ onCaseCreated }: CasesHeaderProps) {
           {t('pages:cases.title')}
         </h1>
         <p className="text-muted-foreground">
-          Manage and track your legal cases
+          {t('pages:cases.description')}
         </p>
       </div>
       

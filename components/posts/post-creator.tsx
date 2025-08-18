@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,7 @@ import {
   FileText, 
   Send, 
   Loader2, 
-  QrCode, 
+  QrCode as QrCodeIcon, 
   Share2, 
   Copy,
   Hash,
@@ -42,7 +42,9 @@ import {
   User,
   Link,
   Plus,
-  Trash2
+  Trash2,
+  ExternalLink,
+  X
 } from "lucide-react";
 
 interface PostCreatorProps {
@@ -154,11 +156,9 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       setIsUploadingImage(true);
       setUploadProgress(0);
       
-      // Create file path with timestamp
       const timestamp = new Date().getTime();
       const filePath = `posts/${timestamp}-${file.name}`;
       
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
@@ -169,10 +169,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         });
       }, 100);
       
-      // Upload to S3
       const imageUrl = await uploadFileOnS3(file, filePath);
       
-      // Complete progress
       clearInterval(progressInterval);
       setUploadProgress(100);
       
@@ -234,7 +232,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         status: 'published'
       });
       
-      // Reset image
       setSelectedFile(null);
 
     } catch (error: any) {
@@ -262,7 +259,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     try {
       setIsGeneratingAi(true);
       
-      // Include image if uploaded
       const aiDataWithImage = {
         ...aiData,
         image: postData.image
@@ -280,7 +276,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: "default",
       });
 
-      // Reset form
       setAiData({
         prompt: '',
         topic: '',
@@ -291,7 +286,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         citations: []
       });
       
-      // Reset image
       setPostData(prev => ({ ...prev, image: undefined }));
       setSelectedFile(null);
 
@@ -319,7 +313,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: "default",
       });
 
-      // Update created post with QR code
       setCreatedPost(prev => prev ? { ...prev, qrCodeUrl: response.data.qrCodeUrl } : null);
 
     } catch (error: any) {
@@ -345,6 +338,106 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
   return (
     <div className="space-y-6">
+      {/* Created Post Display - Now at the top */}
+      {createdPost && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <FileText className="h-5 w-5" />
+              {t('pages:creator.post.created.title')}
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="ml-auto"
+                onClick={() => setCreatedPost(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold">{createdPost.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {createdPost.content.substring(0, 200)}...
+              </p>
+            </div>
+
+            {createdPost.hashtag && (
+              <Badge variant="secondary">{createdPost.hashtag}</Badge>
+            )}
+
+            {createdPost.customUrl && (
+              <div className="space-y-2">
+                <Label>{t('pages:creator.post.created.urls')}</Label>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{t('pages:creator.post.created.customUrl')}:</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyUrl(createdPost.customUrl!, t('pages:creator.post.created.customUrl'))}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="text-xs bg-gray-50 p-2 rounded break-all">
+                    {createdPost.customUrl}
+                  </div>
+                </div>
+
+                {createdPost.shortUrl && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{t('pages:creator.post.created.shortUrl')}:</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyUrl(createdPost.shortUrl!, t('pages:creator.post.created.shortUrl'))}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="text-xs bg-gray-50 p-2 rounded break-all">
+                      {createdPost.shortUrl}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  
+                 
+                </div>
+
+                {createdPost.qrCodeUrl && (
+                  <div className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <Label>{t('pages:creator.post.qr.title')}</Label>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyUrl(createdPost.qrCodeUrl!, t('pages:creator.post.qr.title'))}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="flex justify-center p-4 bg-white rounded border">
+                      <img 
+                        src={createdPost.qrCodeUrl} 
+                        alt={t('pages:creator.post.qr.alt')} 
+                        className="w-32 h-32"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Post Creation Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -428,7 +521,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 {postData.image && !isUploadingImage && (
                   <div className="space-y-2">
                     <div className="text-xs text-green-600">
-                      {t('post.image.success')}
+                      {t('pages:creator.post.image.success')}
                     </div>
                     <div className="relative">
                       <img 
@@ -727,70 +820,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         onLocationSelect={handleLocationSelect}
         initialData={activeTab === 'manual' ? postData.spatialInfo : aiData.spatialInfo}
       />
-
-      {/* Created Post Display */}
-      {createdPost && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {t('pages:creator.post.created.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold">{createdPost.title}</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {createdPost.content.substring(0, 200)}...
-              </p>
-            </div>
-
-            {createdPost.hashtag && (
-              <Badge variant="secondary">{createdPost.hashtag}</Badge>
-            )}
-
-            {createdPost.customUrl && (
-              <div className="space-y-2">
-                <Label>{t('pages:creator.post.created.urls')}</Label>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{t('pages:creator.post.created.customUrl')}:</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => copyUrl(createdPost.customUrl!, t('pages:creator.post.created.customUrl'))}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="text-xs bg-gray-50 p-2 rounded break-all">
-                    {createdPost.customUrl}
-                  </div>
-                </div>
-
-                {createdPost.shortUrl && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{t('pages:creator.post.created.shortUrl')}:</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copyUrl(createdPost.shortUrl!, t('pages:creator.post.created.shortUrl'))}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="text-xs bg-gray-50 p-2 rounded break-all">
-                      {createdPost.shortUrl}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

@@ -38,28 +38,17 @@ const caseCreationSchema = z.object({
   ] as const, {
     required_error: "Please select a court type"
   }),
-  // Client selection or onboarding
   client_option: z.enum(["existing", "new"]).default("existing"),
   existing_client_id: z.string().optional(),
-  // New client onboarding fields
   client_first_name: z.string().optional(),
   client_last_name: z.string().optional(),
   client_email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   client_phone: z.string().optional(),
   client_password: z.string().optional(),
-  // Case details
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   expected_duration: z.string().optional(),
   notes: z.string().max(500, "Notes must be less than 500 characters").optional()
 }).refine((data) => {
-  console.log('Validation refinement check:', {
-    client_option: data.client_option,
-    existing_client_id: data.existing_client_id,
-    client_first_name: data.client_first_name,
-    client_email: data.client_email,
-    client_password: data.client_password
-  })
-  
   if (data.client_option === "existing") {
     return !!data.existing_client_id;
   } else {
@@ -106,7 +95,6 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
     }
   })
 
-  // Fetch clients when dialog opens
   useEffect(() => {
     if (isOpen && profile?.account_type === 'lawyer') {
       fetchClients()
@@ -116,13 +104,13 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   const fetchClients = async () => {
     try {
       setLoadingClients(true)
-      const clientsData = await getClients({ limit: 100 }) // Get more clients
+      const clientsData = await getClients({ limit: 100 })
       setClients(clientsData)
     } catch (error: any) {
       console.error('Error fetching clients:', error)
       toast({
-        title: "Error",
-        description: "Failed to load clients",
+        title: t("common.error"),
+        description: t("pages:casesD.error.fetchingClients"),
         variant: "destructive"
       })
     } finally {
@@ -131,13 +119,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   }
 
   const onSubmit = async (data: CaseCreationData) => {
-    console.log('Form submission data:', data)
-    console.log('Form validation errors:', form.formState.errors)
-    
     if (!token) {
       toast({
-        title: "Authentication Error",
-        description: "Please log in to create a case",
+        title: t("auth.error.authentication"),
+        description: t("auth.error.loginRequired"),
         variant: "destructive"
       })
       return
@@ -149,7 +134,6 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
         ...data,
         lawyer_id: profile?._id,
         status: "open" as const,
-        // Clean up empty optional fields
         client_email: data.client_email || undefined,
         client_phone: data.client_phone || undefined,
         expected_duration: data.expected_duration || undefined,
@@ -160,8 +144,8 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       
       if (response.success) {
         toast({
-          title: "Success",
-          description: "Case created successfully",
+          title: t("pages:commona.success"),
+          description: t("pages:casesD.success.caseCreated"),
           variant: "default"
         })
         
@@ -169,13 +153,13 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
         setIsOpen(false)
         onCaseCreated?.()
       } else {
-        throw new Error("Failed to create case")
+        throw new Error(t("pages:casesD.error.createFailed"))
       }
     } catch (error: any) {
       console.error("Error creating case:", error)
       toast({
-        title: "Error",
-        description: error.message || "Failed to create case. Please try again.",
+        title: t("common.error"),
+        description: error.message || t("pages:casesD.error.tryAgain"),
         variant: "destructive"
       })
     } finally {
@@ -184,10 +168,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   }
 
   const priorityOptions = [
-    { value: "low", label: "Low", color: "bg-green-100 text-green-800" },
-    { value: "medium", label: "Medium", color: "bg-yellow-100 text-yellow-800" },
-    { value: "high", label: "High", color: "bg-orange-100 text-orange-800" },
-    { value: "urgent", label: "Urgent", color: "bg-red-100 text-red-800" }
+    { value: "low", label: t("pages:casesD.priority.low"), color: "bg-green-100 text-green-800" },
+    { value: "medium", label: t("pages:casesD.priority.medium"), color: "bg-yellow-100 text-yellow-800" },
+    { value: "high", label: t("pages:casesD.priority.high"), color: "bg-orange-100 text-orange-800" },
+    { value: "urgent", label: t("pages:casesD.priority.urgent"), color: "bg-red-100 text-red-800" }
   ]
 
   return (
@@ -195,28 +179,28 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       <DialogTrigger asChild>
         <Button className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          Create New Case
+          {t("pages:casesD.createNewCase")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Case</DialogTitle>
+          <DialogTitle>{t("pages:casesD.createNewCase")}</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Case Information</h3>
+              <h3 className="text-lg font-semibold">{t("pages:casesD.caseInformation")}</h3>
               
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Case Title *</FormLabel>
+                    <FormLabel>{t("pages:casesD.form.title")} *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter case title" {...field} />
+                      <Input placeholder={t("pages:casesD.form.titlePlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -228,10 +212,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Case Description *</FormLabel>
+                    <FormLabel>{t("pages:casesD.form.description")} *</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Provide a detailed description of the case"
+                        placeholder={t("pages:casesD.form.descriptionPlaceholder")}
                         className="min-h-[100px]"
                         {...field} 
                       />
@@ -247,19 +231,19 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="case_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Case Type *</FormLabel>
+                      <FormLabel>{t("pages:casesD.form.caseType")} *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select case type" />
+                            <SelectValue placeholder={t("pages:casesD.form.selectCaseType")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {Object.entries(caseTypeConfig).map(([key, config]) => (
                             <SelectItem key={key} value={key}>
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-x1 rounded-full text-xs ${config.color}`}>
-                                  {config.label}
+                                <span className={`px-2 py-1 rounded-full text-xs ${config.color}`}>
+                                  {t(`pages:casesD.caseTypes.${key}`)}
                                 </span>
                               </div>
                             </SelectItem>
@@ -276,11 +260,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="court_type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Court Type *</FormLabel>
+                      <FormLabel>{t("pages:casesD.form.courtType")} *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select court type" />
+                            <SelectValue placeholder={t("pages:casesD.form.selectCourtType")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -288,7 +272,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                             <SelectItem key={key} value={key}>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-xs ${config.color}`}>
-                                  {config.label}
+                                  {t(`pages:casesD.courtTypes.${key}`)}
                                 </span>
                               </div>
                             </SelectItem>
@@ -304,23 +288,23 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
 
             {/* Client Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Client Information</h3>
+              <h3 className="text-lg font-semibold">{t("pages:casesD.clientInformation")}</h3>
               
               <FormField
                 control={form.control}
                 name="client_option"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Client Selection *</FormLabel>
+                    <FormLabel>{t("pages:casesD.form.clientSelection")} *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select client option" />
+                          <SelectValue placeholder={t("pages:casesD.form.selectClientOption")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="existing">Select Existing Client</SelectItem>
-                        <SelectItem value="new">Create New Client</SelectItem>
+                        <SelectItem value="existing">{t("pages:casesD.form.existingClient")}</SelectItem>
+                        <SelectItem value="new">{t("pages:casesD.form.newClient")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -334,21 +318,21 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="existing_client_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Select Client *</FormLabel>
+                      <FormLabel>{t("pages:casesD.form.selectClient")} *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Choose existing client" />
+                            <SelectValue placeholder={t("pages:casesD.form.chooseClient")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {loadingClients ? (
                             <SelectItem value="" disabled>
-                              Loading clients...
+                              {t("cases.loadingClients")}
                             </SelectItem>
                           ) : clients.length === 0 ? (
                             <SelectItem value="" disabled>
-                              No clients found
+                              {t("cases.noClientsFound")}
                             </SelectItem>
                           ) : (
                             clients.map((client) => (
@@ -373,9 +357,9 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       name="client_first_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name *</FormLabel>
+                          <FormLabel>{t("cases.form.firstName")} *</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter first name" {...field} />
+                            <Input placeholder={t("pages:casesD.form.firstNamePlaceholder")} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -386,9 +370,9 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       name="client_last_name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Last Name</FormLabel>
+                          <FormLabel>{t("pages:casesD.form.lastName")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter last name" {...field} />
+                            <Input placeholder={t("pages:casesD.form.lastNamePlaceholder")} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -402,11 +386,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       name="client_email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Client Email *</FormLabel>
+                          <FormLabel>{t("pages:casesD.form.email")} *</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
-                              placeholder="client@example.com" 
+                              placeholder={t("pages:casesD.form.emailPlaceholder")} 
                               {...field} 
                             />
                           </FormControl>
@@ -420,11 +404,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       name="client_phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Client Phone</FormLabel>
+                          <FormLabel>{t("pages:casesD.form.phone")}</FormLabel>
                           <FormControl>
                             <Input 
                               type="tel" 
-                              placeholder="+1 (555) 123-4567" 
+                              placeholder={t("pages:casesD.form.phonePlaceholder")} 
                               {...field} 
                             />
                           </FormControl>
@@ -439,11 +423,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                     name="client_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password *</FormLabel>
+                        <FormLabel>{t("pages:casesD.form.password")} *</FormLabel>
                         <FormControl>
                           <Input 
                             type="password" 
-                            placeholder="Enter password for new client" 
+                            placeholder={t("pages:casesD.form.passwordPlaceholder")} 
                             {...field} 
                           />
                         </FormControl>
@@ -457,7 +441,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
 
             {/* Case Details */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Case Details</h3>
+              <h3 className="text-lg font-semibold">{t("pages:casesD.caseDetails")}</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -465,11 +449,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority Level</FormLabel>
+                      <FormLabel>{t("cases.form.priority")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
+                            <SelectValue placeholder={t("pages:casesD.form.selectPriority")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -494,10 +478,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   name="expected_duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expected Duration</FormLabel>
+                      <FormLabel>{t("pages:casesD.form.expectedDuration")}</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="e.g., 3-6 months" 
+                          placeholder={t("pages:casesD.form.durationPlaceholder")} 
                           {...field} 
                         />
                       </FormControl>
@@ -512,10 +496,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
+                    <FormLabel>{t("pages:casesD.form.notes")}</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Any additional information or special considerations"
+                        placeholder={t("pages:casesD.form.notesPlaceholder")}
                         className="min-h-[80px]"
                         {...field} 
                       />
@@ -534,27 +518,16 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                 onClick={() => setIsOpen(false)}
                 disabled={isLoading}
               >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  console.log('Current form values:', form.getValues())
-                  console.log('Form errors:', form.formState.errors)
-                  console.log('Form is valid:', form.formState.isValid)
-                }}
-              >
-                Debug Form
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {t("pages:casesD.creatingCase")}
                   </>
                 ) : (
-                  "Create Case"
+                  t("pages:casesD.createCase")
                 )}
               </Button>
             </div>

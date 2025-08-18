@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { QrCode, Download, Share2, Copy, ExternalLink } from 'lucide-react'
 import { Post } from '@/lib/api/posts-api'
 import QRCode from 'qrcode'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface QrCodeGeneratorProps {
   post: Post
@@ -15,6 +16,7 @@ interface QrCodeGeneratorProps {
 }
 
 export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [qrCodeData, setQrCodeData] = useState<string | null>(post.qrCodeUrl || null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -25,7 +27,6 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
       setIsGenerating(true)
       const postUrl = post.customUrl || `${window.location.origin}/${post.slug}`
       
-      // Generate QR code on frontend
       const qrCodeDataUrl = await QRCode.toDataURL(postUrl, {
         width: 256,
         margin: 2,
@@ -36,13 +37,13 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
       })
       
       setQrCodeData(qrCodeDataUrl)
-      toast.success('QR Code Generated', {
-        description: 'QR code has been generated successfully!'
+      toast.success(t('pages:qrCode.generated.title'), {
+        description: t('pages:qrCode.generated.description')
       })
     } catch (error: any) {
-      console.error('Error generating QR code:', error)
-      toast.error('Generation Error', {
-        description: 'An error occurred while generating the QR code'
+      console.error(t('pages:qrCode.errors.generation'), error)
+      toast.error(t('pages:qrCode.errors.generationTitle'), {
+        description: t('pages:qrCode.errors.generationDescription')
       })
     } finally {
       setIsGenerating(false)
@@ -55,7 +56,6 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
     try {
       setIsDownloading(true)
       
-      // Create a temporary link to download the QR code
       const link = document.createElement('a')
       link.href = qrCodeData
       link.download = `${post.slug}-qr-code.png`
@@ -63,13 +63,13 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
       link.click()
       document.body.removeChild(link)
 
-      toast.success('Download Started', {
-        description: 'QR code is being downloaded'
+      toast.success(t('pages:qrCode.download.started'), {
+        description: t('pages:qrCode.download.description')
       })
     } catch (error) {
-      console.error('Error downloading QR code:', error)
-      toast.error('Download Failed', {
-        description: 'Failed to download QR code'
+      console.error(t('pages:qrCode.errors.download'), error)
+      toast.error(t('pages:qrCode.errors.downloadTitle'), {
+        description: t('pages:qrCode.errors.downloadDescription')
       })
     } finally {
       setIsDownloading(false)
@@ -81,13 +81,13 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
     
     try {
       await navigator.clipboard.writeText(postUrl)
-      toast.success('URL Copied', {
-        description: 'Post URL has been copied to clipboard'
+      toast.success(t('pages:qrCode.copied.title'), {
+        description: t('pages:qrCode.copied.description')
       })
     } catch (error) {
-      console.error('Error copying URL:', error)
-      toast.error('Copy Failed', {
-        description: 'Failed to copy URL to clipboard'
+      console.error(t('pages:qrCode.errors.copy'), error)
+      toast.error(t('pages:qrCode.errors.copyTitle'), {
+        description: t('pages:qrCode.errors.copyDescription')
       })
     }
   }
@@ -103,10 +103,9 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
           url: postUrl,
         })
       } catch (error) {
-        console.error('Error sharing:', error)
+        console.error(t('pages:qrCode.errors.share'), error)
       }
     } else {
-      // Fallback to copying URL
       handleCopyPostUrl()
     }
   }
@@ -117,73 +116,73 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
-            <QrCode className="h-4 w-4 mr-2" />
-            QR Code
+          <Button variant="outline" size="sm" className="gap-2">
+            <QrCode className="h-4 w-4" />
+            {t('pages:qrCode.button')}
           </Button>
         )}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[30rem] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
-            QR Code for Post
+            {t('pages:qrCode.dialogTitle', { title: post.title })}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           {/* Post Info */}
-          <Card>
+          <Card className="border-gray-200">
             <CardContent className="pt-4">
-              <h3 className="font-medium text-sm mb-2">{post.title}</h3>
-              <p className="text-xs text-gray-600 mb-3">
+              <h3 className="font-medium text-sm mb-2 line-clamp-1">{post.title}</h3>
+              <p className="text-xs text-gray-600 mb-3 line-clamp-2">
                 {post.content.substring(0, 100)}...
               </p>
               <div className="flex items-center gap-2 text-xs text-blue-600">
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{postUrl}</span>
               </div>
             </CardContent>
           </Card>
 
           {/* QR Code Display */}
-          <Card>
+          <Card className="border-gray-200">
             <CardContent className="pt-4">
               {qrCodeData ? (
                 <div className="text-center space-y-4">
-                  <div className="bg-white p-4 rounded-lg border inline-block">
+                  <div className="bg-white p-4 rounded-lg border border-gray-200 inline-block">
                     <img 
                       src={qrCodeData} 
-                      alt="QR Code" 
+                      alt={t('pages:qrCode.altText')} 
                       className="w-48 h-48 mx-auto"
-                      style={{ imageRendering: 'pixelated' }}
+                      style={{ imageRendering: 'crisp-edges' }}
                     />
                   </div>
                   <p className="text-xs text-gray-600">
-                    Scan this QR code to open the post
+                    {t('pages:qrCode.scanInstructions')}
                   </p>
                 </div>
               ) : (
                 <div className="text-center py-8">
                   <QrCode className="h-16 w-16 mx-auto text-gray-300 mb-4" />
                   <p className="text-sm text-gray-600 mb-4">
-                    Generate a QR code for this post
+                    {t('pages:qrCode.generatePrompt')}
                   </p>
                   <Button 
                     onClick={handleGenerateQrCode}
                     disabled={isGenerating}
-                    className="w-full"
+                    className="w-full gap-2"
                   >
                     {isGenerating ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generating...
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                        {t('pages:qrCode.generating')}
                       </>
                     ) : (
                       <>
-                        <QrCode className="h-4 w-4 mr-2" />
-                        Generate QR Code
+                        <QrCode className="h-4 w-4" />
+                        {t('pages:qrCode.generateButton')}
                       </>
                     )}
                   </Button>
@@ -194,21 +193,21 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
 
           {/* Action Buttons */}
           {qrCodeData && (
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button 
                 onClick={handleDownloadQrCode}
                 disabled={isDownloading}
-                className="flex-1"
+                className="gap-2"
               >
                 {isDownloading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Downloading...
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    {t('pages:qrCode.downloading')}
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
+                    <Download className="h-4 w-4" />
+                    {t('pages:qrCode.downloadButton')}
                   </>
                 )}
               </Button>
@@ -216,32 +215,27 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
               <Button 
                 variant="outline" 
                 onClick={handleCopyPostUrl}
-                className="flex-1"
+                className="gap-2"
               >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy URL
+                <Copy className="h-4 w-4" />
+                {t('pages:qrCode.copyButton')}
               </Button>
               
-              <Button 
-                variant="outline" 
-                onClick={handleSharePost}
-                className="flex-1"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+              
             </div>
           )}
 
           {/* Instructions */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-4">
-              <h4 className="font-medium text-sm mb-2 text-blue-800">How to use:</h4>
+              <h4 className="font-medium text-sm mb-2 text-blue-800">
+                {t('pages:qrCode.usage.title')}
+              </h4>
               <ul className="text-xs text-blue-700 space-y-1">
-                <li>• Generate a QR code for easy sharing</li>
-                <li>• Download the QR code as PNG image</li>
-                <li>• Anyone can scan to open your post</li>
-                <li>• Perfect for business cards, flyers, or presentations</li>
+                <li>• {t('pages:qrCode.usage.point1')}</li>
+                <li>• {t('pages:qrCode.usage.point2')}</li>
+                <li>• {t('pages:qrCode.usage.point3')}</li>
+                <li>• {t('pages:qrCode.usage.point4')}</li>
               </ul>
             </CardContent>
           </Card>

@@ -26,12 +26,12 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const translateEmbeddedText = (text: string) => {
     if (!text) return text
     return text
-      .replace(/Status:/gi, t("pages:caseDetails.statusLabel"))
-      .replace(/\bapproved\b/gi, t("pages:caseDetails.status.approved"))
-      .replace(/\bpending\b/gi, t("pages:caseDetails.status.pending"))
-      .replace(/\brejected\b/gi, t("pages:caseDetails.status.rejected"))
-      .replace(/Created by:/gi, t("pages:caseDetails.createdByLabel"))
-      .replace(/Created at:/gi, t("pages:caseDetails.createdAtLabel"))
+      .replace(/Status:/gi, t("pages:caseDetailsq.statusLabel"))
+      .replace(/\bapproved\b/gi, t("pages:caseDetailsq.status.approved"))
+      .replace(/\bpending\b/gi, t("pages:caseDetailsq.status.pending"))
+      .replace(/\brejected\b/gi, t("pages:caseDetailsq.status.rejected"))
+      .replace(/Created by:/gi, t("pages:caseDetailsq.createdByLabel"))
+      .replace(/Created at:/gi, t("pages:caseDetailsq.createdAtLabel"))
   }
 
   const handleStatusUpdate = async (newStatus: CaseStatus) => {
@@ -39,24 +39,24 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       await updateCaseStatus(caseState._id as string, newStatus)
       setCaseState({ ...caseState, status: newStatus })
       toast({
-        title: t("pages:caseDetails.statusUpdated"),
-        description: t("pages:caseDetails.caseHasBeen", {
-          status: t(`pages:caseDetails.status.${newStatus}`)
-        })
+        title: t("pages:caseDetailsq.statusUpdated"),
+        description: t("pages:caseDetailsq.caseHasBeen", {
+          status: t(`pages:caseDetailsq.status.${newStatus}`),
+        }),
       })
     } catch (error) {
       toast({
-        title: t("pages:caseDetails.error"),
-        description: t("pages:caseDetails.failedToUpdate"),
-        variant: "destructive"
+        title: t("pages:caseDetailsq.error"),
+        description: t("pages:caseDetailsq.failedToUpdate"),
+        variant: "destructive",
       })
-    } 
+    }
   }
 
   const getStatusBadge = (status: string) => {
     const statusKey = status.toLowerCase()
     let colorClasses = ""
-    
+
     // Judgment Outcomes (판결 종국)
     if (["full_win", "partial_win"].includes(statusKey)) {
       colorClasses = "bg-green-50 text-green-600 border-green-200"
@@ -87,218 +87,262 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     )
   }
 
-
-  console.log(caseState,"caseStatecaseStatecaseStatecaseStatecaseState")
-
   const getStatusLabel = (status: string) => {
     const statusLabels: Record<string, string> = {
       // Judgment Outcomes (판결 종국)
-      "full_win": "전부 승소 (Full Win)",
-      "full_loss": "전부 패소 (Full Loss)",
-      "partial_win": "부분 승소 (Partial Win)", 
-      "partial_loss": "부분 패소 (Partial Loss)",
-      "dismissal": "기각 (Dismissal)",
-      "rejection": "각하 (Rejection)",
+      full_win: t("pages:caseDetailsq.status.full_win"),
+      full_loss: t("pages:caseDetailsq.status.full_loss"),
+      partial_win: t("pages:caseDetailsq.status.partial_win"),
+      partial_loss: t("pages:caseDetailsq.status.partial_loss"),
+      dismissal: t("pages:caseDetailsq.status.dismissal"),
+      rejection: t("pages:caseDetailsq.status.rejection"),
       // Non-Judgment Outcomes (판결 외 종국)
-      "withdrawal": "취하 (Withdrawal)",
-      "mediation": "조정 (Mediation)",
-      "settlement": "화해 (Settlement)",
-      "trial_cancellation": "공판취소 (Trial Cancellation)",
-      "suspension": "중지 (Suspension)",
-      "closure": "종결 (Closure)",
+      withdrawal: t("pages:caseDetailsq.status.withdrawal"),
+      mediation: t("pages:caseDetailsq.status.mediation"),
+      settlement: t("pages:caseDetailsq.status.settlement"),
+      trial_cancellation: t("pages:caseDetailsq.status.trial_cancellation"),
+      suspension: t("pages:caseDetailsq.status.suspension"),
+      closure: t("pages:caseDetailsq.status.closure"),
       // Active case statuses
-      "in_progress": "진행 중 (In Progress)",
-      "pending": "대기 중 (Pending)"
+      in_progress: t("pages:caseDetailqs.status.in_progress"),
+      pending: t("pages:caseDetailsq.status.pending"),
     }
-    return statusLabels[status] || status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+    return statusLabels[status] || status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
   }
 
   const getStatusDescription = (status: string) => {
     const descriptions: Record<string, string> = {
       // Judgment Outcomes
-      "full_win": "Complete victory in court proceedings",
-      "full_loss": "Complete loss in court proceedings", 
-      "partial_win": "Partial victory with some claims granted",
-      "partial_loss": "Partial loss with some claims denied",
-      "dismissal": "Case dismissed by court",
-      "rejection": "Case rejected without merit review",
+      full_win: t("pages:caseDetailsq.statusDescriptions.full_win"),
+      full_loss: t("pages:caseDetailsq.statusDescriptions.full_loss"),
+      partial_win: t("pages:caseDetailsq.statusDescriptions.partial_win"),
+      partial_loss: t("pages:caseDetailsq.statusDescriptions.partial_loss"),
+      dismissal: t("pages:caseDetailsq.statusDescriptions.dismissal"),
+      rejection: t("pages:caseDetailsq.statusDescriptions.rejection"),
       // Non-Judgment Outcomes
-      "withdrawal": "Case withdrawn by plaintiff",
-      "mediation": "Resolved through court mediation",
-      "settlement": "Settled out of court",
-      "trial_cancellation": "Trial cancelled by court",
-      "suspension": "Case proceedings suspended",
-      "closure": "Case formally closed",
+      withdrawal: t("pages:caseDetailsq.statusDescriptions.withdrawal"),
+      mediation: t("pages:caseDetailsq.statusDescriptions.mediation"),
+      settlement: t("pages:caseDetailsq.statusDescriptions.settlement"),
+      trial_cancellation: t("pages:caseDetailsq.statusDescriptions.trial_cancellation"),
+      suspension: t("pages:caseDetailsq.statusDescriptions.suspension"),
+      closure: t("pages:caseDetailsq.statusDescriptions.closure"),
       // Active statuses
-      "in_progress": "Case is actively being processed",
-      "pending": "Case is waiting to begin",
-      "open": "Case is open",
+      in_progress: t("pages:caseDetailsq.statusDescriptions.in_progress"),
+      pending: t("pages:caseDetailsq.statusDescriptions.pending"),
+      open: t("pages:caseDetailsq.statusDescriptions.open"),
     }
-    return descriptions[status.toLowerCase()] || "Status information not available"
+    return descriptions[status.toLowerCase()] || t("pages:caseDetailsq.statusDescriptions.notAvailable")
   }
 
   return (
     <div className="space-y-6 px-4 md:px-0">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mt-10">
-        <h1 className="text-2xl font-bold">{t("pages:caseDetails.Ctitle")}</h1>
+        <h1 className="text-2xl font-bold">{t("pages:caseDetailsq.title")}</h1>
         <Button variant="outline" onClick={() => router.back()}>
-          {t("pages:caseDetails.backToCases")}
+          {t("pages:caseDetailsq.backToCases")}
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <CardTitle className="text-lg sm:text-xl break-words w-full sm:w-auto">
-            {t("pages:caseDetails.caseNumberWithId", { id: caseState._id })}
-          </CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">{t("pages:caseDetailsq.caseNumber")}</p>
+                <p className="text-lg font-bold text-blue-900 font-mono">{caseState.case_number}</p>
+              </div>
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">#</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        
-        </CardHeader>
+        <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">{t("pages:caseDetailsq.statuse")}</p>
+                <div className="mt-1">{getStatusBadge(caseState.status)}</div>
+              </div>
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">✓</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">{t("pages:caseDetailsq.courtType")}</p>
+                <p className="text-sm font-semibold text-purple-900">
+                  {caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">⚖</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">{t("pages:caseDetailsq.caseType")}</p>
+                <p className="text-sm font-semibold text-orange-900">
+                  {caseState.case_type ? t(`pages:cases.caseTypes.${caseState.case_type}`) : t("common:na")}
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">📋</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Card 1: Basic Information */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              {t("pages:caseDetailsq.basicInfo")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.caseNumber")}
-              </h3>
-              <p className="text-lg font-medium font-mono">{caseState.case_number}</p>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.caseTitle")}</h3>
+              <p className="text-base font-medium mt-1">{caseState.title}</p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.caseTitle")}
-              </h3>
-              <p className="text-lg font-medium">{caseState.title}</p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.client")}
-              </h3>
-              <p className="text-lg font-medium">
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.client")}</h3>
+              <p className="text-base font-medium mt-1">
                 {caseState.client_id
                   ? `${caseState.client_id.first_name} ${caseState.client_id.last_name || ""}`.trim()
-                  : caseState.clientName || t("pages:caseDetails.na")}
+                  : caseState.clientName || t("pages:commonl:na")}
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.lawyer")}
-              </h3>
-              <p className="text-lg font-medium">
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.lawyer")}</h3>
+              <p className="text-base font-medium mt-1">
                 {caseState.lawyer_id
                   ? `${caseState.lawyer_id.first_name} ${caseState.lawyer_id.last_name || ""}`.trim()
-                  : t("pages:caseDetails.na")}
+                  : t("pages:commonl:na")}
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.created")}
-              </h3>
-              <p>{formatDate(caseState.created_at)}</p>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.created")}</h3>
+              <p className="mt-1">{formatDate(caseState.created_at)}</p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.lastUpdated")}
-              </h3>
-              <p>{formatDate(caseState.updated_at)}</p>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.lastUpdated")}</h3>
+              <p className="mt-1">{formatDate(caseState.updated_at)}</p>
             </div>
 
-            {/* Case Type */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                Case Type
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700 border border-blue-200">
-                  {caseState.case_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            {/* Court Type */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                Court Type
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-sm bg-purple-50 text-purple-700 border border-purple-200">
-                  {caseState.court_type?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            {/* Enhanced Case Status */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                Case Status
-              </h3>
-              <div className="flex items-center gap-2">
-                {getStatusBadge(caseState.status)}
-                <span className="text-sm text-gray-600">
-                  {getStatusDescription(caseState.status)}
-                </span>
-              </div>
-            </div>
-
-            {/* Added: Created By */}
             {caseState.createdBy && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
-                  {t("pages:caseDetails.createdByLabel", "Created by")}
+                  {t("pages:caseDetailsq.createdByLabel")}
                 </h3>
-                <p>{caseState.createdBy}</p>
+                <p className="mt-1">{caseState.createdBy}</p>
               </div>
             )}
 
-            {/* Added: Created At */}
             {caseState.createdAt && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500">
-                  {t("pages:caseDetails.createdAtLabel", "Created at")}
+                  {t("pages:caseDetailsq.createdAtLabel")}
                 </h3>
-                <p>{formatDate(caseState.createdAt)}</p>
+                <p className="mt-1">{formatDate(caseState.createdAt)}</p>
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          {caseState.description && (
+        {/* Card 2: Case Details & Status */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              {t("pages:caseDetailsq.caseDetailsAndStatus")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.description")}
-              </h3>
-              <p className="mt-1">{translateEmbeddedText(caseState.description)}</p>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.caseStatus")}</h3>
+              <div className="flex flex-col gap-2 mt-1">
+                {getStatusBadge(caseState.status)}
+                <span className="text-sm text-gray-600">{getStatusDescription(caseState.status)}</span>
+              </div>
             </div>
-          )}
 
-          {caseState.summary && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.summary")}
-              </h3>
-              <p className="mt-1">{translateEmbeddedText(caseState.summary)}</p>
-            </div>
-          )}
+            {caseState.description && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.description")}</h3>
+                <p className="mt-1 text-sm leading-relaxed">{translateEmbeddedText(caseState.description)}</p>
+              </div>
+            )}
 
-          {caseState.key_points?.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">
-                {t("pages:caseDetails.keyPoints")}
-              </h3>
-              <ul className="mt-1 list-disc list-inside space-y-1">
-                {caseState.key_points.map((point: string, index: number) => (
-                  <li key={index} className="text-sm">
-                    {translateEmbeddedText(point)}
-                  </li>
-                ))}
-              </ul>
+            {caseState.summary && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.summary")}</h3>
+                <p className="mt-1 text-sm leading-relaxed">{translateEmbeddedText(caseState.summary)}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Key Points & Additional Info */}
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+              {t("pages:caseDetailsq.keyPointsAndDetails")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {caseState.key_points?.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.keyPoints")}</h3>
+                <ul className="mt-2 space-y-2">
+                  {caseState.key_points.map((point: string, index: number) => (
+                    <li key={index} className="text-sm flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0"></span>
+                      <span className="leading-relaxed">{translateEmbeddedText(point)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-medium text-gray-500 mb-3">{t("pages:caseDetailsq.caseClassification")}</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{t("pages:caseDetailsq.caseType")}:</span>
+                  <span className="px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
+          {caseState.case_type ? t(`pages:cases.caseTypes.${caseState.case_type}`) : t("common:na")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{t("pages:caseDetailsq.courtType")}:</span>
+                  <span className="px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
+{caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}                  </span>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Case Documents Section */}
       <CaseDocuments caseId={caseState._id} caseTitle={caseState.title} />

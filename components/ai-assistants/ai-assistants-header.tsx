@@ -8,12 +8,12 @@ export default  function AIAssistantsHeader() {
 
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-8">
       <h1 className="text-2xl font-bold tracking-tight">
-       {getGreeting()}
+       {/* {getGreeting()} */}
 
       </h1>
-      <h2 className="text-xl font-semibold">AI-Assistants</h2>
+      {/* <h2 className="text-xl font-semibold">AI-Assistants</h2> */}
     </div>
   )
 }

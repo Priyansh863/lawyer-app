@@ -73,14 +73,14 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       if (response.success && response.documents) {
         setDocuments(response.documents as unknown as CaseDocument[])
       } else {
-        console.error('Failed to fetch case documents:', response.message)
+        console.error(t("pages:caseDocuments.errors.fetchFailed"), response.message)
         setDocuments([])
       }
     } catch (error) {
-      console.error('Error fetching case documents:', error)
+      console.error(t("pages:caseDocuments.errors.fetchError"), error)
       toast({
-        title: "Error",
-        description: "Failed to load case documents",
+        title: t("common:error"),
+        description: t("pages:caseDocuments.errors.loadFailed"),
         variant: "destructive"
       })
       setDocuments([])
@@ -94,8 +94,8 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       window.open(doc.link, '_blank')
     } else {
       toast({
-        title: "Error",
-        description: "Document link not available",
+        title: t("common:error"),
+        description: t("pages:caseDocuments.errors.noDocumentLink"),
         variant: "destructive"
       })
     }
@@ -104,8 +104,8 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
   const handleDownloadSummary = async (doc: CaseDocument) => {
     if (!doc.summary) {
       toast({
-        title: "No Summary",
-        description: "This document doesn't have a summary yet",
+        title: t("pages:caseDocuments.noSummary"),
+        description: t("pages:caseDocuments.noSummaryDescription"),
         variant: "destructive"
       })
       return
@@ -115,14 +115,14 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       setDownloadingSummaryId(doc._id)
       await downloadDocumentSummary(doc._id, doc.document_name, doc.file_size.toString())
       toast({
-        title: "Success",
-        description: "Document summary downloaded successfully"
+        title: t("common:success"),
+        description: t("pages:caseDocuments.summaryDownloaded")
       })
     } catch (error) {
-      console.error('Error downloading summary:', error)
+      console.error(t("pages:caseDocuments.errors.summaryDownloadError"), error)
       toast({
-        title: "Error",
-        description: "Failed to download document summary",
+        title: t("common:error"),
+        description: t("pages:caseDocuments.errors.summaryDownloadFailed"),
         variant: "destructive"
       })
     } finally {
@@ -131,7 +131,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
   }
 
   const handleDeleteDocument = async (doc: CaseDocument) => {
-    if (!confirm(`Are you sure you want to delete "${doc.document_name}"?`)) {
+    if (!confirm(t("pages:caseDocuments.confirmDelete", { documentName: doc.document_name }))) {
       return
     }
 
@@ -139,18 +139,17 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       setDeletingId(doc._id)
       await deleteDocument(doc._id)
       
-      // Remove document from local state
       setDocuments(documents.filter(d => d._id !== doc._id))
       
       toast({
-        title: "Success",
-        description: "Document deleted successfully"
+        title: t("common:success"),
+        description: t("pages:caseDocuments.documentDeleted")
       })
     } catch (error) {
-      console.error('Error deleting document:', error)
+      console.error(t("pages:caseDocuments.errors.deleteError"), error)
       toast({
-        title: "Error",
-        description: "Failed to delete document",
+        title: t("common:error"),
+        description: t("pages:caseDocuments.errors.deleteFailed"),
         variant: "destructive"
       })
     } finally {
@@ -178,7 +177,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
 
     return (
       <Badge variant="outline" className={colorClasses}>
-        {status}
+        {t(`pages:caseDocuments.status.${statusLower}`) || status}
       </Badge>
     )
   }
@@ -203,7 +202,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
 
     return (
       <Badge variant="outline" className={colorClasses}>
-        {privacy.replace('_', ' ')}
+        {t(`pages:caseDocuments.privacy.${privacyLower}`) || privacy.replace('_', ' ')}
       </Badge>
     )
   }
@@ -214,14 +213,14 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Case Documents
+            {t("pages:caseDocuments.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500">Loading documents...</p>
+              <p className="mt-2 text-sm text-gray-500">{t("pages:caseDocuments.loading")}</p>
             </div>
           </div>
         </CardContent>
@@ -234,9 +233,9 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Case Documents
+          {t("pages:caseDocuments.title")}
           <Badge variant="secondary" className="ml-auto">
-            {documents.length} {documents.length === 1 ? 'document' : 'documents'}
+            {documents.length} {t(`pages:caseDocuments.${documents.length === 1 ? 'document' : 'documents'}`)}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -244,9 +243,9 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
         {documents.length === 0 ? (
           <div className="text-center py-8">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t("pages:caseDocuments.noDocuments.title")}</h3>
             <p className="text-gray-500">
-              No documents have been uploaded for this case yet.
+              {t("pages:caseDocuments.noDocuments.description")}
             </p>
           </div>
         ) : (
@@ -254,11 +253,11 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Document</TableHead>
-                  <TableHead>Uploaded By</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Privacy</TableHead>
-                  <TableHead>Size</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.document")}</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.uploadedBy")}</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.status")}</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.privacy")}</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.size")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -281,7 +280,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
                           {doc.uploaded_by.first_name} {doc.uploaded_by.last_name}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">
-                          {doc.uploaded_by.account_type}
+                          {t(`pages:caseDocuments.accountTypes.${doc.uploaded_by.account_type.toLowerCase()}`) || doc.uploaded_by.account_type}
                         </p>
                       </div>
                     </TableCell>

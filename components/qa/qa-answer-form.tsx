@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
 import endpoints from "@/constant/endpoints"
+import { useTranslation } from "@/hooks/useTranslation"
 
 interface QAItem {
   _id: string
@@ -48,7 +49,7 @@ export default function QAAnswerForm({
   const [qaItem, setQaItem] = useState<QAItem | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-
+  const { t } = useTranslation()
   const form = useForm<AnswerFormData>({
     resolver: zodResolver(answerSchema),
     defaultValues: {
@@ -151,20 +152,20 @@ export default function QAAnswerForm({
     return (
       <div className="flex justify-center items-center p-10">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        <span className="ml-2">Loading question...</span>
+        <span className="ml-2">{t("pages:qas.loading")}</span>
       </div>
     );
   }
 
   if (!qaItem) {
-    return <div className="text-center py-8 text-red-500">Question not found</div>
+    return <div className="text-center py-8 text-red-500">{t("pages:qas.questionNotFound")}</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="border rounded-md p-4 bg-gray-50">
         <div className="text-sm text-gray-500 mb-2">
-          {qaItem.userId?.first_name || "Anonymous"} {qaItem.userId?.last_name || ""} • {format(new Date(qaItem.createdAt), "MMM dd, yyyy")}
+          {qaItem.userId?.first_name} {qaItem.userId?.last_name || ""} • {format(new Date(qaItem.createdAt), "MMM dd, yyyy")}
         </div>
         <p className="font-medium font-heading">{qaItem.question}</p>
       </div>
@@ -182,9 +183,10 @@ export default function QAAnswerForm({
             name="answer"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Your Answer</FormLabel>
+                <FormLabel>{t("pages:qas.form.yourAnswer")}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Write your answer here..." className="min-h-[200px]" {...field} />
+                  <Textarea placeholder={t("pages:qas.form.answerPlaceholder")}
+ className="min-h-[200px]" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -198,18 +200,18 @@ export default function QAAnswerForm({
               onClick={() => router.push("/qa")}
               disabled={form.formState.isSubmitting}
             >
-              Cancel
+               {t("pages:qas.buttons.cancel")}
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting} className="flex items-center gap-2">
               {isEditing ? (
                 <>
                   <Save size={16} />
-                  {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+                  {form.formState.isSubmitting ? t("pages:qas.buttons.saving") : t("pages:qas.buttons.saveChanges")}
                 </>
               ) : (
                 <>
                   <Send size={16} />
-                  {form.formState.isSubmitting ? "Submitting..." : "Submit Answer"}
+                  {form.formState.isSubmitting ? t("pages:qas.buttons.submitting") : t("pages:qas.buttons.submit")}
                 </>
               )}
             </Button>

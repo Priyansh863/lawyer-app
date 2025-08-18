@@ -284,21 +284,23 @@ export default function DocumentsTable({
         return (
           <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800">
             <Lock className="h-3 w-3" />
-            Fully Private
+            {t('pages:documentT.table.privacy.fullyPrivate')}
           </Badge>
         )
       case 'private':
         return (
           <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800">
             <Lock className="h-3 w-3" />
-            {isShared ? 'Shared Private' : 'Private'}
+            {isShared 
+              ? t('pages:documentT.table.privacy.sharedPrivate') 
+              : t('pages:documentT.table.privacy.private')}
           </Badge>
         )
       default:
         return (
           <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800">
             <Globe className="h-3 w-3" />
-            Public
+            {t('pages:documentT.table.privacy.public')}
           </Badge>
         )
     }
@@ -330,10 +332,10 @@ export default function DocumentsTable({
     setDownloadingSummaryId(document._id)
     try {
       await downloadDocumentSummary(document._id, document.summary as string, document.document_name)
-      toast.success('Document summary downloaded successfully')
+      toast.success(t('pages:documentT.documents.summaryDownloadSuccess'))
     } catch (error: any) {
       console.error('Error downloading document summary:', error)
-      toast.error(error.message || 'Failed to download document summary')
+      toast.error(error.message || t('pages:documentT.documents.summaryDownloadError'))
     } finally {
       setDownloadingSummaryId(null)
     }
@@ -369,7 +371,7 @@ export default function DocumentsTable({
           <div className="flex-1 min-w-[200px] relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search documents..."
+              placeholder={t('pages:documentT.documents.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -378,17 +380,17 @@ export default function DocumentsTable({
           
           <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={t('pages:documentT.table.headers.status')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Processing">Processing</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Failed">Failed</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="all">{t('pages:documentT.table.filters.allStatuses')}</SelectItem>
+              <SelectItem value="Pending">{t('pages:documentT.status.pending')}</SelectItem>
+              <SelectItem value="Processing">{t('pages:documentT.status.processing')}</SelectItem>
+              <SelectItem value="Completed">{t('pages:documentT.status.completed')}</SelectItem>
+              <SelectItem value="Failed">{t('pages:documentT.status.failed')}</SelectItem>
+              <SelectItem value="Approved">{t('pages:documentT.status.approved')}</SelectItem>
+              <SelectItem value="Rejected">{t('pages:documentT.status.rejected')}</SelectItem>
+              <SelectItem value="Cancelled">{t('pages:documentT.status.cancelled')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -416,22 +418,22 @@ export default function DocumentsTable({
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Document
+                      {t('pages:documentT.table.headers.document')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
+                      {t('pages:documentT.table.headers.type')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      {t('pages:documentT.table.headers.status')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Privacy
+                      {t('pages:documentT.table.headers.privacy')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Uploaded
+                      {t('pages:documentT.table.headers.uploaded')}
                     </th>
                     <th className="relative px-6 py-3">
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">{t('pages:documentT.table.headers.actions')}</span>
                     </th>
                   </tr>
                 </thead>
@@ -468,7 +470,7 @@ export default function DocumentsTable({
                           return <IconComponent className={`h-4 w-4 ${color}`} />
                         })()}
                         <span className="text-sm text-gray-900">
-                          {doc.file_type || 'Unknown'}
+                          {doc.file_type || t('pages:documentT.general.unknown')}
                         </span>
                       </div>
                     </td>
@@ -495,7 +497,9 @@ export default function DocumentsTable({
                             disabled={downloadingSummaryId === doc._id}
                           >
                             <FileText className="h-4 w-4" />
-                            {downloadingSummaryId === doc._id ? 'Downloading Summary...' : 'Download Summary'}
+                            {downloadingSummaryId === doc._id 
+                              ? t('pages:documentT.documents.downloadingSummary')
+                              : t('pages:documentT.table.actions.downloadSummary')}
                           </DropdownMenuItem>
                           
                           { (doc.privacy === 'private') && (
@@ -504,13 +508,20 @@ export default function DocumentsTable({
                               className="flex items-center gap-2"
                             >
                               <Share2 className="h-4 w-4" />
-                              Share Document
+                              {t('pages:documentT.table.actions.shareDocument')}
                             </DropdownMenuItem>
                           )}
                           
                           <DropdownMenuSeparator />
                           
-                       
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(doc._id)}
+                            className="flex items-center gap-2 text-red-600"
+                            disabled={deletingId === doc._id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {t('pages:documentT.table.actions.delete')}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

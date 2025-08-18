@@ -9,6 +9,8 @@ import { formatBytes, formatDate } from "@/lib/utils"
 import { FileText, Download, Trash } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { FileMetadata } from "@/types/file"
+import { useTranslation } from "@/hooks/useTranslation"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +27,7 @@ interface ClientDocumentsProps {
 }
 
 export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
+  const { t } = useTranslation()
   const [files, setFiles] = useState<FileMetadata[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
@@ -88,7 +91,7 @@ console.log(selectedDocument,"selectedDocumentselectedDocumentselectedDocumentse
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Documents</h3>
+          <h3 className="text-lg font-medium">{t("pages:clientDetails.documents")}</h3>
         </div>
 
         {isLoading ? (

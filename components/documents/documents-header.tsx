@@ -33,16 +33,13 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
   })
   const user = useSelector((state: RootState) => state.auth.user)
   
-  // Fetch clients for lawyers and document statistics
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch clients for lawyers
       if (user?.account_type === 'lawyer') {
         const res = await getClientsAndLawyers()
         setClients(res.clients)
       }
       
-      // Fetch document statistics
       try {
         const response = await getDocuments()
         if (response.success && response.documents) {
@@ -69,7 +66,6 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
   const handleUploadSuccess = () => {
     setShowUploadDialog(false)
     onDocumentUploaded?.()
-    // Refresh stats after upload
     setTimeout(() => {
       const fetchStats = async () => {
         try {
@@ -100,14 +96,13 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Document Management</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t('pages:headDo.documents.header.title')}</h2>
           <p className="text-muted-foreground">
-            Upload, manage, and share your legal documents securely with enhanced privacy controls
+            {t('pages:headDo.documents.header.description')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Show secure link generator for lawyers */}
           {user?.account_type === 'lawyer' && (
             <SecureLinkGenerator clients={clients} />
           )}
@@ -117,7 +112,7 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
             className="bg-gray-900 hover:bg-gray-800"
           >
             <Upload className="mr-2 h-4 w-4" />
-            Upload Document
+            {t('pages:headDo.documents.upload.button')}
           </Button>
         </div>
       </div>
@@ -126,60 +121,65 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('pages:headDo.documents.stats.total')}
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{documentStats.total}</div>
             <p className="text-xs text-muted-foreground">
-              All uploaded documents
+              {t('pages:headDo.documents.stats.totalDescription')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Public Documents</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('pages:headDo.documents.stats.public')}
+            </CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{documentStats.public}</div>
             <p className="text-xs text-muted-foreground">
-              Visible to all users
+              {t('pages:headDo.documents.stats.publicDescription')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Private Documents</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('pages:headDo.documents.stats.private')}
+            </CardTitle>
             <Lock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{documentStats.private}</div>
             <p className="text-xs text-muted-foreground">
-              Restricted access
+              {t('pages:headDo.documents.stats.privateDescription')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processed</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('pages:headDo.documents.stats.processed')}
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{documentStats.processed}</div>
             <p className="text-xs text-muted-foreground">
-              Successfully processed
+              {t('pages:headDo.documents.stats.processedDescription')}
             </p>
           </CardContent>
         </Card>
       </div>
 
-
-
-      {/* Enhanced Document Upload Dialog */}
       <PDFUpload
         isOpen={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}

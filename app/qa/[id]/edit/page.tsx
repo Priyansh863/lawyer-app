@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function EditAnswerPage({ params }: { params: { id: string } }) {
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Edit Answer</h1>
+    <div className="space-y-6 mt-10">
+      {/* <h1 className="text-2xl font-semibold">Edit Answer</h1> */}
       <QAAnswerForm questionId={params.id} isEditing />
     </div>
   )

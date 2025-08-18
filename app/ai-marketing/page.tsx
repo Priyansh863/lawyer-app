@@ -946,7 +946,7 @@ export default function AIMarketingPage() {
                 {/* QR Code Display */}
                 {qrCodeUrl && (
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">QR Code:</Label>
+                    <Label className="text-sm font-medium">  {t('pages:posts.buttonLabel')}:</Label>
                     <div className="flex justify-center p-4 bg-white rounded-lg border">
                       <img src={qrCodeUrl || "/placeholder.svg"} alt="QR Code for post" className="w-32 h-32" />
                     </div>

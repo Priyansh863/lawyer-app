@@ -1,103 +1,532 @@
 {
-  "cases": {
-    "title": "Cases",
-    "newCase": "New Case",
-    "caseTitle": "Case Title",
-    "caseDescription": "Case Description",
-    "clientName": "Client Name",
-    "caseType": "Case Type",
-    "status": "Status",
-    "priority": "Priority",
-    "dateCreated": "Date Created",
-    "lastUpdated": "Last Updated",
-    "assignedLawyer": "Assigned Lawyer",
-    "caseNotes": "Case Notes",
-    "documents": "Documents",
-    "timeline": "Timeline",
-    "active": "Active",
-    "closed": "Closed",
-    "pending": "Pending",
-    "high": "High",
-    "medium": "Medium",
-    "low": "Low"
-  },
-  "caseDetails": {
-    "Ctitle": "Case Details", 
-    "backToCases": "Back to Cases",
-    "caseNumberWithId": "Case #{{id}}",
-    "approve": "Approve",
-    "reject": "Reject",
-    "caseNumber": "Case Number",
-    "caseTitle": "Case Title",
-    "client": "Client",
-    "lawyer": "Lawyer",
-    "created": "Created",
-    "lastUpdated": "Last Updated",
-    "description": "Description",
-    "summary": "Summary",
-    "keyPoints": "Key Points",
-    "na": "N/A",
-    "statusUpdated": "Status updated",
-    "caseHasBeen": "Case has been {{status}}",
+  "common": {
     "error": "Error",
-    "failedToUpdate": "Failed to update case status",
-    "statusLabel": "Status",
-    "createdByLabel": "Created by",
-    "createdAtLabel": "Created at",
+    "loading": "Loading...",
+    "search": "Search",
+    "searchPlaceholder": "Search cases...",
+    "filter": "Filter",
+    "allStatuses": "All statuses",
+    "actions": "Actions",
+    "viewDetails": "View Details"
+  },
+  "cases": {
+    "title": "Case Management",
+     "description": "Manage and track your legal cases",
+    "error": {
+      "fetchingCases": "Failed to fetch case list. Please try again."
+    },
+    "noCasesFound": "No registered cases found",
+    "updateStatus": "Update Status",
+     "newCase": "New Case",
     "status": {
-      "pending": "Pending",
-      "approved": "Approved",
-      "rejected": "Rejected"
-    }
+      "fullWin": "Full Win",
+      "fullLoss": "Full Loss",
+      "partialWin": "Partial Win",
+      "partialLoss": "Partial Loss",
+      "dismissal": "Dismissal",
+      "rejection": "Rejection",
+      "withdrawal": "Withdrawal",
+      "mediation": "Mediation",
+      "settlement": "Settlement",
+      "trialCancellation": "Trial Cancellation",
+      "suspension": "Suspension",
+      "closure": "Closure",
+      "inProgress": "In Progress",
+      "pending": "Pending"
+    },
+    "statusGroup": {
+      "active": "Active Cases",
+      "judgment": "Judgment Results",
+      "nonJudgment": "Non-Judgment Results"
+    },
+    "table": {
+      "caseNumber": "Case Number",
+      "title": "Case Title",
+      "client": "Client",
+      "lawyer": "Lawyer",
+      "caseType": "Case Type",
+      "courtType": "Court Type",
+      "status": "Status"
+    },
+   "caseTypes": {
+  "civil": "Civil Law",
+  "criminal": "Criminal Law",
+  "family": "Family Law",
+  "corporate": "Corporate Law",
+  "immigration": "Immigration Law",
+  "personal_injury": "Personal Injury",
+  "real_estate": "Real Estate Law",
+  "intellectual_property": "Intellectual Property",
+  "employment": "Employment Law",
+  "tax": "Tax Law",
+  "bankruptcy": "Bankruptcy Law",
+  "administrative": "Administrative Law",
+  "constitutional": "Constitutional Law",
+  "labor": "Labor Law",
+  "other": "Other"
+},
+   "courtTypes": {
+  "district_court": "District Court",
+  "high_court": "High Court",
+  "supreme_court": "Supreme Court",
+  "family_court": "Family Court",
+  "commercial_court": "Commercial Court",
+  "consumer_court": "Consumer Court",
+  "labor_court": "Labor Court",
+  "tax_court": "Tax Court",
+  "tribunal": "Tribunal",
+  "arbitration": "Arbitration",
+  "constitutional_court": "Constitutional Court",
+  "patent_court": "Patent Court",
+  "administrative_court": "Administrative Court",
+  "other": "Other"
+}
 
   },
-  "documentT":{
-  "documents": {
-    "loadFailed": "Failed to load documents",
-    "loadError": "Error loading documents",
-    "deleteConfirm": "Are you sure you want to delete this document?",
-    "deleteSuccess": "Document deleted successfully",
-    "deleteFailed": "Failed to delete document",
-    "deleteError": "Error deleting document",
-    "shareSuccess": "Document sharing updated successfully",
-    "searchPlaceholder": "Search documents...",
-    "filterStatus": "Filter by status",
-    "noDocuments": "No documents uploaded yet",
-    "noMatches": "No documents match your filters",
-    "uploadPrompt": "Upload your first document to get started with AI analysis.",
-    "adjustFilters": "Try adjusting your search terms or filters to find documents.",
-    "document": "Document"
+  
+  "commona": {
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "error": {
+      "authentication": "Authentication Error",
+      "loginRequired": "Please log in to continue"
+    }
+  },
+  "casesD": {
+    "createNewCase": "Create New Case",
+    "caseInformation": "Case Information",
+    "clientInformation": "Client Information",
+    "caseDetails": "Case Details",
+    "creatingCase": "Creating...",
+    "createCase": "Create Case",
+    "loadingClients": "Loading clients...",
+    "noClientsFound": "No clients found",
+    "error": {
+      "fetchingClients": "Failed to load clients",
+      "createFailed": "Failed to create case",
+      "tryAgain": "Failed to create case. Please try again."
+    },
+    "success": {
+      "caseCreated": "Case created successfully"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "form": {
+      "title": "Case Title",
+      "titlePlaceholder": "Enter case title",
+      "description": "Case Description",
+      "descriptionPlaceholder": "Provide a detailed description of the case",
+      "caseType": "Case Type",
+      "selectCaseType": "Select case type",
+      "courtType": "Court Type",
+      "selectCourtType": "Select court type",
+      "clientSelection": "Client Selection",
+      "selectClientOption": "Select client option",
+      "existingClient": "Select Existing Client",
+      "newClient": "Create New Client",
+      "selectClient": "Select Client",
+      "chooseClient": "Choose existing client",
+      "firstName": "First Name",
+      "firstNamePlaceholder": "Enter first name",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Enter last name",
+      "email": "Client Email",
+      "emailPlaceholder": "client@example.com",
+      "phone": "Client Phone",
+      "phonePlaceholder": "+1 (555) 123-4567",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password for new client",
+      "priority": "Priority Level",
+      "selectPriority": "Select priority",
+      "expectedDuration": "Expected Duration",
+      "durationPlaceholder": "e.g., 3-6 months",
+      "notes": "Additional Notes",
+      "notesPlaceholder": "Any additional information or special considerations"
+    },
+    "caseTypes": {
+      "civil": "Civil",
+      "criminal": "Criminal",
+      "family": "Family",
+      "corporate": "Corporate",
+      "immigration": "Immigration",
+      "personal_injury": "Personal Injury",
+      "real_estate": "Real Estate",
+      "intellectual_property": "Intellectual Property",
+      "employment": "Employment",
+      "tax": "Tax",
+      "bankruptcy": "Bankruptcy",
+      "other": "Other"
+    },
+    "courtTypes": {
+      "district_court": "District Court",
+      "high_court": "High Court",
+      "supreme_court": "Supreme Court",
+      "family_court": "Family Court",
+      "commercial_court": "Commercial Court",
+      "consumer_court": "Consumer Court",
+      "labor_court": "Labor Court",
+      "tax_court": "Tax Court",
+      "tribunal": "Tribunal",
+      "arbitration": "Arbitration",
+      "other": "Other"
+    }
+  },
+  "commonf": {
+  "cancel": "Cancel",
+  "error": "Error"
+},
+"casese": {
+  "updateStatus": {
+    "title": "Update Case Status",
+    "description": "Update the status of the case"
+  },
+  "statusUpdated": {
+    "title": "Status Updated",
+    "description": "The case status has been updated"
+  },
+  "statusLabel": "Case Status",
+  "selectStatusPlaceholder": "Select Case Status",
+  "updateStatusButton": "Update Status",
+  "error": {
+    "updateFailed": "Failed to update case status",
+    "tryAgain": "Failed to update case status. Please try again."
+  },
+  "statusGroup": {
+    "active": "Active Cases",
+    "judgment": "Judgment Results",
+    "nonJudgment": "Non-Judgment Results"
   },
   "status": {
-    "all": "All Status",
     "pending": "Pending",
-    "completed": "Completed",
-    "failed": "Failed",
-    "rejected": "Rejected",
-    "approved": "Approved",
-    "processing": "Processing",
-    "cancelled": "Cancelled",
-    "status": "Status"
-  },
-  "privacy": {
-    "public": "Public",
-    "private": "Private",
-    "shared": "Shared",
-    "privacy": "Privacy"
-  },
-  "general": {
-    "unknown": "Unknown",
-    "none": "None",
-    "date": "Date",
-    "actions": "Actions",
-    "loading": "Loading documents..."
-  },
-  "actions": {
-    "view": "View Document",
-    "shareWithLawyer": "Share with Lawyer",
-    "delete": "Delete"
+    "inProgress": "In Progress",
+    "fullWin": "Full Win",
+    "fullLoss": "Full Loss",
+    "partialWin": "Partial Win",
+    "partialLoss": "Partial Loss",
+    "dismissal": "Dismissal",
+    "rejection": "Rejection",
+    "withdrawal": "Withdrawal",
+    "mediation": "Mediation",
+    "settlement": "Settlement",
+    "trialCancellation": "Trial Cancellation",
+    "suspension": "Suspension",
+    "closure": "Closure"
   }
 },
+  "commons": {
+    "cancel": "Cancel"
+  },
+  "upload": {
+    "title": "Upload Document",
+    "dragDrop": "Drag and drop files here or click to select",
+    "supportedFormats": "Supports PDF, DOCX, TXT, Images (JPG, PNG), and Videos (MP4, AVI)",
+    "selectFile": "Select File",
+    "associateWithCase": "Associate with Case (Optional)",
+    "loadingCases": "Loading case list...",
+    "selectCasePlaceholder": "Select Case (Optional)",
+    "noCaseAssociation": "Do not associate with a case",
+    "caseAssociationNote": "This document will be associated with the selected case.",
+    "privacySettings": "Document Privacy",
+    "privacy": {
+      "public": "Public - visible to all authenticated users",
+      "private": "Private - visible only to you and shared users (can be associated with a case)",
+      "fullyPrivate": "Fully Private - only visible to you"
+    },
+    "aiProcessing": "Use AI Processing (automatic summary for text documents)",
+    "uploading": "Uploading document...",
+    "uploadButton": "Upload Document",
+    "uploadingButton": "Uploading...",
+    "success": {
+      "message": "Document uploaded successfully!"
+    },
+    "error": {
+      "unsupportedType": "Unsupported file type. Upload PDF, DOCX, TXT, Images, or Video files.",
+      "sizeExceeded": "File size exceeds {size}MB limit for {type} files",
+      "missingFileOrAuth": "Please select a file and ensure you are logged in",
+      "storageFailed": "Failed to upload file to storage",
+      "general": "Document upload failed"
+    },
+    "fileTypes": {
+      "pdf": "PDF",
+      "word": "Word",
+      "text": "Text",
+      "image": "Image",
+      "video": "Video"
+    }
+  },
+  "casesf": {
+    "error": {
+      "fetchingCases": "Failed to fetch case list"
+    }
+  },
+"clientDetails": {
+  "title": "Case Details",
+  "backToCases": "Back to Cases",
+  "caseNumber": "Case Number",
+  "statusa": "Status",
+  "courtType": "Court Type",
+  "caseType": "Case Type",
+  "basicInfo": "Basic Information",
+  "caseTitle": "Case Title",
+  "client": "Client",
+  "lawyer": "Lawyer",
+  "created": "Created At",
+  "lastUpdated": "Last Updated",
+  "createdByLabel": "Created By",
+  "createdAtLabel": "Created At",
+  "caseDetailsAndStatus": "Case Details and Status",
+  "caseStatus": "Case Status",
+  "description": "Description",
+  "summary": "Summary",
+  "keyPointsAndDetails": "Key Points and Details",
+  "keyPoints": "Key Points",
+  "caseClassification": "Case Classification",
+  "statusLabel": "Status:",
+  "statusUpdated": "Status Updated",
+  "caseHasBeen": "The case status has been changed to {status}",
+  "failedToUpdate": "Failed to update case status",
+
+  "backToClient": "Back to Clients",
+  "createChat": "Create Chat",
+  "chat": "Chat",
+  "scheduleMeeting": "Schedule Meeting",
+  "scheduleMeetingWith": "Schedule a meeting with {{name}}",
+  "meetingLink": "Meeting Link",
+  "meetingLinkPlaceholder": "Enter meeting link",
+  "cancel": "Cancel",
+  "scheduling": "Scheduling...",
+
+  "email": "Email",
+  "phone": "Phone Number",
+  "address": "Address",
+  "clientSince": "Client Since",
+  "lastContact": "Last Contact",
+  "activeCases": "Active Cases",
+  "cases": "Cases",
+  "documents": "Documents",
+  "notes": "Notes",
+  "error": "Error",
+  "pleaseEnterMeetingLink": "Please enter meeting link",
+  "pleaseLogin": "Please login to continue",
+  "success": "Success",
+  "meetingScheduled": "Meeting scheduled successfully",
+  "failedToScheduleMeeting": "Failed to schedule meeting",
+
+  "clientStatusUpdated": "Client status has been changed to {{status}}",
+  "failedToUpdateStatus": "Failed to update client status",
+  "notesUpdated": "Notes updated",
+  "clientNotesUpdated": "Client notes updated successfully",
+  "failedToUpdateNotes": "Failed to update client notes",
+  "QA": "Ask Question",
+  "backToLawyer": "Back to Lawyer",
+
+  "status": {
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "full_win": "Full Win",
+    "full_loss": "Full Loss",
+    "partial_win": "Partial Win",
+    "partial_loss": "Partial Loss",
+    "dismissal": "Dismissal",
+    "rejection": "Rejection",
+    "withdrawal": "Withdrawal",
+    "mediation": "Mediation",
+    "settlement": "Settlement",
+    "trial_cancellation": "Trial Cancellation",
+    "suspension": "Suspension",
+    "closure": "Closure",
+    "in_progress": "In Progress",
+    "pending": "Pending",
+    "active": "Active"
+  },
+
+  "clientDetails": "Client Details",
+
+  "statusDescriptions": {
+    "full_win": "Completely won in court proceedings",
+    "full_loss": "Completely lost in court proceedings",
+    "partial_win": "Partial win with some claims accepted",
+    "partial_loss": "Partial loss with some claims dismissed",
+    "dismissal": "Case dismissed by the court",
+    "rejection": "Case rejected without substantive review",
+    "withdrawal": "Case withdrawn by the plaintiff",
+    "mediation": "Resolved through court mediation",
+    "settlement": "Settled out of court",
+    "trial_cancellation": "Trial canceled by the court",
+    "suspension": "Case proceedings suspended",
+    "closure": "Case officially closed",
+    "in_progress": "Case is currently in progress",
+    "pending": "Case is pending start",
+    "open": "Case has been opened",
+    "notAvailable": "Status information not available"
+  }
+},
+"caseDetails": {
+  "Ctitle": "Case Details",
+  "backToCases": "Back to Case List",
+  "caseNumberWithId": "Case #{{id}}",
+  "approve": "Approve",
+  "reject": "Reject",
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "caseNumber": "Case Number",
+  "caseTitle": "Case Title",
+  "client": "Client",
+  "lawyer": "Lawyer",
+  "created": "Created",
+  "lastUpdated": "Last Updated",
+  "description": "Description",
+  "summary": "Summary",
+  "keyPoints": "Key Points",
+  "na": "N/A",
+  "statusUpdated": "Status has been updated",
+  "caseHasBeen": "Case has been {{status}}",
+  "error": "Error",
+  "failedToUpdate": "Failed to update case status",
+  "statusLabel": "Status",
+  "createdByLabel": "Created By",
+  "createdAtLabel": "Created At"
+},
+"caseDetailsq": {
+  "title": "Case Details",
+  "backToCases": "Back to Case List",
+  "caseNumber": "Case Number",
+  "statuse": "Status",
+  "courtType": "Court Type",
+  "caseType": "Case Type",
+  "basicInfo": "Basic Information",
+  "caseTitle": "Case Title",
+  "client": "Client",
+  "lawyer": "Lawyer",
+  "created": "Created",
+  "lastUpdated": "Last Updated",
+  "createdByLabel": "Created By",
+  "createdAtLabel": "Created At",
+  "caseDetailsAndStatus": "Case Details and Status",
+  "caseStatus": "Case Status",
+  "description": "Description",
+  "summary": "Summary",
+  "keyPointsAndDetails": "Key Points and Details",
+  "keyPoints": "Key Points",
+  "caseClassification": "Case Classification",
+  "statusLabel": "Status:",
+  "statusUpdated": "Status Updated",
+  "caseHasBeen": "Case status has been changed to {status}",
+  "error": "Error occurred",
+  "failedToUpdate": "Failed to update case status",
+  "status": {
+    "approved": "Approved",
+    "pending": "Pending",
+    "rejected": "Rejected",
+    "full_win": "Full Win",
+    "full_loss": "Full Loss",
+    "partial_win": "Partial Win",
+    "partial_loss": "Partial Loss",
+    "dismissal": "Dismissal",
+    "rejection": "Rejection",
+    "withdrawal": "Withdrawal",
+    "mediation": "Mediation",
+    "settlement": "Settlement",
+    "trial_cancellation": "Trial Cancellation",
+    "suspension": "Suspension",
+    "closure": "Closure",
+    "in_progress": "In Progress",
+    "open": "Open"
+  },
+  "statusDescriptions": {
+    "full_win": "Completely won in court proceedings",
+    "full_loss": "Completely lost in court proceedings",
+    "partial_win": "Partial win with some claims granted",
+    "partial_loss": "Partial loss with some claims dismissed",
+    "dismissal": "Case dismissed by the court",
+    "rejection": "Case rejected without substantive review",
+    "withdrawal": "Case withdrawn by the plaintiff",
+    "mediation": "Resolved through court mediation",
+    "settlement": "Settled outside court",
+    "trial_cancellation": "Trial cancelled by the court",
+    "suspension": "Case proceedings suspended",
+    "closure": "Case officially closed",
+    "in_progress": "Case is currently in progress",
+    "pending": "Case is waiting to start",
+    "open": "Case has been opened",
+    "notAvailable": "Status information not available"
+  }
+},
+"commonl": {
+  "na": "Not Available"
+},
+
+ "documentT": {
+      "documents": {
+        "loadFailed": "Failed to load documents",
+        "loadError": "An error occurred while loading documents",
+        "loading": "Loading documents...",
+        "noDocuments": "No documents available",
+        "noMatches": "No matching documents found",
+        "uploadPrompt": "Please upload a new document",
+        "adjustFilters": "Adjust filters or try a different search term",
+        "deleteConfirm": "Are you sure you want to delete this document? This action cannot be undone.",
+        "deleteSuccess": "Document deleted successfully",
+        "deleteFailed": "Failed to delete document",
+        "deleteError": "An error occurred while deleting the document",
+        "shareSuccess": "Document sharing updated successfully",
+        "searchPlaceholder": "Search documents...",
+        "summaryDownloadSuccess": "Document summary downloaded successfully",
+        "summaryDownloadError": "Failed to download document summary",
+        "downloadingSummary": "Downloading summary..."
+      },
+      "status": {
+        "pending": "Pending",
+        "completed": "Completed",
+        "failed": "Failed",
+        "rejected": "Rejected",
+        "approved": "Approved",
+        "processing": "Processing",
+        "cancelled": "Cancelled"
+      },
+      "general": {
+        "unknown": "Unknown",
+        "none": "None"
+      },
+      "table": {
+        "headers": {
+          "document": "Document",
+          "type": "Type",
+          "status": "Status",
+          "privacy": "Privacy",
+          "uploaded": "Uploaded",
+          "actions": "Actions"
+        },
+        "filters": {
+          "allStatuses": "All statuses",
+          "allTypes": "All types",
+          "allPrivacy": "All privacy"
+        },
+        "privacy": {
+          "public": "Public",
+          "private": "Private",
+          "sharedPrivate": "Shared Private",
+          "fullyPrivate": "Fully Private"
+        },
+        "actions": {
+          "downloadSummary": "Download Summary",
+          "shareDocument": "Share Document",
+          "view": "View",
+          "delete": "Delete"
+        }
+      }
+    },
   "secureLink": {
   "title": "Secure Document Upload Links",
   "description": "Generate password-protected links for clients to upload documents securely. Links expire after successful upload or when the time limit is reached.",
@@ -348,28 +777,161 @@
     }
   }
 },
-"questionA" :{
-  "qa": {
-    "loading": "Loading questions...",
-    "empty": "No questions found. Be the first to ask a question!",
-    "unanswered": "This question has not been answered yet.",
-    "status": {
-      "answered": "Answered",
-      "pending": "Pending"
+"caseDocuments": {
+      "title": "Case Documents",
+      "loading": "Loading documents...",
+      "noDocuments": {
+        "title": "No documents found",
+        "description": "No documents have been uploaded for this case yet."
+      },
+      "tableHeaders": {
+        "document": "Document",
+        "uploadedBy": "Uploaded By",
+        "status": "Status",
+        "privacy": "Privacy",
+        "size": "Size"
+      },
+      "status": {
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed"
+      },
+      "privacy": {
+        "public": "Public",
+        "private": "Private",
+        "fully_private": "Fully Private"
+      },
+      "accountTypes": {
+        "lawyer": "Lawyer",
+        "client": "Client",
+        "admin": "Admin",
+        "staff": "Staff"
+      },
+      "noSummary": "No Summary",
+      "noSummaryDescription": "This document doesn't have a summary yet",
+      "summaryDownloaded": "Document summary downloaded successfully",
+      "documentDeleted": "Document deleted successfully",
+      "confirmDelete": "Are you sure you want to delete \"{documentName}\"?",
+      "document": "document",
+      "documents": "documents",
+      "errors": {
+        "fetchFailed": "Failed to fetch case documents:",
+        "fetchError": "Error fetching case documents:",
+        "loadFailed": "Failed to load case documents",
+        "noDocumentLink": "Document link not available",
+        "summaryDownloadError": "Error downloading summary:",
+        "summaryDownloadFailed": "Failed to download document summary",
+        "deleteError": "Error deleting document:",
+        "deleteFailed": "Failed to delete document"
+      }
     },
-    "menu": {
-      "open": "Open menu",
-      "answer": "Answer",
-      "edit": "Edit Answer",
-      "delete": "Delete",
-      "deleting": "Deleting..."
+  "commonr": {
+    "error": "Error",
+    "success": "Success"
+  },
+"headDo":{
+  "documents": {
+    "header": {
+      "title": "Document Management",
+      "description": "Upload, manage, and share your legal documents securely with enhanced privacy controls"
     },
-    "errors": {
-      "fetchFailed": "Failed to load questions. Please try again later.",
-      "deleteFailed": "Failed to delete question. Please try again later."
+    "upload": {
+      "button": "Upload Document"
+    },
+    "stats": {
+      "total": "Total Documents",
+      "totalDescription": "All uploaded documents",
+      "public": "Public Documents",
+      "publicDescription": "Visible to all users",
+      "private": "Private Documents",
+      "privateDescription": "Restricted access",
+      "processed": "Processed",
+      "processedDescription": "Successfully processed"
     }
   }
 },
+"qrCode": {
+  "button": "QR Code",
+  "dialogTitle": "QR Code",
+  "altText": "Post QR Code",
+  "scanInstructions": "Scan this QR code to open the post",
+  "generatePrompt": "Generate a QR code for this post",
+  "generateButton": "Generate QR Code",
+  "generating": "Generating...",
+  "downloading": "Downloading...",
+  "downloadButton": "Download",
+  "copyButton": "Copy URL",
+  "shareButton": "Share Post",
+  "usage": {
+    "title": "How to use:",
+    "point1": "Generate a QR code for easy sharing",
+    "point2": "Download the QR code as a PNG image",
+    "point3": "Anyone can scan it to open the post",
+    "point4": "Perfect for business cards, flyers, or presentations"
+  },
+  "generated": {
+    "title": "QR Code Generated",
+    "description": "The QR code has been successfully generated!"
+  },
+  "download": {
+    "started": "Download Started",
+    "description": "The QR code is being downloaded"
+  },
+  "copied": {
+    "title": "URL Copied",
+    "description": "The post URL has been copied to clipboard"
+  },
+  "errors": {
+    "generation": "QR Code generation error:",
+    "generationTitle": "Generation Error",
+    "generationDescription": "An error occurred while generating the QR code",
+    "download": "QR Code download error:",
+    "downloadTitle": "Download Failed",
+    "downloadDescription": "Failed to download the QR code",
+    "copy": "URL copy error:",
+    "copyTitle": "Copy Failed",
+    "copyDescription": "Could not copy the URL to clipboard",
+    "share": "Share error:"
+  }
+},
+"signu": {
+  "signup": {
+    "title": "Create Account",
+    "have_account": "Already have an account?",
+    "sign_in": "Sign In",
+    "first_name": "First Name",
+    "first_name_placeholder": "Enter your first name",
+    "last_name": "Last Name",
+    "last_name_placeholder": "Enter your last name",
+    "email": "Email",
+    "email_placeholder": "Enter your email",
+    "password": "Password",
+    "password_placeholder": "Enter your password",
+    "account_type": "Account Type",
+    "account_type_placeholder": "Select account type",
+    "client": "Client",
+    "lawyer": "Lawyer",
+    "terms_agreement": "I agree to the Terms of Service, Privacy Policy, and User Agreement.",
+    "create_account": "Create Account",
+    "creating_account": "Creating Account...",
+    "recaptcha_notice": "This site is protected by reCAPTCHA and",
+    "google_policy_prefix": "Google",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "and": "and",
+    "apply": "apply",
+    "error": "Failed to create account. Please try again.",
+    "unexpected_error": "An unexpected error occurred. Please try again later."
+  },
+  "error": "Error",
+  "first_name_error": "First name must be at least 2 characters",
+  "last_name_error": "Last name must be at least 2 characters",
+  "email_error": "Please enter a valid email address",
+  "password_error": "Password must be at least 8 characters",
+  "account_type_error": "Please select an account type",
+  "terms_error": "You must agree to the terms"
+},
+
 "chatbox" :{
   "search": {
     "placeholder": "Search conversations..."
@@ -434,10 +996,61 @@
   "scheduleCall": "Schedule Call",
   "newCase": "New Case"
 },
+"qa": {
+  "title": "Questions & Answers",
+  "description": "Browse common questions and their answers about our services.",
+  "loading": "Loading questions...",
+  "empty": "No questions available",
+  "unanswered": "This question has not been answered yet",
+  "anonymous": "Anonymous",
+  "byUser": "{firstName} {lastName} • {date}",
+  "status": {
+    "answered": "Answered",
+    "pending": "Pending"
+  },
+  "menu": {
+    "open": "Open Menu",
+    "answer": "Write Answer",
+    "edit": "Edit Answer",
+    "delete": "Delete",
+    "deleting": "Deleting..."
+  },
+  "error": {
+    "fetchFailed": "Failed to load question list. Please try again later.",
+    "deleteFailed": "Failed to delete question. Please try again."
+  }
+},
+"qas": {
+  "loading": "Loading question...",
+  "questionNotFound": "Question not found",
+  "form": {
+    "yourAnswer": "Write your answer",
+    "answerPlaceholder": "Please write your answer..."
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "submitAnswer": "Submit answer",
+    "submitting": "Submitting..."
+  },
+  "errors": {
+    "tokenError": "Token retrieval error:",
+    "authenticationRequired": "Authentication is required",
+    "fetchError": "Error: {status}",
+    "loadFailed": "Failed to load question data",
+    "loadQuestionError": "Failed to load question:",
+    "submitError": "Error: {status}",
+    "saveAnswerError": "Failed to save answer:",
+    "saveFailed": "Failed to save your answer. Please try again."
+  }
+}
+,
 "posts" :{
   "postsContentTitle": "Posts & Content",
   "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
   "myPosts": "My Posts",
+  "buttonLabel": "QR Code",
   "createNew": "Create New",
   "loadingPosts": "Loading posts...",
   "noPostsFound": "No posts found",
@@ -570,49 +1183,7 @@
     "caseHistory": "Case History",
     "startChat": "Start Chat"
   },
-  "clientDetails": {
-    "clientDetails": "Client Details",
-    "backToClient": "Back to Clients",
-    "createChat": "Create Chat",
-    "chat": "Chat",
-    "scheduleMeeting": "Schedule Meeting",
-    "scheduleMeetingWith": "Schedule a meeting with {{name}}",
-    "meetingLink": "Meeting Link",
-    "meetingLinkPlaceholder": "Enter meeting link",
-    "cancel": "Cancel",
-    "QA": "QA",
-    "backToLawyer": "Back to Lawyer",
-    "scheduling": "Scheduling...",
-    "statusLabel": "Status",
-    "createdByLabel": "Created By",
-    "createdAtLabel": "Created At",
-    "email": "Email",
-    "phone": "Phone",
-    "address": "Address",
-    "clientSince": "Client Since",
-    "lastContact": "Last Contact",
-    "activeCases": "Active Cases",
-    "cases": "Cases",
-    "documents": "Documents",
-    "notes": "Notes",
-    "error": "Error",
-    "pleaseEnterMeetingLink": "Please enter a meeting link",
-    "pleaseLogin": "Please log in to continue",
-    "success": "Success",
-    "meetingScheduled": "Meeting scheduled successfully",
-    "failedToScheduleMeeting": "Failed to schedule meeting",
-    "statusUpdated": "Status Updated",
-    "clientStatusUpdated": "Client status updated to {{status}}",
-    "failedToUpdateStatus": "Failed to update client status",
-    "notesUpdated": "Notes Updated",
-    "clientNotesUpdated": "Client notes updated successfully",
-    "failedToUpdateNotes": "Failed to update client notes",
-    "status": {
-      "pending": "Pending",
-      "active": "Active",
-      "inactive": "Inactive"
-    }
-  },
+
   
   "creator": {
     "post": {
@@ -747,12 +1318,31 @@
       "failedToLoad": "Failed to load client cases",
       "caseNumber": "Case Number",
       "titleColumn": "Title",
-      "status": "Status",
+      "statusf": "Status",
       "description": "Description",
       "created": "Created",
       "updated": "Updated",
       "action": "Action",
       "noDescription": "No description",
+      "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "full_win": "Full Win",
+    "full_loss": "Full Loss",
+    "partial_win": "Partial Win",
+    "partial_loss": "Partial Loss",
+    "dismissal": "Dismissal",
+    "rejection": "Rejection",
+    "withdrawal": "Withdrawal",
+    "mediation": "Mediation",
+    "settlement": "Settlement",
+    "trial_cancellation": "Trial Cancelled",
+    "suspension": "Suspended",
+    "closure": "Closed",
+    "in_progress": "In Progress",
+    "open": "Open"
+  },
       "viewCase": "View Case"
     },
 "clientDocuments": {
@@ -903,31 +1493,7 @@
   "uploadImage": "Upload Image",
   "selectCategory": "Select Category"
 },
-  "qa": {
-    "title": "Q&A",
-    "description": "Answer user-submitted legal questions",
-    "addQuestion": "Add Question",
-    "newQuestion": "New Question",
-    "askQuestion": "Ask Question",
-    "questionTitle": "Question Title",
-    "questionDescription": "Question Description",
-    "category": "Category",
-    "tags": "Tags",
-    "submitQuestion": "Submit Question",
-    "answerQuestion": "Answer Question",
-    "yourAnswer": "Your Answer",
-    "submitAnswer": "Submit Answer",
-    "answered": "Answered",
-    "unanswered": "Unanswered",
-    "likes": "Likes",
-    "views": "Views",
-    "answers": "Answers",
-    "questionSubmitted": "Question submitted successfully",
-    "answerSubmitted": "Answer submitted successfully",
-    "searchQuestions": "Search questions...",
-    "filterByCategory": "Filter by category",
-    "allCategories": "All Categories"
-  },
+
   "aiAssistants": {
     "title": "AI Assistants",
     "fileProcessor": "File Processor",

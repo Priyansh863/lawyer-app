@@ -101,7 +101,7 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
               <TableRow>
                 <TableHead>{t("pages:clientCases.caseNumber")}</TableHead>
                 <TableHead>{t("pages:clientCases.titleColumn")}</TableHead>
-                <TableHead>{t("pages:clientCases.status")}</TableHead>
+                <TableHead>{t("pages:clientCases.statusf")}</TableHead>
                 <TableHead>{t("pages:clientCases.description")}</TableHead>
                 <TableHead>{t("pages:clientCases.created")}</TableHead>
                 <TableHead>{t("pages:clientCases.updated")}</TableHead>
