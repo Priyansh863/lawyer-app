@@ -2019,6 +2019,30 @@
     }
   }
 },
+  "auth": {
+    "emailValidation": "Please enter a valid email address",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "accountNotVerified": "Account not verified",
+    "verifyEmailOtp": "Please verify your email with the OTP sent to your inbox",
+    "loginSuccessful": "Login successful",
+    "welcomeBackUser": "Welcome back, {email}!",
+    "userDataNotFound": "User data not found",
+    "loginFailed": "Login failed",
+    "unexpectedError": "An unexpected error occurred",
+    "welcomeBack": "Welcome back",
+    "email": "Email",
+    "enterEmail": "Enter your email",
+    "password": "Password",
+    "enterPassword": "Enter your password",
+    "forgotPassword": "Forgot your password?",
+    "loggingIn": "Logging in...",
+    "logIn": "Log in",
+    "dontHaveAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "recaptchaNotice": "This site is protected by reCAPTCHA and the Google",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
   "tokens": {
     "title": "Token Management",
     "description": "Manage your AI tokens and purchase additional credits",
