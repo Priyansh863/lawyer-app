@@ -467,7 +467,7 @@ export default function TokenPage() {
             className="gap-2"
           >
             <ExternalLink className="h-4 w-4" />
-            View History
+            {t('pages:tok.token.viewh')}
           </Button>
           <Button onClick={() => fetchAllData()} variant="outline" className="gap-2">
             <RefreshCw className="h-4 w-4" />

@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, DollarSign, Save, Info } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/hooks/useTranslation'
+import { Trans } from 'next-i18next';
 
 interface LawyerChargesSettingsProps {
   userType?: string
@@ -19,6 +21,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
   const [saving, setSaving] = useState(false)
   const [currentCharges, setCurrentCharges] = useState<number>(0)
   const { toast } = useToast()
+  const { t } = useTranslation()
 
   useEffect(() => {
     fetchCurrentCharges()
@@ -53,8 +56,8 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
     } catch (error) {
       console.error('Error fetching charges:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to load current charges',
+        title: t('pages:commonb:error'),
+        description: t('pages:chargesSettings:toast.failedToLoad'),
         variant: 'destructive'
       })
     } finally {
@@ -65,8 +68,8 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
   const handleSaveCharges = async () => {
     if (!charges || isNaN(Number(charges)) || Number(charges) < 0) {
       toast({
-        title: 'Invalid Input',
-        description: 'Please enter a valid positive number for charges',
+        title: t('pages:chargesSettings:toast.invalidInput.title'),
+        description: t('pages:chargesSettings:toast.invalidInput.description'),
         variant: 'destructive'
       })
       return
@@ -94,17 +97,17 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
       if (response.ok) {
         setCurrentCharges(Number(charges))
         toast({
-          title: 'Success',
-          description: 'Consultation charges updated successfully',
+          title: t('pages:chargesSettings:toast.success.title'),
+          description: t('pages:chargesSettings:toast.success.description'),
         })
       } else {
-        throw new Error(data.message || 'Failed to update charges')
+        throw new Error(data.message || t('chargesSettings:toast.failedToUpdate'))
       }
     } catch (error: any) {
       console.error('Error updating charges:', error)
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update consultation charges',
+        title: t('pages:commonb:error'),
+        description: error.message || t('pages:chargesSettings:toast.failedToUpdate'),
         variant: 'destructive'
       })
     } finally {
@@ -118,7 +121,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Consultation Charges
+            {t('pages:chargesSettings:title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -135,24 +138,26 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Consultation Charges
+          {t('pages:chargesSettings:title')}
         </CardTitle>
         <CardDescription>
-          Set your consultation rate for chat and video consultations. Clients will be charged tokens based on this rate.
+          {t('pages:chargesSettings:description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Your current rate is <strong>{currentCharges} tokens per consultation</strong>. 
-            This applies to both chat and video consultations.
-          </AlertDescription>
+<Trans
+    i18nKey="pages:chargesSettings:currentRate"
+    values={{ charges: currentCharges }}
+    components={{ strong: <strong /> }}
+  />          </AlertDescription>
         </Alert>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="charges">Consultation Rate (Tokens)</Label>
+            <Label htmlFor="charges">{t('pages:chargesSettings:rateLabel')}</Label>
             <div className="relative">
               <Input
                 id="charges"
@@ -161,13 +166,13 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
                 step="1"
                 value={charges}
                 onChange={(e) => setCharges(e.target.value)}
-                placeholder="Enter your consultation rate in tokens"
+                placeholder={t('pages:chargesSettings:ratePlaceholder')}
                 className="pl-8"
               />
               <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              This rate will be charged for each consultation session (chat or video meeting)
+              {t('pages:chargesSettings:rateDescription')}
             </p>
           </div>
 
@@ -182,12 +187,12 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('pages:chargesSettings:saving') : t('pages:chargesSettings:saveButton')}
             </Button>
             
             {charges !== currentCharges.toString() && (
               <p className="text-sm text-muted-foreground">
-                You have unsaved changes
+                {t('pages:chargesSettings:unsavedChanges')}
               </p>
             )}
           </div>

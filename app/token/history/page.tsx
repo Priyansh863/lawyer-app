@@ -27,6 +27,7 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface TokenTransaction {
   _id: string
@@ -66,6 +67,7 @@ export default function TokenHistoryPage() {
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
   const router = useRouter()
+  const { t } = useTranslation()
 
   const getToken = () => {
     if (typeof window !== "undefined") {
@@ -102,8 +104,8 @@ export default function TokenHistoryPage() {
     } catch (error) {
       console.error('Error fetching token history:', error)
       toast({
-        title: 'Error',
-        description: 'Failed to load token transaction history',
+        title: t('pages:common:error'),
+        description: t('pages:tokenHistory:toast.failedToLoad'),
         variant: 'destructive'
       })
     } finally {
@@ -144,24 +146,48 @@ export default function TokenHistoryPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Completed</Badge>
+        return <Badge variant="default" className="bg-green-100 text-green-800">{t('pages:tokenHistory:status.completed')}</Badge>
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">{t('pages:tokenHistory:status.pending')}</Badge>
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>
+        return <Badge variant="destructive">{t('pages:tokenHistory:status.failed')}</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
 
+  const getTranslatedDescription = (description: string) => {
+    if (description.includes('Professional Pack Purchase')) {
+      return t('pages:tokenHistory:descriptions.professionalPack')
+    } else if (description.includes('Starter Pack Purchase')) {
+      return t('pages:tokenHistory:descriptions.starterPack')
+    } else if (description.includes('Enterprise Pack Purchase')) {
+      return t('pages:tokenHistory:descriptions.enterprisePack')
+    } else if (description.includes('Token Purchase')) {
+      return t('pages:tokenHistory:descriptions.tokenPurchase')
+    }
+    return description
+  }
+
+  const getTranslatedCategory = (category: string) => {
+    if (category.includes('Token Purchase')) {
+      return t('pages:tokenHistory:categories.tokenPurchase')
+    }
+    return category
+  }
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (error) {
+      return t('pages:tokenHistory:invalidDate')
+    }
   }
 
   if (loading && !history) {
@@ -170,7 +196,7 @@ export default function TokenHistoryPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading token history...</p>
+            <p className="text-muted-foreground">{t('pages:tokenHistory:loading')}</p>
           </div>
         </div>
       </div>
@@ -182,9 +208,9 @@ export default function TokenHistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Token Transaction History</h1>
+          <h1 className="text-3xl font-bold">{t('pages:tokenHistory:title')}</h1>
           <p className="text-muted-foreground">
-            View all your token purchases and usage history
+            {t('pages:tokenHistory:description')}
           </p>
         </div>
         <Button 
@@ -193,7 +219,7 @@ export default function TokenHistoryPage() {
           className="flex items-center gap-2"
         >
           <Coins className="h-4 w-4" />
-          Buy More Tokens
+          {t('pages:tokenHistory:buyMoreTokens')}
         </Button>
       </div>
 
@@ -202,34 +228,34 @@ export default function TokenHistoryPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('pages:tokenHistory:cards.currentBalance')}</CardTitle>
               <Coins className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{history.currentBalance}</div>
-              <p className="text-xs text-muted-foreground">Available tokens</p>
+              <p className="text-xs text-muted-foreground">{t('pages:tokenHistory:cards.availableTokens')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Purchased</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('pages:tokenHistory:cards.totalPurchased')}</CardTitle>
               <ArrowUpCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{history.totalPurchased}</div>
-              <p className="text-xs text-muted-foreground">Tokens bought</p>
+              <p className="text-xs text-muted-foreground">{t('pages:tokenHistory:cards.tokensBought')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Used</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('pages:tokenHistory:cards.totalUsed')}</CardTitle>
               <ArrowDownCircle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{history.totalUsed}</div>
-              <p className="text-xs text-muted-foreground">Tokens spent</p>
+              <p className="text-xs text-muted-foreground">{t('pages:tokenHistory:cards.tokensSpent')}</p>
             </CardContent>
           </Card>
         </div>
@@ -240,10 +266,10 @@ export default function TokenHistoryPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Transaction History
+            {t('pages:tokenHistory:transactionHistory.title')}
           </CardTitle>
           <CardDescription>
-            Detailed history of all your token transactions
+            {t('pages:tokenHistory:transactionHistory.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -253,12 +279,12 @@ export default function TokenHistoryPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.type')}</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.description')}</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.category')}</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.amount')}</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.status')}</TableHead>
+                      <TableHead>{t('pages:tokenHistory:tableHeaders.date')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -267,12 +293,12 @@ export default function TokenHistoryPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getTransactionIcon(transaction.type)}
-                            <span className="capitalize">{transaction.type}</span>
+                            <span className="capitalize">{t(`pages:tokenHistory:transactionTypes.${transaction.type}`)}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{transaction.description}</p>
+                            <p className="font-medium">{getTranslatedDescription(transaction.description)}</p>
                             {transaction.metadata?.lawyerName && (
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <User className="h-3 w-3" />
@@ -281,13 +307,13 @@ export default function TokenHistoryPage() {
                             )}
                             {transaction.metadata?.consultationType && (
                               <p className="text-xs text-muted-foreground capitalize">
-                                {transaction.metadata.consultationType} consultation
+                                {t(`pages:tokenHistory:consultationTypes.${transaction.metadata.consultationType}`)}
                               </p>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{transaction.category}</Badge>
+                          <Badge variant="outline">{getTranslatedCategory(transaction.category)}</Badge>
                         </TableCell>
                         <TableCell>
                           <span className={`font-medium ${getTransactionColor(transaction.type)}`}>
@@ -313,7 +339,11 @@ export default function TokenHistoryPage() {
               {history.pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, history.pagination.totalCount)} of {history.pagination.totalCount} transactions
+                    {t('pages:tokenHistory:pagination.showing', {
+                      start: ((currentPage - 1) * 20) + 1,
+                      end: Math.min(currentPage * 20, history.pagination.totalCount),
+                      total: history.pagination.totalCount
+                    })}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -323,10 +353,13 @@ export default function TokenHistoryPage() {
                       disabled={!history.pagination.hasPrev || loading}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      {t('pages:tokenHistory:pagination.previous')}
                     </Button>
                     <span className="text-sm">
-                      Page {currentPage} of {history.pagination.totalPages}
+                      {t('pages:tokenHistory:pagination.pageInfo', {
+                        current: currentPage,
+                        total: history.pagination.totalPages
+                      })}
                     </span>
                     <Button
                       variant="outline"
@@ -334,7 +367,7 @@ export default function TokenHistoryPage() {
                       onClick={() => fetchTokenHistory(currentPage + 1)}
                       disabled={!history.pagination.hasNext || loading}
                     >
-                      Next
+                      {t('pages:tokenHistory:pagination.next')}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -344,12 +377,12 @@ export default function TokenHistoryPage() {
           ) : (
             <div className="text-center py-12">
               <Coins className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No transactions yet</h3>
+              <h3 className="text-lg font-medium mb-2">{t('pages:tokenHistory:noTransactions.title')}</h3>
               <p className="text-muted-foreground mb-4">
-                Your token transaction history will appear here once you start using tokens.
+                {t('pages:tokenHistory:noTransactions.description')}
               </p>
               <Button onClick={() => router.push('/token')}>
-                Buy Your First Tokens
+                {t('pages:tokenHistory:noTransactions.button')}
               </Button>
             </div>
           )}

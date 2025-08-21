@@ -217,176 +217,182 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
       setFile(null)
       setFileTypeInfo(null)
       setUploadProgress(0)
+      setPrivacy('public')
+      setSelectedCaseId('')
       onClose()
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-       <DialogContent className="sm:max-w-md max-h-90 overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             {t("pages:upload.title")}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* File Upload Area */}
-          <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-              dragActive
-                ? 'border-primary bg-primary/5'
-                : file
-                ? 'border-green-300 bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            {file ? (
-              <div className="space-y-2">
-                {fileTypeInfo && (
-                  <div className="flex items-center justify-center">
-                    <fileTypeInfo.icon className="h-8 w-8 text-green-600" />
-                  </div>
-                )}
-                <div>
-                  <p className="font-medium text-green-700">{file.name}</p>
-                  <p className="text-sm text-green-600">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+        <div className="space-y-6 py-2">
+          {/* Fixed Top Section - File Upload Area */}
+          <div className="space-y-4">
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                dragActive
+                  ? 'border-primary bg-primary/5'
+                  : file
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              {file ? (
+                <div className="space-y-2">
                   {fileTypeInfo && (
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${fileTypeInfo.color}`}>
-                      {t(`pages:upload.fileTypes.${fileTypeInfo.label.toLowerCase()}`)}
-                    </span>
+                    <div className="flex items-center justify-center">
+                      <fileTypeInfo.icon className="h-8 w-8 text-green-600" />
+                    </div>
                   )}
+                  <div>
+                    <p className="font-medium text-green-700">{file.name}</p>
+                    <p className="text-sm text-green-600">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                    {fileTypeInfo && (
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${fileTypeInfo.color}`}>
+                        {t(`pages:upload.fileTypes.${fileTypeInfo.label.toLowerCase()}`)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {t("pages:upload.dragDrop")}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t("pages:upload.supportedFormats")}
-                  </p>
+              ) : (
+                <div className="space-y-2">
+                  <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      {t("pages:upload.dragDrop")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t("pages:upload.supportedFormats")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <Input
-              type="file"
-              accept=".pdf,.docx,.doc,.txt,.text,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.flv"
-              onChange={handleFileInputChange}
-              className="hidden"
-              id="file-upload"
-              disabled={isUploading}
-            />
-            
-            {!file && (
-              <Label
-                htmlFor="file-upload"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer mt-4"
-              >
-                {t("pages:upload.selectFile")}
+              <Input
+                type="file"
+                accept=".pdf,.docx,.doc,.txt,.text,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.flv"
+                onChange={handleFileInputChange}
+                className="hidden"
+                id="file-upload"
+                disabled={isUploading}
+              />
+              
+              {!file && (
+                <Label
+                  htmlFor="file-upload"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer mt-4"
+                >
+                  {t("pages:upload.selectFile")}
+                </Label>
+              )}
+            </div>
+
+            {/* Privacy Settings - Always visible but compact */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+                {t("pages:upload.privacySettings")}
               </Label>
-            )}
+              <RadioGroup
+                value={privacy}
+                onValueChange={(value: 'public' | 'private' | 'fully_private') => {
+                  setPrivacy(value)
+                  if (value !== 'private') {
+                    setSelectedCaseId('')
+                  }
+                }}
+                className="grid grid-cols-3 gap-2"
+              >
+                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
+                  <RadioGroupItem value="public" id="public" className="mt-1" />
+                  <Label htmlFor="public" className="text-xs text-center flex flex-col items-center">
+                    <Globe className="h-3 w-3 mb-1" />
+                    {t("pages:upload.privacy.public")}
+                  </Label>
+                </div>
+                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
+                  <RadioGroupItem value="private" id="private" className="mt-1" />
+                  <Label htmlFor="private" className="text-xs text-center flex flex-col items-center">
+                    <Lock className="h-3 w-3 mb-1" />
+                    {t("pages:upload.privacy.private")}
+                  </Label>
+                </div>
+                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
+                  <RadioGroupItem value="fully_private" id="fully_private" className="mt-1" />
+                  <Label htmlFor="fully_private" className="text-xs text-center flex flex-col items-center">
+                    <Lock className="h-3 w-3 mb-1" />
+                    {t("pages:upload.privacy.fullyPrivate")}
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* AI Processing Option - Always visible */}
+            <div className="flex items-center space-x-2 pt-2">
+              <input
+                type="checkbox"
+                id="processWithAI"
+                checked={processWithAI}
+                onChange={(e) => setProcessWithAI(e.target.checked)}
+                className="rounded border-gray-300"
+                disabled={isUploading}
+              />
+              <Label htmlFor="processWithAI" className="text-sm font-medium">
+                {t("pages:upload.aiProcessing")}
+              </Label>
+            </div>
           </div>
 
-          {/* Case Selection - Only for Private Documents */}
+          {/* Dynamic Bottom Section - Case Selection appears here when privacy is private */}
           {privacy === 'private' && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                {t("pages:upload.associateWithCase")}
-              </Label>
-              <Select 
-                value={selectedCaseId} 
-                onValueChange={setSelectedCaseId}
-                disabled={loadingCases}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingCases ? t("pages:upload.loadingCases") : t("pages:upload.selectCasePlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">{t("pages:upload.noCaseAssociation")}</SelectItem>
-                  {availableCases.map((caseItem) => (
-                    <SelectItem key={caseItem.id} value={caseItem.id}>
-                      {caseItem.case_number} - {caseItem.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedCaseId && (
-                <p className="text-xs text-gray-500">
-                  {t("pages:upload.caseAssociationNote")}
-                </p>
-              )}
+            <div className="pt-2 border-t animate-in fade-in-50 slide-in-from-bottom-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {t("pages:upload.associateWithCase")}
+                </Label>
+                <Select 
+                  value={selectedCaseId} 
+                  onValueChange={setSelectedCaseId}
+                  disabled={loadingCases}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingCases ? t("pages:upload.loadingCases") : t("pages:upload.selectCasePlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t("pages:upload.noCaseAssociation")}</SelectItem>
+                    {availableCases.map((caseItem) => (
+                      <SelectItem key={caseItem.id} value={caseItem.id}>
+                        {caseItem.case_number} - {caseItem.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCaseId && (
+                  <p className="text-xs text-gray-500">
+                    {t("pages:upload.caseAssociationNote")}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Privacy Settings */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-              {t("pages:upload.privacySettings")}
-            </Label>
-            <RadioGroup
-              value={privacy}
-              onValueChange={(value: 'public' | 'private' | 'fully_private') => {
-                setPrivacy(value)
-                if (value !== 'private') {
-                  setSelectedCaseId('')
-                }
-              }}
-              className="space-y-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="public" id="public" />
-                <Label htmlFor="public" className="text-sm">
-                  <Globe className="h-4 w-4 inline mr-1" />
-                  {t("pages:upload.privacy.public")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="private" id="private" />
-                <Label htmlFor="private" className="text-sm">
-                  <Lock className="h-4 w-4 inline mr-1" />
-                  {t("pages:upload.privacy.private")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fully_private" id="fully_private" />
-                <Label htmlFor="fully_private" className="text-sm">
-                  <Lock className="h-4 w-4 inline mr-1" />
-                  {t("pages:upload.privacy.fullyPrivate")}
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* AI Processing Option */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="processWithAI"
-              checked={processWithAI}
-              onChange={(e) => setProcessWithAI(e.target.checked)}
-              className="rounded border-gray-300"
-              disabled={isUploading}
-            />
-            <Label htmlFor="processWithAI" className="text-sm font-medium">
-              {t("pages:upload.aiProcessing")}
-            </Label>
-          </div>
-
           {/* Upload Progress */}
           {isUploading && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2">
               <div className="flex justify-between text-sm">
                 <span>{t("pages:upload.uploading")}</span>
                 <span>{Math.round(uploadProgress)}%</span>
@@ -396,7 +402,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 pt-4">
             <Button
               type="button"
               variant="outline"
