@@ -59,7 +59,8 @@
     "noClientsFound": "No clients found",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
-    "viewDetails": "View details"
+    "viewDetails": "View details",
+    "charges": "Charges ($)"
   },
   "auth": {
     "login": "Login",

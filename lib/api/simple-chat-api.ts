@@ -59,14 +59,18 @@ interface ApiResponse<T> {
 }
 
 // 1. Create or Get Chat
-export const createOrGetChat = async (participantId: string): Promise<Chat> => {
+export const createOrGetChat = async (participantId: string): Promise<any> => {
   try {
     const response = await axios.post<ApiResponse<Chat>>(
       `${API_BASE_URL}/chat/create`,
       { participantId },
       { headers: getAuthHeaders() }
     )
-    return response.data.data
+    console.log(response.data,"responseresponseresponseresponseresponseresponse")
+    if(response.data.data){
+      return response.data.data
+    }
+    return response.data
   } catch (error) {
     console.error('Error creating/getting chat:', error)
     throw error

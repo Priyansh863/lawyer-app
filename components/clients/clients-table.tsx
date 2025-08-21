@@ -305,7 +305,9 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
               <TableHead>{t("common.email") || "Email"}</TableHead>
               <TableHead>{t("common.phone") || "Phone"}</TableHead>
               <TableHead>{t("common.address") || "Address"}</TableHead>
-              <TableHead>{t("common.activeCases") || "Active Cases"}</TableHead>
+              {profile?.account_type === "client" && (
+                <TableHead>{t("common.charges") || "Charges"}</TableHead>
+              )}
               <TableHead>{t("common.lastContact") || "Last Contact"}</TableHead>
               <TableHead>{t("common.actions") || "Actions"}</TableHead>
             </TableRow>
@@ -345,14 +347,16 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                   >
                     {client.address || "N/A"}
                   </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="bg-blue-50 text-blue-600 border-blue-200"
-                    >
-                      {client.activeCases || 0}
-                    </Badge>
-                  </TableCell>
+                  {profile?.account_type === "client" && (
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-50 text-blue-600 border-blue-200"
+                      >
+                        {client.charges || 0}
+                      </Badge>
+                    </TableCell>
+                  )}
                   <TableCell className="text-sm">
                     {client.lastContactDate
                       ? new Date(client.lastContactDate).toLocaleDateString()

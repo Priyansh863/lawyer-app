@@ -81,9 +81,11 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
         headers: getAuthHeaders()
       }
     )
+    console.log(response.data,"responseresponseresponseresponseresponseresponseresponseresponse")
     return response.data
   } catch (error: any) {
     console.error('Create meeting error:', error)
+
     throw new Error(error.response?.data?.message || 'Failed to create meeting')
   }
 }

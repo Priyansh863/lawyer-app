@@ -71,8 +71,10 @@ export async function createChat({ lawyerId }: CreateChatParams): Promise<ChatRe
       { lawyerId },
       { headers: getAuthHeaders() }
     )
+    console.log(response.data,"responseresponseresponseresponseresponseresponse")
     return response.data
   } catch (error: any) {
+    console.log(error,"errorerrorerrorerrorerrorerrorerrorerror")
     console.error('Create chat error:', error)
     throw new Error(error.response?.data?.message || 'Failed to create chat')
   }

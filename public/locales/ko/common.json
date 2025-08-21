@@ -14,7 +14,8 @@
     "token": "토큰",
     "settings": "설정",
     "logout": "로그아웃",
-    "postsAndContent": "게시물 및 콘텐츠"
+    "postsAndContent": "게시물 및 콘텐츠",
+    "charges": "요금 ($)"
   },
   "common": {
     "save": "저장",
@@ -59,7 +60,8 @@
     "noClientsFound": "고객이 없습니다",
     "addFavorite": "즐겨찾기에 추가",
     "removeFavorite": "즐겨찾기에서 제거",
-    "viewDetails": "상세 보기"
+    "viewDetails": "상세 보기",
+     "charges": "요금 ($)"
   },
   "auth": {
     "login": "로그인",

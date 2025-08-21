@@ -98,6 +98,20 @@ const currentUserId = profile?._id
           }
         } else if (clientId) {
           chatData = await createOrGetChat(clientId)
+          if(!(chatData && chatData?._id)){
+            // Use setTimeout to ensure toast is called after component is fully mounted
+            setTimeout(() => {
+              toast({
+                title: t("pages:conv.error"),
+                description: "Insufficient token balance to start chat consultation",
+                variant: "destructive",
+                duration: 6000,
+              })
+            }, 100)
+            onClose() // Close the chat component
+            return
+          }
+          console.log(chatData,"chatDatachatDatachatDatachatData")
         } else {
           return
         }

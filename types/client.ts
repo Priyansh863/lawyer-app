@@ -1,6 +1,7 @@
 export type ClientStatus = "active" | "inactive" | "pending"
 
 export interface Client {
+  charges: number
   id: string
   name: string // Computed from first_name + last_name
   first_name: string

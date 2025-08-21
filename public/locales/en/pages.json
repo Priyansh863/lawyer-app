@@ -8,7 +8,9 @@
     "filter": "Filter",
     "allStatuses": "All statuses",
     "actions": "Actions",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "charges": "Charges ($)",
+    "chargesPlaceholder": "Enter charges"
   },
   "cases": {
     "title": "Case Management",

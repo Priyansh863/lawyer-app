@@ -63,21 +63,32 @@ export async function getClients({
 
     const offset = (page - 1) * limit
     
-    const response = await axios.get(`${API_BASE_URL}/user/list`, {
-      headers: getAuthHeaders(),
-      params: {
-        accountType,
-        offset,
-        limit
-      }
-    })
+    // If client is viewing lawyers, use the lawyers-with-charges endpoint
+    let response
+    if (currentUser.account_type === 'client' && accountType === 'lawyer') {
+      response = await axios.get(`${API_BASE_URL}/charges/lawyers-with-charges`, {
+        headers: getAuthHeaders()
+      })
+    } else {
+      response = await axios.get(`${API_BASE_URL}/user/list`, {
+        headers: getAuthHeaders(),
+        params: {
+          accountType,
+          offset,
+          limit
+        }
+      })
+    }
 
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch users')
     }
 
     // Transform backend response to match Client interface
-    const users = response.data.data || []
+    const users = (currentUser.account_type === 'client' && accountType === 'lawyer') 
+      ? response.data.lawyers || []
+      : response.data.data || []
+      
     const transformedClients: Client[] = users.map((user: any) => ({
       id: user._id,
       name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
@@ -96,7 +107,9 @@ export async function getClients({
       isBlocked: false,
       // Additional fields from backend
       account_type: user.account_type,
-      _id: user._id
+      _id: user._id,
+      // Include charges for lawyers
+      charges: user.charges || 0
     }))
 
     // Apply client-side filtering if needed

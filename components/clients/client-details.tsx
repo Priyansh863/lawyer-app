@@ -79,6 +79,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         meetingLink: meetingLink.trim(),
       }
       const response = await createMeeting(meetingData)
+      console.log(response,"responseresponseresponseresponseresponseresponseresponse")
       if (response.success) {
         toast({
           title: t("pages:clientDetails.success"),
@@ -88,7 +89,14 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         setMeetingLink("")
         setMeetingDialogOpen(false)
       } else {
-        throw new Error(response.message || t("pages:clientDetails.failedToScheduleMeeting"))
+        toast({
+          title: t("pages:clientDetails.error"),
+          description: response.message || t("pages:clientDetails.failedToScheduleMeeting"),
+          variant: "destructive",
+        })
+        setMeetingLink("")
+        setMeetingDialogOpen(false)
+        return
       }
     } catch (error: any) {
       console.error("Meeting scheduling error:", error)
@@ -105,6 +113,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   // Handle create chat
   const [showChat, setShowChat] = useState(false)
   const handleCreateChat = () => {
+    console.log("handleCreateChat",profile)
     setShowChat(true)
   }
 

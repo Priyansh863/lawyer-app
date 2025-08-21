@@ -7,7 +7,8 @@
     "filter": "필터",
     "allStatuses": "모든 상태",
     "actions": "작업",
-    "viewDetails": "상세 보기"
+    "viewDetails": "상세 보기",
+    "charges": "요금 ($)"
   },
   "cases": {
     "title": "사건 관리",

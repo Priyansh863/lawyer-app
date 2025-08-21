@@ -460,10 +460,20 @@ export default function TokenPage() {
           <h1 className="text-3xl font-bold tracking-tight">{t('pages:tok.token.title')}</h1>
           <p className="text-muted-foreground">{t('pages:tok.token.subtitle')}</p>
         </div>
-        <Button onClick={() => fetchAllData()} variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          {t('pages:tok.token.refresh')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => router.push('/token/history')} 
+            variant="outline" 
+            className="gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            View History
+          </Button>
+          <Button onClick={() => fetchAllData()} variant="outline" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            {t('pages:tok.token.refresh')}
+          </Button>
+        </div>
       </div>
 
       {/* Token Overview Cards */}
