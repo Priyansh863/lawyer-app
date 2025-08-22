@@ -196,7 +196,12 @@
       "expectedDuration": "예상 기간",
       "durationPlaceholder": "예: 3-6개월",
       "notes": "추가 사항",
-      "notesPlaceholder": "추가 정보 또는 특별 고려 사항"
+      "notesPlaceholder": "추가 정보 또는 특별 고려 사항",
+       "caseCode": "사건 코드",
+        "caseNumber": "사건 번호",
+        "caseNumberPlaceholder": "사건 번호 입력",
+        "selectCaseCode": "사건 코드 선택",
+        "caseIdentifier": "사건 식별자"
     },
     "caseTypes": {
       "civil": "민사",

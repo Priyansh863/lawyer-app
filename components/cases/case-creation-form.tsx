@@ -21,6 +21,22 @@ import { CaseType, CourtType, caseTypeConfig, courtTypeConfig } from "@/types/ca
 import { IUser } from "@/lib/slices/authSlice"
 import { Client } from "@/types/client"
 
+// Define case code options
+const caseCodeOptions = [
+  "CR", // Criminal
+  "CV", // Civil
+  "FM", // Family
+  "CP", // Corporate
+  "IM", // Immigration
+  "PI", // Personal Injury
+  "RE", // Real Estate
+  "IP", // Intellectual Property
+  "EM", // Employment
+  "TX", // Tax
+  "BK", // Bankruptcy
+  "OT"  // Other
+] as const
+
 const caseCreationSchema = z.object({
   title: z.string().min(1, "Case title is required").max(200, "Title must be less than 200 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
@@ -38,6 +54,10 @@ const caseCreationSchema = z.object({
   ] as const, {
     required_error: "Please select a court type"
   }),
+  case_code: z.enum(["CR", "CV", "FM", "CP", "IM", "PI", "RE", "IP", "EM", "TX", "BK", "OT"], {
+    required_error: "Please select a case code"
+  }),
+  case_number: z.string().min(1, "Case number is required").max(50, "Case number must be less than 50 characters"),
   client_option: z.enum(["existing", "new"]).default("existing"),
   existing_client_id: z.string().optional(),
   client_first_name: z.string().optional(),
@@ -82,6 +102,8 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       description: "",
       case_type: undefined,
       court_type: undefined,
+      case_code: undefined,
+      case_number: "",
       client_option: "existing",
       existing_client_id: "",
       client_first_name: "",
@@ -100,6 +122,31 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       fetchClients()
     }
   }, [isOpen, profile])
+
+  // Automatically set case code based on case type
+  useEffect(() => {
+    const caseType = form.watch("case_type");
+    if (caseType) {
+      const codeMap: Record<string, typeof caseCodeOptions[number]> = {
+        criminal: "CR",
+        civil: "CV",
+        family: "FM",
+        corporate: "CP",
+        immigration: "IM",
+        personal_injury: "PI",
+        real_estate: "RE",
+        intellectual_property: "IP",
+        employment: "EM",
+        tax: "TX",
+        bankruptcy: "BK",
+        other: "OT"
+      };
+      
+      if (caseType in codeMap) {
+        form.setValue("case_code", codeMap[caseType]);
+      }
+    }
+  }, [form.watch("case_type")]);
 
   const fetchClients = async () => {
     try {
@@ -130,8 +177,13 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
 
     setIsLoading(true)
     try {
+      // Assemble case identification: court + case code + case number
+      const courtAbbreviation = courtTypeConfig[data.court_type]?.abbreviation || "CT";
+      const caseIdentifier = `${courtAbbreviation}-${data.case_code}-${data.case_number}`;
+
       const caseData = {
         ...data,
+        case_identifier: caseIdentifier,
         lawyer_id: profile?._id,
         status: "open" as const,
         client_email: data.client_email || undefined,
@@ -168,10 +220,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   }
 
   const priorityOptions = [
-    { value: "low", label: t("pages:casesD.priority.low"), color: "bg-green-100 text-green-800" },
-    { value: "medium", label: t("pages:casesD.priority.medium"), color: "bg-yellow-100 text-yellow-800" },
-    { value: "high", label: t("pages:casesD.priority.high"), color: "bg-orange-100 text-orange-800" },
-    { value: "urgent", label: t("pages:casesD.priority.urgent"), color: "bg-red-100 text-red-800" }
+    { value: "low", label: t("pages:casesD.priority.low") },
+    { value: "medium", label: t("pages:casesD.priority.medium") },
+    { value: "high", label: t("pages:casesD.priority.high") },
+    { value: "urgent", label: t("pages:casesD.priority.urgent") }
   ]
 
   return (
@@ -241,11 +293,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                         <SelectContent>
                           {Object.entries(caseTypeConfig).map(([key, config]) => (
                             <SelectItem key={key} value={key}>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs ${config.color}`}>
-                                  {t(`pages:casesD.caseTypes.${key}`)}
-                                </span>
-                              </div>
+                              {t(`pages:casesD.caseTypes.${key}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -270,11 +318,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                         <SelectContent>
                           {Object.entries(courtTypeConfig).map(([key, config]) => (
                             <SelectItem key={key} value={key}>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs ${config.color}`}>
-                                  {t(`pages:casesD.courtTypes.${key}`)}
-                                </span>
-                              </div>
+                              {t(`pages:casesD.courtTypes.${key}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -284,6 +328,62 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   )}
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="case_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("pages:casesD.form.caseCode")} *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("pages:casesD.form.selectCaseCode")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {caseCodeOptions.map((code) => (
+                            <SelectItem key={code} value={code}>
+                              {code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="case_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("pages:casesD.form.caseNumber")} *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder={t("pages:casesD.form.caseNumberPlaceholder")} 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Display the assembled case identifier */}
+              {form.watch("court_type") && form.watch("case_code") && form.watch("case_number") && (
+                <div className="p-3 bg-muted rounded-md">
+                  <p className="text-sm font-medium">{t("pages:casesD.form.caseIdentifier")}:</p>
+                  <p className="text-lg font-bold">
+                    {courtTypeConfig[form.watch("court_type")]?.abbreviation || "CT"}-
+                    {form.watch("case_code")}-
+                    {form.watch("case_number")}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Client Information */}
@@ -459,11 +559,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                         <SelectContent>
                           {priorityOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-xs ${option.color}`}>
-                                  {option.label}
-                                </span>
-                              </div>
+                              {option.label}
                             </SelectItem>
                           ))}
                         </SelectContent>

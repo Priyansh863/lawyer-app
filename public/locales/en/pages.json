@@ -152,7 +152,12 @@
       "expectedDuration": "Expected Duration",
       "durationPlaceholder": "e.g., 3-6 months",
       "notes": "Additional Notes",
-      "notesPlaceholder": "Any additional information or special considerations"
+      "notesPlaceholder": "Any additional information or special considerations",
+      "caseCode" : "Case Code",
+      "caseNumber" : "Case Number",
+      "caseNumberPlaceholder": "Enter case number",
+      "selectCaseCode": "Select case code",
+       "caseIdentifier": "Case Identifier"
     },
     "caseTypes": {
       "civil": "Civil",

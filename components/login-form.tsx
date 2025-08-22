@@ -14,8 +14,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import Link from "next/link"
 import { useTranslation } from "@/hooks/useTranslation"
+import { Eye, EyeOff } from "lucide-react"
 
-// Note: Validation messages will be handled by the component using i18n
+// Validation schema
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -28,10 +29,10 @@ export default function LoginForm() {
   const dispatch = useDispatch()
   const { toast } = useToast()
   const { t } = useTranslation()
+
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema.refine(
       (data) => {
-        // Custom validation with i18n messages
         if (!data.email || !z.string().email().safeParse(data.email).success) {
           throw new Error(t('auth.emailValidation'))
         }
@@ -47,25 +48,24 @@ export default function LoginForm() {
     },
   })
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true);
-      
+
       const result = await signIn("credentials", {
         email: data.email.trim(),
         password: data.password,
         redirect: false,
       });
 
-
       if (!result) {
         throw new Error("No response from server. Please try again.");
       }
 
       if (result.error) {
-        // Handle unverified account
         if (result.error === 'account_not_verified') {
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=login`);
           toast({
@@ -75,22 +75,15 @@ export default function LoginForm() {
           });
           return;
         }
-
-        // For all other errors, show the error message from the server
         throw new Error(result.error);
       }
-      
-      // If we get here, login was successful
+
       const userInfo = await getSession();
-      
+
       if (userInfo?.user?.email) {
-        // Save user details to local storage
         localStorage.setItem("user", JSON.stringify(userInfo.user));
-        
-        // Update Redux store immediately
         dispatch(setUser(userInfo.user as any));
-        
-        // If there's a token in the user object, save it to Redux
+
         if ((userInfo.user as any)?.token) {
           localStorage.setItem("token", (userInfo.user as any).token);
           dispatch(setToken((userInfo.user as any).token));
@@ -102,7 +95,7 @@ export default function LoginForm() {
           variant: "success",
         });
 
-        router.push("/dashboard"); // Redirect after successful login
+        router.push("/dashboard");
       } else {
         throw new Error(t('auth.userDataNotFound'));
       }
@@ -125,6 +118,7 @@ export default function LoginForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Email Field */}
             <FormField
               control={form.control}
               name="email"
@@ -139,8 +133,7 @@ export default function LoginForm() {
               )}
             />
 
-          
-
+            {/* Password Field with Eye Toggle */}
             <FormField
               control={form.control}
               name="password"
@@ -148,22 +141,36 @@ export default function LoginForm() {
                 <FormItem>
                   <FormLabel>{t('auth.password')}</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder={t('auth.enterPassword')} className="bg-gray-50" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder={t('auth.enterPassword')}
+                        className="bg-gray-50 pr-10"
+                        {...field}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1} // prevent focus from jumping
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Forgot Password Link */}
+            {/* Forgot Password */}
             <div className="text-right">
               <Link href="/forgot-password" className="text-sm text-[#0f0921] hover:underline">
                  {t('auth.forgotPassword')}
               </Link>
             </div>
 
-         
-
+            {/* Submit Button */}
             <Button
               type="submit"
               className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
