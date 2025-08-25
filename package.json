@@ -64,6 +64,7 @@
     "react-hook-form": "^7.54.1",
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.1",
+    "react-loading-skeleton": "^3.5.0",
     "react-redux": "^9.2.0",
     "react-resizable-panels": "^2.1.7",
     "react-share": "^5.2.2",

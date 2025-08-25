@@ -15,6 +15,8 @@ import {
   type Chat 
 } from "@/lib/api/simple-chat-api"
 import { useTranslation } from "@/hooks/useTranslation"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
 
 export default function SimpleChatList() {
   const { t } = useTranslation('chat')
@@ -103,10 +105,38 @@ export default function SimpleChatList() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-3">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>{t('pages:chatbox.loading')}</span>
+      <div className="space-y-4">
+        {/* Search Bar Skeleton */}
+        <div className="relative">
+          <Skeleton height={40} />
+        </div>
+
+        {/* Chat List Skeleton */}
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Card key={index} className="cursor-pointer">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Skeleton circle width={48} height={48} />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <Skeleton width={120} height={20} />
+                      <div className="flex items-center space-x-2">
+                        <Skeleton width={20} height={20} />
+                        <Skeleton width={40} height={16} />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-1">
+                      <Skeleton width={180} height={16} />
+                      <Skeleton circle width={24} height={24} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )

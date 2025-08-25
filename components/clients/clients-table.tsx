@@ -34,6 +34,8 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/lib/store";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Eye } from "lucide-react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -313,15 +315,31 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredClients.length === 0 ? (
+            {isLoading ? (
+              // Show skeleton loading state
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow
+                  key={index}
+                  className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                >
+                  <TableCell><Skeleton width={120} /></TableCell>
+                  <TableCell><Skeleton width={150} /></TableCell>
+                  <TableCell><Skeleton width={100} /></TableCell>
+                  <TableCell><Skeleton width={180} /></TableCell>
+                  {profile?.account_type === "client" && (
+                    <TableCell><Skeleton width={60} /></TableCell>
+                  )}
+                  <TableCell><Skeleton width={80} /></TableCell>
+                  <TableCell><Skeleton circle width={24} height={24} /></TableCell>
+                </TableRow>
+              ))
+            ) : filteredClients.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  {isLoading
-                    ? t("common.loading")
-                    : t("common.noClientsFound") || "No clients found"}
+                  {t("common.noClientsFound") || "No clients found"}
                 </TableCell>
               </TableRow>
             ) : (

@@ -48,6 +48,8 @@ import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from "@/hooks/useTranslation"
 import { ShareDocumentDialog } from '@/components/documents/share-with-lawyer-dialog'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 
 interface Document {
   _id: string
@@ -355,9 +357,81 @@ export default function DocumentsTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">{t('pages:documentT.documents.loading')}</span>
+      <div className="space-y-6">
+        {/* Enhanced Header with single search bar and filters - Skeleton */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex items-center gap-4 mb-6 flex-wrap">
+            <div className="flex-1 min-w-[200px] relative">
+              <Skeleton height={40} />
+            </div>
+            
+            <Skeleton width={160} height={40} />
+          </div>
+        </div>
+
+        {/* Documents Table Skeleton */}
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Skeleton width={80} />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Skeleton width={60} />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Skeleton width={70} />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Skeleton width={80} />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <Skeleton width={90} />
+                  </th>
+                  <th className="relative px-6 py-3">
+                    <Skeleton width={40} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <tr key={index} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <Skeleton circle width={32} height={32} />
+                        <div className="min-w-0 flex-1 ml-3">
+                          <Skeleton width={120} height={16} />
+                          <Skeleton width={80} height={12} className="mt-1" />
+                          <Skeleton width={180} height={12} className="mt-1" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Skeleton circle width={16} height={16} />
+                        <Skeleton width={60} height={16} />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton width={80} height={24} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton width={100} height={24} />
+                    </td>
+                    <td className="px-6 py-4">
+                      <Skeleton width={100} height={16} />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Skeleton circle width={32} height={32} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     )
   }

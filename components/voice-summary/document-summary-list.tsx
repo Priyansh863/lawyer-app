@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
 
 interface DocumentSummaryListProps {
   initialSummaries: DocumentSummary[]
@@ -149,6 +151,35 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
     setPlayingId(null)
   }
 
+  // Skeleton loading component
+  const SummarySkeleton = () => (
+    <Card className="overflow-hidden mb-4">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <Skeleton width={200} height={24} className="mb-2" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-3">
+              <Skeleton width={120} height={16} />
+              <Skeleton width={20} height={16} />
+              <Skeleton width={120} height={16} />
+              <Skeleton width={20} height={16} />
+              <Skeleton width={80} height={16} />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Skeleton width={80} height={36} />
+          </div>
+        </div>
+        <div className="bg-muted/30 rounded-lg p-4 mb-4">
+          <Skeleton count={3} height={16} className="mb-2" />
+        </div>
+        <div className="flex items-center justify-between">
+          <Skeleton width={100} height={24} />
+        </div>
+      </CardContent>
+    </Card>
+  )
+
   return (
     <div className="space-y-6">
       {/* Voice Summary Header */}
@@ -221,12 +252,13 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          <span>{t("pages:voiceSummary.loadingSummaries")}</span>
-
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SummarySkeleton key={index} />
+          ))}
         </div>
       )}
+
       {/* Document Summaries List */}
       <div className="relative flex-1 overflow-y-auto pr-2 md:grid md:gap-4 md:overflow-y-visible">
         {filteredSummaries.length === 0 && !isLoading ? (
@@ -234,7 +266,6 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
             <CardContent className="p-6 text-center text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
              <p>{t("pages:voiceSummary.noDocumentSummariesFound")}</p>
-
             </CardContent>
           </Card>
         ) : (

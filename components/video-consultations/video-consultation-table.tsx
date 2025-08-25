@@ -14,6 +14,8 @@ import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import { getMeetings, updateMeetingStatus, approveMeeting, rejectMeeting, type Meeting } from "@/lib/api/meeting-api"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
 
 const searchFormSchema = z.object({
   query: z.string(),
@@ -310,14 +312,23 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex items-center justify-center space-x-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-gray-500">{t('pages:meeting.loading')}</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                // Skeleton loading state
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index} className={index % 2 === 0 ? "bg-gray-50" : ""}>
+                    <TableCell><Skeleton width={100} /></TableCell>
+                    <TableCell><Skeleton width={100} /></TableCell>
+                    <TableCell><Skeleton width={60} /></TableCell>
+                    <TableCell><Skeleton width={120} /></TableCell>
+                    <TableCell><Skeleton width={80} height={24} /></TableCell>
+                    <TableCell><Skeleton width={150} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        <Skeleton width={80} height={32} />
+                        <Skeleton width={80} height={32} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : filteredMeetings.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-gray-500">

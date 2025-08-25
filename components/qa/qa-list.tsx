@@ -11,6 +11,8 @@ import { useSelector } from "react-redux"
 import { useEffect, useState } from "react"
 import { useTranslation } from "@/hooks/useTranslation"
 import { getQAItems, deleteQuestion, type QAQuestion } from "@/lib/api/qa-api"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
 
 export default function QAList() {
   const user = useSelector((state: any) => state.auth.user);
@@ -70,9 +72,25 @@ export default function QAList() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-10">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        <span className="ml-2">{t("pages:qa.loading")}</span>
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className={`border rounded-lg p-4 ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <Skeleton width={80} height={24} />
+                  <Skeleton width={120} height={16} />
+                </div>
+                <Skeleton width="90%" height={20} className="mb-2" />
+                <Skeleton width="70%" height={16} />
+              </div>
+              <div className="flex items-center gap-2 ml-4">
+                <Skeleton circle width={32} height={32} />
+                <Skeleton circle width={32} height={32} />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

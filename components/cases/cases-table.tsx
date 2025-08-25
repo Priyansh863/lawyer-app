@@ -19,6 +19,8 @@ import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import CaseStatusUpdateDialog from "./case-status-update-dialog"
 import { caseTypeConfig, courtTypeConfig } from "@/types/case"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
@@ -96,7 +98,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
       }
     }
     fetchCases()
-  }, [searchForm.watch('query'), searchForm.watch('status'), toast, searchForm, t])
+  }, [searchForm.watch('query'), searchForm.watch('status')])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -311,10 +313,31 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {cases.length === 0 ? (
+            {isLoading ? (
+              // Show skeleton loading state
+              Array.from({ length: 5 }).map((_, index) => (
+                <TableRow key={index} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                  <TableCell><Skeleton width={80} /></TableCell>
+                  <TableCell><Skeleton width={120} /></TableCell>
+                  <TableCell><Skeleton width={100} /></TableCell>
+                  <TableCell><Skeleton width={100} /></TableCell>
+                  <TableCell><Skeleton width={80} /></TableCell>
+                  <TableCell><Skeleton width={80} /></TableCell>
+                  <TableCell><Skeleton width={70} height={24} /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Skeleton circle width={32} height={32} />
+                      {profile?.account_type === 'lawyer' && (
+                        <Skeleton circle width={32} height={32} />
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : cases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  {isLoading ? t("pages:common.loading") : t("pages:cases.noCasesFound")}
+                  {t("pages:cases.noCasesFound")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -335,15 +358,15 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                     }
                   </TableCell>
                   <TableCell>
-  <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-    {t(`pages:cases.caseTypes.${caseItem.case_type}`) || caseItem.case_type}
-  </Badge>
-</TableCell>
-<TableCell>
-  <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-    {t(`pages:cases.courtTypes.${caseItem.court_type}`) || caseItem.court_type}
-  </Badge>
-</TableCell>
+                    <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
+                      {t(`pages:cases.caseTypes.${caseItem.case_type}`) || caseItem.case_type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
+                      {t(`pages:cases.courtTypes.${caseItem.court_type}`) || caseItem.court_type}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

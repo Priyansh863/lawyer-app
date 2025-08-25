@@ -9,6 +9,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react";
 import { getBlogPosts, deleteBlogPost, BlogPost } from "@/lib/api/blog-api";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 interface BlogListProps {
   searchQuery?: string
@@ -64,7 +66,30 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Card key={index} className={`overflow-hidden ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}>
+            <div className="relative h-48 w-full">
+              <Skeleton height={192} />
+            </div>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <Skeleton width={120} height={24} />
+                <Skeleton width={80} height={24} />
+              </div>
+              <Skeleton count={2} />
+            </CardContent>
+            <CardFooter className="p-4 pt-0 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Skeleton width={80} height={20} />
+              </div>
+              <Skeleton circle width={32} height={32} />
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -85,10 +110,6 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
           </CardContent>
           <CardFooter className="p-4 pt-0 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              {/* <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Heart className="h-4 w-4" />
-              </Button> */}
-              {/* <span className="text-sm text-gray-500">{post.likes}</span> */}
               <span className="text-sm text-gray-500 ml-2">{new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
             <DropdownMenu>
@@ -102,9 +123,6 @@ export default function BlogList({ searchQuery = "", categoryFilter = "all", sta
                 <DropdownMenuItem asChild>
                   <Link href={`/blog/${post._id}`}>Edit</Link>
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem asChild>
-                  <Link href={`/blog/${post._id}/preview`}>Preview</Link>
-                </DropdownMenuItem> */}
                 <DropdownMenuItem onClick={() => handleDelete(post._id)}>Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
