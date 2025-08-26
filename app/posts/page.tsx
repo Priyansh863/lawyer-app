@@ -15,6 +15,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 import PostCreator from "@/components/posts/post-creator";
 import QrCodeGenerator from "@/components/posts/qr-code-generator";
@@ -103,6 +105,52 @@ export default function PostsPage() {
     });
   };
 
+  // Skeleton components
+  const PostCardSkeleton = () => (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <Skeleton width={200} height={24} className="mb-2" />
+            <div className="flex items-center gap-2 mt-2">
+              <Skeleton width={80} height={20} />
+              <Skeleton width={60} height={20} />
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <Skeleton height={192} className="rounded-lg" />
+        
+        <div className="space-y-2">
+          <Skeleton count={3} height={16} />
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Skeleton width={100} height={16} />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Skeleton width={120} height={16} />
+          <Skeleton width={100} height={16} />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Skeleton width={80} height={16} />
+            <Skeleton width={24} height={24} circle />
+          </div>
+          <Skeleton width={200} height={16} />
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <Skeleton width={100} height={32} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6 mt-7">
       <div className="px-6 py-4 border-b">
@@ -130,9 +178,9 @@ export default function PostsPage() {
         <TabsContent value="list" className="space-y-6">
           {/* Posts Grid */}
           {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-gray-600">{t("pages:posts.loadingPosts")}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PostCardSkeleton />
+              <PostCardSkeleton />
             </div>
           ) : posts.length === 0 ? (
             <Card>
@@ -285,9 +333,9 @@ export default function PostsPage() {
                         post={post}
                         trigger={
                           <Button variant="outline" size="sm">
-  <QrCode className="h-3 w-3 mr-1" />
-  {t('pages:posts.buttonLabel')}
-</Button>
+                            <QrCode className="h-3 w-3 mr-1" />
+                            {t('pages:posts.buttonLabel')}
+                          </Button>
                         }
                       />
                     </div>
@@ -302,7 +350,7 @@ export default function PostsPage() {
             <div className="flex justify-center gap-2">
               <Button
                 variant="outline"
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || isLoading}
                 onClick={() => fetchPosts(currentPage - 1)}
               >
                 {t("pages:posts.previous")}
@@ -312,7 +360,7 @@ export default function PostsPage() {
               </span>
               <Button
                 variant="outline"
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || isLoading}
                 onClick={() => fetchPosts(currentPage + 1)}
               >
                 {t("pages:posts.next")}
