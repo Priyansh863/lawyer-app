@@ -36,40 +36,41 @@ interface LocationUrlGeneratorProps {
   initialData?: SpatialInfo;
 }
 
-const searchPlacesAPI = async (query: string, t: any) => {
+const searchPlacesAPI = async (
+  query: string,
+  t: any,
+  opts?: { type?: 'address' | 'place'; language?: string; region?: string }
+) => {
   if (!query.trim()) return [];
   
   try {
-    const response = await fetch(`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+    const params = new URLSearchParams();
+    params.set('query', query);
+    if (opts?.language) params.set('language', opts.language);
+    if (opts?.region) params.set('region', opts.region);
+    if (opts?.type) params.set('type', opts.type);
+
+    // Use backend proxy instead of direct Google API call
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+    const url = `${backendUrl}/places/search?${params.toString()}`;
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error('Failed to fetch places');
     }
     
     const data = await response.json();
-    
-    return data.results?.slice(0, 5).map((place: any) => ({
-      place_id: place.place_id,
-      description: place.formatted_address || place.name,
-      lat: place.geometry.location.lat,
-      lng: place.geometry.location.lng
-    })) || [];
+
+    // Handle backend response
+    if (!data.success) {
+      console.warn('Places API error:', data.message);
+      throw new Error(data.message || 'Places API error');
+    }
+
+    return data.results || [];
   } catch (error) {
     console.error('Places search error:', error);
-    return [
-      {
-        place_id: '1',
-        description: t('location.defaultPlaces.timesSquare'),
-        lat: 40.758896,
-        lng: -73.985130
-      },
-      {
-        place_id: '2', 
-        description: t('location.defaultPlaces.centralPark'),
-        lat: 40.785091,
-        lng: -73.968285
-      }
-    ];
   }
 };
 
@@ -146,7 +147,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
     setIsSearching(true);
     try {
-      const results = await searchPlacesAPI(query, t);
+      const results = await searchPlacesAPI(query, t, { type, language: typeof navigator !== 'undefined' ? navigator.language : undefined });
       setSearchResults(results);
     } catch (error) {
       toast({
@@ -181,23 +182,20 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (addressQuery.trim().length > 2 && inputMethod === 'address') {
-        searchPlacesAPI(addressQuery, t).then(results => {
-          setSearchResults(results);
-          setShowSuggestions(results.length > 0);
-        }).catch(() => {
-          setSearchResults([]);
-          setShowSuggestions(false);
-        });
-      } else {
+    if (addressQuery.trim().length > 2 && inputMethod === 'address') {
+      searchPlacesAPI(addressQuery, t, { type: 'address', language: typeof navigator !== 'undefined' ? navigator.language : undefined }).then(results => {
+        setSearchResults(results);
+        setShowSuggestions(results.length > 0);
+      }).catch(() => {
         setSearchResults([]);
         setShowSuggestions(false);
-      }
-    }, 300);
+      });
+    } else {
+      setSearchResults([]);
+      setShowSuggestions(false);
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [addressQuery, inputMethod, t]);
+  }, [addressQuery, inputMethod]);
 
   const handleAddressChange = (value: string) => {
     setAddressQuery(value);
@@ -210,7 +208,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
   };
 
   const generateCustomUrl = () => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://yourapp.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
     let url = `${baseUrl}/post-title`;
     
     if (spatialInfo.latitude && spatialInfo.longitude) {
@@ -239,7 +237,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
   };
 
   const generateShortUrl = () => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://yourapp.com';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
     let url = `${baseUrl}/l/post-title`;
     
     if (spatialInfo.latitude && spatialInfo.longitude) {

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
-import { Upload, FileText, Lock, Globe, AlertCircle, Video, Image, File } from 'lucide-react'
+import { Upload, FileText, Lock, Globe, AlertCircle, Video, Image, File, X } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { uploadPDFToS3, validatePDFFile } from '@/lib/helpers/pdf-upload'
@@ -159,6 +159,16 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
     }
   }
 
+  const handleRemoveFile = () => {
+    setFile(null)
+    setFileTypeInfo(null)
+    // Reset the file input
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement
+    if (fileInput) {
+      fileInput.value = ''
+    }
+  }
+
   const handleUpload = async () => {
     if (!file || !user?._id) {
       toast.error(t("pages:upload.error.missingFileOrAuth"))
@@ -250,7 +260,17 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
               onDrop={handleDrop}
             >
               {file ? (
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
+                  {/* Remove button */}
+                  <button
+                    onClick={handleRemoveFile}
+                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-colors z-10"
+                    disabled={isUploading}
+                    title="Remove file"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  
                   {fileTypeInfo && (
                     <div className="flex items-center justify-center">
                       <fileTypeInfo.icon className="h-8 w-8 text-green-600" />

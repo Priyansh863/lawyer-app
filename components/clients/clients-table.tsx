@@ -101,7 +101,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
     };
 
     fetchClients();
-  }, [searchParams, toast, searchForm]);
+  }, [searchParams, searchForm]);
 
   // Real-time frontend search
   useEffect(() => {
@@ -129,7 +129,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
     }
 
     setFilteredClients(filtered);
-  }, [searchForm.watch("query"), searchForm.watch("status"), clients]);
+  }, [searchForm.watch("query"), searchForm.watch("status")]);
 
   // Handle search submit
   const onSearchSubmit = async (data: SearchFormData) => {

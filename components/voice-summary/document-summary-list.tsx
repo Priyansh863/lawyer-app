@@ -195,7 +195,7 @@ export default function DocumentSummaryList({ initialSummaries }: DocumentSummar
           <Input
              placeholder={t("pages:voiceSummary.searchPlaceholder")}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value.trim())}
             className="pl-10"
           />
         </div>

@@ -275,7 +275,7 @@ export function generateCustomUrl(
   slug: string,
   spatialInfo?: SpatialInfo
 ): string {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://yourapp.com'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://lawgg.net'
   
   if (!spatialInfo || (!spatialInfo.latitude && !spatialInfo.longitude)) {
     return `${baseUrl}/${type}/${slug}`
@@ -300,7 +300,7 @@ export function generateShortUrl(
   slug: string,
   spatialInfo?: SpatialInfo
 ): string {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://yourapp.com'
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://lawgg.net'
   
   if (!spatialInfo || (!spatialInfo.latitude && !spatialInfo.longitude)) {
     return `${baseUrl}/l/${type}/${slug}`

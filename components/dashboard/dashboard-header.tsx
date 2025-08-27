@@ -3,6 +3,7 @@ import { RootState } from "@/lib/store"
 import { useSelector } from "react-redux"
 import { getGreeting } from "@/lib/helpers/greeting"
 import { useTranslation } from "@/hooks/useTranslation"
+import NotificationBell from "@/components/notifications/NotificationBell"
 
 interface DashboardHeaderProps {}
 
@@ -12,9 +13,12 @@ export default function DashboardHeader({}: DashboardHeaderProps) {
 
   return (
     <header className="px-6 py-4 border-b">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {t('dashboard.welcome')}{user?.first_name ? `, ${user.first_name}` : ''}
         </h1>
+        <NotificationBell />
+      </div>
   </header>
   )
 }

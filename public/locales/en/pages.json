@@ -157,7 +157,9 @@
       "caseNumber" : "Case Number",
       "caseNumberPlaceholder": "Enter case number",
       "selectCaseCode": "Select case code",
-       "caseIdentifier": "Case Identifier"
+       "caseIdentifier": "Case Identifier",
+       "caseStatus": "Case Status",
+       "selectCaseStatus": "Select case status"
     },
     "caseTypes": {
       "civil": "Civil",
@@ -548,7 +550,8 @@
         "searchPlaceholder": "Search documents...",
         "summaryDownloadSuccess": "Document summary downloaded successfully",
         "summaryDownloadError": "Failed to download document summary",
-        "downloadingSummary": "Downloading summary..."
+        "downloadingSummary": "Downloading summary...",
+        "downloadDocument":"Download Document"
       },
       "status": {
         "pending": "Pending",
@@ -853,7 +856,8 @@
         "uploadedBy": "Uploaded By",
         "status": "Status",
         "privacy": "Privacy",
-        "size": "Size"
+        "size": "Size",
+        "actions": "Actions"
       },
       "status": {
         "completed": "Completed",

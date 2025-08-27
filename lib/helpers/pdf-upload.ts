@@ -11,9 +11,7 @@ export const uploadPDFToS3 = async (
   userId: string
 ): Promise<string | undefined> => {
   // Validate file type
-  if (file.type !== 'application/pdf') {
-    throw new Error('Only PDF files are allowed')
-  }
+
 
   // Validate file size (max 10MB)
   const maxSize = 10 * 1024 * 1024 // 10MB
@@ -42,10 +40,7 @@ export const uploadPDFToS3 = async (
  */
 export const validatePDFFile = (file: File): { isValid: boolean; error?: string } => {
   // Check file type
-  if (file.type !== 'application/pdf') {
-    return { isValid: false, error: 'Only PDF files are allowed' }
-  }
-
+ 
   // Check file size (max 10MB)
   const maxSize = 10 * 1024 * 1024 // 10MB
   if (file.size > maxSize) {

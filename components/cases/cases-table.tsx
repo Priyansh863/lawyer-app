@@ -98,7 +98,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
       }
     }
     fetchCases()
-  }, [searchForm.watch('query'), searchForm.watch('status')])
+  }, [searchForm.watch('query'), searchForm.watch('status'),searchForm])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -359,12 +359,12 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-                      {t(`pages:cases.caseTypes.${caseItem.case_type}`) || caseItem.case_type}
+                      {caseItem.case_type}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-                      {t(`pages:cases.courtTypes.${caseItem.court_type}`) || caseItem.court_type}
+                      {caseItem.court_type}
                     </Badge>
                   </TableCell>
                   <TableCell>{getStatusBadge(caseItem.status)}</TableCell>

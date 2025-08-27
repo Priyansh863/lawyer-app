@@ -1,12 +1,15 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageSquare, Video, FileText, Calendar, Clock, User } from "lucide-react"
+import { MessageSquare, Video, FileText, Calendar, Clock, User, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { activityApi, Activity } from "@/lib/api/activity-api"
+import { useNotifications } from "@/contexts/NotificationContext"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
+import { useRouter } from "next/navigation"
+import { formatDistanceToNow } from "date-fns"
 
 interface ActivityItemProps {
   icon: React.ReactNode
@@ -14,11 +17,16 @@ interface ActivityItemProps {
   description: string
   time: string
   iconColor?: string
+  onClick?: () => void
+  isNotification?: boolean
 }
 
-function ActivityItem({ icon, title, description, time, iconColor = "bg-gray-100" }: ActivityItemProps) {
+function ActivityItem({ icon, title, description, time, iconColor = "bg-gray-100", onClick, isNotification = false }: ActivityItemProps) {
   return (
-    <div className="flex items-start gap-4 py-3">
+    <div 
+      className={`flex items-start gap-4 py-3 ${onClick ? 'cursor-pointer hover:bg-gray-50 rounded-lg px-2 -mx-2' : ''} ${isNotification ? 'bg-blue-50 border-l-2 border-blue-500 pl-4' : ''}`}
+      onClick={onClick}
+    >
       <div className={cn("p-2 rounded-md", iconColor)}>{icon}</div>
       <div className="flex-1 space-y-1">
         <p className="font-medium">{title}</p>
@@ -34,33 +42,63 @@ export default function RecentActivity() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
+  const { notifications, fetchNotifications } = useNotifications()
   const { t } = useTranslation()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Fetch notifications for recent activity
+    fetchNotifications({ limit: 4 })
+  }, [])
 
   useEffect(() => {
     const fetchRecentActivity = async () => {
-      // Access user ID from Redux state
       const userId = profile?._id
       if (!userId) return
       
       try {
         setLoading(true)
         setError(null)
-        const response = await activityApi.getActivities(userId)
         
-        if (response.success && response.data) {
-          const activityData = response.data.map((activity: Activity) => ({
-            icon: getActivityIcon(activity.activity_name),
-            title: activity.activity_name,
-            description: activity.description,
-            time: formatTimeAgo(activity.created_at),
-            iconColor: getActivityIconColor(activity.activity_name),
-          }))
-          setActivities(activityData)
+        // Combine notifications with regular activities
+        const combinedActivities: ActivityItemProps[] = []
+        
+        // Add last 4 notifications
+        const recentNotifications = notifications.slice(0, 4).map(notification => ({
+          icon: getNotificationIcon(notification.type),
+          title: notification.title,
+          description: notification.message,
+          time: formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }),
+          iconColor: getNotificationIconColor(notification.type),
+          onClick: () => handleNotificationClick(notification.type),
+          isNotification: true
+        }))
+        
+        combinedActivities.push(...recentNotifications)
+        
+        // If we have less than 4 notifications, try to fetch regular activities
+        if (recentNotifications.length < 4) {
+          try {
+            const response = await activityApi.getActivities(userId)
+            if (response.success && response.data) {
+              const activityData = response.data.slice(0, 4 - recentNotifications.length).map((activity: Activity) => ({
+                icon: getActivityIcon(activity.activity_name),
+                title: activity.activity_name,
+                description: activity.description,
+                time: formatTimeAgo(activity.created_at),
+                iconColor: getActivityIconColor(activity.activity_name),
+              }))
+              combinedActivities.push(...activityData)
+            }
+          } catch (activityError) {
+            console.log("Regular activities not available, showing notifications only")
+          }
         }
+        
+        setActivities(combinedActivities)
       } catch (error) {
         console.error("Failed to fetch recent activity:", error)
         setError(t('common.error'))
-        // Fallback to some default activities
         setActivities([
           {
             icon: <Clock size={16} />,
@@ -76,7 +114,62 @@ export default function RecentActivity() {
     }
 
     fetchRecentActivity()
-  }, [profile])
+  }, [profile, notifications])
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'case_created':
+      case 'case_status_changed':
+        return <FileText size={16} />
+      case 'document_uploaded':
+        return <FileText size={16} />
+      case 'chat_started':
+        return <MessageSquare size={16} />
+      case 'video_consultation_started':
+        return <Video size={16} />
+      case 'qa_question_posted':
+      case 'qa_answer_posted':
+        return <User size={16} />
+      default:
+        return <Bell size={16} />
+    }
+  }
+
+  const getNotificationIconColor = (type: string) => {
+    switch (type) {
+      case 'case_created':
+      case 'case_status_changed':
+        return "bg-purple-100 text-purple-600"
+      case 'document_uploaded':
+        return "bg-green-100 text-green-600"
+      case 'chat_started':
+        return "bg-blue-100 text-blue-600"
+      case 'video_consultation_started':
+        return "bg-red-100 text-red-600"
+      case 'qa_question_posted':
+      case 'qa_answer_posted':
+        return "bg-yellow-100 text-yellow-600"
+      default:
+        return "bg-gray-100 text-gray-600"
+    }
+  }
+
+  const handleNotificationClick = (type: string) => {
+    switch (type) {
+      case 'chat_started':
+        router.push('/chat')
+        break
+      case 'case_created':
+      case 'case_status_changed':
+        router.push('/cases')
+        break
+      case 'video_consultation_started':
+        router.push('/video-consultations')
+        break
+      default:
+        router.push('/notifications')
+    }
+  }
 
   const getActivityIcon = (activityName: string) => {
     const name = activityName.toLowerCase()
@@ -131,7 +224,10 @@ export default function RecentActivity() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          {t('dashboard.recentActivity')}
+          <Bell size={16} className="text-blue-600" />
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-0 divide-y">
         {loading ? (
@@ -156,6 +252,8 @@ export default function RecentActivity() {
               description={activity.description}
               time={activity.time}
               iconColor={activity.iconColor}
+              onClick={activity.onClick}
+              isNotification={activity.isNotification}
             />
           ))
         )}

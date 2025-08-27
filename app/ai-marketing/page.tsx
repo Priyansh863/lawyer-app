@@ -285,7 +285,7 @@ export default function AIMarketingPage() {
   // Generate URLs with spatial information
   const generateUrls = useCallback((content: string, spatial?: SpatialInfo) => {
     if (!content.trim()) return
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://yourapp.com"
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://lawgg.net"
     const postTitle = content.substring(0, 50).replace(/[^\w\s]/gi, "") || "AI Generated Content"
     const fullUrl = generateCustomUrl(baseUrl, postTitle, spatial)
     const shortUrlGenerated = generateShortUrl(baseUrl, postTitle, spatial)

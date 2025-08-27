@@ -72,10 +72,10 @@ export default function LocationUrlGenerator({
 
   const generateCustomUrl = (location: LocationFormData, title: string) => {
     const baseSlug = title.toLowerCase().replace(/\s+/g, "-")
-    const baseUrl = `https://yourapp.com/${baseSlug}`
+    const baseUrl = `https://lawgg.net/${baseSlug}`
 
     if (!location.latitude || !location.longitude) {
-      return { full: baseUrl, short: `https://yourapp.com/l/${baseSlug}` }
+      return { full: baseUrl, short: `https://lawgg.net/l/${baseSlug}` }
     }
 
     const params = new URLSearchParams()
@@ -96,7 +96,7 @@ export default function LocationUrlGenerator({
       location.timestamp ?? "",
       location.floor ?? "",
     ]
-    const shortUrl = `https://yourapp.com/l/${baseSlug}?${parts.join(",")}`
+    const shortUrl = `https://lawgg.net/l/${baseSlug}?${parts.join(",")}`
 
     return { full: fullUrl, short: shortUrl }
   }

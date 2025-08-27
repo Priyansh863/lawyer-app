@@ -21,43 +21,143 @@ import { CaseType, CourtType, caseTypeConfig, courtTypeConfig } from "@/types/ca
 import { IUser } from "@/lib/slices/authSlice"
 import { Client } from "@/types/client"
 
-// Define case code options
-const caseCodeOptions = [
-  "CR", // Criminal
-  "CV", // Civil
-  "FM", // Family
-  "CP", // Corporate
-  "IM", // Immigration
-  "PI", // Personal Injury
-  "RE", // Real Estate
-  "IP", // Intellectual Property
-  "EM", // Employment
-  "TX", // Tax
-  "BK", // Bankruptcy
-  "OT"  // Other
-] as const
+// Court-Case Type-Code mapping based on Korean court system
+const courtCaseMapping = {
+  "Seoul Central District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Seoul Eastern District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Seoul Western District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Seoul Southern District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Seoul Northern District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Incheon District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Suwon District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Uijeongbu District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Chuncheon District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Cheongju District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Daejeon District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Daegu District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Busan District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Ulsan District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Gwangju District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Changwon District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Jeju District Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Seoul High Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Daejeon High Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Daegu High Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Busan High Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Gwangju High Court": {
+    "Criminal": ["Go", "GoHap", "Hyeong", "Criminal", "HyeongJe", "No", "NoHap", "Do", "DoHap", "Hang", "Appeal", "HangHap", "Jae", "JaeHang", "JaeHap"],
+    "Civil": ["Ga", "GaHap", "GaDan", "GaSo", "GaCheo", "Car", "CarHap", "CarDan", "Na", "NaHap", "NaDan", "Ba", "BaHap", "BaDan", "Ha", "Ma", "Ta", "TaHap", "TaDan"]
+  },
+  "Constitutional Court": {
+    "Constitutional": ["Constitution"]
+  },
+  "Supreme Court": {
+    "Appeal (Supreme)": ["SupremeAppeal"]
+  },
+  "Seoul Family Court": {
+    "Family": ["Deu", "GaHap", "GaDan", "Ga", "Family", "GaJae", "GaShin", "GaCheo"]
+  }
+} as const
+
+// Define case status options grouped by category
+const caseStatusOptions = {
+  active: [
+    { value: "pending", label: "pages:cases.status.pending" },
+    { value: "in_progress", label: "pages:cases.status.inProgress" }
+  ],
+  judgment: [
+    { value: "full_win", label: "pages:cases.status.fullWin" },
+    { value: "full_loss", label: "pages:cases.status.fullLoss" },
+    { value: "partial_win", label: "pages:cases.status.partialWin" },
+    { value: "partial_loss", label: "pages:cases.status.partialLoss" },
+    { value: "dismissal", label: "pages:cases.status.dismissal" },
+    { value: "rejection", label: "pages:cases.status.rejection" }
+  ],
+  nonJudgment: [
+    { value: "withdrawal", label: "pages:cases.status.withdrawal" },
+    { value: "mediation", label: "pages:cases.status.mediation" },
+    { value: "settlement", label: "pages:cases.status.settlement" },
+    { value: "trial_cancellation", label: "pages:cases.status.trialCancellation" },
+    { value: "suspension", label: "pages:cases.status.suspension" },
+    { value: "closure", label: "pages:cases.status.closure" }
+  ]
+} as const
 
 const caseCreationSchema = z.object({
   title: z.string().min(1, "Case title is required").max(200, "Title must be less than 200 characters"),
   description: z.string().min(10, "Description must be at least 10 characters").max(1000, "Description must be less than 1000 characters"),
-  case_type: z.enum([
-    "civil", "criminal", "family", "corporate", "immigration", 
-    "personal_injury", "real_estate", "intellectual_property", 
-    "employment", "tax", "bankruptcy", "other"
-  ] as const, {
-    required_error: "Please select a case type"
-  }),
-  court_type: z.enum([
-    "district_court", "high_court", "supreme_court", "family_court", 
-    "commercial_court", "consumer_court", "labor_court", "tax_court", 
-    "tribunal", "arbitration", "other"
-  ] as const, {
-    required_error: "Please select a court type"
-  }),
-  case_code: z.enum(["CR", "CV", "FM", "CP", "IM", "PI", "RE", "IP", "EM", "TX", "BK", "OT"], {
-    required_error: "Please select a case code"
-  }),
+  court_name: z.string().min(1, "Please select a court"),
+  case_type: z.string().min(1, "Please select a case type"),
+  case_code: z.string().min(1, "Please select a case code"),
   case_number: z.string().min(1, "Case number is required").max(50, "Case number must be less than 50 characters"),
+  case_status: z.enum([
+    "pending", "in_progress", "full_win", "full_loss", "partial_win", 
+    "partial_loss", "dismissal", "rejection", "withdrawal", "mediation", 
+    "settlement", "trial_cancellation", "suspension", "closure"
+  ]).default("pending"),
   client_option: z.enum(["existing", "new"]).default("existing"),
   existing_client_id: z.string().optional(),
   client_first_name: z.string().optional(),
@@ -90,6 +190,8 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   const [isLoading, setIsLoading] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
   const [loadingClients, setLoadingClients] = useState(false)
+  const [availableCaseTypes, setAvailableCaseTypes] = useState<string[]>([])
+  const [availableCaseCodes, setAvailableCaseCodes] = useState<string[]>([])
   const { toast } = useToast()
   const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
@@ -100,10 +202,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
     defaultValues: {
       title: "",
       description: "",
-      case_type: undefined,
-      court_type: undefined,
-      case_code: undefined,
+      court_name: "",
+      case_type: "",
+      case_code: "",
       case_number: "",
+      case_status: "pending",
       client_option: "existing",
       existing_client_id: "",
       client_first_name: "",
@@ -123,30 +226,40 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
     }
   }, [isOpen, profile])
 
-  // Automatically set case code based on case type
+  // Handle court selection to update available case types and codes
   useEffect(() => {
-    const caseType = form.watch("case_type");
-    if (caseType) {
-      const codeMap: Record<string, typeof caseCodeOptions[number]> = {
-        criminal: "CR",
-        civil: "CV",
-        family: "FM",
-        corporate: "CP",
-        immigration: "IM",
-        personal_injury: "PI",
-        real_estate: "RE",
-        intellectual_property: "IP",
-        employment: "EM",
-        tax: "TX",
-        bankruptcy: "BK",
-        other: "OT"
-      };
+    const courtName = form.watch("court_name");
+    if (courtName && courtCaseMapping[courtName as keyof typeof courtCaseMapping]) {
+      const courtData = courtCaseMapping[courtName as keyof typeof courtCaseMapping];
+      const caseTypes = Object.keys(courtData);
+      setAvailableCaseTypes(caseTypes);
       
-      if (caseType in codeMap) {
-        form.setValue("case_code", codeMap[caseType]);
-      }
+      // Reset case type and case code when court changes
+      form.setValue("case_type", "");
+      form.setValue("case_code", "");
+      setAvailableCaseCodes([]);
+    } else {
+      setAvailableCaseTypes([]);
+      setAvailableCaseCodes([]);
     }
-  }, [form.watch("case_type")]);
+  }, [form.watch("court_name")]);
+
+  // Handle case type selection to update available case codes
+  useEffect(() => {
+    const courtName = form.watch("court_name");
+    const caseType = form.watch("case_type");
+    
+    if (courtName && caseType && courtCaseMapping[courtName as keyof typeof courtCaseMapping]) {
+      const courtData = courtCaseMapping[courtName as keyof typeof courtCaseMapping];
+      const caseCodes = courtData[caseType as keyof typeof courtData] || [];
+      setAvailableCaseCodes(caseCodes as string[]);
+      
+      // Reset case code when case type changes
+      form.setValue("case_code", "");
+    } else {
+      setAvailableCaseCodes([]);
+    }
+  }, [form.watch("court_name"), form.watch("case_type")]);
 
   const fetchClients = async () => {
     try {
@@ -178,14 +291,16 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
     setIsLoading(true)
     try {
       // Assemble case identification: court + case code + case number
-      const courtAbbreviation = courtTypeConfig[data.court_type]?.abbreviation || "CT";
+      const courtAbbreviation = data.court_name.split(' ').map(word => word.charAt(0)).join('').toUpperCase();
       const caseIdentifier = `${courtAbbreviation}-${data.case_code}-${data.case_number}`;
 
       const caseData = {
         ...data,
         case_identifier: caseIdentifier,
         lawyer_id: profile?._id,
-        status: "open" as const,
+        status: data.case_status,
+        court_name: data.court_name,
+        court_type: data.court_name, // Send court_name as court_type for backend compatibility
         client_email: data.client_email || undefined,
         client_phone: data.client_phone || undefined,
         expected_duration: data.expected_duration || undefined,
@@ -277,6 +392,31 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="court_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("pages:casesD.form.courtType")} *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a court" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.keys(courtCaseMapping).map((courtName) => (
+                          <SelectItem key={courtName} value={courtName}>
+                            {courtName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -284,16 +424,20 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pages:casesD.form.caseType")} *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={availableCaseTypes.length === 0}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("pages:casesD.form.selectCaseType")} />
+                            <SelectValue placeholder={availableCaseTypes.length === 0 ? "Select a court first" : "Select case type"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(caseTypeConfig).map(([key, config]) => (
-                            <SelectItem key={key} value={key}>
-                              {t(`pages:casesD.caseTypes.${key}`)}
+                          {availableCaseTypes.map((caseType) => (
+                            <SelectItem key={caseType} value={caseType}>
+                              {caseType}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -305,20 +449,24 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
 
                 <FormField
                   control={form.control}
-                  name="court_type"
+                  name="case_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("pages:casesD.form.courtType")} *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>{t("pages:casesD.form.caseCode")} *</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={availableCaseCodes.length === 0}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("pages:casesD.form.selectCourtType")} />
+                            <SelectValue placeholder={availableCaseCodes.length === 0 ? "Select case type first" : "Select case code"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(courtTypeConfig).map(([key, config]) => (
-                            <SelectItem key={key} value={key}>
-                              {t(`pages:casesD.courtTypes.${key}`)}
+                          {availableCaseCodes.map((code) => (
+                            <SelectItem key={code} value={code}>
+                              {code}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -329,23 +477,39 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                 />
               </div>
 
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="case_code"
+                  name="case_status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("pages:casesD.form.caseCode")} *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <FormLabel>{t("pages:casesD.form.caseStatus")} *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("pages:casesD.form.selectCaseCode")} />
+                            <SelectValue placeholder={t("pages:casesD.form.selectCaseStatus")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {caseCodeOptions.map((code) => (
-                            <SelectItem key={code} value={code}>
-                              {code}
+                          {/* Active Case Statuses */}
+                          {caseStatusOptions.active.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {t(status.label)}
+                            </SelectItem>
+                          ))}
+                          
+                          {/* Judgment Outcomes */}
+                          {caseStatusOptions.judgment.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {t(status.label)}
+                            </SelectItem>
+                          ))}
+                          
+                          {/* Non-Judgment Outcomes */}
+                          {caseStatusOptions.nonJudgment.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {t(status.label)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -374,11 +538,11 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
               </div>
 
               {/* Display the assembled case identifier */}
-              {form.watch("court_type") && form.watch("case_code") && form.watch("case_number") && (
+              {form.watch("court_name") && form.watch("case_code") && form.watch("case_number") && (
                 <div className="p-3 bg-muted rounded-md">
                   <p className="text-sm font-medium">{t("pages:casesD.form.caseIdentifier")}:</p>
                   <p className="text-lg font-bold">
-                    {courtTypeConfig[form.watch("court_type")]?.abbreviation || "CT"}-
+                    {form.watch("court_name")?.split(' ').map(word => word.charAt(0)).join('').toUpperCase()}-
                     {form.watch("case_code")}-
                     {form.watch("case_number")}
                   </p>

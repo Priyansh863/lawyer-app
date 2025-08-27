@@ -2,14 +2,17 @@
 
 import React from 'react'
 import { useI18n, Language } from '@/contexts/i18nContext'
-import toast from 'react-hot-toast'
+import { toast } from '@/hooks/use-toast'
 
 const LanguageSettings: React.FC = () => {
   const { language, setLanguage, t } = useI18n()
 
   const handleLanguageChange = (newLanguage: Language) => {
     setLanguage(newLanguage)
-    toast.success(t('common:settings.languageChanged'))
+    toast({
+      title: t('common:settings.language'),
+      description: t('common:settings.languageChanged'),
+    })
   }
 
   const languages = [

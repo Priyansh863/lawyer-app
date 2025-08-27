@@ -302,13 +302,6 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                 <p className="mt-1 text-sm leading-relaxed">{translateEmbeddedText(caseState.description)}</p>
               </div>
             )}
-
-            {caseState.summary && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.summary")}</h3>
-                <p className="mt-1 text-sm leading-relaxed">{translateEmbeddedText(caseState.summary)}</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 

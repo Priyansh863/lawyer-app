@@ -201,7 +201,9 @@
         "caseNumber": "사건 번호",
         "caseNumberPlaceholder": "사건 번호 입력",
         "selectCaseCode": "사건 코드 선택",
-        "caseIdentifier": "사건 식별자"
+        "caseIdentifier": "사건 식별자",
+         "caseStatus": "사건 상태",
+       "selectCaseStatus": "사건 상태 선택"
     },
     "caseTypes": {
       "civil": "민사",
@@ -1069,7 +1071,8 @@
       "category": "카테고리",
       "amount": "금액",
       "status": "상태",
-      "date": "날짜"
+      "date": "날짜",
+      "actions": "작업"
     },
     "transactionTypes": {
       "purchase": "구매",
@@ -1136,7 +1139,8 @@
         "searchPlaceholder": "문서 검색...",
         "summaryDownloadSuccess": "문서 요약이 성공적으로 다운로드되었습니다",
         "summaryDownloadError": "문서 요약 다운로드 실패",
-        "downloadingSummary": "요약 다운로드 중..."
+        "downloadingSummary": "요약 다운로드 중...",
+        "downloadDocument":"문서 다운로드"
       },
       "status": {
         "pending": "대기 중",

@@ -1,7 +1,6 @@
 "use client"
 import { RootState } from "@/lib/store"
 import { useSelector } from "react-redux"
-import { getGreeting } from "@/lib/helpers/greeting"
 import { useTranslation } from "@/hooks/useTranslation"
 
 

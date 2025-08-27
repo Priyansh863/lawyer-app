@@ -5,8 +5,10 @@ import "./globals.css"
 import ReduxProvider from "@/lib/redux-provider"
 import TokenValidationProvider from "@/components/providers/TokenValidationProvider"
 import { I18nProvider } from "@/contexts/i18nContext"
-import toast, { Toaster as HotToaster } from 'react-hot-toast';
 import { Toaster } from "@/components/ui/toaster"
+import { NotificationProvider } from "@/contexts/NotificationContext"
+import { Toaster as SonnerToaster } from "sonner"
+import NotificationToastProvider from "@/components/providers/NotificationToastProvider"
 // import { SessionProvider } from "next-auth/react"
 
 // Initialize the Lato font
@@ -35,9 +37,12 @@ export default function RootLayout({
           <ReduxProvider>
             <I18nProvider>
               <TokenValidationProvider>
-                {children}
-                <Toaster />
-                <HotToaster />
+                <NotificationProvider>
+                  <NotificationToastProvider />
+                  {children}
+                  <Toaster />
+                  <SonnerToaster position="top-right" />
+                </NotificationProvider>
               </TokenValidationProvider>
             </I18nProvider>
           </ReduxProvider>

@@ -258,6 +258,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
                   <TableHead>{t("pages:caseDocuments.tableHeaders.status")}</TableHead>
                   <TableHead>{t("pages:caseDocuments.tableHeaders.privacy")}</TableHead>
                   <TableHead>{t("pages:caseDocuments.tableHeaders.size")}</TableHead>
+                  <TableHead>{t("pages:caseDocuments.tableHeaders.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -287,6 +288,13 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
                     <TableCell>{getStatusBadge(doc.status)}</TableCell>
                     <TableCell>{getPrivacyBadge(doc.privacy)}</TableCell>
                     <TableCell>{formatFileSize(doc.file_size)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={() => handleViewDocument(doc)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

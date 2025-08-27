@@ -26,7 +26,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import ClientCases from "@/components/clients/client-cases"
-import ClientNotes from "@/components/clients/client-notes"
 import { SimpleChat } from "@/components/chat/simple-chat"
 import { useTranslation } from "@/hooks/useTranslation"
 import ClientDocuments from "./client-documents"
@@ -311,7 +310,6 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
             <TabsList>
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
               <TabsTrigger value="documents">{t("pages:clientDetails.documents")}</TabsTrigger>
-              <TabsTrigger value="notes">{t("pages:clientDetails.notes")}</TabsTrigger>
             </TabsList>
             <TabsContent value="cases" className="mt-4">
               <ClientCases clientId={client.id} />

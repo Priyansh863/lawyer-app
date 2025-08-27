@@ -575,6 +575,17 @@ export default function DocumentsTable({
                               ? t('pages:documentT.documents.downloadingSummary')
                               : t('pages:documentT.table.actions.downloadSummary')}
                           </DropdownMenuItem>
+
+                          <DropdownMenuItem 
+                            onClick={() => handleDownloadSummary(doc)}
+                            className="flex items-center gap-2"
+                            disabled={downloadingSummaryId === doc._id}
+                          >
+                            <FileText className="h-4 w-4" />
+                            {downloadingSummaryId === doc._id 
+                              ? t('pages:documentT.documents.downloadDocument')
+                              : t('pages:documentT.table.actions.downloadDocument')}
+                          </DropdownMenuItem>
                           
                           { (doc.privacy === 'private') && (
                             <DropdownMenuItem 
