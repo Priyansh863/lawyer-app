@@ -66,6 +66,10 @@ export default function NotificationsPage() {
         return '/cases'
       case 'video_consultation_started':
         return '/video-consultations'
+      case 'qa_question_posted':
+        return '/qa'
+      case 'document_uploaded':
+        return '/documents'
       default:
         return '/notifications'
     }
