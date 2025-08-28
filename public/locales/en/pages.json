@@ -573,7 +573,8 @@
           "status": "Status",
           "privacy": "Privacy",
           "uploaded": "Uploaded",
-          "actions": "Actions"
+          "actions": "Actions",
+          "downloadDocument": "Download Document"
         },
         "filters": {
           "allStatuses": "All statuses",
@@ -590,7 +591,8 @@
           "downloadSummary": "Download Summary",
           "shareDocument": "Share Document",
           "view": "View",
-          "delete": "Delete"
+          "delete": "Delete",
+          "downloadDocument": "Download Document"
         }
       }
     },
@@ -1227,6 +1229,42 @@
     }
   }
 },
+
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "loading": "Loading notifications...",
+    "empty": "No notifications yet",
+    "viewAll": "View all notifications"
+  },
+  
+  "notificationsa": {
+    "title": "Notifications",
+    "unread": "unread",
+    "refresh": "Refresh",
+    "markAllRead": "Mark all read",
+    "allNotifications": "All Notifications",
+    "filterByType": "Filter by type",
+    "allTypes": "All Types",
+    "loading": "Loading notifications...",
+    "noUnread": "No unread notifications",
+    "empty": "No notifications yet",
+    "highPriority": "High Priority",
+    "by": "by",
+    "markAsRead": "Mark as read",
+    "delete": "Delete notification",
+    "loadMore": "Load More",
+    "types": {
+      "caseCreated": "Case Created",
+      "caseStatus": "Case Status",
+      "document": "Document",
+      "chat": "Chat",
+      "videoCall": "Video Call",
+      "qaQuestion": "Q&A Question",
+      "qaAnswer": "Q&A Answer",
+      "general": "General"
+    }
+  },
 "questionform" :{
   "error": "Error",
   "failed_to_load_lawyers": "Failed to load lawyers list.",

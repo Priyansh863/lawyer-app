@@ -260,4 +260,5 @@ export default function RecentActivity() {
       </CardContent>
     </Card>
   )
+  
 }

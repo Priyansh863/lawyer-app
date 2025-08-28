@@ -11,8 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const { 
     notifications, 
     unreadCount, 
@@ -120,21 +122,21 @@ export default function NotificationsPage() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'case_created':
-        return 'Case Created'
+        return t('pages:notificationsa.types.caseCreated')
       case 'case_status_changed':
-        return 'Case Status'
+        return t('pages:notificationsa.types.caseStatus')
       case 'document_uploaded':
-        return 'Document'
+        return t('pages:notificationsa.types.document')
       case 'chat_started':
-        return 'Chat'
+        return t('pages:notificationsa.types.chat')
       case 'video_consultation_started':
-        return 'Video Call'
+        return t('pages:notificationsa.types.videoCall')
       case 'qa_question_posted':
-        return 'Q&A Question'
+        return t('pages:notificationsa.types.qaQuestion')
       case 'qa_answer_posted':
-        return 'Q&A Answer'
+        return t('pages:notificationsa.types.qaAnswer')
       default:
-        return 'General'
+        return t('pages:notificationsa.types.general')
     }
   }
 
@@ -147,10 +149,10 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Bell className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Notifications</h1>
+          <h1 className="text-2xl font-bold">{t('pages:notificationsa.title')}</h1>
           {unreadCount > 0 && (
             <Badge variant="destructive" className="rounded-full">
-              {unreadCount} unread
+              {unreadCount} {t('pages:notificationsa.unread')}
             </Badge>
           )}
         </div>
@@ -163,7 +165,7 @@ export default function NotificationsPage() {
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('pages:notificationsa.refresh')}
           </Button>
           
           {unreadCount > 0 && (
@@ -173,7 +175,7 @@ export default function NotificationsPage() {
               onClick={markAllAsRead}
             >
               <CheckCheck className="h-4 w-4 mr-2" />
-              Mark all read
+              {t('pages:notificationsa.markAllRead')}
             </Button>
           )}
         </div>
@@ -182,26 +184,26 @@ export default function NotificationsPage() {
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <Tabs value={filter} onValueChange={(value: any) => setFilter(value)} className="flex-1">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">All Notifications</TabsTrigger>
+            <TabsTrigger value="all">{t('pages:notificationsa.allNotifications')}</TabsTrigger>
             <TabsTrigger value="unread">
-              Unread {unreadCount > 0 && `(${unreadCount})`}
+              {t('pages:notificationsa.unread')} {unreadCount > 0 && `(${unreadCount})`}
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder={t('pages:notificationsa.filterByType')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="case_created">Case Created</SelectItem>
-            <SelectItem value="case_status_changed">Case Status</SelectItem>
-            <SelectItem value="document_uploaded">Documents</SelectItem>
-            <SelectItem value="chat_started">Chats</SelectItem>
-            <SelectItem value="video_consultation_started">Video Calls</SelectItem>
-            <SelectItem value="qa_question_posted">Q&A Questions</SelectItem>
-            <SelectItem value="qa_answer_posted">Q&A Answers</SelectItem>
+            <SelectItem value="all">{t('pages:notificationsa.allTypes')}</SelectItem>
+            <SelectItem value="case_created">{t('pages:notificationsa.types.caseCreated')}</SelectItem>
+            <SelectItem value="case_status_changed">{t('pages:notificationsa.types.caseStatus')}</SelectItem>
+            <SelectItem value="document_uploaded">{t('pages:notificationsa.types.document')}</SelectItem>
+            <SelectItem value="chat_started">{t('pages:notificationsa.types.chat')}</SelectItem>
+            <SelectItem value="video_consultation_started">{t('pages:notificationsa.types.videoCall')}</SelectItem>
+            <SelectItem value="qa_question_posted">{t('pages:notificationsa.types.qaQuestion')}</SelectItem>
+            <SelectItem value="qa_answer_posted">{t('pages:notificationsa.types.qaAnswer')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -210,14 +212,14 @@ export default function NotificationsPage() {
         {loading && page === 1 ? (
           <div className="text-center py-8">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">Loading notifications...</p>
+            <p className="text-muted-foreground">{t('pages:notificationsa.loading')}</p>
           </div>
         ) : filteredNotifications.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
               <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground">
-                {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                {filter === 'unread' ? t('pages:notificationsa.noUnread') : t('pages:notificationsa.empty')}
               </p>
             </CardContent>
           </Card>
@@ -241,7 +243,7 @@ export default function NotificationsPage() {
                         </Badge>
                         {notification.priority === 'high' && (
                           <Badge variant="destructive" className="text-xs">
-                            High Priority
+                            {t('pages:notificationsa.highPriority')}
                           </Badge>
                         )}
                         {!notification.isRead && (
@@ -262,7 +264,7 @@ export default function NotificationsPage() {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                           {notification.createdBy && (
                             <span className="ml-2">
-                              by {notification.createdBy.first_name} {notification.createdBy.last_name}
+                              {t('pages:notificationsa.by')} {notification.createdBy.first_name} {notification.createdBy.last_name}
                             </span>
                           )}
                         </p>
@@ -275,7 +277,7 @@ export default function NotificationsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={(e) => handleMarkAsRead(notification._id, e)}
-                          title="Mark as read"
+                          title={t('pages:notificationsa.markAsRead')}
                         >
                           <Check className="h-4 w-4" />
                         </Button>
@@ -285,7 +287,7 @@ export default function NotificationsPage() {
                         variant="ghost"
                         size="sm"
                         onClick={(e) => handleDeleteNotification(notification._id, e)}
-                        title="Delete notification"
+                        title={t('pages:notificationsa.delete')}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -309,10 +311,10 @@ export default function NotificationsPage() {
             {loading ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
+                {t('pages:notificationsa.loading')}
               </>
             ) : (
-              'Load More'
+              t('pages:notificationsa.loadMore')
             )}
           </Button>
         </div>

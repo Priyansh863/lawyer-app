@@ -15,8 +15,10 @@ import {
 import { ScrollArea } from '../ui/scroll-area'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationBell() {
+  const { t } = useTranslation()
   const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
@@ -106,7 +108,7 @@ export default function NotificationBell() {
       
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between p-4">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold">{t('pages:notifications.title')}</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -114,7 +116,7 @@ export default function NotificationBell() {
               onClick={markAllAsRead}
               className="text-xs"
             >
-              Mark all read
+              {t('pages:notifications.markAllRead')}
             </Button>
           )}
         </div>
@@ -124,11 +126,11 @@ export default function NotificationBell() {
         <ScrollArea className="max-h-96">
           {loading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              Loading notifications...
+              {t('pages:notifications.loading')}
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No notifications yet
+              {t('pages:notifications.empty')}
             </div>
           ) : (
             notifications.slice(0, 10).map((notification) => (
@@ -173,7 +175,7 @@ export default function NotificationBell() {
                 setIsOpen(false)
               }}
             >
-              <span className="text-sm text-blue-600 font-medium">View all notifications</span>
+              <span className="text-sm text-blue-600 font-medium">{t('pages:notifications.viewAll')}</span>
             </DropdownMenuItem>
           </>
         )}

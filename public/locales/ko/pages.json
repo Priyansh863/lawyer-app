@@ -427,6 +427,41 @@
     }
   }
 },
+"notifications": {
+    "title": "알림",
+    "markAllRead": "모두 읽음으로 표시",
+    "loading": "알림을 불러오는 중...",
+    "empty": "아직 알림이 없습니다",
+    "viewAll": "알림 보기"
+  },
+  
+  "notificationsa": {
+    "title": "알림",
+    "unread": "읽지 않음",
+    "refresh": "새로고침",
+    "markAllRead": "모두 읽음으로 표시",
+    "allNotifications": "모든 알림",
+    "filterByType": "유형별 필터",
+    "allTypes": "모든 유형",
+    "loading": "알림을 불러오는 중...",
+    "noUnread": "읽지 않은 알림이 없습니다",
+    "empty": "아직 알림이 없습니다",
+    "highPriority": "높은 중요도",
+    "by": "작성자",
+    "markAsRead": "읽음으로 표시",
+    "delete": "알림 삭제",
+    "loadMore": "더 보기",
+    "types": {
+      "caseCreated": "사건 생성됨",
+      "caseStatus": "사건 상태",
+      "document": "문서",
+      "chat": "채팅",
+      "videoCall": "영상 통화",
+      "qaQuestion": "Q&A 질문",
+      "qaAnswer": "Q&A 답변",
+      "general": "일반"
+    }
+  },
 "voiceSummary": {
   "title": "음성 요약",
   "description": "문서 요약을 확인하고 음성으로 들을 수 있습니다.",
@@ -1162,7 +1197,8 @@
           "status": "상태",
           "privacy": "공개 범위",
           "uploaded": "업로드 시간",
-          "actions": "작업"
+          "actions": "작업",
+          "downloadDocument": "문서 다운로드"
         },
         "filters": {
           "allStatuses": "모든 상태",
@@ -1179,7 +1215,8 @@
           "downloadSummary": "요약 다운로드",
           "shareDocument": "문서 공유",
           "view": "보기",
-          "delete": "삭제"
+          "delete": "삭제",
+          "downloadDocument": "문서 다운로드"
         }
       }
     },
