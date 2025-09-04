@@ -28,7 +28,7 @@ interface Meeting {
   meeting_description?: string;
   requested_date: string;
   requested_time: string;
-  status: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed';
   client_id: {
     _id: string;
     first_name: string;
@@ -41,10 +41,17 @@ interface Meeting {
     last_name: string;
     email: string;
   };
+  created_by: {
+    _id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
   meeting_link?: string;
   notes?: string;
   rejection_reason?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface MeetingApprovalCardProps {
@@ -55,15 +62,15 @@ interface MeetingApprovalCardProps {
 const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUpdate }) => {
   const profile = useSelector((state: RootState) => state.auth.user);
 
-  const [showApprovalForm, setShowApprovalForm] = useState(false);
-  const [showRejectionForm, setShowRejectionForm] = useState(false);
-  const [meetingLink, setMeetingLink] = useState('');
-  const [notes, setNotes] = useState('');
-  const [rejectionReason, setRejectionReason] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [meetingLink, setMeetingLink] = useState(meeting.meeting_link || '');
+  const [notes, setNotes] = useState(meeting.notes || '');
+  const [rejectionReason, setRejectionReason] = useState(meeting.rejection_reason || '');
+  const [isRejecting, setIsRejecting] = useState(false);
+  const isLawyer = profile?.account_type === 'lawyer';
 
   const handleApprove = async () => {
-    if (!meetingLink.trim()) {
+    if (!meetingLink.trim() && !meeting.meeting_link) {
       toast({
         title: "Error",
         description: "Meeting link is required for approval",
@@ -72,9 +79,10 @@ const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUp
       return;
     }
 
-    setIsProcessing(true);
+    setIsLoading(true);
 
     try {
+      const token = getToken();
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/meeting/approve/${meeting._id}`,
         {
@@ -94,9 +102,7 @@ const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUp
           title: "Success",
           description: "Meeting approved successfully!"
         });
-        setShowApprovalForm(false);
-        setMeetingLink('');
-        setNotes('');
+        setIsLoading(false);
         onUpdate();
       }
     } catch (error: any) {
@@ -107,54 +113,54 @@ const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUp
         variant: "destructive"
       });
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
+  const handleRejectClick = () => {
+    setIsRejecting(true);
+  };
+
   const handleReject = async () => {
-    if (!rejectionReason.trim()) {
+    if (!rejectionReason) {
       toast({
-        title: "Error",
-        description: "Rejection reason is required",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please provide a reason for rejection',
+        variant: 'destructive',
       });
       return;
     }
 
-    setIsProcessing(true);
-
     try {
-      const response = await axios.put(
+      setIsLoading(true);
+      const token = getToken();
+      await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/meeting/reject/${meeting._id}`,
-        {
-          rejection_reason: rejectionReason
-        },
+        { rejection_reason: rejectionReason },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         }
       );
-
-      if (response.data.success) {
-        toast({
-          title: "Success",
-          description: "Meeting rejected successfully"
-        });
-        setShowRejectionForm(false);
-        setRejectionReason('');
-        onUpdate();
-      }
-    } catch (error: any) {
+      
+      toast({
+        title: 'Success',
+        description: 'Meeting rejected successfully',
+      });
+      
+      onUpdate();
+      setIsRejecting(false);
+    } catch (error) {
       console.error('Error rejecting meeting:', error);
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to reject meeting",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to reject meeting',
+        variant: 'destructive',
       });
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
@@ -181,154 +187,158 @@ const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUp
     return null;
   };
 
-  const token = getToken()
-
-
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {meeting.meeting_title}
-          </CardTitle>
-          {getStatusBadge(meeting.status)}
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="flex flex-col space-y-1">
+              <CardTitle className="text-lg font-medium">
+                {meeting.meeting_title}
+              </CardTitle>
+              <div className="flex items-center space-x-2">
+                <Badge 
+                  variant={
+                    meeting.status === 'approved' ? 'default' : 
+                    meeting.status === 'rejected' ? 'destructive' : 
+                    meeting.status === 'pending' ? 'secondary' : 'outline'
+                  }
+                >
+                  {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                </Badge>
+                {meeting.status === 'pending' && meeting.created_by !== profile?._id && (
+                  <span className="text-xs text-muted-foreground">
+                    Requires your approval
+                  </span>
+                )}
+              </div>
+            </div>
+          </CardHeader>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Meeting Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">Client:</span>
-            <span>{meeting.client_id.first_name} {meeting.client_id.last_name}</span>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {meeting.client_id?._id === profile?._id ? 'Lawyer: ' : 'Client: '}{
+                  meeting.client_id?._id === profile?._id 
+                    ? `${meeting.lawyer_id?.first_name} ${meeting.lawyer_id?.last_name}`
+                    : `${meeting.client_id?.first_name} ${meeting.client_id?.last_name}`
+                }
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                {new Date(meeting.requested_date).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{meeting.requested_time}</span>
+            </div>
+            {meeting.meeting_link && (
+              <div className="flex items-center space-x-2">
+                <Link className="h-4 w-4 text-muted-foreground" />
+                <a 
+                  href={meeting.meeting_link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  Join Meeting
+                </a>
+              </div>
+            )}
+            
+            {/* Status message */}
+            {meeting.status === 'rejected' && meeting.rejection_reason && (
+              <div className="mt-2 p-2 bg-red-50 rounded-md text-sm text-red-700">
+                <p><strong>Rejection Reason:</strong> {meeting.rejection_reason}</p>
+              </div>
+            )}
+            
+            {/* Notes */}
+            {meeting.notes && (
+              <div className="mt-2 p-2 bg-gray-50 rounded-md text-sm">
+                <p><strong>Notes:</strong> {meeting.notes}</p>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">Date:</span>
-            <span>{new Date(meeting.requested_date).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">Time:</span>
-            <span>{meeting.requested_time}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">Requested:</span>
-            <span>{new Date(meeting.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-
-        {/* Description */}
-        {meeting.meeting_description && (
-          <div>
-            <p className="font-medium mb-1">Description:</p>
-            <p className="text-gray-600">{meeting.meeting_description}</p>
-          </div>
-        )}
-
-        {/* Meeting Link (if approved) */}
-        {meeting.meeting_link && (
-          <div className="flex items-center gap-2">
-            <Link className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">Meeting Link:</span>
-            <a 
-              href={meeting.meeting_link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Join Meeting
-            </a>
-          </div>
-        )}
-
-        {/* Notes (if any) */}
-        {meeting.notes && (
-          <div>
-            <p className="font-medium mb-1">Notes:</p>
-            <p className="text-gray-600">{meeting.notes}</p>
-          </div>
-        )}
-
-        {/* Rejection Reason (if rejected) */}
-        {meeting.rejection_reason && (
-          <div>
-            <p className="font-medium mb-1">Rejection Reason:</p>
-            <p className="text-red-600">{meeting.rejection_reason}</p>
-          </div>
-        )}
-
-        {/* Action Buttons (only for pending meetings) */}
-        {meeting.status === 'pending' && (
-          <div className="flex gap-2 pt-4 border-t">
-            <Button
-              onClick={() => setShowApprovalForm(true)}
-              className="flex-1"
-              disabled={showRejectionForm}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Approve
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setShowRejectionForm(true)}
-              className="flex-1"
-              disabled={showApprovalForm}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Reject
-            </Button>
-          </div>
-        )}
+          {meeting.meeting_description && (
+            <div>
+              <p className="font-medium mb-1">Description:</p>
+              <p className="text-gray-600">{meeting.meeting_description}</p>
+            </div>
+          )}
+        </CardContent>
 
         {/* Approval Form */}
-        {showApprovalForm && (
-          <div className="space-y-4 p-4 border rounded-lg bg-green-50">
-            <h4 className="font-medium text-green-800">Approve Meeting</h4>
-            
-            <div className="space-y-2">
-              <Label htmlFor="meeting_link">Meeting Link *</Label>
-              <Input
-                id="meeting_link"
-                value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)}
-                placeholder="https://zoom.us/j/... or https://meet.google.com/..."
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any additional notes for the client..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button onClick={handleApprove} disabled={isProcessing}>
-                <Check className="h-4 w-4 mr-2" />
-                {isProcessing ? 'Approving...' : 'Confirm Approval'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowApprovalForm(false)}
-                disabled={isProcessing}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Rejection Form */}
-        {showRejectionForm && (
-          <div className="space-y-4 p-4 border rounded-lg bg-red-50">
+        {meeting.status === 'pending' && isLawyer && meeting.created_by?._id !== profile?._id && (
+          <div className="flex flex-col space-y-2 mt-4">
+            {isRejecting ? (
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Reason for rejection"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="min-h-[80px]"
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsRejecting(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={handleReject}
+                    disabled={isLoading || !rejectionReason.trim()}
+                  >
+                    {isLoading ? 'Rejecting...' : 'Confirm Reject'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                {!meetingLink && (
+                  <div className="space-y-1">
+                    <Label htmlFor="meetingLink">Meeting Link</Label>
+                    <Input
+                      id="meetingLink"
+                      placeholder="https://meet.google.com/..."
+                      value={meetingLink}
+                      onChange={(e) => setMeetingLink(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleRejectClick}
+                    disabled={isLoading}
+                  >
+                    <X className="h-4 w-4 mr-1" /> Reject
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={handleApprove}
+                    disabled={isLoading || (!meetingLink && !meeting.meeting_link)}
+                  >
+                    <Check className="h-4 w-4 mr-1" /> Approve
+                  </Button>
+                </div>
+              </div>
+            )}
             <h4 className="font-medium text-red-800">Reject Meeting</h4>
             
             <div className="space-y-2">
@@ -347,15 +357,15 @@ const MeetingApprovalCard: React.FC<MeetingApprovalCardProps> = ({ meeting, onUp
               <Button 
                 variant="destructive" 
                 onClick={handleReject} 
-                disabled={isProcessing}
+                disabled={isLoading}
               >
                 <X className="h-4 w-4 mr-2" />
-                {isProcessing ? 'Rejecting...' : 'Confirm Rejection'}
+                {isLoading ? 'Rejecting...' : 'Confirm Rejection'}
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => setShowRejectionForm(false)}
-                disabled={isProcessing}
+                onClick={() => setIsRejecting(false)}
+                disabled={isLoading}
               >
                 Cancel
               </Button>

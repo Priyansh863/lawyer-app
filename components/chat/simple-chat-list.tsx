@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { SimpleChat } from "@/components/chat/simple-chat"
 import { 
@@ -26,6 +36,8 @@ export default function SimpleChatList() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
   const [showChat, setShowChat] = useState(false)
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -66,24 +78,42 @@ export default function SimpleChatList() {
     }
   }
 
-  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (chatId: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    setChatToDelete(chatId)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return
     
     try {
-      await deleteChatAPI(chatId)
-      setChats(prev => prev.filter(chat => chat._id !== chatId))
+      await deleteChatAPI(chatToDelete)
+      setChats(prev => prev.filter(chat => chat._id !== chatToDelete))
       toast({
         title: t('pages:chatbox.delete.success.title'),
         description: t('pages:chatbox.delete.success.description'),
       })
     } catch (error) {
-      console.error('pages:chatbox.Error deleting chat:', error)
+      console.error('Error deleting chat:', error)
       toast({
         title: t('pages:chatbox.errors.delete.title'),
         description: t('pages:chatbox.errors.delete.description'),
         variant: "destructive",
       })
+    } finally {
+      setShowDeleteConfirm(false)
+      setChatToDelete(null)
     }
+  }
+
+  const cancelDeleteChat = () => {
+    setShowDeleteConfirm(false)
+    setChatToDelete(null)
+    toast({
+      title: t('pages:chatbox.delete.cancelled.title'),
+      description: t('pages:chatbox.delete.cancelled.description'),
+    })
   }
 
   const handleChatClick = (chat: Chat) => {
@@ -213,7 +243,7 @@ export default function SimpleChatList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => handleDeleteChat(chat._id, e)}
+                            onClick={(e) => handleDeleteClick(chat._id, e)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             aria-label={t('pages:chatbox.delete.button')}
                           >
@@ -251,6 +281,29 @@ export default function SimpleChatList() {
           }
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('pages:chatbox.delete.confirm.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('pages:chatbox.delete.confirm.description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteChat}>
+              {t('pages:chatbox.delete.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteChat}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t('pages:chatbox.delete.confirm.button')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

@@ -13,6 +13,7 @@ interface StatCardProps {
   title: string
   value: string | number
   icon: React.ReactNode
+  index: number
 }
 
 interface TokenBalance {
@@ -21,17 +22,41 @@ interface TokenBalance {
   monthly_usage: number
 }
 
-function StatCard({ title, value, icon }: StatCardProps) {
+function StatCard({ title, value, icon, index }: StatCardProps) {
+  // Korean-style pastel color palette
+  const cardColors = [
+    "bg-gradient-to-br from-[#FFD8E0] to-[#FFAFBD]", // Soft pink
+    "bg-gradient-to-br from-[#C2E9FB] to-[#A1C4FD]", // Soft blue
+    "bg-gradient-to-br from-[#D4FC79] to-[#96E6A1]", // Soft green
+    "bg-gradient-to-br from-[#FFECD2] to-[#FCB69F]", // Soft peach
+    "bg-gradient-to-br from-[#E0C3FC] to-[#8EC5FC]", // Soft purple
+    "bg-gradient-to-br from-[#FEE140] to-[#FA709A]", // Soft yellow to pink
+  ]
+
+  const iconColors = [
+    "text-pink-600 bg-pink-100",
+    "text-blue-600 bg-blue-100",
+    "text-green-600 bg-green-100",
+    "text-orange-600 bg-orange-100",
+    "text-purple-600 bg-purple-100",
+    "text-yellow-600 bg-yellow-100",
+  ]
+
+  const colorIndex = index % cardColors.length
+
   return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="p-6 pb-4">
-        <div className="flex items-start justify-between">
-          <span className="text-sm text-gray-500">{title}</span>
-          <div className="text-gray-500">{icon}</div>
+    <Card className={`relative overflow-hidden border-0 shadow-lg rounded-2xl ${cardColors[colorIndex]} transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-sm font-medium text-gray-700">{title}</div>
+          <div className={`p-2 rounded-full ${iconColors[colorIndex]}`}>
+            {icon}
+          </div>
         </div>
-        <div className="mt-4 text-3xl font-bold">{value}</div>
+        <div className="text-3xl font-bold text-gray-800">{value}</div>
+        <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-full bg-white opacity-20"></div>
+        <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full bg-white opacity-10"></div>
       </CardContent>
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-600" />
     </Card>
   )
 }
@@ -63,10 +88,11 @@ export default function StatsCards() {
       const response = await activityApi.getDashboardSummary(userId)
 
       if (response.success && response.data) {
-        const statsData = response.data.map((item: DashboardSummary) => ({
+        const statsData = response.data.map((item: DashboardSummary, index: number) => ({
           title: t(`pages:stst.dashboard.${item.title.toLowerCase().replace(/\s+/g, '')}`),
           value: item.value,
           icon: getIconForStat(item.icon, item.title),
+          index: index
         }))
         setStats(statsData)
       }
@@ -74,9 +100,9 @@ export default function StatsCards() {
       console.error("Failed to fetch stats:", error)
       setError(t("pages:stst.common.error"))
       setStats([
-        { title: t("pages:stst.dashboard.activecases"), value: 0, icon: <FileText size={18} /> },
-        { title: t("pages:stst.dashboard.inactivecases"), value: 0, icon: <FileArchive size={18} /> },
-        { title: t("pages:stst.dashboard.todayschats"), value: 0, icon: <MessageSquare size={18} /> },
+        { title: t("pages:stst.dashboard.activecases"), value: 0, icon: <FileText size={18} />, index: 0 },
+        { title: t("pages:stst.dashboard.inactivecases"), value: 0, icon: <FileArchive size={18} />, index: 1 },
+        { title: t("pages:stst.dashboard.todayschats"), value: 0, icon: <MessageSquare size={18} />, index: 2 },
       ])
     } finally {
       setLoading(false)
@@ -93,8 +119,19 @@ export default function StatsCards() {
 
   async function fetchTokenBalance() {
     try {
+      console.log('Fetching token balance...')
       const token = getToken()
-      if (!token) return
+      console.log('Token found:', !!token)
+      
+      if (!token) {
+        console.error('No authentication token found')
+        setTokenBalance({
+          current_balance: 0,
+          total_purchased: 0,
+          monthly_usage: 0
+        })
+        return
+      }
 
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/user/tokens`,
@@ -102,15 +139,35 @@ export default function StatsCards() {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 10000 // 10 second timeout
         }
       )
+      
+      console.log('Token balance response:', response.data)
 
-      if (response.data.success) {
-        setTokenBalance(response.data.data)
+      if (response.data?.success) {
+        setTokenBalance({
+          current_balance: response.data.data?.current_balance || 0,
+          total_purchased: response.data.data?.total_purchased || 0,
+          monthly_usage: response.data.data?.monthly_usage || 0
+        })
+      } else {
+        console.error('Invalid response format:', response.data)
+        setTokenBalance({
+          current_balance: 0,
+          total_purchased: 0,
+          monthly_usage: 0
+        })
       }
     } catch (error) {
       console.error('Error fetching token balance:', error)
+      // Set default values on error to ensure UI still renders
+      setTokenBalance({
+        current_balance: 0,
+        total_purchased: 0,
+        monthly_usage: 0
+      })
     }
   }
 
@@ -147,19 +204,20 @@ export default function StatsCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="relative overflow-hidden">
-            <CardContent className="p-6 pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i} className="relative overflow-hidden border-0 shadow-lg rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200">
+            <CardContent className="p-5">
               <div className="animate-pulse">
-                <div className="flex items-start justify-between">
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
-                  <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-4 bg-gray-300 rounded w-20"></div>
+                  <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
                 </div>
-                <div className="mt-4 h-8 bg-gray-200 rounded w-16"></div>
+                <div className="h-8 bg-gray-300 rounded w-16"></div>
               </div>
+              <div className="absolute -bottom-4 -right-4 w-16 h-16 rounded-full bg-white opacity-20"></div>
+              <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full bg-white opacity-10"></div>
             </CardContent>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200" />
           </Card>
         ))}
       </div>
@@ -168,8 +226,8 @@ export default function StatsCards() {
 
   if (error) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="col-span-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+        <Card className="col-span-full border-0 shadow-lg rounded-2xl bg-gradient-to-br from-white to-gray-50">
           <CardContent className="p-6 text-center text-red-500">
             <p>{error}</p>
           </CardContent>
@@ -179,32 +237,38 @@ export default function StatsCards() {
   }
 
   const tokenStats: StatCardProps[] = []
-  if (profile?.account_type === 'client' && tokenBalance) {
+  console.log('Profile account type:', profile?.account_type)
+  console.log('Token balance:', tokenBalance)
+  if (profile?.account_type === 'client') {
     tokenStats.push(
       {
         title: t('pages:stst.dashboard.availabletokens'),
-        value: tokenBalance.current_balance,
-        icon: <Coins size={18} />
+        value: tokenBalance?.current_balance ?? 0,
+        icon: <Coins size={18} />,
+        index: stats.length
       },
       {
         title: t('pages:stst.dashboard.totalpurchased'),
-        value: tokenBalance.total_purchased,
-        icon: <DollarSign size={18} />
+        value: tokenBalance?.total_purchased ?? 0,
+        icon: <DollarSign size={18} />,
+        index: stats.length + 1
       },
       {
         title: t('pages:stst.dashboard.monthlyusage'),
-        value: tokenBalance.monthly_usage,
-        icon: <MessageSquare size={18} />
+        value: tokenBalance?.monthly_usage ?? 0,
+        icon: <MessageSquare size={18} />,
+        index: stats.length + 2
       }
     )
   }
 
   const allStats = [...stats, ...tokenStats]
+  console.log('All stats to display:', allStats)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
       {allStats.map((stat, index) => (
-        <StatCard key={`${stat.title}-${index}`} title={stat.title} value={stat.value} icon={stat.icon} />
+        <StatCard key={`${stat.title}-${index}`} title={stat.title} value={stat.value} icon={stat.icon} index={index} />
       ))}
     </div>
   )

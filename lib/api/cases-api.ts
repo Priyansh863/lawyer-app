@@ -171,5 +171,3 @@ export async function getClientCases(clientId: string,account_type:string): Prom
     throw error
   }
 }
-
-

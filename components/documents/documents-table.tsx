@@ -43,7 +43,7 @@ import {
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
-import { getDocuments, deleteDocument, downloadDocumentSummary } from '@/lib/api/documents-api'
+import { getDocuments, deleteDocument, downloadDocumentSummary, downloadDocument } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from "@/hooks/useTranslation"
@@ -97,15 +97,16 @@ export default function DocumentsTable({
   const [fileTypeFilter, setFileTypeFilter] = useState<'all' | 'PDF' | 'DOCX' | 'TXT' | 'Image' | 'Video'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [downloadingSummaryId, setDownloadingSummaryId] = useState<string | null>(null)
+  const [downloadingDocumentId, setDownloadingDocumentId] = useState<string | null>(null)
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
 
-  // Get user from Redux store
-  const user = useSelector((state: RootState) => state.auth.user)
+  // Get user from Redux store with safety check
+  const user = useSelector((state: RootState) => state.auth?.user)
   const isClient = user?.account_type === 'client'
   const isLawyer = user?.account_type === 'lawyer'
 
-  // Load documents only when refreshTrigger changes
+  // Load documents on component mount and when refreshTrigger changes
   useEffect(() => {
     loadDocuments()
   }, [refreshTrigger])
@@ -343,6 +344,19 @@ export default function DocumentsTable({
     }
   }
 
+  const handleDownloadDocument = async (document: Document) => {
+    setDownloadingDocumentId(document._id)
+    try {
+      await downloadDocument(document._id, document.document_name, document.link)
+      toast.success(t('pages:documentT.documents.documentDownloadSuccess'))
+    } catch (error: any) {
+      console.error('Error downloading document:', error)
+      toast.error(error.message || t('pages:documentT.documents.documentDownloadError'))
+    } finally {
+      setDownloadingDocumentId(null)
+    }
+  }
+
   // Get uploader name
   const getUploaderName = (uploadedBy: Document['uploaded_by']) => {
     if (typeof uploadedBy === 'string') return t('pages:documentT.general.unknown')
@@ -577,13 +591,13 @@ export default function DocumentsTable({
                           </DropdownMenuItem>
 
                           <DropdownMenuItem 
-                            onClick={() => handleDownloadSummary(doc)}
+                            onClick={() => handleDownloadDocument(doc)}
                             className="flex items-center gap-2"
-                            disabled={downloadingSummaryId === doc._id}
+                            disabled={downloadingDocumentId === doc._id}
                           >
-                            <FileText className="h-4 w-4" />
-                            {downloadingSummaryId === doc._id 
-                              ? t('pages:documentT.documents.downloadDocument')
+                            <Download className="h-4 w-4" />
+                            {downloadingDocumentId === doc._id 
+                              ? t('pages:documentT.documents.downloadingDocument')
                               : t('pages:documentT.table.actions.downloadDocument')}
                           </DropdownMenuItem>
                           

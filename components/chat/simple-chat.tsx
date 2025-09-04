@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
@@ -52,8 +53,9 @@ export function SimpleChat({
   const [isLoading, setIsLoading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false) // Add state for delete confirmation
   const profile = useSelector((state: RootState) => state.auth.user)
-const currentUserId = profile?._id
+  const currentUserId = profile?._id
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -157,7 +159,13 @@ const currentUserId = profile?._id
     }
   }
 
-  const handleDeleteChat = async () => {
+  // Handle delete chat - show confirmation dialog first
+  const handleDeleteChat = () => {
+    setShowDeleteConfirm(true)
+  }
+
+  // Confirm chat deletion
+  const confirmDeleteChat = async () => {
     if (!chat) return
     try {
       await deleteChat(chat._id)
@@ -169,10 +177,21 @@ const currentUserId = profile?._id
     } catch {
       toast({
         title: t("pages:conv.error"),
-description: t("pages:conv.failedToDeleteChat"),
+        description: t("pages:conv.failedToDeleteChat"),
         variant: "destructive",
       })
+    } finally {
+      setShowDeleteConfirm(false)
     }
+  }
+
+  // Cancel chat deletion
+  const cancelDeleteChat = () => {
+    setShowDeleteConfirm(false)
+    toast({
+      title: t("pages:conv.deletionCancelled"),
+      description: t("pages:conv.chatNotDeleted"),
+    })
   }
 
   // 🔹 Drag handlers
@@ -327,6 +346,26 @@ description: t("pages:conv.failedToDeleteChat"),
             </form>
           </Form>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("pages:conv.deleteChatConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("pages:conv.deleteChatConfirmDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDeleteChat}>
+                {t("pages:conv.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteChat} className="bg-red-600 hover:bg-red-700">
+                {t("pages:conv.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

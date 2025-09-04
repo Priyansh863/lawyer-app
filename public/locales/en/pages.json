@@ -128,7 +128,6 @@
       "description": "Case Description",
       "descriptionPlaceholder": "Provide a detailed description of the case",
       "caseType": "Case Type",
-      "selectCaseType": "Select case type",
       "courtType": "Court Type",
       "selectCourtType": "Select court type",
       "clientSelection": "Client Selection",
@@ -156,10 +155,15 @@
       "caseCode" : "Case Code",
       "caseNumber" : "Case Number",
       "caseNumberPlaceholder": "Enter case number",
-      "selectCaseCode": "Select case code",
+     
        "caseIdentifier": "Case Identifier",
        "caseStatus": "Case Status",
-       "selectCaseStatus": "Select case status"
+       "selectCaseStatus": "Select case status",
+        "selectCourt": "Select Court",
+      "selectCourtFirst": "Please select a court first",
+     "selectCaseType": "Select Case Type",
+    "selectCaseTypeFirst": "Please select a case type first",
+     "selectCaseCode": "Select Case Code"
     },
     "caseTypes": {
       "civil": "Civil",
@@ -174,6 +178,7 @@
       "tax": "Tax",
       "bankruptcy": "Bankruptcy",
       "other": "Other"
+      
     },
     "courtTypes": {
       "district_court": "District Court",
@@ -186,7 +191,9 @@
       "tax_court": "Tax Court",
       "tribunal": "Tribunal",
       "arbitration": "Arbitration",
-      "other": "Other"
+      "other": "Other",
+      "administrative_court": "Administrative Court",
+      "constitutional_court": "Constitutional Court"
     }
   },
   "commonf": {

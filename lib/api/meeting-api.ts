@@ -74,19 +74,32 @@ export interface MeetingResponse {
  */
 export const createMeeting = async (data: any): Promise<MeetingResponse> => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/meeting/create`,
-      data,
-      {
-        headers: getAuthHeaders()
-      }
-    )
-    console.log(response.data,"responseresponseresponseresponseresponseresponseresponseresponse")
+    // Get current user info
+    const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
+    const authState = JSON.parse(state.auth || '{}')
+    const user = authState.user ? JSON.parse(authState.user) : null
+    
+    // Add createdBy and status if not provided
+    const meetingData = {
+      ...data,
+      created_by: user?._id,
+      status: user?.account_type === 'client' ? 'pending' : 'approved',
+      // Add timestamps for better tracking
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/meeting/create`, meetingData, {
+      headers: getAuthHeaders()
+    })
+    
     return response.data
   } catch (error: any) {
-    console.error('Create meeting error:', error)
-
-    throw new Error(error.response?.data?.message || 'Failed to create meeting')
+    console.error('Error creating meeting:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to create meeting'
+    }
   }
 }
 
@@ -111,22 +124,24 @@ export const getMeetings = async (): Promise<MeetingResponse> => {
 /**
  * Update meeting status
  */
-export const updateMeetingStatus = async (meetingId: string, status: string): Promise<MeetingResponse> => {
+export const updateMeetingStatus = async (meetingId: string, status: string, reason?: string): Promise<MeetingResponse> => {
   try {
     const response = await axios.put(
-      `${API_BASE_URL}/meeting/update-metting-status`,
-      {
-        meetingId,
-        status
+      `${API_BASE_URL}/meeting/status/${meetingId}`,
+      { 
+        status,
+        ...(reason && { rejection_reason: reason }),
+        updated_at: new Date().toISOString()
       },
-      {
-        headers: getAuthHeaders()
-      }
+      { headers: getAuthHeaders() }
     )
     return response.data
   } catch (error: any) {
-    console.error('Update meeting status error:', error)
-    throw new Error(error.response?.data?.message || 'Failed to update meeting status')
+    console.error('Error updating meeting status:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update meeting status'
+    }
   }
 }
 
@@ -137,35 +152,54 @@ export const approveMeeting = async (meetingId: string): Promise<MeetingResponse
   try {
     const response = await axios.put(
       `${API_BASE_URL}/meeting/approve/${meetingId}`,
-      {},
-      {
-        headers: getAuthHeaders()
-      }
+      { 
+        approval_date: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      { headers: getAuthHeaders() }
     )
     return response.data
   } catch (error: any) {
-    console.error('Approve meeting error:', error)
-    throw new Error(error.response?.data?.message || 'Failed to approve meeting')
+    console.error('Error approving meeting:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to approve meeting'
+    }
   }
 }
 
-/**
- * Reject a meeting
- */
-export const rejectMeeting = async (meetingId: string, reason?: string): Promise<MeetingResponse> => {
+export const rejectMeeting = async (meetingId: string, reason: string = 'Meeting rejected'): Promise<MeetingResponse> => {
   try {
     const response = await axios.put(
       `${API_BASE_URL}/meeting/reject/${meetingId}`,
-      {
-        rejection_reason: reason
+      { 
+        rejection_reason: reason,
+        updated_at: new Date().toISOString()
       },
-      {
-        headers: getAuthHeaders()
-      }
+      { headers: getAuthHeaders() }
     )
     return response.data
   } catch (error: any) {
-    console.error('Reject meeting error:', error)
-    throw new Error(error.response?.data?.message || 'Failed to reject meeting')
+    console.error('Error rejecting meeting:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to reject meeting'
+    }
+  }
+}
+
+// Get pending meetings for lawyer
+export const getPendingMeetings = async (): Promise<MeetingResponse> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/meeting/pending`, {
+      headers: getAuthHeaders()
+    })
+    return response.data
+  } catch (error: any) {
+    console.error('Error fetching pending meetings:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to fetch pending meetings'
+    }
   }
 }

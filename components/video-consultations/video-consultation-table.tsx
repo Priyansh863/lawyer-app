@@ -33,6 +33,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
   const [updatingMeeting, setUpdatingMeeting] = useState<string | null>(null)
   const [approvingMeeting, setApprovingMeeting] = useState<string | null>(null)
   const [rejectingMeeting, setRejectingMeeting] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const { toast } = useToast()
 
   const searchForm = useForm<SearchFormData>({
@@ -42,7 +43,24 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     },
   })
 
+  // Get current user info
+  const getCurrentUser = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
+        const authState = JSON.parse(state.auth || '{}')
+        return authState.user ? JSON.parse(authState.user) : null
+      } catch (error) {
+        console.error('Error getting current user:', error)
+        return null
+      }
+    }
+    return null
+  }
+
   useEffect(() => {
+    const user = getCurrentUser()
+    setCurrentUser(user)
     fetchMeetings()
   }, [])
 
@@ -81,6 +99,29 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     } finally {
       setLoading(false)
     }
+  }
+
+  // Check if approve/reject buttons should be shown
+  const shouldShowApproveReject = (meeting: Meeting) => {
+    if (!currentUser) return false
+    
+    // Only lawyers can see approve/reject buttons
+    if (currentUser.account_type !== 'lawyer') return false
+    
+    // Only show for pending meetings
+    if (meeting.status !== 'pending') return false
+    
+    // Check if meeting was created by a client
+    if (meeting.created_by && typeof meeting.created_by === 'object') {
+      return meeting.created_by.account_type === 'client'
+    }
+    
+    // Fallback: check if client_id exists and is different from current user
+    if (meeting.client_id && typeof meeting.client_id === 'object') {
+      return meeting.client_id._id !== currentUser._id
+    }
+    
+    return false
   }
 
   const getStatusBadge = (status: string) => {
@@ -237,7 +278,7 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     if (meeting.client_id && typeof meeting.client_id === 'object') {
       return `${meeting.client_id.first_name || ''} ${meeting.client_id.last_name || ''}`.trim() || t('pages:meeting.unknown.client')
     }
-    return t('meeting.unknown.client')
+    return t('pages:meeting.unknown.client')
   }
 
   const getLawyerName = (meeting: Meeting) => {
@@ -382,7 +423,8 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                     </TableCell>
                     <TableCell className="min-w-[250px]">
                       <div className="flex gap-1 flex-wrap">
-                        {meeting.status === "pending" && (
+                        {/* Show approve/reject buttons only for lawyers when client created the meeting */}
+                        {shouldShowApproveReject(meeting) && (
                           <>
                             <Button
                               size="sm"

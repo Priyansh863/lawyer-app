@@ -81,12 +81,13 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       console.log(response,"responseresponseresponseresponseresponseresponseresponse")
       if (response.success) {
         toast({
-          title: t("pages:clientDetails.success"),
-          description: t("pages:clientDetails.meetingScheduled"),
-          variant: "default",
+          title: "Meeting Request Sent",
+          description: `Meeting request sent to ${client.first_name}`,
         })
         setMeetingLink("")
         setMeetingDialogOpen(false)
+        // Navigate to video consultations to see the scheduled meeting
+        router.push('/video-consultations')
       } else {
         toast({
           title: t("pages:clientDetails.error"),

@@ -172,7 +172,6 @@
       "description": "사건 설명",
       "descriptionPlaceholder": "사건에 대한 상세 설명을 제공하세요",
       "caseType": "사건 유형",
-      "selectCaseType": "사건 유형 선택",
       "courtType": "법원 유형",
       "selectCourtType": "법원 유형 선택",
       "clientSelection": "의뢰인 선택",
@@ -200,10 +199,14 @@
        "caseCode": "사건 코드",
         "caseNumber": "사건 번호",
         "caseNumberPlaceholder": "사건 번호 입력",
-        "selectCaseCode": "사건 코드 선택",
         "caseIdentifier": "사건 식별자",
          "caseStatus": "사건 상태",
-       "selectCaseStatus": "사건 상태 선택"
+       "selectCaseStatus": "사건 상태 선택",
+       "selectCourtFirst": "먼저 법원을 선택하세요",
+       "selectCaseType": "사건 유형 선택",
+       "selectCaseTypeFirst": "먼저 사건 유형을 선택하세요",
+        "selectCaseCode": "사건 코드 선택",
+        "selectCourt": "법원 선택"
     },
     "caseTypes": {
       "civil": "민사",

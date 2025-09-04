@@ -30,9 +30,11 @@ export default {
     GET_USER_LIST: `${URL}/user/list`,
     GET_USER_INFO: `${URL}/user/info`,
     GET_USER_CASES: `${URL}/user/cases`,
-    GET_RELATED_USERS: `${URL}/user/users/related`,
+    GET_RELATED_USERS: `${URL}/users/related`,
     CREATE_CASE: `${URL}/user/CreateCases`,
     GET_CLIENTS_AND_LAWYERS: `${URL}/user/clients-and-lawyers`,
+    LAWYERS: `${URL}/users/lawyers`,
+    CLIENTS_LIST: `${URL}/users/clients-list`,
   },
   blog: {
     GET_BLOGS: `${URL}/user/blogs`,

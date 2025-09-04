@@ -246,6 +246,29 @@ export const uploadDocument = async (data: any) => {
   }
 }
 
+// Download original document
+export const downloadDocument = async (documentId: string, documentName: string, documentUrl: string) => {
+  try {
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = documentUrl;
+    link.setAttribute('download', documentName);
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(documentUrl);
+    }, 100);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error downloading document:', error);
+    throw new Error('Failed to initiate document download');
+  }
+};
+
 // Download document summary as text file
 export const downloadDocumentSummary = async (documentId: string, summary: string, documentName: string) => {
   try {

@@ -401,14 +401,14 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a court" />
+                         <SelectValue placeholder={t("pages:casesD.form.selectCourt")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {Object.keys(courtCaseMapping).map((courtName) => (
-                          <SelectItem key={courtName} value={courtName}>
-                            {courtName}
-                          </SelectItem>
+                         <SelectItem key={courtName} value={courtName}>
+  {t(`common:courtTypes.${courtName}`)}
+</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -431,14 +431,20 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={availableCaseTypes.length === 0 ? "Select a court first" : "Select case type"} />
+                            <SelectValue 
+  placeholder={
+    availableCaseTypes.length === 0 
+      ? t("pages:casesD.form.selectCourtFirst") 
+      : t("pages:casesD.form.selectCaseType")
+  } 
+/>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {availableCaseTypes.map((caseType) => (
-                            <SelectItem key={caseType} value={caseType}>
-                              {caseType}
-                            </SelectItem>
+                           <SelectItem key={caseType} value={caseType}>
+  {t(`common:caseTypes.${caseType}`)}
+</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -460,14 +466,20 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={availableCaseCodes.length === 0 ? "Select case type first" : "Select case code"} />
+                            <SelectValue 
+  placeholder={
+    availableCaseCodes.length === 0 
+      ? t("pages:casesD.form.selectCaseTypeFirst") 
+      : t("pages:casesD.form.selectCaseCode")
+  } 
+/>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {availableCaseCodes.map((code) => (
                             <SelectItem key={code} value={code}>
-                              {code}
-                            </SelectItem>
+  {t(`common:caseCodes.${code}`)}
+</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

@@ -7,9 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Calendar, Clock, User, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, User, AlertCircle, CheckCircle, History } from 'lucide-react';
 import axios from 'axios';
 import MeetingApprovalCard from './meeting-approval-card';
+
+interface User {
+  _id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  account_type?: string;
+}
 
 interface Meeting {
   _id: string;
@@ -17,23 +25,17 @@ interface Meeting {
   meeting_description?: string;
   requested_date: string;
   requested_time: string;
-  status: string;
-  client_id: {
-    _id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  lawyer_id: {
-    _id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed';
+  client_id: User;
+  lawyer_id: User;
+  created_by: User;
   meeting_link?: string;
   notes?: string;
   rejection_reason?: string;
   createdAt: string;
+  updatedAt: string;
+  title?: string; // Alias for meeting_title
+  description?: string; // Alias for meeting_description
 }
 
 const MeetingDashboard: React.FC = () => {
@@ -44,75 +46,144 @@ const MeetingDashboard: React.FC = () => {
   const [pendingMeetings, setPendingMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const getToken = () => {
-    if (typeof window !== "undefined") {
-      const user = localStorage.getItem("user");
-      return user ? JSON.parse(user).token : null;
+  // Get token from localStorage with proper type checking
+  const getToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const userData = localStorage.getItem('user');
+      if (!userData) return null;
+      
+      const user = JSON.parse(userData);
+      return user?.token || null;
+    } catch (error) {
+      console.error('Error getting token:', error);
+      return null;
     }
-    return null;
   };
-
-  const token = getToken()
 
   useEffect(() => {
     fetchMeetings();
-    if (userType === 'lawyer') {
-      fetchPendingMeetings();
-    }
-  }, []);
+  }, [userType]);
 
   const fetchMeetings = async () => {
     try {
+      setLoading(true);
+      
+      const currentToken = getToken();
+      
+      if (!currentToken) {
+        console.error('No authentication token found');
+        toast({
+          title: 'Authentication Error',
+          description: 'Please log in to view meetings',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      console.log('Fetching meetings from:', `${process.env.NEXT_PUBLIC_API_URL}/meeting/list`);
+      
+      // Use axios directly - the interceptor will handle the token
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/meeting/list`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
-      if (response.data.success) {
-        setMeetings(response.data.data);
+      console.log('API Response Status:', response.status);
+      console.log('API Response Data:', response.data);
+      
+      if (response.status !== 200) {
+        throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+      }
+
+      // Handle different response formats
+      let meetingsData = [];
+      
+      if (response.data && Array.isArray(response.data)) {
+        // If response is already an array
+        meetingsData = response.data;
+      } else if (response.data && response.data.data) {
+        // If response has a data property that contains the array
+        meetingsData = Array.isArray(response.data.data) 
+          ? response.data.data 
+          : [response.data.data];
+      } else if (response.data && response.data.meetings) {
+        // If response has a meetings property
+        meetingsData = Array.isArray(response.data.meetings)
+          ? response.data.meetings
+          : [response.data.meetings];
+      }
+      
+      console.log('Processed meetings data:', meetingsData); // Debug log
+      
+      if (meetingsData && meetingsData.length > 0) {
+        // Sort meetings by date (newest first)
+        meetingsData = meetingsData.sort((a: Meeting, b: Meeting) => 
+          new Date(b.requested_date || b.createdAt).getTime() - new Date(a.requested_date || a.createdAt).getTime()
+        );
+        
+        setMeetings(meetingsData);
+        
+        // For lawyers, show pending meetings that they need to approve
+        // For clients, show their pending meetings
+        const pending = meetingsData.filter((m: Meeting) => {
+          if (!m || !m.status) return false;
+          
+          if (userType === 'lawyer') {
+            return m.status.toLowerCase() === 'pending' && 
+                   m.lawyer_id && 
+                   m.lawyer_id._id === profile?._id;
+          } else {
+            return m.status.toLowerCase() === 'pending' && 
+                   m.client_id && 
+                   m.client_id._id === profile?._id;
+          }
+        });
+        
+        console.log('Pending meetings:', pending); // Debug log
+        setPendingMeetings(pending || []);
+      } else {
+        console.log('No meetings data found in response');
+        setMeetings([]);
+        setPendingMeetings([]);
       }
     } catch (error) {
       console.error('Error fetching meetings:', error);
+      let errorMessage = 'Failed to fetch meetings';
+      
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          message: error.message,
+          code: error.code,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          responseData: error.response?.data
+        });
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message.includes('Network Error')) {
+          errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+        }
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to fetch meetings",
-        variant: "destructive"
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPendingMeetings = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/meeting/pending`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data.success) {
-        setPendingMeetings(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching pending meetings:', error);
-    }
-  };
-
   const handleMeetingUpdate = () => {
     fetchMeetings();
-    if (userType === 'lawyer') {
-      fetchPendingMeetings();
-    }
   };
 
   const getStatusColor = (status: string) => {
@@ -131,7 +202,46 @@ const MeetingDashboard: React.FC = () => {
   };
 
   const filterMeetingsByStatus = (status: string) => {
-    return meetings.filter(meeting => meeting.status === status);
+    if (!meetings || !Array.isArray(meetings)) return [];
+    return meetings.filter((meeting: Meeting) => 
+      meeting && meeting.status && meeting.status.toLowerCase() === status.toLowerCase()
+    );
+  };
+
+  const getUpcomingMeetings = () => {
+    if (!meetings || !Array.isArray(meetings)) return [];
+    
+    const now = new Date();
+    return meetings.filter(meeting => {
+      if (!meeting || !meeting.status) return false;
+      
+      const meetingDate = meeting.requested_date ? new Date(meeting.requested_date) : null;
+      if (!meetingDate) return false;
+      
+      const status = meeting.status.toLowerCase();
+      return meetingDate > now && 
+             status !== 'completed' && 
+             status !== 'rejected' &&
+             status !== 'cancelled';
+    });
+  };
+
+  const getPastMeetings = () => {
+    if (!meetings || !Array.isArray(meetings)) return [];
+    
+    const now = new Date();
+    return meetings.filter(meeting => {
+      if (!meeting || !meeting.status) return false;
+      
+      const meetingDate = meeting.requested_date ? new Date(meeting.requested_date) : null;
+      const status = meeting.status.toLowerCase();
+      
+      if (status === 'completed' || status === 'rejected' || status === 'cancelled') {
+        return true;
+      }
+      
+      return meetingDate ? meetingDate <= now : false;
+    });
   };
 
   if (loading) {
@@ -203,27 +313,37 @@ const MeetingDashboard: React.FC = () => {
 
       {/* Meetings Tabs */}
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList>
           <TabsTrigger value="all">All Meetings</TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending
-            {filterMeetingsByStatus('pending').length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {filterMeetingsByStatus('pending').length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          {userType === 'lawyer' && (
+            <TabsTrigger value="pending">
+              Pending Approval
+              {pendingMeetings.length > 0 && (
+                <Badge className="ml-2" variant="secondary">
+                  {pendingMeetings.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
-          {meetings.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : meetings.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
-                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No meetings found</p>
+              <CardContent className="flex flex-col items-center justify-center py-10">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No meetings found</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  {userType === 'lawyer' 
+                    ? "You don't have any scheduled meetings yet."
+                    : "You haven't scheduled any meetings yet."}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -232,83 +352,97 @@ const MeetingDashboard: React.FC = () => {
                 <MeetingApprovalCard
                   key={meeting._id}
                   meeting={meeting}
-                  onUpdate={handleMeetingUpdate}
+                  onUpdate={fetchMeetings}
                 />
               ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="pending" className="space-y-4">
-          {userType === 'lawyer' && pendingMeetings.length > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-yellow-600" />
-                  <p className="text-yellow-800 font-medium">
-                    You have {pendingMeetings.length} meeting request(s) awaiting your approval
+        {userType === 'lawyer' && (
+          <TabsContent value="pending">
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+            ) : pendingMeetings.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-10">
+                  <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                  <h3 className="text-lg font-medium">No pending approval</h3>
+                  <p className="text-sm text-muted-foreground text-center">
+                    You don't have any pending meeting requests that require your approval.
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
-          {filterMeetingsByStatus('pending').length === 0 ? (
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {pendingMeetings.map((meeting) => (
+                  <MeetingApprovalCard
+                    key={meeting._id}
+                    meeting={meeting}
+                    onUpdate={fetchMeetings}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        )}
+
+        <TabsContent value="upcoming">
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : getUpcomingMeetings().length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No pending meetings</p>
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No upcoming meetings</h3>
+                <p className="text-sm text-gray-500 mt-2">
+                  {userType === 'lawyer' 
+                    ? "You don't have any upcoming meetings scheduled."
+                    : "You don't have any upcoming video consultations."}
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filterMeetingsByStatus('pending').map((meeting) => (
+              {getUpcomingMeetings().map(meeting => (
                 <MeetingApprovalCard
                   key={meeting._id}
                   meeting={meeting}
-                  onUpdate={handleMeetingUpdate}
+                  onUpdate={fetchMeetings}
                 />
               ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="approved" className="space-y-4">
-          {filterMeetingsByStatus('approved').length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No approved meetings</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filterMeetingsByStatus('approved').map((meeting) => (
-                <MeetingApprovalCard
-                  key={meeting._id}
-                  meeting={meeting}
-                  onUpdate={handleMeetingUpdate}
-                />
-              ))}
+        <TabsContent value="past" className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="rejected" className="space-y-4">
-          {filterMeetingsByStatus('rejected').length === 0 ? (
+          ) : getPastMeetings().length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No rejected meetings</p>
+                <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No past meetings</h3>
+                <p className="text-sm text-gray-500 mt-2">
+                  {userType === 'lawyer' 
+                    ? "Your past video consultations will appear here."
+                    : "Your past video consultations will appear here."}
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid gap-4">
-              {filterMeetingsByStatus('rejected').map((meeting) => (
+              {getPastMeetings().map(meeting => (
                 <MeetingApprovalCard
                   key={meeting._id}
                   meeting={meeting}
-                  onUpdate={handleMeetingUpdate}
+                  onUpdate={fetchMeetings}
                 />
               ))}
             </div>
@@ -316,7 +450,7 @@ const MeetingDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-4">
-          {filterMeetingsByStatus('completed').length === 0 ? (
+          {!meetings || filterMeetingsByStatus('completed').length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
