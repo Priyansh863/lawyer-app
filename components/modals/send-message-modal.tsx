@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, User, Mail, Send, ArrowLeft } from "lucide-react";
 import { getRelatedUsers } from "@/lib/api/users-api";
-import { sendMessage, type SendMessageData } from "@/lib/api/message-api";
+import { sendMessage, type SendMessageData } from "@/lib/api/simple-chat-api";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { useRouter } from "next/navigation";
 
 interface User {
   _id: string;
@@ -46,6 +47,7 @@ export default function SendMessageModal({
   const { toast } = useToast();
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const isLawyer = currentUser?.account_type === 'lawyer';
+  const router = useRouter();
 
   // Fetch users based on current user's role
   useEffect(() => {
@@ -96,8 +98,11 @@ export default function SendMessageModal({
   );
 
   const handleUserSelect = (user: User) => {
-    setSelectedUser(user);
-    setCurrentStep('composeMessage');
+    // Close the modal
+    onClose();
+    
+    // Navigate to the chat with the selected user
+    router.push(`/chat?userId=${user._id}&name=${user.first_name}+${user.last_name}${user.profile_image ? `&avatar=${encodeURIComponent(user.profile_image)}` : ''}`);
   };
 
   const handleSendMessage = async () => {

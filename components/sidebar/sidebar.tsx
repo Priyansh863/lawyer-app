@@ -97,7 +97,7 @@ export default function Sidebar() {
     ...(user?.account_type === "lawyer"
       ? [
           { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
-          { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
+          // { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
           { href: "/posts", icon: <FileText size={18} />, label: t('navigation.postsAndContent') },
 
         ]

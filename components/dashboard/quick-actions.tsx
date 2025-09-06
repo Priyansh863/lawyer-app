@@ -5,57 +5,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus, Camera, Users, MessageSquare, Video, Sparkles, Zap } from "lucide-react";
 import ScheduleMeetingModal from "@/components/modals/schedule-meeting-modal";
-import ChatUserModal from "@/components/modals/chat-user-modal";
+import SendMessageModal from "@/components/modals/send-message-modal";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function QuickActions() {
   const [isScheduleMeetingOpen, setIsScheduleMeetingOpen] = useState(false);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [isSendMessageOpen, setIsSendMessageOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { t } = useTranslation();
 
-  const handleUserSelect = (user: any) => {
+  const handleMessageSent = () => {
     toast({
-      title: "Meeting Scheduled",
-      description: `Meeting request sent to ${user.first_name} ${user.last_name}`,
+      title: t("pages:common.success"),
+      description: t("pages:quickActions.messageSentSuccess"),
     });
-    // Navigate to video consultations to see the scheduled meeting
-    router.push('/video-consultations');
   };
 
   const actions = [
     {
       icon: <Camera className="w-5 h-5" />,
-      title: "New Post",
-      description: "Share your moment",
+      title: t("pages:quickActions.newPost"),
+      description: t("pages:quickActions.shareMoment"),
       color: "from-primary/10 to-accent/20",
       iconColor: "text-primary",
       onClick: () => console.log("New post")
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
-      title: "Send Message",
-      description: "Start a new chat",
+      title: t("pages:quickActions.sendMessage"),
+      description: t("pages:quickActions.startChat"),
       color: "from-blue-100 to-purple-100",
       iconColor: "text-blue-500",
-      onClick: () => setIsChatModalOpen(true)
+      onClick: () => setIsSendMessageOpen(true)
     },
     {
       icon: <Calendar className="w-5 h-5" />,
-      title: "Schedule Meeting",
-      description: "Book with clients/lawyers",
+      title: t("pages:quickActions.scheduleMeeting"),
+      description: t("pages:quickActions.bookWithClients"),
       color: "from-green-100 to-emerald-100", 
       iconColor: "text-green-500",
       onClick: () => setIsScheduleMeetingOpen(true)
     },
     {
       icon: <Sparkles className="w-5 h-5" />,
-      title: "Create Story",
-      description: "Share your day",
+      title: t("pages:quickActions.askQuestion"),
+      description: t("pages:quickActions.startQA"),
       color: "from-purple-100 to-pink-100",
       iconColor: "text-purple-500", 
-      onClick: () => console.log("Create story")
+      onClick: () => console.log("Open QA form")
     }
   ];
 
@@ -68,7 +68,7 @@ export default function QuickActions() {
               <Zap className="w-5 h-5 text-primary" />
             </div>
             <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Quick Actions
+              {t("pages:quickActions.title")}
             </span>
           </CardTitle>
         </CardHeader>
@@ -103,12 +103,13 @@ export default function QuickActions() {
       <ScheduleMeetingModal
         isOpen={isScheduleMeetingOpen}
         onClose={() => setIsScheduleMeetingOpen(false)}
-        onSelectUser={handleUserSelect}
+        onSelectUser={handleMessageSent}
       />
 
-      <ChatUserModal
-        isOpen={isChatModalOpen}
-        onClose={() => setIsChatModalOpen(false)}
+      <SendMessageModal
+        isOpen={isSendMessageOpen}
+        onClose={() => setIsSendMessageOpen(false)}
+        onMessageSent={handleMessageSent}
       />
     </>
   );

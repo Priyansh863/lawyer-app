@@ -126,55 +126,56 @@ export default function QAList() {
           className={`border rounded-lg overflow-hidden ${index % 2 === 0 ? "bg-gray-100" : "bg-white"}`}
         >
           <div className="flex items-center justify-between p-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant={item.answer ? "default" : "outline"}>
-                  {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}
-                </span>
-              </div>
-              <AccordionTrigger className="hover:no-underline p-0">
+            <div className="flex-1 flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant={item.answer ? "default" : "outline"}>
+                    {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}
+                  </span>
+                </div>
                 <p className="text-left font-normal">{item.question}</p>
-              </AccordionTrigger>
-            </div>
-            <div className="flex items-center gap-2">
-              {user?.account_type === "lawyer" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">{t("pages:qa.menu.open")}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {!item.answer ? (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer")}</Link>
+              </div>
+              <div className="flex items-center gap-2 ml-4">
+                <AccordionTrigger className="hover:no-underline p-0 ml-2" />
+                {user?.account_type === "lawyer" && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">{t("pages:qa.menu.open")}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {!item.answer ? (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer")}</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDelete(item._id)}
+                            disabled={deleteLoading === item._id}
+                          >
+                            {deleteLoading === item._id ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                {t("pages:qa.menu.deleting")}
+                              </>
+                            ) : t("pages:qa.menu.delete")}
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <DropdownMenuItem disabled className="text-gray-400">
+                          Question already answered - cannot edit or delete
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          className="text-red-600"
-                          onClick={() => handleDelete(item._id)}
-                          disabled={deleteLoading === item._id}
-                        >
-                          {deleteLoading === item._id ? (
-                            <>
-                              <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                              {t("pages:qa.menu.deleting")}
-                            </>
-                          ) : t("pages:qa.menu.delete")}
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <DropdownMenuItem disabled className="text-gray-400">
-                        Question already answered - cannot edit or delete
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
           </div>
           <AccordionContent className="px-4 pb-4 pt-0">

@@ -14,7 +14,7 @@ export default function ChatPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t('pages:chat.title')}</h1>
           <h2 className="text-lg text-gray-600">{t('pages:chat.description')}</h2>
         </div>
-        <SimpleChatList />
+        <SimpleChatList/>
       </div>
     </ChatLayout>
   )

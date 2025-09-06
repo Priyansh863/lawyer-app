@@ -10,8 +10,21 @@
     "actions": "Actions",
     "viewDetails": "View Details",
     "charges": "Charges ($)",
-    "chargesPlaceholder": "Enter charges"
+    "chargesPlaceholder": "Enter charges",
+    "success": "Success"
   },
+    "quickActions": {
+      "title": "Quick Actions",
+      "messageSentSuccess": "Message sent successfully!",
+      "newPost": "New Post",
+      "shareMoment": "Share your moment",
+      "sendMessage": "Send Message",
+      "startChat": "Start a new chat",
+      "scheduleMeeting": "Schedule Meeting",
+      "bookWithClients": "Book with clients/lawyers",
+      "askQuestion": "Ask a Question",
+      "startQA": "Start a new Q&A"
+    },
   "cases": {
     "title": "Case Management",
      "description": "Manage and track your legal cases",
@@ -1023,9 +1036,19 @@
   },
   "delete": {
     "button": "Delete chat",
+    "cancel": "Cancel",
+    "cancelled": {
+      "title": "Deletion cancelled",
+      "description": "The chat was not deleted."
+    },
+    "confirm": {
+      "title": "Are you sure?",
+      "description": "This action will permanently delete the chat. You cannot undo this action.",
+      "button": "Yes, delete it"
+    },
     "success": {
       "title": "Chat deleted",
-      "description": "The chat has been deleted successfully"
+      "description": "The chat has been successfully removed."
     }
   },
   "errors": {
@@ -1034,8 +1057,8 @@
       "description": "Failed to load chats"
     },
     "delete": {
-      "title": "Error",
-      "description": "Failed to delete chat"
+      "title": "Delete failed",
+      "description": "An error occurred while deleting the chat. Please try again."
     }
   }
 },

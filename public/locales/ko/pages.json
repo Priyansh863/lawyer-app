@@ -8,8 +8,22 @@
     "allStatuses": "모든 상태",
     "actions": "작업",
     "viewDetails": "상세 보기",
-    "charges": "요금 ($)"
+    "charges": "요금 ($)",
+    "success": "성공"
   },
+    "quickActions": {
+      "title": "빠른 작업",
+      "messageSentSuccess": "메시지가 성공적으로 전송되었습니다!",
+      "newPost": "새 게시물",
+      "shareMoment": "순간 공유하기",
+      "sendMessage": "메시지 보내기",
+      "startChat": "새 채팅 시작",
+      "scheduleMeeting": "회의 예약",
+      "bookWithClients": "고객/변호사와 예약",
+      "askQuestion": "질문하기",
+      "startQA": "새 Q&A 시작"
+    },
+  
   "cases": {
     "title": "사건 관리",
     "description": "법적 사건을 관리하고 추적하세요",
@@ -1584,33 +1598,43 @@
 
 },
 
-  "chatbox" :{
+"chatbox": {
   "search": {
-    "placeholder": "대화 검색..."
+    "placeholder": "대화를 검색하세요..."
   },
   "loading": "채팅 불러오는 중...",
   "noMessages": "아직 메시지가 없습니다",
   "empty": {
     "default": "아직 대화가 없습니다",
-    "defaultHint": "프로필 페이지에서 고객과 대화를 시작하세요",
+    "defaultHint": "클라이언트 프로필 페이지에서 대화를 시작하세요",
     "search": "채팅을 찾을 수 없습니다",
-    "searchHint": "검색어를 변경해 보세요"
+    "searchHint": "검색어를 조정해 보세요"
   },
   "delete": {
     "button": "채팅 삭제",
+    "cancel": "취소",
+    "cancelled": {
+      "title": "삭제 취소됨",
+      "description": "채팅이 삭제되지 않았습니다."
+    },
+    "confirm": {
+      "title": "정말 삭제하시겠습니까?",
+      "description": "이 작업은 채팅을 영구적으로 삭제합니다. 되돌릴 수 없습니다.",
+      "button": "네, 삭제합니다"
+    },
     "success": {
       "title": "채팅 삭제됨",
-      "description": "채팅이 성공적으로 삭제되었습니다"
+      "description": "채팅이 성공적으로 삭제되었습니다."
     }
   },
   "errors": {
     "load": {
       "title": "오류",
-      "description": "채팅을 불러오는데 실패했습니다"
+      "description": "채팅을 불러오지 못했습니다"
     },
     "delete": {
-      "title": "오류",
-      "description": "채팅 삭제에 실패했습니다"
+      "title": "삭제 실패",
+      "description": "채팅을 삭제하는 동안 오류가 발생했습니다. 다시 시도해 주세요."
     }
   }
 },
