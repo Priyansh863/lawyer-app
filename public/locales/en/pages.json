@@ -13,6 +13,109 @@
     "chargesPlaceholder": "Enter charges",
     "success": "Success"
   },
+  
+  "dashboard": {
+      "error": "Error",
+      "failedToLoadPosts": "Failed to load posts",
+      "bookmarked": "Bookmarked",
+      "bookmarkRemoved": "Bookmark removed",
+      "failedToUpdateBookmark": "Failed to update bookmark",
+      "linkCopied": "Link copied",
+      "postUrlCopied": "Post URL copied to clipboard",
+      "failedToCopyLink": "Failed to copy link",
+      "pleaseEnterReason": "Please enter a reason for reporting",
+      "success": "Success",
+      "reportSubmitted": "Report submitted successfully",
+      "reportFailed": "Failed to submit report",
+      "unknownAuthor": "Unknown Author",
+      "user": "User",
+      "legalPost": "Legal Post",
+      "bookmark": "Bookmark",
+      "copyLink": "Copy link",
+      "report": "Report",
+      "showLess": "Show less",
+      "readMore": "Read more",
+      "tags": "Tags",
+      "legalResources": "Legal Resources",
+      "visitResource": "Visit resource",
+      "shareLinks": "Share Links",
+      "customUrl": "Custom URL",
+      "shortUrl": "Short URL",
+      "copy": "Copy",
+      "created": "Created",
+      "updated": "Updated",
+      "welcomeBack": "Welcome back, {name}!",
+      "dashboard": "Dashboard",
+      "noPostsTitle": "No posts available",
+      "noPostsDescription": "There are no posts to display at the moment.",
+      "reportPost": "Report Post",
+      "reportDescription": "Please explain why you are reporting this post. Your report will be reviewed by our team.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Please provide details about why you are reporting this post...",
+      "legalPosts": "Legal Posts",
+      "professionalContent": "Professional content from legal experts",
+      "posts": "posts",
+      "createPost": "Create Post"
+    },
+    "scheduleM": {
+      "error": "Error",
+      "failedToFetchUsers": "Failed to fetch users",
+      "missingInformation": "Missing Information",
+      "pleaseProvideMeetingLink": "Please provide a meeting link",
+      "meetingWith": "Meeting with {{name}}",
+      "scheduledMeeting": "Scheduled meeting",
+      "meetingRequestSent": "Meeting Request Sent",
+      "meetingRequestSentTo": "Meeting request sent to {{name}}",
+      "failedToScheduleMeeting": "Failed to schedule meeting",
+      "pleaseFillAllFields": "Please fill in all required fields",
+      "meetingScheduled": "Meeting Scheduled",
+      "scheduleMeeting": "Schedule Meeting",
+      "selectClient": "Select Client",
+      "selectLawyer": "Select Lawyer",
+      "scheduleMeetingWith": "Schedule a meeting with {{name}}",
+      "searchPlaceholder": "Search {{type}}...",
+      "clients": "Clients",
+      "lawyers": "Lawyers",
+      "noClientsFound": "No clients found",
+      "noLawyersFound": "No lawyers found",
+      "noActiveClients": "You currently have no active clients.",
+      "noLawyersAvailable": "No lawyers are currently available.",
+      "lawyer": "lawyer",
+      "client": "client",
+      "tokensPerHour": "tokens/hour",
+      "select": "Select",
+      "consultationRate": "Consultation Rate",
+      "meetingLink": "Meeting Link",
+      "pasteMeetingLink": "Paste your meeting link here",
+      "cancel": "Cancel",
+      "scheduling": "Scheduling"
+    },
+    "sendMessage": {
+        "failedToLoadUsers": "Failed to load users",
+        "error": "Error",
+        "success": "Success",
+        "messageSentSuccessfully": "Message sent successfully!",
+        "failedToSendMessage": "Failed to send message. Please try again.",
+        "client": "Client",
+        "lawyer": "Lawyer",
+        "regardingUser": "Regarding {{userType}} {{firstName}} {{lastName}}",
+        "selectUser": "Select a {{userType}}",
+        "newMessage": "New Message",
+        "searchPlaceholder": "Search {{userType}} by name or email...",
+        "clients": "clients",
+        "lawyers": "lawyers",
+        "loadingUsers": "Loading {{userType}}...",
+        "chatRate": "Chat: {{rate}} tokens/hour",
+        "noUsersFound": "No {{userType}} found",
+        "to": "To:",
+        "subject": "Subject:",
+        "subjectPlaceholder": "Subject",
+        "message": "Message:",
+        "messagePlaceholder": "Type your message to {{firstName}}...",
+        "back": "Back",
+        "sending": "Sending...",
+        "sendMessage": "Send Message"
+      },
     "quickActions": {
       "title": "Quick Actions",
       "messageSentSuccess": "Message sent successfully!",
@@ -64,40 +167,41 @@
       "courtType": "Court Type",
       "status": "Status"
     },
-   "caseTypes": {
-  "civil": "Civil Law",
-  "criminal": "Criminal Law",
-  "family": "Family Law",
-  "corporate": "Corporate Law",
-  "immigration": "Immigration Law",
-  "personal_injury": "Personal Injury",
-  "real_estate": "Real Estate Law",
-  "intellectual_property": "Intellectual Property",
-  "employment": "Employment Law",
-  "tax": "Tax Law",
-  "bankruptcy": "Bankruptcy Law",
-  "administrative": "Administrative Law",
-  "constitutional": "Constitutional Law",
-  "labor": "Labor Law",
-  "other": "Other"
-},
-   "courtTypes": {
-  "district_court": "District Court",
-  "high_court": "High Court",
-  "supreme_court": "Supreme Court",
-  "family_court": "Family Court",
-  "commercial_court": "Commercial Court",
-  "consumer_court": "Consumer Court",
-  "labor_court": "Labor Court",
-  "tax_court": "Tax Court",
-  "tribunal": "Tribunal",
-  "arbitration": "Arbitration",
-  "constitutional_court": "Constitutional Court",
-  "patent_court": "Patent Court",
-  "administrative_court": "Administrative Court",
-  "other": "Other"
-}
-
+    "courts": {
+      "Seoul Central District Court": "Seoul Central District Court",
+      "Seoul Eastern District Court": "Seoul Eastern District Court",
+      "Seoul Western District Court": "Seoul Western District Court",
+      "Seoul Southern District Court": "Seoul Southern District Court",
+      "Seoul Northern District Court": "Seoul Northern District Court",
+      "Incheon District Court": "Incheon District Court",
+      "Suwon District Court": "Suwon District Court",
+      "Uijeongbu District Court": "Uijeongbu District Court",
+      "Chuncheon District Court": "Chuncheon District Court",
+      "Cheongju District Court": "Cheongju District Court",
+      "Daejeon District Court": "Daejeon District Court",
+      "Daegu District Court": "Daegu District Court",
+      "Busan District Court": "Busan District Court",
+      "Ulsan District Court": "Ulsan District Court",
+      "Gwangju District Court": "Gwangju District Court",
+      "Changwon District Court": "Changwon District Court",
+      "Jeju District Court": "Jeju District Court",
+      "Seoul High Court": "Seoul High Court",
+      "Daejeon High Court": "Daejeon High Court",
+      "Daegu High Court": "Daegu High Court",
+      "Busan High Court": "Busan High Court",
+      "Gwangju High Court": "Gwangju High Court",
+      "Constitutional Court": "Constitutional Court",
+      "Supreme Court": "Supreme Court",
+      "Seoul Family Court": "Seoul Family Court"
+    },
+    "caseTypes": {
+      "Criminal": "Criminal",
+      "Civil": "Civil",
+      "Constitutional": "Constitutional",
+      "Appeal (Supreme)": "Appeal (Supreme)",
+      "Family": "Family"
+    }
+ 
   },
   
   "commona": {
@@ -410,6 +514,21 @@
     "rateLabel": "Consultation Rate (Tokens)",
     "ratePlaceholder": "Enter your consultation rate in tokens",
     "rateDescription": "This rate will be charged for each consultation session (chat or video meeting)",
+    "generalRate": "General Consultation Rate",
+    "chatRate": "Chat Consultation Rate",
+    "videoRate": "Video Consultation Rate",
+    "placeholders": {
+      "generalRate": "Enter your general consultation rate",
+      "chatRate": "Enter your chat consultation rate",
+      "videoRate": "Enter your video consultation rate"
+    },
+    "descriptions": {
+      "generalRate": "Your standard hourly rate for in-person consultations",
+      "chatRate": "Your rate per hour for text-based chat consultations",
+      "videoRate": "Your rate per hour for video call consultations"
+    },
+    
+
     "saveButton": "Save Changes",
     "saving": "Saving...",
     "unsavedChanges": "You have unsaved changes",
@@ -423,7 +542,8 @@
         "title": "Success",
         "description": "Consultation charges updated successfully"
       },
-      "failedToUpdate": "Failed to update consultation charges"
+      
+      "failedToUpdate": "Failed to update your rates"
     }
   },
 "caseDetails": {
@@ -1127,13 +1247,14 @@
 },
 "qa": {
   "title": "Questions & Answers",
-  "description": "Browse common questions and their answers about our services.",
+  "description": "Check out common questions and answers about the service.",
   "loading": "Loading questions...",
-  "addQuestion": "Add Question",
-  "empty": "No questions available",
+  "empty": "No questions have been posted",
+  "byAuthorOnDate": "By {{author}} • {{date}}",
   "unanswered": "This question has not been answered yet",
   "anonymous": "Anonymous",
-  "byUser": "{firstName} {lastName} • {date}",
+  "addQuestion": "Add Question",
+  "byUser": "{{firstName}} {{lastName}} • {{date}}",
   "status": {
     "answered": "Answered",
     "pending": "Pending"
@@ -1146,23 +1267,31 @@
     "deleting": "Deleting..."
   },
   "error": {
-    "fetchFailed": "Failed to load question list. Please try again later.",
+    "loadFailed": "Failed to load questions. Please try again later.",
+    "cannotDeleteAnswered": "Answered questions cannot be deleted",
+    "deleteFailedTryAgain": "Failed to delete the question. Please try again.",
+
+    "fetchFailed": "Failed to fetch question list. Please try again later.",
     "deleteFailed": "Failed to delete question. Please try again."
   },
   "search": {
-    "placeholder": "Search questions and answers..."
+    "placeholder": "Search questions and answers...",
+    "noResults": "No questions match your search",
+    "resultsCount": "Found {{count}} question",
+    "resultsCount_plural": "Found {{count}} questions",
+    "noResultsDetailed": "No questions match your search or filters. Try adjusting your keywords or filters."
   },
   "filter": {
-    "allQuestions": "All Questions",
-    "answered": "Answered", 
-    "pending": "Pending",
-    "filterByStatus": "Filter by status"
+    "placeholder": "Filter by status",
+    "all": "All Questions",
+    "answered": "Answered",
+    "pending": "Pending"
   },
   "results": {
-    "noResults": "No questions found matching your search criteria. Try adjusting your search terms or filters.",
+    "noResults": "No questions found for the given search. Try adjusting your keywords or filters.",
     "found": "Found {count} question",
     "foundPlural": "Found {count} questions",
-    "noMatch": "No questions found matching your search"
+    "noMatch": "No questions match your search"
   }
 },
 
@@ -1178,7 +1307,8 @@
     "saveChanges": "Save changes",
     "saving": "Saving...",
     "submitAnswer": "Submit answer",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "submit": "Submit"
   },
   "errors": {
     "tokenError": "Token retrieval error:",

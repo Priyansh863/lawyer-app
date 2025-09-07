@@ -37,12 +37,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      {/* Use display:none instead of opacity for complete hiding */}
-      <main className={`flex-1 w-full ${isMobile && isSidebarOpen ? "hidden" : "block"}`}>
-        <div className="md:p-6 px-4">
-          <div className="pt-24 md:pt-0 max-w-7xl mx-auto">{children}</div>
-        </div>
-      </main>
+      <div className="flex-1 min-w-0">
+        <main className={`p-4 md:p-6 ${isMobile && isSidebarOpen ? "hidden md:block" : "block"}`}>
+          <div className="max-w-7xl mx-auto w-full">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

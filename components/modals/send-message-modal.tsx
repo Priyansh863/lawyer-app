@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { SimpleChat } from "@/components/chat/simple-chat";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface User {
   _id: string;
@@ -48,11 +49,14 @@ export default function SendMessageModal({
   const [messageContent, setMessageContent] = useState("");
   const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const isLawyer = currentUser?.account_type === 'lawyer';
 
   // Fetch users based on current user's role
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchUsers = async () => {
       if (!isOpen) return;
       
@@ -60,39 +64,47 @@ export default function SendMessageModal({
         setLoading(true);
         const response = await getRelatedUsers();
         
-        // Debug log the response to understand its structure
-        console.log('API Response:', response);
+        if (!isMounted) return;
         
-        // Handle the response based on its structure
         if (response.success) {
-          // The response might be in different formats:
-          // 1. { success: true, users: [...] } - from getClients()
-          // 2. { success: true, data: [...] } - from getLawyers()
           const userList = response.users || response.data || [];
           console.log('Processed user list:', userList);
           setUsers(Array.isArray(userList) ? userList : []);
         } else {
-          throw new Error(response.message || 'Failed to load users');
+          throw new Error(response.message || t('pages:sendMessage.failedToLoadUsers'));
         }
       } catch (error) {
         console.error('Error in fetchUsers:', error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load users",
-          variant: "destructive",
-        });
+        if (isMounted) {
+          toast({
+            title: t('pages:sendMessage.error'),
+            description: error instanceof Error ? error.message : t('pages:sendMessage.failedToLoadUsers'),
+            variant: "destructive",
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    // Add a small delay to prevent rapid firing of requests
-    const timer = setTimeout(() => {
-      fetchUsers();
-    }, 100);
+    // Only fetch if the modal is open and we don't have users yet
+    if (isOpen && users.length === 0) {
+      const timer = setTimeout(() => {
+        fetchUsers();
+      }, 100);
 
-    return () => clearTimeout(timer);
-  }, [isOpen, toast]);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, t]);
 
   const filteredUsers = users.filter(user => 
     (user.first_name + ' ' + user.last_name).toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,8 +135,8 @@ export default function SendMessageModal({
       });
 
       toast({
-        title: "Success",
-        description: "Message sent successfully!",
+        title: t('pages:sendMessage.success'),
+        description: t('pages:sendMessage.messageSentSuccessfully'),
       });
 
       // Reset form
@@ -142,8 +154,8 @@ export default function SendMessageModal({
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send message. Please try again.",
+        title: t('pages:sendMessage.error'),
+        description: error.message || t('pages:sendMessage.failedToSendMessage'),
         variant: "destructive",
       });
     } finally {
@@ -154,10 +166,14 @@ export default function SendMessageModal({
   // Set default subject based on user type
   useEffect(() => {
     if (selectedUser && !messageSubject) {
-      const userType = isLawyer ? 'Client' : 'Lawyer';
-      setMessageSubject(`Regarding ${userType} ${selectedUser.first_name} ${selectedUser.last_name}`);
+      const userType = isLawyer ? t('pages:sendMessage.client') : t('pages:sendMessage.lawyer');
+      setMessageSubject(t('pages:sendMessage.regardingUser', {
+        userType,
+        firstName: selectedUser.first_name,
+        lastName: selectedUser.last_name
+      }));
     }
-  }, [selectedUser, isLawyer]);
+  }, [selectedUser, isLawyer, t]);
 
   return (
     <>
@@ -176,8 +192,11 @@ export default function SendMessageModal({
                 </Button>
               )}
               {currentStep === 'userSelection' 
-                ? `Select ${isLawyer ? 'Client' : 'Lawyer'}` 
-                : 'New Message'}
+                ? t('pages:sendMessage.selectUser', { 
+                    userType: isLawyer ? t('pages:sendMessage.client') : t('pages:sendMessage.lawyer') 
+                  })
+                : t('pages:sendMessage.newMessage')
+              }
             </DialogTitle>
           </DialogHeader>
 
@@ -186,7 +205,9 @@ export default function SendMessageModal({
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={`Search ${isLawyer ? 'clients' : 'lawyers'} by name or email...`}
+                  placeholder={t('pages:sendMessage.searchPlaceholder', {
+                    userType: isLawyer ? t('pages:sendMessage.clients') : t('pages:sendMessage.lawyers')
+                  })}
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -196,7 +217,9 @@ export default function SendMessageModal({
               <div className="max-h-[300px] overflow-y-auto space-y-2">
                 {loading ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    Loading {isLawyer ? 'clients' : 'lawyers'}...
+                    {t('pages:sendMessage.loadingUsers', {
+                      userType: isLawyer ? t('pages:sendMessage.clients') : t('pages:sendMessage.lawyers')
+                    })}
                   </div>
                 ) : filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
@@ -222,18 +245,20 @@ export default function SendMessageModal({
                         {/* Show chat rate for lawyers when clients are selecting */}
                         {user.account_type === 'lawyer' && currentUser?.account_type === 'client' && user.chat_rate && (
                           <div className="text-xs text-green-600 font-medium">
-                            Chat: {user.chat_rate} tokens/hour
+                            {t('pages:sendMessage.chatRate', { rate: user.chat_rate })}
                           </div>
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {user.account_type === 'lawyer' ? 'Lawyer' : 'Client'}
+                        {user.account_type === 'lawyer' ? t('pages:sendMessage.lawyer') : t('pages:sendMessage.client')}
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
-                    No {isLawyer ? 'clients' : 'lawyers'} found
+                    {t('pages:sendMessage.noUsersFound', {
+                      userType: isLawyer ? t('pages:sendMessage.clients') : t('pages:sendMessage.lawyers')
+                    })}
                   </div>
                 )}
               </div>
@@ -241,7 +266,7 @@ export default function SendMessageModal({
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>To:</Label>
+                <Label>{t('pages:sendMessage.to')}</Label>
                 <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={selectedUser?.profile_image} alt={selectedUser?.first_name} />
@@ -262,20 +287,22 @@ export default function SendMessageModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject:</Label>
+                <Label htmlFor="subject">{t('pages:sendMessage.subject')}</Label>
                 <Input
                   id="subject"
-                  placeholder="Subject"
+                  placeholder={t('pages:sendMessage.subjectPlaceholder')}
                   value={messageSubject}
                   onChange={(e) => setMessageSubject(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Message:</Label>
+                <Label htmlFor="message">{t('pages:sendMessage.message')}</Label>
                 <Textarea
                   id="message"
-                  placeholder={`Type your message to ${selectedUser?.first_name || ''}...`}
+                  placeholder={t('pages:sendMessage.messagePlaceholder', {
+                    firstName: selectedUser?.first_name || ''
+                  })}
                   className="min-h-[150px]"
                   value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
@@ -288,14 +315,14 @@ export default function SendMessageModal({
                   onClick={() => setCurrentStep('userSelection')}
                   disabled={loading}
                 >
-                  Back
+                  {t('pages:sendMessage.back')}
                 </Button>
                 <Button
                   onClick={handleSendMessage}
                   disabled={!messageContent.trim() || loading}
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {loading ? 'Sending...' : 'Send Message'}
+                  {loading ? t('pages:sendMessage.sending') : t('pages:sendMessage.sendMessage')}
                 </Button>
               </DialogFooter>
             </div>

@@ -60,7 +60,15 @@
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
     "viewDetails": "View details",
-    "charges": "Charges ($)"
+    "charges": "Charges ($)",
+     
+      "client": "Client",
+      "lawyer": "Lawyer",
+      "clients": "clients",
+      "lawyers": "lawyers",
+      "back": "Back",
+      "submitting": "Submitting..."
+    
   },
   "auth": {
     "login": "Login",

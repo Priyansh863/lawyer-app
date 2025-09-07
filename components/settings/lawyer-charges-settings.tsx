@@ -80,7 +80,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
         (!videoRate || isNaN(Number(videoRate)) || Number(videoRate) < 0)) {
       toast({
         title: t('pages:chargesSettings:toast.invalidInput.title'),
-        description: 'Please enter valid rates for all consultation types',
+        description: t('pages:chargesSettings:toast.invalidInput.description'),
         variant: 'destructive'
       })
       return
@@ -113,7 +113,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
         setCurrentVideoRate(Number(videoRate))
         toast({
           title: t('pages:chargesSettings:toast.success.title'),
-          description: 'Consultation rates updated successfully',
+          description: t('pages:chargesSettings:toast.success.description'),
         })
       } else {
         throw new Error(data.message || t('chargesSettings:toast.failedToUpdate'))
@@ -163,7 +163,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="charges">General Consultation Rate</Label>
+            <Label htmlFor="charges">{t('pages:chargesSettings:generalRate')}</Label>
             <div className="relative">
               <Input
                 id="charges"
@@ -172,18 +172,18 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
                 step="1"
                 value={charges}
                 onChange={(e) => setCharges(e.target.value)}
-                placeholder="Enter general rate"
+                placeholder={t('pages:chargesSettings:placeholders.generalRate')}
                 className="pl-8"
               />
               <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              General consultation rate (tokens per session)
+              {t('pages:chargesSettings:descriptions.generalRate')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="chatRate">Chat Consultation Rate</Label>
+            <Label htmlFor="chatRate">{t('pages:chargesSettings:chatRate')}</Label>
             <div className="relative">
               <Input
                 id="chatRate"
@@ -192,18 +192,18 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
                 step="1"
                 value={chatRate}
                 onChange={(e) => setChatRate(e.target.value)}
-                placeholder="Enter chat rate"
+                placeholder={t('pages:chargesSettings:placeholders.chatRate')}
                 className="pl-8"
               />
               <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Chat consultation rate (tokens per session)
+              {t('pages:chargesSettings:descriptions.chatRate')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="videoRate">Video Consultation Rate</Label>
+            <Label htmlFor="videoRate">{t('pages:chargesSettings:videoRate')}</Label>
             <div className="relative">
               <Input
                 id="videoRate"
@@ -212,13 +212,13 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
                 step="1"
                 value={videoRate}
                 onChange={(e) => setVideoRate(e.target.value)}
-                placeholder="Enter video rate"
+                placeholder={t('pages:chargesSettings:placeholders.videoRate')}
                 className="pl-8"
               />
               <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Video consultation rate (tokens per session)
+              {t('pages:chargesSettings:descriptions.videoRate')}
             </p>
           </div>
 
@@ -233,12 +233,12 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? 'Saving...' : 'Save Rates'}
+              {saving ? t('common:actions.saving') : t('common:actions.saveRates')}
             </Button>
             
             {(charges !== currentCharges.toString() || chatRate !== currentChatRate.toString() || videoRate !== currentVideoRate.toString()) && (
               <p className="text-sm text-muted-foreground">
-                You have unsaved changes
+                {t('pages:chargesSettings:unsavedChanges')}
               </p>
             )}
           </div>

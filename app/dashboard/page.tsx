@@ -110,8 +110,8 @@ export default function ProfessionalDashboardPage() {
     } catch (error) {
       console.error("Error fetching posts:", error);
       toast({
-        title: "Error",
-        description: "Failed to load posts. Please try again.",
+        title: t('pages:dashboard.error'),
+        description: t('pages:dashboard.failedToLoadPosts'),
         variant: "destructive",
       });
     } finally {
@@ -165,13 +165,13 @@ export default function ProfessionalDashboardPage() {
       });
       
       toast({
-        title: result.data.isBookmarked ? "Bookmarked" : "Bookmark Removed",
+        title: result.data.isBookmarked ? t('pages:dashboard.bookmarked') : t('pages:dashboard.bookmarkRemoved'),
         description: result.message,
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update bookmark",
+        title: t('pages:dashboard.error'),
+        description: error.message || t('pages:dashboard.failedToUpdateBookmark'),
         variant: "destructive",
       });
     }
@@ -183,13 +183,13 @@ export default function ProfessionalDashboardPage() {
       const url = `${window.location.origin}/${postSlug}`;
       await navigator.clipboard.writeText(url);
       toast({
-        title: "Link Copied",
-        description: "Post URL has been copied to clipboard",
+        title: t('pages:dashboard.linkCopied'),
+        description: t('pages:dashboard.postUrlCopied'),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to copy link",
+        title: t('pages:dashboard.error'),
+        description: t('pages:dashboard.failedToCopyLink'),
         variant: "destructive",
       });
     }
@@ -201,11 +201,11 @@ export default function ProfessionalDashboardPage() {
     setShowReportDialog(true);
   };
 
-  const handleReport = async () => {
+  const handleReportSubmit = async () => {
     if (!reportReason.trim()) {
       toast({
-        title: "Error",
-        description: "Please provide a reason for reporting",
+        title: t('pages:dashboard.error'),
+        description: t('pages:dashboard.pleaseEnterReason'),
         variant: "destructive",
       });
       return;
@@ -216,17 +216,17 @@ export default function ProfessionalDashboardPage() {
       await reportPost(reportingPostId, reportReason);
       
       toast({
-        title: "Report Submitted",
-        description: "Thank you for reporting. We'll review this content.",
+        title: t('pages:dashboard.success'),
+        description: t('pages:dashboard.reportSubmitted'),
       });
       
       setShowReportDialog(false);
       setReportReason("");
-      setReportingPostId("");
     } catch (error: any) {
+      console.error('Error reporting post:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to submit report",
+        title: t('pages:dashboard.error'),
+        description: error.message || t('pages:dashboard.reportFailed'),
         variant: "destructive",
       });
     } finally {
@@ -262,10 +262,10 @@ export default function ProfessionalDashboardPage() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <h3 className="font-semibold text-gray-900 text-sm">
-                    {post.author ? `${post.author.first_name} ${post.author.last_name}` : "Unknown Author"}
+                    {post.author ? `${post.author.first_name} ${post.author.last_name}` : t('pages:dashboard.unknownAuthor')}
                   </h3>
                   <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                    {post.author?.account_type || "User"}
+                    {post.author?.account_type || t('pages:dashboard.user')}
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
@@ -285,7 +285,7 @@ export default function ProfessionalDashboardPage() {
             <div className="flex items-center space-x-2">
               <Badge variant="outline" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
-                Legal Post
+                {t('pages:dashboard.legalPost')}
               </Badge>
               
               <DropdownMenu>
@@ -301,17 +301,17 @@ export default function ProfessionalDashboardPage() {
                     ) : (
                       <Bookmark className="mr-2 h-4 w-4" />
                     )}
-                    {isBookmarked ? "Bookmarked" : "Bookmark"}
+                    {isBookmarked ? t('pages:dashboard.bookmarked') : t('pages:dashboard.bookmark')}
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem onClick={() => handleCopyUrl(post.slug)}>
                     <Copy className="mr-2 h-4 w-4" />
-                    Copy Link
+                    {t('pages:dashboard.copyLink')}
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem onClick={() => handleReportClick(post._id)}>
                     <Flag className="mr-2 h-4 w-4" />
-                    Report
+                    {t('pages:dashboard.report')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -338,12 +338,12 @@ export default function ProfessionalDashboardPage() {
               {isExpanded ? (
                 <>
                   <ChevronUp className="h-4 w-4 mr-1" />
-                  Show less
+                  {t('pages:dashboard.showLess')}
                 </>
               ) : (
                 <>
                   <ChevronDown className="h-4 w-4 mr-1" />
-                  Read more
+                  {t('pages:dashboard.readMore')}
                 </>
               )}
             </Button>
@@ -368,7 +368,7 @@ export default function ProfessionalDashboardPage() {
           <div className="px-6 pb-4">
             <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
               <Tag className="h-4 w-4 mr-2" />
-              Tags
+              {t('pages:dashboard.tags')}
             </h4>
             <div className="flex flex-wrap gap-2">
               {post.hashtags.map((hashtag, index) => (
@@ -389,7 +389,7 @@ export default function ProfessionalDashboardPage() {
           <div className="px-6 pb-4">
             <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
               <LinkIcon className="h-4 w-4 mr-2" />
-              Legal Resources
+              {t('pages:dashboard.legalResources')}
             </h4>
             <div className="space-y-3">
               {post.usefulLinks.map((link, index) => (
@@ -411,7 +411,7 @@ export default function ProfessionalDashboardPage() {
                         className="text-blue-600 hover:text-blue-700 text-xs font-medium inline-flex items-center bg-blue-50 px-2 py-1 rounded"
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
-                        Visit Resource
+                        {t('pages:dashboard.visitResource')}
                       </a>
                     </div>
                   </div>
@@ -426,13 +426,13 @@ export default function ProfessionalDashboardPage() {
           <div className="px-6 pb-4">
             <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
               <Globe className="h-4 w-4 mr-2" />
-              Share Links
+              {t('pages:dashboard.shareLinks')}
             </h4>
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="space-y-3">
                 {post.customUrl && (
                   <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">Custom URL</label>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">{t('pages:dashboard.customUrl')}</label>
                     <div className="flex items-center justify-between bg-white rounded p-2 border">
                       <span className="text-xs text-gray-600 truncate flex-1 mr-2">
                         {post.customUrl}
@@ -443,14 +443,14 @@ export default function ProfessionalDashboardPage() {
                         className="h-6 px-2 text-xs"
                         onClick={() => navigator.clipboard.writeText(post.customUrl)}
                       >
-                        Copy
+                        {t('pages:dashboard.copy')}
                       </Button>
                     </div>
                   </div>
                 )}
                 {post.shortUrl && (
                   <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">Short URL</label>
+                    <label className="text-xs font-medium text-gray-700 mb-1 block">{t('pages:dashboard.shortUrl')}</label>
                     <div className="flex items-center justify-between bg-white rounded p-2 border">
                       <span className="text-xs text-gray-600 truncate flex-1 mr-2">
                         {post.shortUrl}
@@ -461,7 +461,7 @@ export default function ProfessionalDashboardPage() {
                         className="h-6 px-2 text-xs"
                         onClick={() => navigator.clipboard.writeText(post.shortUrl)}
                       >
-                        Copy
+                        {t('pages:dashboard.copy')}
                       </Button>
                     </div>
                   </div>
@@ -477,12 +477,12 @@ export default function ProfessionalDashboardPage() {
             <div className="flex items-center space-x-4">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                Created: {formatDate(post.createdAt)}
+                {t('pages:dashboard.created')}: {formatDate(post.createdAt)}
               </span>
               {post.updatedAt && post.updatedAt !== post.createdAt && (
                 <span className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
-                  Updated: {formatDate(post.updatedAt)}
+                  {t('pages:dashboard.updated')}: {formatDate(post.updatedAt)}
                 </span>
               )}
             </div>
@@ -492,10 +492,102 @@ export default function ProfessionalDashboardPage() {
     );
   };
 
+  // Render loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <DashboardHeader 
+          title={t('pages:dashboard.dashboard')} 
+          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
+        />
+        <div className="space-y-6">
+          <StatsCards />
+          <QuickActions />
+          <Card>
+            <CardContent className="p-6">
+              <Skeleton height={200} />
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Render empty state if no posts
+  if (posts.length === 0) {
+    return (
+      <DashboardLayout>
+        <DashboardHeader 
+          title={t('pages:dashboard.dashboard')} 
+          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
+        />
+        <div className="space-y-6">
+          <StatsCards />
+          <QuickActions />
+          <Card>
+            <CardContent className="p-6 text-center">
+              <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-lg font-medium">
+                {t('pages:dashboard.noPostsTitle')}
+              </h3>
+              <p className="text-muted-foreground mt-1">
+                {t('pages:dashboard.noPostsDescription')}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Report Dialog
+  const renderReportDialog = () => (
+    <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('pages:dashboard.reportPost')}</DialogTitle>
+          <DialogDescription>
+            {t('pages:dashboard.reportDescription')}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="reason">{t('pages:dashboard.reason')}</Label>
+            <Textarea
+              id="reason"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder={t('pages:dashboard.reasonPlaceholder')}
+              className="min-h-[100px]"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowReportDialog(false)}
+            disabled={isReporting}
+          >
+            {t('common:cancel')}
+          </Button>
+          <Button 
+            onClick={handleReportSubmit}
+            disabled={!reportReason.trim() || isReporting}
+          >
+            {isReporting ? t('common:submitting') : t('common:submit')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-8">
-        <DashboardHeader />
+        <DashboardHeader 
+          title={t('pages:dashboard.dashboard')} 
+          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
+        />
         <StatsCards />
         
         {profile?.account_type === "lawyer" && (
@@ -508,11 +600,11 @@ export default function ProfessionalDashboardPage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Legal Posts</h2>
-              <p className="text-gray-600 text-sm mt-1">Professional legal content and resources</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t('pages:dashboard.legalPosts')}</h2>
+              <p className="text-gray-600 text-sm mt-1">{t('pages:dashboard.professionalContent')}</p>
             </div>
             <Badge variant="secondary" className="px-3 py-1">
-              {posts.length} posts
+              {posts.length} {t('pages:dashboard.posts')}
             </Badge>
           </div>
           
@@ -536,12 +628,12 @@ export default function ProfessionalDashboardPage() {
             <Card className="border-0 shadow-none bg-gray-50/50">
               <CardContent className="text-center py-16">
                 <div className="text-gray-300 text-6xl mb-4">⚖️</div>
-                <h3 className="text-lg font-normal text-gray-600 mb-2">No legal posts yet</h3>
+                <h3 className="text-lg font-normal text-gray-600 mb-2">{t('pages:dashboard.noPostsTitle')}</h3>
                 <p className="text-gray-400 text-sm">
-                  Start sharing your legal expertise with the community
+                  {t('pages:dashboard.noPostsDescription')}
                 </p>
                 <Button className="mt-4" variant="outline">
-                  Create your first post
+                  {t('pages:dashboard.createPost')}
                 </Button>
               </CardContent>
             </Card>
@@ -554,50 +646,7 @@ export default function ProfessionalDashboardPage() {
           )}
         </div>
 
-        {/* Report Dialog */}
-        <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Report Post</DialogTitle>
-              <DialogDescription>
-                Please let us know why you're reporting this post. We'll review it and take appropriate action.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="reason">Reason for reporting</Label>
-                <Textarea
-                  id="reason"
-                  placeholder="Please describe the issue with this post..."
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="min-h-[100px]"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowReportDialog(false);
-                  setReportReason("");
-                  setReportingPostId("");
-                }}
-                disabled={isReporting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleReport}
-                disabled={isReporting || !reportReason.trim()}
-              >
-                {isReporting ? "Submitting..." : "Submit Report"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {renderReportDialog()}
       </div>
     </DashboardLayout>
   );

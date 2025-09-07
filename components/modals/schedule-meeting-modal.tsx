@@ -13,6 +13,7 @@ import { createMeeting } from "@/lib/api/meeting-api";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface User {
   _id: string;
@@ -53,6 +54,7 @@ export default function ScheduleMeetingModal({
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
   const profile = useSelector((state: RootState) => state.auth.user);
+  const { t } = useTranslation();
 
   console.log(users,"usersusersusersusersusersusersusers");
 
@@ -78,8 +80,8 @@ export default function ScheduleMeetingModal({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch users",
+        title: t("pages:scheduleM.error"),
+        description: error.message || t("pages:scheduleM.failedToFetchUsers"),
         variant: "destructive",
       });
     } finally {
@@ -113,8 +115,8 @@ export default function ScheduleMeetingModal({
   const handleMeetingLinkSubmit = async () => {
     if (!selectedUser || !meetingLink) {
       toast({
-        title: "Missing Information",
-        description: "Please provide a meeting link",
+        title: t("pages:scheduleM.missingInformation"),
+        description: t("pages:scheduleM.pleaseProvideMeetingLink"),
         variant: "destructive",
       });
       return;
@@ -126,8 +128,8 @@ export default function ScheduleMeetingModal({
       const meetingData = {
         lawyerId: profile?.account_type === 'lawyer' ? profile._id : selectedUser._id,
         clientId: profile?.account_type === 'client' ? profile._id : selectedUser._id,
-        meeting_title: `Meeting with ${selectedUser.first_name} ${selectedUser.last_name}`,
-        meeting_description: "Scheduled meeting",
+        meeting_title: t("pages:scheduleM.meetingWith", { name: `${selectedUser.first_name} ${selectedUser.last_name}` }),
+        meeting_description: t("pages:scheduleM.scheduledMeeting"),
         requested_date: new Date().toISOString().split('T')[0],
         requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
         meetingLink: meetingLink,
@@ -137,8 +139,8 @@ export default function ScheduleMeetingModal({
       
       if (response.success) {
         toast({
-          title: "Meeting Request Sent",
-          description: `Meeting request sent to ${selectedUser.first_name} ${selectedUser.last_name}`,
+          title: t("pages:scheduleM.meetingRequestSent"),
+          description: t("pages:scheduleM.meetingRequestSentTo", { name: `${selectedUser.first_name} ${selectedUser.last_name}` }),
         });
         
         onSelectUser(selectedUser);
@@ -146,8 +148,8 @@ export default function ScheduleMeetingModal({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule meeting",
+        title: t("pages:scheduleM.error"),
+        description: error.message || t("pages:scheduleM.failedToScheduleMeeting"),
         variant: "destructive",
       });
     } finally {
@@ -163,8 +165,8 @@ export default function ScheduleMeetingModal({
   const handleSendMeeting = async () => {
     if (!selectedUser || !meetingTitle || !meetingDate || !meetingTime || !meetingLink) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
+        title: t("pages:scheduleM.missingInformation"),
+        description: t("pages:scheduleM.pleaseFillAllFields"),
         variant: "destructive",
       });
       return;
@@ -187,8 +189,8 @@ export default function ScheduleMeetingModal({
       
       if (response.success) {
         toast({
-          title: "Meeting Scheduled",
-          description: `Meeting request sent to ${selectedUser.first_name} ${selectedUser.last_name}`,
+          title: t("pages:scheduleM.meetingScheduled"),
+          description: t("pages:scheduleM.meetingRequestSentTo", { name: `${selectedUser.first_name} ${selectedUser.last_name}` }),
         });
         
         onSelectUser(selectedUser);
@@ -196,8 +198,8 @@ export default function ScheduleMeetingModal({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule meeting",
+        title: t("scheduleM.error"),
+        description: error.message || t("pages:scheduleM.failedToScheduleMeeting"),
         variant: "destructive",
       });
     } finally {
@@ -222,7 +224,7 @@ export default function ScheduleMeetingModal({
   };
 
   const getUserTypeLabel = () => {
-    return profile?.account_type === "lawyer" ? "Clients" : "Lawyers";
+    return profile?.account_type === "lawyer" ? t("pages:scheduleM.clients") : t("pages:scheduleM.lawyers");
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -246,8 +248,8 @@ export default function ScheduleMeetingModal({
             )}
             <Calendar className="w-5 h-5 text-primary" />
             {currentStep === 'userSelection' 
-              ? `Schedule Meeting - Select ${profile?.account_type === 'lawyer' ? 'Client' : 'Lawyer'}`
-              : `Schedule a meeting with ${selectedUser?.first_name || 'User'}`
+              ? `${t("pages:scheduleM.scheduleMeeting")} - ${profile?.account_type === 'lawyer' ? t("pages:scheduleM.selectClient") : t("pages:scheduleM.selectLawyer")}`
+              : t("pages:scheduleM.scheduleMeetingWith", { name: selectedUser?.first_name || t("pages:scheduleM.user") })
             }
           </DialogTitle>
         </DialogHeader>
@@ -258,7 +260,7 @@ export default function ScheduleMeetingModal({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder={`Search ${getUserTypeLabel().toLowerCase()}...`}
+                placeholder={t("pages:scheduleM.searchPlaceholder", { type: getUserTypeLabel().toLowerCase() })}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -276,13 +278,13 @@ export default function ScheduleMeetingModal({
                   <User className="w-12 h-12 mb-2 opacity-50" />
                   <p className="text-center">
                     {profile?.account_type === 'lawyer' 
-                      ? 'No clients found' 
-                      : 'No lawyers found'}
+                      ? t("pages:scheduleM.noClientsFound") 
+                      : t("pages:scheduleM.noLawyersFound")}
                   </p>
                   <p className="text-sm text-muted-foreground text-center mt-1">
                     {profile?.account_type === 'lawyer'
-                      ? 'You currently have no active clients.'
-                      : 'No lawyers are currently available.'}
+                      ? t("pages:scheduleM.noActiveClients")
+                      : t("pages:scheduleM.noLawyersAvailable")}
                   </p>
                 </div>
               ) : (
@@ -304,7 +306,7 @@ export default function ScheduleMeetingModal({
                           {user.first_name} {user.last_name}
                         </h3>
                         <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                          {user.account_type}
+                          {user.account_type === 'lawyer' ? t("pages:scheduleM.lawyer") : t("pages:scheduleM.client")}
                         </span>
                       </div>
 
@@ -333,7 +335,7 @@ export default function ScheduleMeetingModal({
                           <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-md">
                             <Coins className="w-3 h-3 text-green-600" />
                             <span className="font-medium text-green-700">
-                              {user.charges || 0} tokens/hour
+                              {user.charges || 0} {t("pages:scheduleM.tokensPerHour")}
                             </span>
                           </div>
                         )}
@@ -345,7 +347,7 @@ export default function ScheduleMeetingModal({
                       variant="outline"
                       onClick={() => handleUserSelect(user)}
                     >
-                      Select
+                      {t("pages:scheduleM.select")}
                     </Button>
                   </div>
                 ))
@@ -374,7 +376,7 @@ export default function ScheduleMeetingModal({
                     <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded-md">
                       <Coins className="w-4 h-4 text-blue-600" />
                       <span className="text-sm font-medium text-blue-700">
-                        Consultation Rate: {selectedUser.charges || 0} tokens/hour
+                        {t("pages:scheduleM.consultationRate")}: {selectedUser.charges || 0} {t("pages:scheduleM.tokensPerHour")}
                       </span>
                     </div>
                   )}
@@ -385,10 +387,10 @@ export default function ScheduleMeetingModal({
             {/* Meeting Link Only */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="link">Meeting Link</Label>
+                <Label htmlFor="link">{t("pages:scheduleM.meetingLink")}</Label>
                 <Input
                   id="link"
-                  placeholder="Paste your meeting link here"
+                  placeholder={t("scheduleM.pasteMeetingLink")}
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
                 />
@@ -399,7 +401,7 @@ export default function ScheduleMeetingModal({
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={handleClose}>
-            Cancel
+            {t("pages:scheduleM.cancel")}
           </Button>
           {currentStep === 'meetingDetails' && (
             <Button 
@@ -409,10 +411,10 @@ export default function ScheduleMeetingModal({
               {sending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Scheduling...
+                  {t("pages:scheduleM.scheduling")}...
                 </>
               ) : (
-                'Schedule Meeting'
+                t("pages:scheduleM.scheduleMeeting")
               )}
             </Button>
           )}

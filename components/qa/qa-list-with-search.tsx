@@ -39,7 +39,7 @@ export default function QAListWithSearch() {
         setFilteredQuestions(questionsData);
       } catch (err) {
         console.error("Failed to fetch questions:", err);
-        setError("Failed to load questions. Please try again later.");
+        setError(t("pages:qa.errors.loadFailed") || "Failed to load questions. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -95,7 +95,7 @@ export default function QAListWithSearch() {
       // Check if question is already answered
       const question = questions.find(q => q._id === questionId);
       if (question?.answer) {
-        setError("Cannot delete answered questions");
+        setError(t("pages:qa.errors.cannotDeleteAnswered") || "Cannot delete answered questions");
         return;
       }
 
@@ -107,11 +107,11 @@ export default function QAListWithSearch() {
         setQuestions(prevQuestions => prevQuestions.filter(q => q._id !== questionId));
         setFilteredQuestions(prevQuestions => prevQuestions.filter(q => q._id !== questionId));
       } else {
-        setError("Failed to delete question");
+        setError(t("pages:qa.errors.deleteFailed") || "Failed to delete question");
       }
     } catch (err) {
       console.error("Failed to delete question:", err);
-      setError("Failed to delete question. Please try again.");
+      setError(t("pages:qa.errors.deleteFailedTryAgain") || "Failed to delete question. Please try again.");
     } finally {
       setDeleteLoading(null);
     }
@@ -160,7 +160,7 @@ export default function QAListWithSearch() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search questions and answers..."
+              placeholder={t('pages:qa.search.placeholder') || 'Search questions and answers...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -170,12 +170,12 @@ export default function QAListWithSearch() {
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('pages:qa.filter.placeholder') || 'Filter by status'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Questions</SelectItem>
-                <SelectItem value="answered">Answered</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t('pages:qa.filter.all') || 'All Questions'}</SelectItem>
+                <SelectItem value="answered">{t('pages:qa.filter.answered') || 'Answered'}</SelectItem>
+                <SelectItem value="pending">{t('pages:qa.filter.pending') || 'Pending'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,7 +196,7 @@ export default function QAListWithSearch() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search questions and answers..."
+              placeholder={t('pages:qa.search.placeholder') || 'Search questions and answers...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -206,19 +206,19 @@ export default function QAListWithSearch() {
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t('pages:qa.filter.placeholder') || 'Filter by status'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Questions</SelectItem>
-                <SelectItem value="answered">Answered</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t('pages:qa.filter.all') || 'All Questions'}</SelectItem>
+                <SelectItem value="answered">{t('pages:qa.filter.answered') || 'Answered'}</SelectItem>
+                <SelectItem value="pending">{t('pages:qa.filter.pending') || 'Pending'}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         
         <div className="p-4 border border-gray-200 bg-gray-50 text-gray-700 rounded-md">
-           {t("pages:questionA.qa.empty")}
+           {t("pages:qa.empty") || "No questions have been asked yet."}
         </div>
       </div>
     );
@@ -241,12 +241,12 @@ export default function QAListWithSearch() {
           <Filter className="h-4 w-4 text-gray-500" />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t('pages:qa.filter.placeholder') || 'Filter by status'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Questions</SelectItem>
-              <SelectItem value="answered">Answered</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="all">{t('pages:qa.filter.all') || 'All Questions'}</SelectItem>
+              <SelectItem value="answered">{t('pages:qa.filter.answered') || 'Answered'}</SelectItem>
+              <SelectItem value="pending">{t('pages:qa.filter.pending') || 'Pending'}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -256,8 +256,8 @@ export default function QAListWithSearch() {
       {searchTerm && (
         <div className="text-sm text-gray-600">
           {filteredQuestions.length === 0 
-            ? 'No questions found matching your search'
-            : `Found ${filteredQuestions.length} question${filteredQuestions.length === 1 ? '' : 's'}`
+            ? t('pages:qa.search.noResults') || 'No questions found matching your search'
+            : t('pages:qa.search.resultsCount', { count: filteredQuestions.length }) || `Found ${filteredQuestions.length} question${filteredQuestions.length === 1 ? '' : 's'}`
           }
         </div>
       )}
@@ -265,7 +265,7 @@ export default function QAListWithSearch() {
       {/* Questions List */}
       {filteredQuestions.length === 0 && searchTerm ? (
         <div className="p-4 border border-gray-200 bg-gray-50 text-gray-700 rounded-md text-center">
-          No questions found matching your search criteria. Try adjusting your search terms or filters.
+          {t('pages:qa.search.noResultsDetailed') || 'No questions found matching your search criteria. Try adjusting your search terms or filters.'}
         </div>
       ) : (
         <Accordion type="single" collapsible className="space-y-4">
@@ -283,7 +283,10 @@ export default function QAListWithSearch() {
                         {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        by {item.userId?.first_name} {item.userId?.last_name} • {formatDate(item.createdAt)}
+                        {t('pages:qa.byAuthorOnDate', {
+                          author: `${item.userId?.first_name} ${item.userId?.last_name}`,
+                          date: formatDate(item.createdAt)
+                        }) || `by ${item.userId?.first_name} ${item.userId?.last_name} • ${formatDate(item.createdAt)}`}
                       </span>
                     </div>
                     <p className="text-left font-normal">{item.question}</p>
@@ -295,14 +298,14 @@ export default function QAListWithSearch() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">{t("pages:qa.menu.open")}</span>
+                            <span className="sr-only">{t("pages:qa.menu.open") || "Open menu"}</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {!item.answer ? (
                             <>
                               <DropdownMenuItem asChild>
-                                <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer")}</Link>
+                                <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer") || "Answer"}</Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 className="text-red-600"
@@ -312,14 +315,14 @@ export default function QAListWithSearch() {
                                 {deleteLoading === item._id ? (
                                   <>
                                     <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                                    {t("pages:qa.menu.deleting")}
+                                    {t("pages:qa.menu.deleting") || "Deleting..."}
                                   </>
-                                ) : t("pages:qa.menu.delete")}
+                                ) : t("pages:qa.menu.delete") || "Delete"}
                               </DropdownMenuItem>
                             </>
                           ) : (
                             <DropdownMenuItem disabled className="text-gray-400">
-                              Question already answered - cannot edit or delete
+                              {t("pages:qa.menu.alreadyAnswered") || "Question already answered - cannot edit or delete"}
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -332,7 +335,7 @@ export default function QAListWithSearch() {
                 {item.answer ? (
                   <div className="mt-2 text-gray-700">{item.answer}</div>
                 ) : (
-                  <div className="mt-2 italic text-gray-500">{t("pages:qa.unanswered")}</div>
+                  <div className="mt-2 italic text-gray-500">{t("pages:qa.unanswered") || "This question hasn't been answered yet."}</div>
                 )}
               </AccordionContent>
             </AccordionItem>

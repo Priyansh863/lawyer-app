@@ -61,7 +61,13 @@
     "addFavorite": "즐겨찾기에 추가",
     "removeFavorite": "즐겨찾기에서 제거",
     "viewDetails": "상세 보기",
-     "charges": "요금 ($)"
+     "charges": "요금 ($)",
+     "client": "의뢰인",
+     "lawyer": "변호사",
+     "clients": "의뢰인",
+     "lawyers": "변호사",
+     "back": "뒤로",
+     "submitting": "제출 중..."
   },
   "auth": {
     "login": "로그인",
