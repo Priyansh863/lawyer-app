@@ -40,6 +40,7 @@ interface SpatialDisplayProps {
   spatialInfo?: SpatialInfo
   citations?: Citation[]
   hashtag?: string
+  slug?: string
   customUrl?: string
   shortUrl?: string
   qrCodeUrl?: string
@@ -51,6 +52,7 @@ export default function SpatialDisplay({
   spatialInfo,
   citations = [],
   hashtag,
+  slug,
   customUrl,
   shortUrl,
   qrCodeUrl,
@@ -252,26 +254,26 @@ export default function SpatialDisplay({
       )}
 
       {/* URLs and QR Code */}
-      {(customUrl || shortUrl || qrCodeUrl) && (
+      {(slug || shortUrl || qrCodeUrl) && (
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Globe className="h-5 w-5 text-indigo-600" />
+              <Globe className="h-4 w-4" />
               <h3 className="font-semibold">Share Links</h3>
             </div>
             
             <div className="space-y-3">
-              {customUrl && (
+              {slug && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Full URL</label>
                   <div className="flex items-center gap-2 mt-1">
                     <code className="flex-1 text-xs bg-gray-100 p-2 rounded border font-mono">
-                      {customUrl}
+                      {window.location.origin}/{slug}
                     </code>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => copyToClipboard(customUrl)}
+                      onClick={() => copyToClipboard(`${window.location.origin}/${slug}`)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>

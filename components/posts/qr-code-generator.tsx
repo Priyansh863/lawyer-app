@@ -25,7 +25,31 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
   const handleGenerateQrCode = async () => {
     try {
       setIsGenerating(true)
-      const postUrl = post.customUrl || `${window.location.origin}/${post.slug}`
+      // Always use slug-based URL instead of stored customUrl to ensure current format
+      let postUrl = `${window.location.origin}/${post.slug}`
+      
+      // Add spatial parameters if available
+      if (post.spatialInfo && post.spatialInfo.latitude && post.spatialInfo.longitude) {
+        const params = new URLSearchParams()
+        
+        if (post.spatialInfo.planet) params.append('planet', post.spatialInfo.planet)
+        params.append('lat', post.spatialInfo.latitude.toString())
+        params.append('lng', post.spatialInfo.longitude.toString())
+        
+        if (post.spatialInfo.altitude !== null && post.spatialInfo.altitude !== undefined) {
+          params.append('altitude', post.spatialInfo.altitude.toString())
+        }
+        
+        if (post.spatialInfo.timestamp) {
+          params.append('timestamp', new Date(post.spatialInfo.timestamp).toISOString().slice(0, 16))
+        }
+        
+        if (post.spatialInfo.floor !== null && post.spatialInfo.floor !== undefined) {
+          params.append('floor', post.spatialInfo.floor.toString())
+        }
+        
+        postUrl += `?${params.toString()}`
+      }
       
       const qrCodeDataUrl = await QRCode.toDataURL(postUrl, {
         width: 256,
@@ -77,7 +101,31 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
   }
 
   const handleCopyPostUrl = async () => {
-    const postUrl = post.customUrl || `${window.location.origin}/${post.slug}`
+    // Always use slug-based URL with spatial parameters
+    let postUrl = `${window.location.origin}/${post.slug}`
+    
+    // Add spatial parameters if available
+    if (post.spatialInfo && post.spatialInfo.latitude && post.spatialInfo.longitude) {
+      const params = new URLSearchParams()
+      
+      if (post.spatialInfo.planet) params.append('planet', post.spatialInfo.planet)
+      params.append('lat', post.spatialInfo.latitude.toString())
+      params.append('lng', post.spatialInfo.longitude.toString())
+      
+      if (post.spatialInfo.altitude !== null && post.spatialInfo.altitude !== undefined) {
+        params.append('altitude', post.spatialInfo.altitude.toString())
+      }
+      
+      if (post.spatialInfo.timestamp) {
+        params.append('timestamp', new Date(post.spatialInfo.timestamp).toISOString().slice(0, 16))
+      }
+      
+      if (post.spatialInfo.floor !== null && post.spatialInfo.floor !== undefined) {
+        params.append('floor', post.spatialInfo.floor.toString())
+      }
+      
+      postUrl += `?${params.toString()}`
+    }
     
     try {
       await navigator.clipboard.writeText(postUrl)
@@ -93,7 +141,31 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
   }
 
   const handleSharePost = async () => {
-    const postUrl = post.customUrl || `${window.location.origin}/${post.slug}`
+    // Always use slug-based URL with spatial parameters
+    let postUrl = `${window.location.origin}/${post.slug}`
+    
+    // Add spatial parameters if available
+    if (post.spatialInfo && post.spatialInfo.latitude && post.spatialInfo.longitude) {
+      const params = new URLSearchParams()
+      
+      if (post.spatialInfo.planet) params.append('planet', post.spatialInfo.planet)
+      params.append('lat', post.spatialInfo.latitude.toString())
+      params.append('lng', post.spatialInfo.longitude.toString())
+      
+      if (post.spatialInfo.altitude !== null && post.spatialInfo.altitude !== undefined) {
+        params.append('altitude', post.spatialInfo.altitude.toString())
+      }
+      
+      if (post.spatialInfo.timestamp) {
+        params.append('timestamp', new Date(post.spatialInfo.timestamp).toISOString().slice(0, 16))
+      }
+      
+      if (post.spatialInfo.floor !== null && post.spatialInfo.floor !== undefined) {
+        params.append('floor', post.spatialInfo.floor.toString())
+      }
+      
+      postUrl += `?${params.toString()}`
+    }
     
     if (navigator.share) {
       try {
@@ -110,7 +182,30 @@ export default function QrCodeGenerator({ post, trigger }: QrCodeGeneratorProps)
     }
   }
 
-  const postUrl = post.customUrl || `${window.location.origin}/${post.slug}`
+  // Generate current slug-based URL with spatial parameters
+  let postUrl = `${window.location.origin}/${post.slug}`
+  
+  if (post.spatialInfo && post.spatialInfo.latitude && post.spatialInfo.longitude) {
+    const params = new URLSearchParams()
+    
+    if (post.spatialInfo.planet) params.append('planet', post.spatialInfo.planet)
+    params.append('lat', post.spatialInfo.latitude.toString())
+    params.append('lng', post.spatialInfo.longitude.toString())
+    
+    if (post.spatialInfo.altitude !== null && post.spatialInfo.altitude !== undefined) {
+      params.append('altitude', post.spatialInfo.altitude.toString())
+    }
+    
+    if (post.spatialInfo.timestamp) {
+      params.append('timestamp', new Date(post.spatialInfo.timestamp).toISOString().slice(0, 16))
+    }
+    
+    if (post.spatialInfo.floor !== null && post.spatialInfo.floor !== undefined) {
+      params.append('floor', post.spatialInfo.floor.toString())
+    }
+    
+    postUrl += `?${params.toString()}`
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

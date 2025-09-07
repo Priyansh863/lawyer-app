@@ -202,6 +202,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
 
   // View client details
   const viewClientDetails = (client: Client) => {
+    console.log(client,"clientclientclientclientclientclientclientclientclientclient")
     const clientData = encodeURIComponent(JSON.stringify(client));
     router.push(`/client/${client.id}?data=${clientData}`);
   };

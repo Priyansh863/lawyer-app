@@ -13,7 +13,7 @@ import { sendMessage, type SendMessageData } from "@/lib/api/simple-chat-api";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
-import { useRouter } from "next/navigation";
+import { SimpleChat } from "@/components/chat/simple-chat";
 
 interface User {
   _id: string;
@@ -22,6 +22,8 @@ interface User {
   email: string;
   account_type: "client" | "lawyer";
   profile_image?: string;
+  chat_rate?: number;
+  video_rate?: number;
 }
 
 interface SendMessageModalProps {
@@ -44,10 +46,10 @@ export default function SendMessageModal({
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [messageSubject, setMessageSubject] = useState("");
   const [messageContent, setMessageContent] = useState("");
+  const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
   const currentUser = useSelector((state: RootState) => state.auth.user);
   const isLawyer = currentUser?.account_type === 'lawyer';
-  const router = useRouter();
 
   // Fetch users based on current user's role
   useEffect(() => {
@@ -98,11 +100,15 @@ export default function SendMessageModal({
   );
 
   const handleUserSelect = (user: User) => {
-    // Close the modal
+    // Open chat modal instead of navigating to chat page
+    setSelectedUser(user);
+    setShowChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+    setSelectedUser(null);
     onClose();
-    
-    // Navigate to the chat with the selected user
-    router.push(`/chat?userId=${user._id}&name=${user.first_name}+${user.last_name}${user.profile_image ? `&avatar=${encodeURIComponent(user.profile_image)}` : ''}`);
   };
 
   const handleSendMessage = async () => {
@@ -154,140 +160,159 @@ export default function SendMessageModal({
   }, [selectedUser, isLawyer]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {currentStep === 'composeMessage' && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 -ml-2"
-                onClick={() => setCurrentStep('userSelection')}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-            {currentStep === 'userSelection' 
-              ? `Select ${isLawyer ? 'Client' : 'Lawyer'}` 
-              : 'New Message'}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen && !showChat} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {currentStep === 'composeMessage' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 -ml-2"
+                  onClick={() => setCurrentStep('userSelection')}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              {currentStep === 'userSelection' 
+                ? `Select ${isLawyer ? 'Client' : 'Lawyer'}` 
+                : 'New Message'}
+            </DialogTitle>
+          </DialogHeader>
 
-        {currentStep === 'userSelection' ? (
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={`Search ${isLawyer ? 'clients' : 'lawyers'} by name or email...`}
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+          {currentStep === 'userSelection' ? (
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={`Search ${isLawyer ? 'clients' : 'lawyers'} by name or email...`}
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="max-h-[300px] overflow-y-auto space-y-2">
+                {loading ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Loading {isLawyer ? 'clients' : 'lawyers'}...
+                  </div>
+                ) : filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <div
+                      key={user._id}
+                      className="flex items-center p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      <Avatar className="h-10 w-10 mr-3">
+                        <AvatarImage src={user.profile_image} alt={user.first_name} />
+                        <AvatarFallback>
+                          {user.first_name?.[0]}
+                          {user.last_name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {user.first_name} {user.last_name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.email}
+                        </div>
+                        {/* Show chat rate for lawyers when clients are selecting */}
+                        {user.account_type === 'lawyer' && currentUser?.account_type === 'client' && user.chat_rate && (
+                          <div className="text-xs text-green-600 font-medium">
+                            Chat: {user.chat_rate} tokens/hour
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {user.account_type === 'lawyer' ? 'Lawyer' : 'Client'}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No {isLawyer ? 'clients' : 'lawyers'} found
+                  </div>
+                )}
+              </div>
             </div>
-
-            <div className="max-h-[300px] overflow-y-auto space-y-2">
-              {loading ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Loading {isLawyer ? 'clients' : 'lawyers'}...
-                </div>
-              ) : filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <div
-                    key={user._id}
-                    className="flex items-center p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors"
-                    onClick={() => handleUserSelect(user)}
-                  >
-                    <Avatar className="h-10 w-10 mr-3">
-                      <AvatarImage src={user.profile_image} alt={user.first_name} />
-                      <AvatarFallback>
-                        {user.first_name?.[0]}
-                        {user.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        {user.first_name} {user.last_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {user.email}
-                      </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>To:</Label>
+                <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={selectedUser?.profile_image} alt={selectedUser?.first_name} />
+                    <AvatarFallback>
+                      {selectedUser?.first_name?.[0]}
+                      {selectedUser?.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="text-sm font-medium">
+                      {selectedUser?.first_name} {selectedUser?.last_name}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {user.account_type === 'lawyer' ? 'Lawyer' : 'Client'}
+                      {selectedUser?.email}
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  No {isLawyer ? 'clients' : 'lawyers'} found
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>To:</Label>
-              <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={selectedUser?.profile_image} alt={selectedUser?.first_name} />
-                  <AvatarFallback>
-                    {selectedUser?.first_name?.[0]}
-                    {selectedUser?.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="text-sm font-medium">
-                    {selectedUser?.first_name} {selectedUser?.last_name}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {selectedUser?.email}
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject:</Label>
-              <Input
-                id="subject"
-                placeholder="Subject"
-                value={messageSubject}
-                onChange={(e) => setMessageSubject(e.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject:</Label>
+                <Input
+                  id="subject"
+                  placeholder="Subject"
+                  value={messageSubject}
+                  onChange={(e) => setMessageSubject(e.target.value)}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="message">Message:</Label>
-              <Textarea
-                id="message"
-                placeholder={`Type your message to ${selectedUser?.first_name || ''}...`}
-                className="min-h-[150px]"
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="message">Message:</Label>
+                <Textarea
+                  id="message"
+                  placeholder={`Type your message to ${selectedUser?.first_name || ''}...`}
+                  className="min-h-[150px]"
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                />
+              </div>
 
-            <DialogFooter className="mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep('userSelection')}
-                disabled={loading}
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleSendMessage}
-                disabled={!messageContent.trim() || loading}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {loading ? 'Sending...' : 'Send Message'}
-              </Button>
-            </DialogFooter>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+              <DialogFooter className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep('userSelection')}
+                  disabled={loading}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!messageContent.trim() || loading}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {loading ? 'Sending...' : 'Send Message'}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Chat Modal */}
+      {showChat && selectedUser && (
+        <SimpleChat
+          onClose={handleCloseChat}
+          clientId={selectedUser._id}
+          clientName={`${selectedUser.first_name} ${selectedUser.last_name}`}
+          clientAvatar={selectedUser.profile_image}
+          chatRate={selectedUser.chat_rate}
+        />
+      )}
+    </>
   );
 }

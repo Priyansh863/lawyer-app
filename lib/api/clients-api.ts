@@ -109,7 +109,11 @@ export async function getClients({
       account_type: user.account_type,
       _id: user._id,
       // Include charges for lawyers
-      charges: user.charges || 0
+      charges: user.charges || 0,
+      video_rate: user.video_rate || 0,
+      chat_rate: user.chat_rate || 0,
+      pratice_area: user.pratice_area,
+      experience: user.experience
     }))
 
     // Apply client-side filtering if needed

@@ -82,43 +82,8 @@ export default function PostPage() {
       try {
         setIsLoading(true);
         
-        // Check if there's an ID parameter for direct access
-        const urlParams = new URLSearchParams(window.location.search);
-        const postId = urlParams.get('id');
-        
-        let response;
-        if (postId) {
-          // Fetch by ID if available
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-          const user = localStorage.getItem('user');
-          const token = user ? JSON.parse(user).token : null;
-          
-          if (!token) {
-            throw new Error('Authentication required');
-          }
-          
-          response = await fetch(`${baseUrl}/post/id/${postId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          
-          const data = await response.json();
-          if (data.success) {
-            response = { data: data.data };
-          } else {
-            throw new Error(data.message || 'Failed to fetch post');
-          }
-        } else {
-          // Fetch by slug
-          response = await getPostBySlug(slug);
-        }
-        
+        // Fetch by slug (title-based URL)
+        const response = await getPostBySlug(slug);
         setPost(response.data);
       } catch (error: any) {
         toast({

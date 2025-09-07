@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/lib/store";
 import { 
   createPost, 
   generateAiPost, 
@@ -55,6 +57,7 @@ interface PostCreatorProps {
 export default function PostCreator({ onPostCreated, initialData }: PostCreatorProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const user = useSelector((state: RootState) => state.auth.user);
   
   // Form state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual');
@@ -106,9 +109,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       return;
     }
 
-    const citation: Citation = {
-      ...newCitation,
-      content: newCitation.content.trim()
+    const citation = {
+      type: newCitation.type,
+      content: newCitation.content.trim(),
+      ...(newCitation.type === 'user' && { userId: newCitation.content.trim() }),
+      ...(newCitation.type === 'url' && { url: newCitation.content.trim() })
     };
 
     if (activeTab === 'manual') {
@@ -367,7 +372,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               <Badge variant="secondary">{createdPost.hashtag}</Badge>
             )}
 
-            {createdPost.customUrl && (
+            {createdPost.slug && (
               <div className="space-y-2">
                 <Label>{t('pages:creator.post.created.urls')}</Label>
                 
@@ -377,30 +382,136 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => copyUrl(createdPost.customUrl!, t('pages:creator.post.created.customUrl'))}
+                      onClick={() => {
+                        let url = `${window.location.origin}/${createdPost.slug}`;
+                        
+                        // Add spatial parameters if available
+                        if (createdPost.spatialInfo && createdPost.spatialInfo.latitude && createdPost.spatialInfo.longitude) {
+                          const params = new URLSearchParams();
+                          
+                          if (createdPost.spatialInfo.planet) params.append('planet', createdPost.spatialInfo.planet);
+                          params.append('lat', createdPost.spatialInfo.latitude.toString());
+                          params.append('lng', createdPost.spatialInfo.longitude.toString());
+                          
+                          if (createdPost.spatialInfo.altitude !== null && createdPost.spatialInfo.altitude !== undefined) {
+                            params.append('altitude', createdPost.spatialInfo.altitude.toString());
+                          }
+                          
+                          if (createdPost.spatialInfo.timestamp) {
+                            params.append('timestamp', createdPost.spatialInfo.timestamp);
+                          }
+                          
+                          if (createdPost.spatialInfo.floor !== null && createdPost.spatialInfo.floor !== undefined) {
+                            params.append('floor', createdPost.spatialInfo.floor.toString());
+                          }
+                          
+                          url += `?${params.toString()}`;
+                        }
+                        
+                        
+                        copyUrl(url, t('pages:creator.post.created.customUrl'));
+                      }}
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
                   <div className="text-xs bg-gray-50 p-2 rounded break-all">
-                    {createdPost.customUrl}
+                    {(() => {
+                      let url = `${window.location.origin}/${createdPost.slug}`;
+                      
+                      // Add spatial parameters if available
+                      if (createdPost.spatialInfo && createdPost.spatialInfo.latitude && createdPost.spatialInfo.longitude) {
+                        const params = new URLSearchParams();
+                        
+                        if (createdPost.spatialInfo.planet) params.append('planet', createdPost.spatialInfo.planet);
+                        params.append('lat', createdPost.spatialInfo.latitude.toString());
+                        params.append('lng', createdPost.spatialInfo.longitude.toString());
+                        
+                        if (createdPost.spatialInfo.altitude !== null && createdPost.spatialInfo.altitude !== undefined) {
+                          params.append('altitude', createdPost.spatialInfo.altitude.toString());
+                        }
+                        
+                        if (createdPost.spatialInfo.timestamp) {
+                          params.append('timestamp', createdPost.spatialInfo.timestamp);
+                        }
+                        
+                        if (createdPost.spatialInfo.floor !== null && createdPost.spatialInfo.floor !== undefined) {
+                          params.append('floor', createdPost.spatialInfo.floor.toString());
+                        }
+                        
+                        if (params.toString()) {
+                          url += `?${params.toString()}`;
+                        }
+                      }
+                      
+                      
+                      return url;
+                    })()}
                   </div>
                 </div>
 
-                {createdPost.shortUrl && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{t('pages:creator.post.created.shortUrl')}:</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copyUrl(createdPost.shortUrl!, t('pages:creator.post.created.shortUrl'))}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <div className="text-xs bg-gray-50 p-2 rounded break-all">
-                      {createdPost.shortUrl}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{t('pages:creator.post.created.shortUrl')}:</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        let shortUrl = `${window.location.origin}/l/${createdPost.slug}`;
+                        
+                        // Add spatial parameters in short format if available
+                        if (createdPost.spatialInfo && createdPost.spatialInfo.latitude && createdPost.spatialInfo.longitude) {
+                          const parts = [
+                            createdPost.spatialInfo.planet || 'Earth',
+                            createdPost.spatialInfo.latitude.toString(),
+                            createdPost.spatialInfo.longitude.toString(),
+                            createdPost.spatialInfo.altitude?.toString() || '',
+                            createdPost.spatialInfo.timestamp || '',
+                            createdPost.spatialInfo.floor?.toString() || ''
+                          ];
+                          
+                          shortUrl += `?${parts.join(',')}`;
+                        }
+                        
+                        copyUrl(shortUrl, t('pages:creator.post.created.shortUrl'));
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="text-xs bg-gray-50 p-2 rounded break-all">
+                    {(() => {
+                      let shortUrl = `${window.location.origin}/l/${createdPost.slug}`;
+                      
+                      // Add spatial parameters in short format if available
+                      if (createdPost.spatialInfo && createdPost.spatialInfo.latitude && createdPost.spatialInfo.longitude) {
+                        const parts = [
+                          createdPost.spatialInfo.planet || 'Earth',
+                          createdPost.spatialInfo.latitude.toString(),
+                          createdPost.spatialInfo.longitude.toString(),
+                          createdPost.spatialInfo.altitude?.toString() || '',
+                          createdPost.spatialInfo.timestamp || '',
+                          createdPost.spatialInfo.floor?.toString() || ''
+                        ];
+                        
+                        shortUrl += `?${parts.join(',')}`;
+                      }
+                      
+                      return shortUrl;
+                    })()}
+                  </div>
+                </div>
+
+                {/* Display image if available */}
+                {createdPost.image && (
+                  <div className="space-y-2 pt-4">
+                    <Label>Post Image</Label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <img 
+                        src={createdPost.image} 
+                        alt="Post image"
+                        className="w-full h-auto max-h-64 object-cover"
+                      />
                     </div>
                   </div>
                 )}
@@ -753,65 +864,170 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Add Citation */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-            <Select 
-              value={newCitation.type} 
-              onValueChange={(value: any) => setNewCitation(prev => ({ ...prev, type: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="spatial">{t('pages:creator.post.citations.types.spatial')}</SelectItem>
-                <SelectItem value="user">{t('pages:creator.post.citations.types.user')}</SelectItem>
-                <SelectItem value="url">{t('pages:creator.post.citations.types.url')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Input
-              value={newCitation.content}
-              onChange={(e) => setNewCitation(prev => ({ ...prev, content: e.target.value }))}
-              placeholder={
-                newCitation.type === 'user' ? t('pages:creator.post.citations.placeholders.user') :
-                newCitation.type === 'url' ? t('pages:creator.post.citations.placeholders.url') :
-                t('pages:creator.post.citations.placeholders.spatial')
-              }
-              className="md:col-span-2"
-            />
-
-            <Button onClick={addCitation} size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              {t('pages:creator.post.citations.buttons.add')}
-            </Button>
+          {/* URL Citation */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Link className="h-4 w-4" />
+              {t('pages:creator.post.citations.types.url')}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                value={currentCitations?.find(c => c.type === 'url')?.content || ''}
+                onChange={(e) => {
+                  const existingIndex = currentCitations?.findIndex(c => c.type === 'url') ?? -1;
+                  if (existingIndex >= 0) {
+                    // Update existing URL citation
+                    const updatedCitations = [...(currentCitations || [])];
+                    updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value, url: e.target.value };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                    }
+                  } else if (e.target.value.trim()) {
+                    // Add new URL citation
+                    const newCitation = { type: 'url' as const, content: e.target.value, url: e.target.value };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    }
+                  }
+                }}
+                placeholder={t('pages:creator.post.citations.placeholders.url')}
+                className="flex-1"
+              />
+              {currentCitations?.find(c => c.type === 'url') && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const filteredCitations = currentCitations?.filter(c => c.type !== 'url') || [];
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
-          {/* Citations List */}
-          {currentCitations && currentCitations.length > 0 && (
-            <div className="space-y-2">
-              <Label>{t('pages:creator.post.citations.added')}</Label>
-              {currentCitations.map((citation, index) => (
-                <div key={index} className="flex items-center justify-between p-2 border rounded">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">
-                      {citation.type === 'spatial' && <MapPin className="h-3 w-3 mr-1" />}
-                      {citation.type === 'user' && <User className="h-3 w-3 mr-1" />}
-                      {citation.type === 'url' && <Link className="h-3 w-3 mr-1" />}
-                      {t(`pages:creator.post.citations.types.${citation.type}`)}
-                    </Badge>
-                    <span className="text-sm">{citation.content}</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeCitation(index)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
+          {/* User Citation */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              {t('pages:creator.post.citations.types.user')}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                value={currentCitations?.find(c => c.type === 'user')?.content || ''}
+                onChange={(e) => {
+                  const existingIndex = currentCitations?.findIndex(c => c.type === 'user') ?? -1;
+                  if (existingIndex >= 0) {
+                    // Update existing user citation with authenticated user's ID
+                    const updatedCitations = [...(currentCitations || [])];
+                    updatedCitations[existingIndex] = { 
+                      ...updatedCitations[existingIndex], 
+                      content: e.target.value,
+                      userId: user?._id
+                    };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                    }
+                  } else if (e.target.value.trim()) {
+                    // Add new user citation with authenticated user's ID
+                    const newCitation = { 
+                      type: 'user' as const, 
+                      content: e.target.value,
+                      userId: user?._id
+                    };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    }
+                  }
+                }}
+                placeholder={t('pages:creator.post.citations.placeholders.user')}
+                className="flex-1"
+              />
+              {currentCitations?.find(c => c.type === 'user') && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const filteredCitations = currentCitations?.filter(c => c.type !== 'user') || [];
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Spatial Citation */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              {t('pages:creator.post.citations.types.spatial')}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                value={currentCitations?.find(c => c.type === 'spatial')?.content || ''}
+                onChange={(e) => {
+                  const existingIndex = currentCitations?.findIndex(c => c.type === 'spatial') ?? -1;
+                  if (existingIndex >= 0) {
+                    // Update existing spatial citation
+                    const updatedCitations = [...(currentCitations || [])];
+                    updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                    }
+                  } else if (e.target.value.trim()) {
+                    // Add new spatial citation
+                    const newCitation = { type: 'spatial' as const, content: e.target.value };
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                    }
+                  }
+                }}
+                placeholder={t('pages:creator.post.citations.placeholders.spatial')}
+                className="flex-1"
+              />
+              {currentCitations?.find(c => c.type === 'spatial') && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const filteredCitations = currentCitations?.filter(c => c.type !== 'spatial') || [];
+                    if (activeTab === 'manual') {
+                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                    } else {
+                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
         </CardContent>
       </Card>
 
@@ -819,6 +1035,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       <LocationUrlGenerator 
         onLocationSelect={handleLocationSelect}
         initialData={activeTab === 'manual' ? postData.spatialInfo : aiData.spatialInfo}
+        postTitle={activeTab === 'manual' ? postData.title : aiData.topic}
+        postImage={activeTab === 'manual' ? postData.image : aiData.image}
       />
     </div>
   );

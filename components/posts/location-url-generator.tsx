@@ -34,6 +34,8 @@ import { SpatialInfo } from "@/lib/api/posts-api";
 interface LocationUrlGeneratorProps {
   onLocationSelect: (spatialInfo: SpatialInfo) => void;
   initialData?: SpatialInfo;
+  postTitle?: string;
+  postImage?: string;
 }
 
 const searchPlacesAPI = async (
@@ -73,10 +75,16 @@ const searchPlacesAPI = async (
     return data.results || [];
   } catch (error) {
     console.error('Places search error:', error);
+    throw error;
   }
 };
 
-export default function LocationUrlGenerator({ onLocationSelect, initialData }: LocationUrlGeneratorProps) {
+export default function LocationUrlGenerator({ 
+  onLocationSelect, 
+  initialData,
+  postTitle,
+  postImage 
+}: LocationUrlGeneratorProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
   
@@ -211,7 +219,18 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
   const generateCustomUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
-    let url = `${baseUrl}/post-title`;
+    // Generate slug from post title
+    const slug = postTitle 
+      ? postTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim()
+          .substring(0, 100)
+      : 'post-title';
+    
+    let url = `${baseUrl}/${slug}`;
     
     if (spatialInfo.latitude && spatialInfo.longitude) {
       const params = new URLSearchParams();
@@ -240,7 +259,18 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
   const generateShortUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
-    let url = `${baseUrl}/l/post-title`;
+    // Generate slug from post title
+    const slug = postTitle 
+      ? postTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim()
+          .substring(0, 100)
+      : 'post-title';
+    
+    let url = `${baseUrl}/l/${slug}`;
     
     if (spatialInfo.latitude && spatialInfo.longitude) {
       const parts = [
@@ -330,7 +360,6 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
             <SelectContent>
               <SelectItem value="manual">{t('pages:locla.location.methods.manual')}</SelectItem>
               <SelectItem value="address">{t('pages:locla.location.methods.address')}</SelectItem>
-              <SelectItem value="place">{t('pages:locla.location.methods.place')}</SelectItem>
               <SelectItem value="auto">{t('pages:locla.location.methods.auto')}</SelectItem>
             </SelectContent>
           </Select>
@@ -412,25 +441,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
           </div>
         )}
 
-        {inputMethod === 'place' && (
-          <div className="space-y-2">
-            <Label htmlFor="place">{t('pages:locla.location.placeSearch')}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="place"
-                value={placeQuery}
-                onChange={(e) => setPlaceQuery(e.target.value)}
-                placeholder={t('pages:locla.location.placeholders.place')}
-              />
-              <Button 
-                onClick={() => searchPlaces(placeQuery, 'place')}
-                disabled={isSearching}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
+   
 
         {inputMethod === 'auto' && (
           <div className="space-y-2">

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MessageSquare,HelpCircle, Calendar, Loader2 } from "lucide-react"
+import { MessageSquare,HelpCircle, Calendar, Loader2, Video, MessageCircle, Coins } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { updateClientStatus, updateClientNotes } from "@/lib/api/clients-api"
 import { createMeeting } from "@/lib/api/meeting-api"
@@ -31,13 +31,16 @@ import { useTranslation } from "@/hooks/useTranslation"
 import ClientDocuments from "./client-documents"
 
 interface ClientDetailsProps {
-  client: Client
+  client: Client & {
+    video_rate?: number;
+    chat_rate?: number;
+  }
 }
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
   const { t } = useTranslation()
   console.log("initialClientinitialClientinitialClient",initialClient)
-  const [client, setClient] = useState<Client>(initialClient)
+  const [client, setClient] = useState<Client & { video_rate?: number; chat_rate?: number }>(initialClient)
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
   const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
@@ -223,61 +226,87 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   </Button>
 )}
 
-            <Button variant="outline" onClick={handleCreateChat} title={t("pages:clientDetails.createChat")}>
-              <MessageSquare className="mr-2" size={16} />
-              {t("pages:clientDetails.chat")}
-            </Button>
-            <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" title={t("pages:clientDetails.scheduleMeeting")}>
-                  <Calendar className="mr-2" size={16} />
-                  {t("pages:clientDetails.scheduleMeeting")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{t("pages:clientDetails.scheduleMeeting")}</DialogTitle>
-                  <DialogDescription>
-                    {t("pages:clientDetails.scheduleMeetingWith", { name: client.first_name })}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
-                    <Input
-                      id="meetingLink"
-                      type="url"
-                      placeholder={t("pages:clientDetails.meetingLinkPlaceholder")}
-                      value={meetingLink}
-                      onChange={(e) => setMeetingLink(e.target.value)}
-                      disabled={isSchedulingMeeting}
-                    />
+            {/* Chat Button - Rate will be shown in chat header */}
+            <div className="flex flex-col items-center gap-1">
+              <Button variant="outline" onClick={handleCreateChat} title={t("pages:clientDetails.createChat")}>
+                <MessageSquare className="mr-2" size={16} />
+                {t("pages:clientDetails.chat")}
+              </Button>
+            </div>
+
+            {/* Video Meeting Button with Rate Display */}
+            <div className="flex flex-col items-center gap-1">
+              <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" title={t("pages:clientDetails.scheduleMeeting")}>
+                    <Calendar className="mr-2" size={16} />
+                    {t("pages:clientDetails.scheduleMeeting")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>{t("pages:clientDetails.scheduleMeeting")}</DialogTitle>
+                    <DialogDescription>
+                      {t("pages:clientDetails.scheduleMeetingWith", { name: client.first_name })}
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  {/* Show video consultation rate in dialog */}
+                  {user?.account_type === 'client' && client.video_rate && (
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md mb-4">
+                      <Video className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-700">
+                        Video Consultation Rate: {client.video_rate} tokens/hour
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
+                      <Input
+                        id="meetingLink"
+                        type="url"
+                        placeholder={t("pages:clientDetails.meetingLinkPlaceholder")}
+                        value={meetingLink}
+                        onChange={(e) => setMeetingLink(e.target.value)}
+                        disabled={isSchedulingMeeting}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setMeetingDialogOpen(false)}
+                        disabled={isSchedulingMeeting}
+                      >
+                        {t("pages:clientDetails.cancel")}
+                      </Button>
+                      <Button onClick={handleScheduleMeeting} disabled={!meetingLink.trim() || isSchedulingMeeting}>
+                        {isSchedulingMeeting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t("pages:clientDetails.scheduling")}
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {t("pages:clientDetails.scheduleMeeting")}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setMeetingDialogOpen(false)}
-                      disabled={isSchedulingMeeting}
-                    >
-                      {t("pages:clientDetails.cancel")}
-                    </Button>
-                    <Button onClick={handleScheduleMeeting} disabled={!meetingLink.trim() || isSchedulingMeeting}>
-                      {isSchedulingMeeting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t("pages:clientDetails.scheduling")}
-                        </>
-                      ) : (
-                        <>
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {t("pages:clientDetails.scheduleMeeting")}
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Show video rate for clients viewing lawyers */}
+              {client.account_type === 'lawyer' && user?.account_type === 'client' && client.video_rate && (
+                <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                  <Video className="w-3 h-3" />
+                  <span>{client.video_rate} tokens/hour</span>
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -307,6 +336,32 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
               <p className="text-base">{client.activeCases}</p>
             </div>
           </div>
+          
+          {/* Consultation Rates Summary for Clients */}
+          {client.account_type === 'lawyer' && user?.account_type === 'client' && (client.chat_rate || client.video_rate) && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Consultation Rates</h3>
+              <div className="flex flex-wrap gap-4">
+                {client.chat_rate && (
+                  <div className="flex items-center gap-2 bg-green-100 px-3 py-2 rounded-md">
+                    <MessageCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      Chat: {client.chat_rate} tokens/hour
+                    </span>
+                  </div>
+                )}
+                {client.video_rate && (
+                  <div className="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded-md">
+                    <Video className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">
+                      Video: {client.video_rate} tokens/hour
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
@@ -327,6 +382,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           clientId={client.id}
           clientName={`${client.first_name} ${client.last_name}`}
           clientAvatar={client.avatar}
+          chatRate={client.chat_rate} // Pass chat rate to SimpleChat
         />
       )}
     </div>

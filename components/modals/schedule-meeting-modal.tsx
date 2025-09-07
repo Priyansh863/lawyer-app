@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Calendar, User, Mail, Briefcase, Clock, ArrowLeft, Send, Link, Video } from "lucide-react";
+import { Search, Calendar, User, Mail, Briefcase, Clock, ArrowLeft, Send, Link, Video, Coins } from "lucide-react";
 import { getRelatedUsers } from "@/lib/api/users-api";
 import { createMeeting } from "@/lib/api/meeting-api";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ interface User {
   experience?: string;
   is_active: number;
   profile_image?: string;
+  charges?: number; // Added charges field for lawyer consultation rates
 }
 
 interface ScheduleMeetingModalProps {
@@ -52,6 +53,8 @@ export default function ScheduleMeetingModal({
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
   const profile = useSelector((state: RootState) => state.auth.user);
+
+  console.log(users,"usersusersusersusersusersusersusers");
 
   const fetchUsers = async (query?: string) => {
     try {
@@ -324,6 +327,16 @@ export default function ScheduleMeetingModal({
                             <span>{user.experience}</span>
                           </div>
                         )}
+
+                        {/* Display lawyer charges for clients */}
+                        {user.account_type === 'lawyer' && profile?.account_type === 'client' && (
+                          <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-md">
+                            <Coins className="w-3 h-3 text-green-600" />
+                            <span className="font-medium text-green-700">
+                              {user.charges || 0} tokens/hour
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -350,11 +363,21 @@ export default function ScheduleMeetingModal({
                     {getInitials(selectedUser.first_name, selectedUser.last_name)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold text-gray-900">
                     {selectedUser.first_name} {selectedUser.last_name}
                   </h3>
                   <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                  
+                  {/* Show consultation charges in meeting details */}
+                  {selectedUser.account_type === 'lawyer' && profile?.account_type === 'client' && (
+                    <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded-md">
+                      <Coins className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-700">
+                        Consultation Rate: {selectedUser.charges || 0} tokens/hour
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

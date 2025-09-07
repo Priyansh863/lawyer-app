@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { X, Send, Loader2, MessageSquare, Trash2 } from "lucide-react"
+import { X, Send, Loader2, MessageSquare, Trash2, MessageCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +38,7 @@ interface SimpleChatProps {
   clientName?: string
   clientAvatar?: string
   chatId?: string
+  chatRate?: number // Add chat rate prop
 }
 
 export function SimpleChat({
@@ -46,6 +47,7 @@ export function SimpleChat({
   clientName = "User",
   clientAvatar,
   chatId: initialChatId,
+  chatRate,
 }: SimpleChatProps) {
   const { t } = useTranslation()
   const [chat, setChat] = useState<Chat | null>(null)
@@ -254,37 +256,49 @@ export function SimpleChat({
         onMouseDown={handleMouseDown} // Drag starts here
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b cursor-move">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage
-                src={
-                  participant?.avatar ||
-                  clientAvatar ||
-                  `/placeholder.svg?height=40&width=40&query=${encodeURIComponent(participantName)}`
-                }
-              />
-              <AvatarFallback>
-                {participantName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold">{participantName}</h3>
-              <p className="text-sm text-gray-500">{participant?.email || t("pages:conv.client")}</p>
+        <div className="flex flex-col border-b cursor-move">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage
+                  src={
+                    participant?.avatar ||
+                    clientAvatar ||
+                    `/placeholder.svg?height=40&width=40&query=${encodeURIComponent(participantName)}`
+                  }
+                />
+                <AvatarFallback>
+                  {participantName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-semibold">{participantName}</h3>
+                <p className="text-sm text-gray-500">{participant?.email || t("pages:conv.client")}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="ghost" size="sm" onClick={handleDeleteChat}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" onClick={handleDeleteChat}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          
+          {/* Chat Rate Display for Clients */}
+          {profile?.account_type === 'client' && chatRate && (
+            <div className="px-4 pb-3">
+              <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                <MessageCircle className="w-3 h-3" />
+                <span className="font-medium">Chat Rate: {chatRate} tokens/hour</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Messages */}

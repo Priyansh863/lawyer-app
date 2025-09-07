@@ -34,7 +34,8 @@ import {
   Info,
   Target,
   Globe,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react'
 
 export interface SpatialInfo {
@@ -305,78 +306,124 @@ export default function SpatialMetadataInput({
             <CardTitle>Citations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {citations.map((citation, index) => (
-              <div key={index} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline">
-                    {citation.type === 'spatial' && <MapPin className="h-3 w-3 mr-1" />}
-                    {citation.type === 'user' && <AtSign className="h-3 w-3 mr-1" />}
-                    {citation.type === 'url' && <Link className="h-3 w-3 mr-1" />}
-                    {citation.type.charAt(0).toUpperCase() + citation.type.slice(1)} Citation
-                  </Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeCitation(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-                
-                <Textarea
-                  placeholder="Citation content..."
-                  value={citation.content}
-                  onChange={(e) => updateCitation(index, { content: e.target.value })}
-                  maxLength={500}
+            {/* URL Citation */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Link className="h-4 w-4" />
+                URL
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={citations?.find(c => c.type === 'url')?.content || ''}
+                  onChange={(e) => {
+                    const existingIndex = citations?.findIndex(c => c.type === 'url') ?? -1;
+                    if (existingIndex >= 0) {
+                      // Update existing URL citation
+                      const updatedCitations = [...(citations || [])];
+                      updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value, url: e.target.value };
+                      onCitationsChange(updatedCitations);
+                    } else if (e.target.value.trim()) {
+                      // Add new URL citation
+                      const newCitation = { type: 'url' as const, content: e.target.value, url: e.target.value };
+                      onCitationsChange([...(citations || []), newCitation]);
+                    }
+                  }}
+                  placeholder="https://example.com"
+                  className="flex-1"
                 />
-                
-                {citation.type === 'user' && (
-                  <Input
-                    placeholder="@username"
-                    value={citation.userId || ''}
-                    onChange={(e) => updateCitation(index, { userId: e.target.value })}
-                  />
-                )}
-                
-                {citation.type === 'url' && (
-                  <Input
-                    placeholder="https://example.com"
-                    value={citation.url || ''}
-                    onChange={(e) => updateCitation(index, { url: e.target.value })}
-                  />
+                {citations?.find(c => c.type === 'url') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const filteredCitations = citations?.filter(c => c.type !== 'url') || [];
+                      onCitationsChange(filteredCitations);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
-            ))}
-            
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addCitation('spatial')}
-              >
-                <MapPin className="h-4 w-4 mr-2" />
-                Add Spatial Citation
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addCitation('user')}
-              >
-                <AtSign className="h-4 w-4 mr-2" />
-                Add User Citation
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => addCitation('url')}
-              >
-                <Link className="h-4 w-4 mr-2" />
-                Add URL Citation
-              </Button>
+            </div>
+
+            {/* User Citation */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <AtSign className="h-4 w-4" />
+                User
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={citations?.find(c => c.type === 'user')?.content || ''}
+                  onChange={(e) => {
+                    const existingIndex = citations?.findIndex(c => c.type === 'user') ?? -1;
+                    if (existingIndex >= 0) {
+                      // Update existing user citation
+                      const updatedCitations = [...(citations || [])];
+                      updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value, userId: e.target.value };
+                      onCitationsChange(updatedCitations);
+                    } else if (e.target.value.trim()) {
+                      // Add new user citation
+                      const newCitation = { type: 'user' as const, content: e.target.value, userId: e.target.value };
+                      onCitationsChange([...(citations || []), newCitation]);
+                    }
+                  }}
+                  placeholder="@username"
+                  className="flex-1"
+                />
+                {citations?.find(c => c.type === 'user') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const filteredCitations = citations?.filter(c => c.type !== 'user') || [];
+                      onCitationsChange(filteredCitations);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Spatial Citation */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Spatial Information
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={citations?.find(c => c.type === 'spatial')?.content || ''}
+                  onChange={(e) => {
+                    const existingIndex = citations?.findIndex(c => c.type === 'spatial') ?? -1;
+                    if (existingIndex >= 0) {
+                      // Update existing spatial citation
+                      const updatedCitations = [...(citations || [])];
+                      updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value };
+                      onCitationsChange(updatedCitations);
+                    } else if (e.target.value.trim()) {
+                      // Add new spatial citation
+                      const newCitation = { type: 'spatial' as const, content: e.target.value };
+                      onCitationsChange([...(citations || []), newCitation]);
+                    }
+                  }}
+                  placeholder="Spatial information description"
+                  className="flex-1"
+                />
+                {citations?.find(c => c.type === 'spatial') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      const filteredCitations = citations?.filter(c => c.type !== 'spatial') || [];
+                      onCitationsChange(filteredCitations);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

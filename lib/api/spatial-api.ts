@@ -318,54 +318,6 @@ export function generateShortUrl(
   return `${baseUrl}/l/${type}/${slug}?${parts.join(',')}`
 }
 
-/**
- * Validate spatial information
- */
-export function validateSpatialInfo(spatialInfo: SpatialInfo): string[] {
-  const errors: string[] = []
-  
-  if (spatialInfo.latitude !== undefined) {
-    if (spatialInfo.latitude < -90 || spatialInfo.latitude > 90) {
-      errors.push('Latitude must be between -90 and 90 degrees')
-    }
-    const decimalPlaces = (spatialInfo.latitude.toString().split('.')[1] || '').length
-    if (decimalPlaces < 5 || decimalPlaces > 7) {
-      errors.push('Latitude must have 5-7 decimal places')
-    }
-  }
-  
-  if (spatialInfo.longitude !== undefined) {
-    if (spatialInfo.longitude < -180 || spatialInfo.longitude > 180) {
-      errors.push('Longitude must be between -180 and 180 degrees')
-    }
-    const decimalPlaces = (spatialInfo.longitude.toString().split('.')[1] || '').length
-    if (decimalPlaces < 5 || decimalPlaces > 7) {
-      errors.push('Longitude must have 5-7 decimal places')
-    }
-  }
-  
-  if (spatialInfo.altitude !== undefined) {
-    if (spatialInfo.altitude < -500 || spatialInfo.altitude > 9000) {
-      errors.push('Altitude must be between -500 and 9000 meters')
-    }
-  }
-  
-  if (spatialInfo.floor !== undefined) {
-    if (!Number.isInteger(spatialInfo.floor)) {
-      errors.push('Floor must be an integer')
-    }
-  }
-  
-  if (spatialInfo.timestamp) {
-    try {
-      new Date(spatialInfo.timestamp)
-    } catch {
-      errors.push('Invalid timestamp format')
-    }
-  }
-  
-  return errors
-}
 
 /**
  * Validate citation
