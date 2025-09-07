@@ -17,9 +17,13 @@ interface LawyerChargesSettingsProps {
 
 export default function LawyerChargesSettings({ userType }: LawyerChargesSettingsProps) {
   const [charges, setCharges] = useState<string>('')
+  const [chatRate, setChatRate] = useState<string>('')
+  const [videoRate, setVideoRate] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [currentCharges, setCurrentCharges] = useState<number>(0)
+  const [currentChatRate, setCurrentChatRate] = useState<number>(0)
+  const [currentVideoRate, setCurrentVideoRate] = useState<number>(0)
   const { toast } = useToast()
   const { t } = useTranslation()
 
@@ -51,7 +55,11 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
       if (response.ok) {
         const data = await response.json()
         setCurrentCharges(data.user.charges || 0)
+        setCurrentChatRate(data.user.chat_rate || 0)
+        setCurrentVideoRate(data.user.video_rate || 0)
         setCharges(data.user.charges?.toString() || '0')
+        setChatRate(data.user.chat_rate?.toString() || '0')
+        setVideoRate(data.user.video_rate?.toString() || '0')
       }
     } catch (error) {
       console.error('Error fetching charges:', error)
@@ -66,10 +74,13 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
   }
 
   const handleSaveCharges = async () => {
-    if (!charges || isNaN(Number(charges)) || Number(charges) < 0) {
+    // Validate inputs
+    if ((!charges || isNaN(Number(charges)) || Number(charges) < 0) ||
+        (!chatRate || isNaN(Number(chatRate)) || Number(chatRate) < 0) ||
+        (!videoRate || isNaN(Number(videoRate)) || Number(videoRate) < 0)) {
       toast({
         title: t('pages:chargesSettings:toast.invalidInput.title'),
-        description: t('pages:chargesSettings:toast.invalidInput.description'),
+        description: 'Please enter valid rates for all consultation types',
         variant: 'destructive'
       })
       return
@@ -88,7 +99,9 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
         },
         body: JSON.stringify({
           userId: user._id,
-          charges: Number(charges)
+          charges: Number(charges),
+          chat_rate: Number(chatRate),
+          video_rate: Number(videoRate)
         })
       })
 
@@ -96,9 +109,11 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
 
       if (response.ok) {
         setCurrentCharges(Number(charges))
+        setCurrentChatRate(Number(chatRate))
+        setCurrentVideoRate(Number(videoRate))
         toast({
           title: t('pages:chargesSettings:toast.success.title'),
-          description: t('pages:chargesSettings:toast.success.description'),
+          description: 'Consultation rates updated successfully',
         })
       } else {
         throw new Error(data.message || t('chargesSettings:toast.failedToUpdate'))
@@ -145,19 +160,10 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-<Trans
-    i18nKey="pages:chargesSettings:currentRate"
-    values={{ charges: currentCharges }}
-    components={{ strong: <strong /> }}
-  />          </AlertDescription>
-        </Alert>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="charges">{t('pages:chargesSettings:rateLabel')}</Label>
+            <Label htmlFor="charges">General Consultation Rate</Label>
             <div className="relative">
               <Input
                 id="charges"
@@ -166,20 +172,60 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
                 step="1"
                 value={charges}
                 onChange={(e) => setCharges(e.target.value)}
-                placeholder={t('pages:chargesSettings:ratePlaceholder')}
+                placeholder="Enter general rate"
                 className="pl-8"
               />
               <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              {t('pages:chargesSettings:rateDescription')}
+              General consultation rate (tokens per session)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chatRate">Chat Consultation Rate</Label>
+            <div className="relative">
+              <Input
+                id="chatRate"
+                type="number"
+                min="0"
+                step="1"
+                value={chatRate}
+                onChange={(e) => setChatRate(e.target.value)}
+                placeholder="Enter chat rate"
+                className="pl-8"
+              />
+              <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Chat consultation rate (tokens per session)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="videoRate">Video Consultation Rate</Label>
+            <div className="relative">
+              <Input
+                id="videoRate"
+                type="number"
+                min="0"
+                step="1"
+                value={videoRate}
+                onChange={(e) => setVideoRate(e.target.value)}
+                placeholder="Enter video rate"
+                className="pl-8"
+              />
+              <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Video consultation rate (tokens per session)
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             <Button 
               onClick={handleSaveCharges} 
-              disabled={saving || charges === currentCharges.toString()}
+              disabled={saving || (charges === currentCharges.toString() && chatRate === currentChatRate.toString() && videoRate === currentVideoRate.toString())}
               className="flex items-center gap-2"
             >
               {saving ? (
@@ -187,12 +233,12 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? t('pages:chargesSettings:saving') : t('pages:chargesSettings:saveButton')}
+              {saving ? 'Saving...' : 'Save Rates'}
             </Button>
             
-            {charges !== currentCharges.toString() && (
+            {(charges !== currentCharges.toString() || chatRate !== currentChatRate.toString() || videoRate !== currentVideoRate.toString()) && (
               <p className="text-sm text-muted-foreground">
-                {t('pages:chargesSettings:unsavedChanges')}
+                You have unsaved changes
               </p>
             )}
           </div>

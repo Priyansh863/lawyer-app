@@ -29,6 +29,8 @@ interface LawyerInfo {
   _id: string
   name: string
   charges: number
+  chat_rate: number
+  video_rate: number
 }
 
 export default function TokenBalanceDisplay({ 
@@ -40,6 +42,7 @@ export default function TokenBalanceDisplay({
 }: TokenBalanceDisplayProps) {
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null)
   const [lawyerCharges, setLawyerCharges] = useState<number>(0)
+  const [lawyerInfo, setLawyerInfo] = useState<LawyerInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(false)
   const { toast } = useToast()
@@ -68,7 +71,7 @@ export default function TokenBalanceDisplay({
     if (lawyerId) {
       fetchLawyerCharges()
     }
-  }, [lawyerId])
+  }, [lawyerId, consultationType])
 
   const fetchTokenInfo = async () => {
     setLoading(true)
@@ -108,7 +111,20 @@ export default function TokenBalanceDisplay({
 
       if (response.ok) {
         const data = await response.json()
-        setLawyerCharges(data.user.charges || 0)
+        const lawyer = data.user
+        setLawyerInfo(lawyer)
+        
+        // Set the appropriate rate based on consultation type
+        let rate = 0
+        if (consultationType === 'chat') {
+          rate = lawyer.chat_rate || lawyer.charges || 0
+        } else if (consultationType === 'video') {
+          rate = lawyer.video_rate || lawyer.charges || 0
+        } else {
+          rate = lawyer.charges || 0
+        }
+        
+        setLawyerCharges(rate)
       }
     } catch (error) {
       console.error('Error fetching lawyer charges:', error)

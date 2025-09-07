@@ -2,9 +2,13 @@
 import { RootState } from "@/lib/store"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
+import OnboardClientForm from "./onboard-client-form"
 
+interface ClientsHeaderProps {
+  onClientCreated?: () => void;
+}
 
-export default  function ClientsHeader() {
+export default function ClientsHeader({ onClientCreated }: ClientsHeaderProps) {
   const user = useSelector((state: RootState) => state.auth.user)
   const { t } = useTranslation()
 
@@ -16,7 +20,12 @@ export default  function ClientsHeader() {
       <h1 className="text-2xl font-bold tracking-tight">
         {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
       </h1>
-      <h2 className="text-xl font-semibold">{user?.account_type==="client" ? "Lawyers" : t('pages:clients.title')}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">{user?.account_type==="client" ? "Lawyers" : t('pages:clients.title')}</h2>
+        {user?.account_type === "lawyer" && (
+          <OnboardClientForm onClientCreated={onClientCreated} />
+        )}
+      </div>
     </div>
   )
 }

@@ -1148,6 +1148,21 @@
   "error": {
     "fetchFailed": "Failed to load question list. Please try again later.",
     "deleteFailed": "Failed to delete question. Please try again."
+  },
+  "search": {
+    "placeholder": "Search questions and answers..."
+  },
+  "filter": {
+    "allQuestions": "All Questions",
+    "answered": "Answered", 
+    "pending": "Pending",
+    "filterByStatus": "Filter by status"
+  },
+  "results": {
+    "noResults": "No questions found matching your search criteria. Try adjusting your search terms or filters.",
+    "found": "Found {count} question",
+    "foundPlural": "Found {count} questions",
+    "noMatch": "No questions found matching your search"
   }
 },
 
@@ -1924,6 +1939,7 @@
     },
     "status": {
       "pending": "Pending",
+      "pending_approval": "Pending Approval",
       "approved": "Approved",
       "active": "Active",
       "completed": "Completed",

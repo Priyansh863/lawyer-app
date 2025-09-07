@@ -237,33 +237,8 @@ export default function StatsCards() {
   }
 
   const tokenStats: StatCardProps[] = []
-  console.log('Profile account type:', profile?.account_type)
-  console.log('Token balance:', tokenBalance)
-  if (profile?.account_type === 'client') {
-    tokenStats.push(
-      {
-        title: t('pages:stst.dashboard.availabletokens'),
-        value: tokenBalance?.current_balance ?? 0,
-        icon: <Coins size={18} />,
-        index: stats.length
-      },
-      {
-        title: t('pages:stst.dashboard.totalpurchased'),
-        value: tokenBalance?.total_purchased ?? 0,
-        icon: <DollarSign size={18} />,
-        index: stats.length + 1
-      },
-      {
-        title: t('pages:stst.dashboard.monthlyusage'),
-        value: tokenBalance?.monthly_usage ?? 0,
-        icon: <MessageSquare size={18} />,
-        index: stats.length + 2
-      }
-    )
-  }
 
   const allStats = [...stats, ...tokenStats]
-  console.log('All stats to display:', allStats)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">

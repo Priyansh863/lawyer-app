@@ -127,10 +127,10 @@ export const generateAiPost = async (data: GenerateAiPostData) => {
 /**
  * Get all posts with pagination
  */
-export const getPosts = async (page = 1, limit = 10, status = 'all') => {
+export const getPosts = async (page = 1, limit = 10, status = 'all', type = 'all') => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/post/list?page=${page}&limit=${limit}&status=${status}`,
+      `${API_BASE_URL}/post/list?page=${page}&limit=${limit}&status=${status}&type=${type}`,
       { headers: getAuthHeaders() }
     );
     return response.data;

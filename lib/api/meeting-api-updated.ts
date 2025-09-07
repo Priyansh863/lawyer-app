@@ -37,6 +37,8 @@ export interface User {
   email: string
   account_type: string
   charges?: number
+  chat_rate?: number
+  video_rate?: number
 }
 
 export interface Meeting {
@@ -83,7 +85,7 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
     const meetingData = {
       ...data,
       created_by: user?._id,
-      status: user?.account_type === 'client' ? 'pending' : 'approved',
+      status: user?.account_type === 'client' ? 'pending_approval' : 'approved',
       // Add timestamps for better tracking
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -200,6 +202,34 @@ export const getPendingMeetings = async (): Promise<MeetingResponse> => {
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to fetch pending meetings'
+    }
+  }
+}
+
+/**
+ * Check if client has sufficient tokens for video consultation
+ */
+export const checkVideoConsultationTokens = async (lawyerId: string): Promise<any> => {
+  try {
+    const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
+    const authState = JSON.parse(state.auth || '{}')
+    const user = authState.user ? JSON.parse(authState.user) : null
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/charges/check-token-balance`,
+      {
+        clientId: user?._id,
+        lawyerId: lawyerId,
+        consultationType: 'video'
+      },
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Error checking video consultation tokens:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to check token balance'
     }
   }
 }

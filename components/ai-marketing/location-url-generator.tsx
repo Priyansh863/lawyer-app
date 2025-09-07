@@ -111,17 +111,52 @@ export default function LocationUrlGenerator({
   }
 
   // Address Input
+  const searchPlacesAPI = async (query: string, type: 'address' | 'place') => {
+    if (!query.trim()) return [];
+    
+    try {
+      const params = new URLSearchParams();
+      params.set('query', query);
+      params.set('language', 'ko'); // Korean language
+      params.set('region', 'kr'); // South Korea region
+      params.set('type', type);
+
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+      const url = `${backendUrl}/places/search?${params.toString()}`;
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch places');
+      }
+      
+      const data = await response.json();
+
+      if (!data.success) {
+        console.warn('Places API error:', data.message);
+        return [];
+      }
+
+      return data.results || [];
+    } catch (error) {
+      console.error('Places search error:', error);
+      return [];
+    }
+  };
+
   const searchAddresses = async (query: string) => {
     if (query.length < 3) {
       setAddressSuggestions([])
       return
     }
-    const mockAddresses = [
-      { description: "123 Main Street, New York, NY, USA", lat: 40.7128, lng: -74.006 },
-      { description: "456 Broadway, New York, NY, USA", lat: 40.7589, lng: -73.9851 },
-      { description: "789 Fifth Avenue, New York, NY, USA", lat: 40.7614, lng: -73.9776 },
-    ].filter((addr) => addr.description.toLowerCase().includes(query.toLowerCase()))
-    setAddressSuggestions(mockAddresses)
+    
+    const results = await searchPlacesAPI(query, 'address');
+    const formattedResults = results.map((place: any) => ({
+      description: place.description || place.name,
+      lat: place.lat,
+      lng: place.lng
+    }));
+    setAddressSuggestions(formattedResults);
   }
 
   const searchPlaces = async (query: string) => {
@@ -129,12 +164,14 @@ export default function LocationUrlGenerator({
       setPlaceSuggestions([])
       return
     }
-    const mockPlaces = [
-      { name: "Central Park", lat: 40.7829, lng: -73.9654 },
-      { name: "Times Square", lat: 40.758, lng: -73.9855 },
-      { name: "Brooklyn Bridge", lat: 40.7061, lng: -73.9969 },
-    ].filter((place) => place.name.toLowerCase().includes(query.toLowerCase()))
-    setPlaceSuggestions(mockPlaces)
+    
+    const results = await searchPlacesAPI(query, 'place');
+    const formattedResults = results.map((place: any) => ({
+      name: place.name,
+      lat: place.lat,
+      lng: place.lng
+    }));
+    setPlaceSuggestions(formattedResults);
   }
 
   const handleMapClick = () => {

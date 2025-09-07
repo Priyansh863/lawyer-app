@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { getPostBySlug, type Post, type SpatialInfo } from "@/lib/api/posts-api";
 import { 
   MapPin, 
@@ -20,12 +21,18 @@ import {
   Share2,
   QrCode,
   ExternalLink,
-  Wand2
+  Wand2,
+  FileText,
+  Scale,
+  BookOpen,
+  Link,
+  CheckCircle
 } from "lucide-react";
 
 export default function PostPage() {
   const params = useParams();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const slug = params.slug as string;
   
   const [post, setPost] = useState<Post | null>(null);
@@ -129,9 +136,9 @@ export default function PostPage() {
     }
   }, [slug, toast]);
 
-  // Format date
+  // Format date with Korean locale support
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -140,9 +147,9 @@ export default function PostPage() {
     });
   };
 
-  // Format spatial timestamp
+  // Format spatial timestamp with Korean locale support
   const formatSpatialTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('en-US', {
+    return new Date(timestamp).toLocaleString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -193,45 +200,68 @@ export default function PostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        {/* Post Header */}
-        <Card className="mb-6">
-          <CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="max-w-5xl mx-auto py-8 px-4">
+        {/* Professional Legal Post Header */}
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader className="pb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-2xl lg:text-3xl mb-4">{post.title}</CardTitle>
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-                    {post.status}
-                  </Badge>
-                  {post.isAiGenerated && (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Wand2 className="h-3 w-3" />
-                      AI Generated
-                    </Badge>
-                  )}
-                  {(spatialInfo?.latitude || post.spatialInfo?.latitude) && (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      Location Data
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {post.author.first_name} {post.author.last_name}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Scale className="h-6 w-6 text-blue-600" />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(post.createdAt)}
+                  <div>
+                    <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="mb-1">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {post.status === 'published' ? '게시됨' : post.status}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {post.isAiGenerated && (
+                        <Badge variant="outline" className="flex items-center gap-1 text-purple-600 border-purple-200">
+                          <Wand2 className="h-3 w-3" />
+                          AI 생성
+                        </Badge>
+                      )}
+                      {(spatialInfo?.latitude || post.spatialInfo?.latitude) && (
+                        <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-200">
+                          <MapPin className="h-3 w-3" />
+                          위치 정보
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <CardTitle className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  {post.title}
+                </CardTitle>
+                <div className="flex items-center gap-6 text-gray-600 bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        {post.author.first_name} {post.author.last_name}
+                      </div>
+                      <div className="text-sm text-gray-500">법무 전문가</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">{formatDate(post.createdAt)}</span>
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
-          
-                
+                <Button variant="outline" size="sm" onClick={copyUrl}>
+                  <Copy className="h-4 w-4 mr-1" />
+                  URL 복사
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-1" />
+                  공유
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -329,74 +359,97 @@ export default function PostPage() {
           </Card>
         )}
 
-        {/* Post Content */}
-        <Card className="mb-6">
+        {/* Professional Legal Content */}
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl text-gray-900">
+              <FileText className="h-5 w-5 text-blue-600" />
+              법률 내용
+            </CardTitle>
+          </CardHeader>
           <CardContent className="py-6">
             <div className="prose max-w-none">
               <div 
-                className="text-gray-800 leading-relaxed"
+                className="text-gray-800 leading-relaxed text-lg"
+                style={{ lineHeight: '1.8' }}
                 dangerouslySetInnerHTML={{
                   __html: post.content
                     .replace(/\n/g, '<br>')
-                    .replace(/### (.*?)\n/g, '<h3 class="text-xl font-bold mt-6 mb-3 text-gray-900">$1</h3>')
-                    .replace(/#### (.*?)\n/g, '<h4 class="text-lg font-semibold mt-4 mb-2 text-gray-800">$1</h4>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-                    .replace(/- (.*?)\n/g, '<li class="ml-4">$1</li>')
+                    .replace(/### (.*?)\n/g, '<h3 class="text-2xl font-bold mt-8 mb-4 text-gray-900 border-l-4 border-blue-500 pl-4">$1</h3>')
+                    .replace(/#### (.*?)\n/g, '<h4 class="text-xl font-semibold mt-6 mb-3 text-gray-800">$1</h4>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900 bg-yellow-100 px-1 rounded">$1</strong>')
+                    .replace(/- (.*?)\n/g, '<li class="ml-6 mb-2 text-gray-700">$1</li>')
                 }}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Hashtags */}
+        {/* Professional Hashtags Section */}
         {((post.hashtags && post.hashtags.length > 0) || post.hashtag) && (
-          <Card className="mb-6">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Hash className="h-4 w-4 text-blue-500" />
+          <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
+                <Hash className="h-5 w-5 text-blue-600" />
+                관련 태그
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3 flex-wrap">
                 {post.hashtags && post.hashtags.length > 0 ? (
                   post.hashtags.map((tag, index) => (
-                    <span key={index} className="text-blue-500 font-medium">
-                      {tag}{index < post.hashtags!.length - 1 ? ', ' : ''}
-                    </span>
+                    <Badge key={index} variant="secondary" className="px-3 py-1 text-sm bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100">
+                      #{tag}
+                    </Badge>
                   ))
                 ) : (
-                  <span className="text-blue-500 font-medium">{post.hashtag}</span>
+                  <Badge variant="secondary" className="px-3 py-1 text-sm bg-blue-50 text-blue-700 border border-blue-200">
+                    #{post.hashtag}
+                  </Badge>
                 )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Useful Links */}
+        {/* Professional Legal Resources */}
         {post.usefulLinks && post.usefulLinks.length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" />
-                Useful Resources
+              <CardTitle className="flex items-center gap-2 text-xl text-gray-900">
+                <BookOpen className="h-5 w-5 text-green-600" />
+                유용한 법률 자료
               </CardTitle>
+              <p className="text-gray-600 text-sm mt-1">관련 법률 정보 및 참고 자료</p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid gap-4">
                 {post.usefulLinks.map((link, index) => (
-                  <div key={index} className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div key={index} className="group p-5 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-100 hover:border-green-200 hover:shadow-md transition-all duration-200">
                     <a 
                       href={link.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="block"
                     >
-                      <div className="flex items-start gap-3">
-                        <ExternalLink className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
-                        <div>
-                          <h4 className="font-medium text-blue-600 hover:text-blue-800 underline">
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                          <Link className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 group-hover:text-green-700 transition-colors text-lg mb-2">
                             {link.title}
                           </h4>
                           {link.description && (
-                            <p className="text-sm text-gray-600 mt-1">{link.description}</p>
+                            <p className="text-gray-700 mb-3 leading-relaxed">{link.description}</p>
                           )}
-                          <p className="text-xs text-gray-500 mt-1">{link.url}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs bg-white/50">
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              외부 링크
+                            </Badge>
+                            <span className="text-xs text-gray-500 truncate max-w-md">{link.url}</span>
+                          </div>
                         </div>
                       </div>
                     </a>
@@ -443,39 +496,64 @@ export default function PostPage() {
           </Card>
         )}
 
-        {/* QR Code */}
+        {/* QR Code Section */}
         {post.qrCodeUrl && (
-          <Card className="mb-6">
+          <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <QrCode className="h-5 w-5" />
-                 {t('pages:posts.buttonLabel')}
+              <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
+                <QrCode className="h-5 w-5 text-purple-600" />
+                QR 코드로 공유
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <img 
-                src={post.qrCodeUrl} 
-                alt="QR Code for this post" 
-                className="mx-auto max-w-48 max-h-48"
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                Scan to share this post
+              <div className="p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl inline-block">
+                <img 
+                  src={post.qrCodeUrl} 
+                  alt="이 게시물의 QR 코드" 
+                  className="mx-auto max-w-48 max-h-48 rounded-lg shadow-sm"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-4 font-medium">
+                QR 코드를 스캔하여 이 게시물을 공유하세요
               </p>
             </CardContent>
           </Card>
         )}
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          <p>
-            This post was {post.isAiGenerated ? 'generated with AI assistance' : 'manually created'} by {post.author.first_name} {post.author.last_name}
-          </p>
-          {post.isAiGenerated && post.aiPrompt && (
-            <p className="mt-1">
-              AI Prompt: "{post.aiPrompt}"
-            </p>
-          )}
-        </div>
+        {/* Professional Footer */}
+        <Card className="border-0 shadow-lg bg-gradient-to-r from-slate-50 to-blue-50">
+          <CardContent className="py-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="font-medium text-gray-900">
+                  {post.author.first_name} {post.author.last_name}
+                </span>
+                <Badge variant="outline" className="ml-2">
+                  법무 전문가
+                </Badge>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">
+                이 게시물은 {post.isAiGenerated ? 'AI 도움을 받아 생성' : '직접 작성'}되었습니다
+              </p>
+              {post.isAiGenerated && post.aiPrompt && (
+                <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                  <p className="text-xs text-purple-700 font-medium mb-1">AI 프롬프트:</p>
+                  <p className="text-sm text-purple-800 italic">
+                    "{post.aiPrompt}"
+                  </p>
+                </div>
+              )}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  © {new Date().getFullYear()} 법률 정보 플랫폼. 모든 권리 보유.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

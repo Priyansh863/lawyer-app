@@ -343,7 +343,7 @@ export async function getClientCases(clientId: string): Promise<Case[]> {
  */
 export async function createClient(clientData: Partial<Client>): Promise<Client> {
   try {
-    const response = await axios.post(`${API_BASE_URL}/user`, clientData, {
+    const response = await axios.post(`${API_BASE_URL}/user/create`, clientData, {
       headers: getAuthHeaders(),
     })
 

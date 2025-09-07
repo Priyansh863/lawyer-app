@@ -26,14 +26,6 @@ export default function QuickActions() {
 
   const actions = [
     {
-      icon: <Camera className="w-5 h-5" />,
-      title: t("pages:quickActions.newPost"),
-      description: t("pages:quickActions.shareMoment"),
-      color: "from-primary/10 to-accent/20",
-      iconColor: "text-primary",
-      onClick: () => console.log("New post")
-    },
-    {
       icon: <MessageSquare className="w-5 h-5" />,
       title: t("pages:quickActions.sendMessage"),
       description: t("pages:quickActions.startChat"),
@@ -49,14 +41,6 @@ export default function QuickActions() {
       iconColor: "text-green-500",
       onClick: () => setIsScheduleMeetingOpen(true)
     },
-    {
-      icon: <Sparkles className="w-5 h-5" />,
-      title: t("pages:quickActions.askQuestion"),
-      description: t("pages:quickActions.startQA"),
-      color: "from-purple-100 to-pink-100",
-      iconColor: "text-purple-500", 
-      onClick: () => console.log("Open QA form")
-    }
   ];
 
   return (

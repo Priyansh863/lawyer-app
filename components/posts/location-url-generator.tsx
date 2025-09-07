@@ -46,8 +46,10 @@ const searchPlacesAPI = async (
   try {
     const params = new URLSearchParams();
     params.set('query', query);
-    if (opts?.language) params.set('language', opts.language);
-    if (opts?.region) params.set('region', opts.region);
+    
+    // Default to Korean language and South Korea region
+    params.set('language', opts?.language || 'ko');
+    params.set('region', opts?.region || 'kr');
     if (opts?.type) params.set('type', opts.type);
 
     // Use backend proxy instead of direct Google API call
@@ -147,7 +149,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
     setIsSearching(true);
     try {
-      const results = await searchPlacesAPI(query, t, { type, language: typeof navigator !== 'undefined' ? navigator.language : undefined });
+      const results = await searchPlacesAPI(query, t, { type, language: 'ko', region: 'kr' });
       setSearchResults(results);
     } catch (error) {
       toast({
@@ -183,7 +185,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
 
   useEffect(() => {
     if (addressQuery.trim().length > 2 && inputMethod === 'address') {
-      searchPlacesAPI(addressQuery, t, { type: 'address', language: typeof navigator !== 'undefined' ? navigator.language : undefined }).then(results => {
+      searchPlacesAPI(addressQuery, t, { type: 'address', language: 'ko', region: 'kr' }).then(results => {
         setSearchResults(results);
         setShowSuggestions(results.length > 0);
       }).catch(() => {
@@ -471,7 +473,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
               <div className="space-y-2">
                 <Label htmlFor="altitude">
                   {t('pages:locla.location.altitude')}
-                  <Info className="h-3 w-3 inline ml-1" title={t('pages:locla.location.tooltips.altitude')} />
+                  <Info className="h-3 w-3 inline ml-1" />
                 </Label>
                 <Input
                   id="altitude"
@@ -490,7 +492,7 @@ export default function LocationUrlGenerator({ onLocationSelect, initialData }: 
               <div className="space-y-2">
                 <Label htmlFor="floor">
                   {t('pages:locla.location.floor')}
-                  <Info className="h-3 w-3 inline ml-1" title={t('pages:locla.location.tooltips.floor')} />
+                  <Info className="h-3 w-3 inline ml-1" />
                 </Label>
                 <Input
                   id="floor"

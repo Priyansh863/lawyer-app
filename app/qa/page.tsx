@@ -1,5 +1,5 @@
 import QAHeader from "@/components/qa/qa-header"
-import QAList from "@/components/qa/qa-list"
+import QAListWithSearch from "@/components/qa/qa-list-with-search"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export default function QAPage() {
   return (
     <div className="space-y-6" style={{ marginTop: "2.25rem" }}>
       <QAHeader />
-      <QAList />
+      <QAListWithSearch />
     </div>
   )
 }

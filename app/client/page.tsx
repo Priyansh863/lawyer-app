@@ -1,5 +1,5 @@
 "use client"
-import React, { Suspense } from "react"
+import React, { Suspense, useState } from "react"
 import ClientLayout from "@/components/layouts/client-layout"
 import ClientsTable from "@/components/clients/clients-table"
 import ClientsHeader from "@/components/clients/clients-header"
@@ -7,10 +7,17 @@ import { Loader2 } from "lucide-react"
 import { useTranslation } from "@/hooks/useTranslation"
 
 function ClientContent() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleClientCreated = () => {
+    // Force refresh of the clients table by updating the key
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      <ClientsHeader />
-      <ClientsTable initialClients={[]} />
+      <ClientsHeader onClientCreated={handleClientCreated} />
+      <ClientsTable key={refreshKey} initialClients={[]} />
     </div>
   )
 }
