@@ -28,8 +28,39 @@ import {
   Link as LinkIcon,
   FileText,
   Clock,
-  Globe
+  Globe,
+  MoreVertical,
+  Bookmark,
+  BookmarkCheck,
+  Copy,
+  Flag
 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { toggleBookmark, checkBookmark, reportPost } from "@/lib/api/bookmark-api";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { formatDate } from "@/lib/utils/date-formatter";
+
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
 
 export default function ProfessionalDashboardPage() {
   const profile = useSelector((state: RootState) => state.auth.user);
@@ -40,6 +71,11 @@ export default function ProfessionalDashboardPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<string>>(new Set());
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportingPostId, setReportingPostId] = useState<string>("");
+  const [reportReason, setReportReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
 
   // Fetch posts
   const fetchPosts = async () => {
@@ -48,10 +84,34 @@ export default function ProfessionalDashboardPage() {
       const response = await getPosts(1, 8, "published","dashboard");
       
       setPosts(response.data.posts || []);
-    } catch (error: any) {
+      
+      // Check bookmark status for each post (only if user is logged in)
+      const token = getToken();
+      if (response.data.posts?.length > 0 && token) {
+        try {
+          const bookmarkChecks = await Promise.allSettled(
+            response.data.posts.map((post: Post) => checkBookmark(post._id))
+          );
+
+          
+          
+          const bookmarked = new Set<string>();
+          bookmarkChecks.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value.isBookmarked) {
+              bookmarked.add(response.data.posts[index]._id);
+            }
+          });
+          setBookmarkedPosts(bookmarked);
+        } catch (error) {
+          // Silently fail bookmark checks if authentication fails
+          console.log('Bookmark check failed, user may not be logged in');
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
       toast({
-        title: t("pages:posts.fetchPostsError"),
-        description: error.message || t("pages:posts.somethingWentWrong"),
+        title: "Error",
+        description: "Failed to load posts. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -59,50 +119,126 @@ export default function ProfessionalDashboardPage() {
     }
   };
 
-  // Load posts on component mount
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  // Toggle post expansion
   const togglePostExpansion = (postId: string) => {
-    const newExpanded = new Set(expandedPosts);
-    if (newExpanded.has(postId)) {
-      newExpanded.delete(postId);
-    } else {
-      newExpanded.add(postId);
-    }
-    setExpandedPosts(newExpanded);
+    setExpandedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
   };
 
-  // Helper function to check if post has an image
+  const formatContent = (content: string, isExpanded: boolean) => {
+    if (!content) return "";
+    if (content.length <= 400 || isExpanded) return content;
+    return content.substring(0, 400) + "...";
+  };
+
   const hasImage = (post: Post) => {
     return post.image && post.image.trim() !== "";
   };
 
-  // Helper function to format content
-  const formatContent = (content: string, isExpanded: boolean) => {
-    if (!content) return "";
-    
-    if (isExpanded) {
-      return content;
-    }
-    
-    return content.length > 400 ? content.substring(0, 400) + "..." : content;
+  const getAuthorAvatar = (author: any) => {
+    return author?.profile_image || author?.avatar || null;
   };
 
-  // Helper function to get author avatar
-  const getAuthorAvatar = (author: any) => {
-    if (author?.avatar) {
-      return author.avatar;
+  // Handle bookmark toggle
+  const handleBookmarkToggle = async (postId: string) => {
+    try {
+      const result = await toggleBookmark(postId);
+      
+      setBookmarkedPosts(prev => {
+        const newSet = new Set(prev);
+        if (result.data.isBookmarked) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+      
+      toast({
+        title: result.data.isBookmarked ? "Bookmarked" : "Bookmark Removed",
+        description: result.message,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update bookmark",
+        variant: "destructive",
+      });
     }
-    return null;
+  };
+
+  // Handle copy URL
+  const handleCopyUrl = async (postSlug: string) => {
+    try {
+      const url = `${window.location.origin}/${postSlug}`;
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link Copied",
+        description: "Post URL has been copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle report
+  const handleReportClick = (postId: string) => {
+    setReportingPostId(postId);
+    setShowReportDialog(true);
+  };
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a reason for reporting",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsReporting(true);
+      await reportPost(reportingPostId, reportReason);
+      
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for reporting. We'll review this content.",
+      });
+      
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportingPostId("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   // Professional post card component
   const PostCard = ({ post }: { post: Post }) => {
     const isExpanded = expandedPosts.has(post._id);
     const hasLongContent = post.content && post.content.length > 400;
+    const isBookmarked = bookmarkedPosts.has(post._id);
 
     return (
       <Card className="w-full bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
@@ -135,13 +271,7 @@ export default function ProfessionalDashboardPage() {
                 <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
                   <Calendar className="h-3 w-3" />
                   <span>
-                    {new Date(post.createdAt).toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {formatDate(post.createdAt)}
                   </span>
                   <span>•</span>
                   <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="text-xs">
@@ -150,11 +280,41 @@ export default function ProfessionalDashboardPage() {
                 </div>
               </div>
             </div>
+            
+            {/* Post Actions Dropdown */}
             <div className="flex items-center space-x-2">
               <Badge variant="outline" className="text-xs">
                 <FileText className="h-3 w-3 mr-1" />
                 Legal Post
               </Badge>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleBookmarkToggle(post._id)}>
+                    {isBookmarked ? (
+                      <BookmarkCheck className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Bookmark className="mr-2 h-4 w-4" />
+                    )}
+                    {isBookmarked ? "Bookmarked" : "Bookmark"}
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => handleCopyUrl(post.slug)}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Link
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem onClick={() => handleReportClick(post._id)}>
+                    <Flag className="mr-2 h-4 w-4" />
+                    Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -317,12 +477,12 @@ export default function ProfessionalDashboardPage() {
             <div className="flex items-center space-x-4">
               <span className="flex items-center">
                 <Clock className="h-3 w-3 mr-1" />
-                Created: {new Date(post.createdAt).toLocaleDateString('ko-KR')}
+                Created: {formatDate(post.createdAt)}
               </span>
               {post.updatedAt && post.updatedAt !== post.createdAt && (
                 <span className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
-                  Updated: {new Date(post.updatedAt).toLocaleDateString('ko-KR')}
+                  Updated: {formatDate(post.updatedAt)}
                 </span>
               )}
             </div>
@@ -393,6 +553,51 @@ export default function ProfessionalDashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Report Dialog */}
+        <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Report Post</DialogTitle>
+              <DialogDescription>
+                Please let us know why you're reporting this post. We'll review it and take appropriate action.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="reason">Reason for reporting</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="Please describe the issue with this post..."
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReportDialog(false);
+                  setReportReason("");
+                  setReportingPostId("");
+                }}
+                disabled={isReporting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleReport}
+                disabled={isReporting || !reportReason.trim()}
+              >
+                {isReporting ? "Submitting..." : "Submit Report"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
