@@ -233,7 +233,7 @@ export default function LawyerChargesSettings({ userType }: LawyerChargesSetting
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? t('common:actions.saving') : t('common:actions.saveRates')}
+              {saving ? t('pages:actions.saving') : t('pages:actions.saveRates')}
             </Button>
             
             {(charges !== currentCharges.toString() || chatRate !== currentChatRate.toString() || videoRate !== currentVideoRate.toString()) && (

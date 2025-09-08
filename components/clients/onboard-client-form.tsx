@@ -66,8 +66,8 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       await createClient(data);
       
       toast({
-        title: t("common.success") || "Success",
-        description: "Client has been successfully onboarded",
+        title: t("pages:client.onboard.successTitle") || "Success",
+        description: t("pages:client.onboard.successDescription") || "Client has been successfully onboarded",
       });
 
       form.reset();
@@ -79,8 +79,8 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       }
     } catch (error: any) {
       toast({
-        title: t("common.error") || "Error",
-        description: error.message || "Failed to onboard client",
+        title: t("pages:client.onboard.errorTitle") || "Error",
+        description: error.message || t("pages:client.onboard.errorDescription") || "Failed to onboard client",
         variant: "destructive",
       });
     } finally {
@@ -93,13 +93,13 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       <DialogTrigger asChild>
         <Button className="bg-black hover:bg-gray-800 text-white">
           <UserPlus className="h-4 w-4 mr-2" />
-          Onboard Client
+          {t("pages:client.onboard.button") || "Onboard Client"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
-            Onboard New Client
+            {t("pages:client.onboard.title") || "Onboard New Client"}
           </DialogTitle>
         </DialogHeader>
 
@@ -111,10 +111,10 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name *</FormLabel>
+                    <FormLabel>{t("pages:client.onboard.firstName") || "First Name"} *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter first name"
+                        placeholder={t("pages:client.onboard.firstNamePlaceholder") || "Enter first name"}
                         {...field}
                         className="bg-[#F5F5F5] border-gray-200"
                       />
@@ -129,10 +129,10 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
+                    <FormLabel>{t("pages:client.onboard.lastName") || "Last Name"} *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter last name"
+                        placeholder={t("pages:client.onboard.lastNamePlaceholder") || "Enter last name"}
                         {...field}
                         className="bg-[#F5F5F5] border-gray-200"
                       />
@@ -148,11 +148,11 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address *</FormLabel>
+                  <FormLabel>{t("pages:client.onboard.email") || "Email Address"} *</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Enter email address"
+                      placeholder={t("pages:client.onboard.emailPlaceholder") || "Enter email address"}
                       {...field}
                       className="bg-[#F5F5F5] border-gray-200"
                     />
@@ -167,11 +167,11 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number *</FormLabel>
+                  <FormLabel>{t("pages:client.onboard.phone") || "Phone Number"} *</FormLabel>
                   <FormControl>
                     <Input
                       type="tel"
-                      placeholder="Enter phone number"
+                      placeholder={t("pages:client.onboard.phonePlaceholder") || "Enter phone number"}
                       {...field}
                       className="bg-[#F5F5F5] border-gray-200"
                     />
@@ -186,11 +186,11 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password *</FormLabel>
+                  <FormLabel>{t("pages:client.onboard.password") || "Password"} *</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Enter password (min 6 characters)"
+                      placeholder={t("pages:client.onboard.passwordPlaceholder") || "Enter password (min 6 characters)"}
                       {...field}
                       className="bg-[#F5F5F5] border-gray-200"
                     />
@@ -200,7 +200,6 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
               )}
             />
 
-
             <div className="flex justify-end space-x-3 pt-4">
               <Button
                 type="button"
@@ -208,7 +207,7 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
                 onClick={() => setIsOpen(false)}
                 disabled={isLoading}
               >
-                Cancel
+                {t("pages:client.onboard.cancel") || "Cancel"}
               </Button>
               <Button
                 type="submit"
@@ -218,10 +217,10 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
+                    {t("pages:client.onboard.creating") || "Creating..."}
                   </>
                 ) : (
-                  "Onboard Client"
+                  t("pages:client.onboard.submit") || "Onboard Client"
                 )}
               </Button>
             </div>

@@ -259,22 +259,22 @@ export default function ProfessionalDashboardPage() {
                   </div>
                 )}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <h3 className="font-semibold text-gray-900 text-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                  <h3 className="font-semibold text-gray-900 text-sm truncate">
                     {post.author ? `${post.author.first_name} ${post.author.last_name}` : t('pages:dashboard.unknownAuthor')}
                   </h3>
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                  <Badge variant="secondary" className="text-xs px-2 py-0.5 mt-1 sm:mt-0 hidden sm:inline-flex">
                     {post.author?.account_type || t('pages:dashboard.user')}
                   </Badge>
                 </div>
-                <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>
+                <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1 flex-wrap">
+                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">
                     {formatDate(post.createdAt)}
                   </span>
-                  <span>•</span>
-                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="text-xs">
+                  <span className="hidden sm:inline">•</span>
+                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="text-xs mt-1 sm:mt-0">
                     {post.status}
                   </Badge>
                 </div>
@@ -282,8 +282,8 @@ export default function ProfessionalDashboardPage() {
             </div>
             
             {/* Post Actions Dropdown */}
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">
+            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
+              <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                 <FileText className="h-3 w-3 mr-1" />
                 {t('pages:dashboard.legalPost')}
               </Badge>
@@ -316,6 +316,14 @@ export default function ProfessionalDashboardPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </div>
+
+          {/* Mobile-only legal post badge */}
+          <div className="sm:hidden mb-3">
+            <Badge variant="outline" className="text-xs">
+              <FileText className="h-3 w-3 mr-1" />
+              {t('pages:dashboard.legalPost')}
+            </Badge>
           </div>
 
           {/* Post Title */}
@@ -473,15 +481,15 @@ export default function ProfessionalDashboardPage() {
 
         {/* Post Metadata Footer */}
         <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+              <span className="flex items-center mb-1 sm:mb-0">
+                <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
                 {t('pages:dashboard.created')}: {formatDate(post.createdAt)}
               </span>
               {post.updatedAt && post.updatedAt !== post.createdAt && (
                 <span className="flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
+                  <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
                   {t('pages:dashboard.updated')}: {formatDate(post.updatedAt)}
                 </span>
               )}

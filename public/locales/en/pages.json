@@ -13,6 +13,33 @@
     "chargesPlaceholder": "Enter charges",
     "success": "Success"
   },
+  "actions": {
+      "saving": "Saving...",
+      "saveRates": "Save Rates"
+    },
+  "client": {
+      "onboard": {
+        "button": "Onboard Client",
+        "title": "Onboard New Client",
+        "firstName": "First Name",
+        "firstNamePlaceholder": "Enter first name",
+        "lastName": "Last Name",
+        "lastNamePlaceholder": "Enter last name",
+        "email": "Email Address",
+        "emailPlaceholder": "Enter email address",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password (min 6 characters)",
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Onboard Client",
+        "successTitle": "Success",
+        "successDescription": "Client has been successfully onboarded",
+        "errorTitle": "Error",
+        "errorDescription": "Failed to onboard client"
+      }
+    },
   "document":{
     "doc":"Document",
     "vs": "Voice Summary"
