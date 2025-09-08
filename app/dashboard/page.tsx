@@ -568,13 +568,13 @@ export default function ProfessionalDashboardPage() {
             onClick={() => setShowReportDialog(false)}
             disabled={isReporting}
           >
-            {t('common:cancel')}
+            {t('pages:dashboard.cancel')}
           </Button>
           <Button 
             onClick={handleReportSubmit}
             disabled={!reportReason.trim() || isReporting}
           >
-            {isReporting ? t('common:submitting') : t('common:submit')}
+            {isReporting ? t('pages:dashboard.submitting') : t('pages:dashboard.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

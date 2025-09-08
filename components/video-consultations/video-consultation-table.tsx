@@ -326,16 +326,16 @@ export default function VideoConsultationTableNew() {
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t('pages:meeting.filter.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending_approval">Pending Approval</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="all">{t('pages:meeting.filter.all')}</SelectItem>
+              <SelectItem value="pending_approval">{t('pages:meeting.filter.pending_approval')}</SelectItem>
+      <SelectItem value="approved">{t('pages:meeting.filter.approved')}</SelectItem>
+      <SelectItem value="active">{t('pages:meeting.filter.active')}</SelectItem>
+      <SelectItem value="completed">{t('pages:meeting.filter.completed')}</SelectItem>
+      <SelectItem value="cancelled">{t('pages:meeting.filter.cancelled')}</SelectItem>
+      <SelectItem value="rejected">{t('pages:meeting.filter.rejected')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

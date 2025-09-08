@@ -11,8 +11,15 @@
     "charges": "요금 ($)",
     "success": "성공"
   },
+  "document": {
+    "doc": "문서",
+    "vs": "음성 요약"
+  },
   "dashboard": {
       "error": "오류",
+      "cancel": "취소",
+      "submit": "신고 제출",
+      "submitting": "제출 중...",
       "failedToLoadPosts": "게시물을 불러오지 못했습니다",
       "bookmarked": "북마크됨",
       "bookmarkRemoved": "북마크 제거됨",
@@ -1126,6 +1133,16 @@
       "title": "미팅 관리",
       "description": "예약된 미팅을 관리하고, 화상 통화에 연결하며, 미팅 상태를 추적하세요."
     },
+    "filter": {
+        "placeholder": "상태별 필터",
+        "all": "모든 상태",
+        "pending_approval": "승인 대기 중",
+        "approved": "승인됨",
+        "active": "활성",
+        "completed": "완료됨",
+        "cancelled": "취소됨",
+        "rejected": "거부됨"
+      },
     "search": {
       "placeholder": "상담 검색..."
     },
@@ -1190,6 +1207,8 @@
         "title": "미팅 거절",
         "description": "미팅이 거절되었습니다"
       }
+      
+
     },
     "errors": {
       "closeFailed": "미팅 종료에 실패했습니다",
@@ -1658,6 +1677,9 @@
   "createNew": "새로 만들기",
   "buttonLabel": "QR 코드",
   "loadingPosts": "게시물 로드 중...",
+  "readmore": "더 보기",
+  "showless": "간략히",
+
   "noPostsFound": "게시물을 찾을 수 없음",
   "noPostsCreatedYet": "아직 게시물을 생성하지 않았습니다",
   "createFirstPost": "첫 게시물 생성하기",

@@ -13,10 +13,17 @@
     "chargesPlaceholder": "Enter charges",
     "success": "Success"
   },
+  "document":{
+    "doc":"Document",
+    "vs": "Voice Summary"
+  },
   
   "dashboard": {
       "error": "Error",
       "failedToLoadPosts": "Failed to load posts",
+      "cancel": "Cancel",
+      "submit": "Submit Report",
+      "submitting": "Submitting...",
       "bookmarked": "Bookmarked",
       "bookmarkRemoved": "Bookmark removed",
       "failedToUpdateBookmark": "Failed to update bookmark",
@@ -1365,6 +1372,8 @@
   "buttonLabel": "QR Code",
   "createNew": "Create New",
   "loadingPosts": "Loading posts...",
+  "readmore": "Read more",
+   "showless": "Show less",
   "noPostsFound": "No posts found",
   "noPostsCreatedYet": "You haven't created any posts yet",
   "createFirstPost": "Create Your First Post",
@@ -2054,6 +2063,16 @@
      "header": {
       "title": "Meeting Management",
       "description": "Manage your scheduled meetings, connect to video calls, and track meeting status."
+    },
+    "filter": {
+      "placeholder": "Filter by status",
+      "all": "All Status",
+      "pending_approval": "Pending Approval",
+      "approved": "Approved",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected"
     },
     "search": {
       "placeholder": "Search consultations..."

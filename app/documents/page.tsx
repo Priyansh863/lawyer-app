@@ -4,6 +4,7 @@ import { useState } from "react"
 import DashboardLayout from "@/components/layouts/dashboard-layout"
 import { DocumentsHeader } from "@/components/documents/documents-header"
 import DocumentsTable from "@/components/documents/documents-table"
+import { useTranslation } from "@/hooks/useTranslation"
 
 // import the voice summary components you already have
 import VoiceSummaryLayout from "@/components/layouts/voice-summary-layout"
@@ -11,6 +12,7 @@ import VoiceSummaryHeader from "@/components/voice-summary/voice-summary-header"
 import DocumentSummaryList from "@/components/voice-summary/document-summary-list"
 
 export default function DocumentsPage() {
+  const { t } = useTranslation()
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [activeTab, setActiveTab] = useState<"documents" | "voice">("documents")
 
@@ -32,7 +34,7 @@ export default function DocumentsPage() {
                 : "text-gray-500"
             }`}
           >
-            Documents
+            {t("pages:document.doc")}
           </button>
           <button
             onClick={() => setActiveTab("voice")}
@@ -42,7 +44,7 @@ export default function DocumentsPage() {
                 : "text-gray-500"
             }`}
           >
-            Voice Summary
+            {t("pages:document.vs")}
           </button>
         </div>
 
