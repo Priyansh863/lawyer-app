@@ -468,55 +468,6 @@ export default function ProfessionalDashboardPage() {
           </div>
         )}
 
-        {/* Share Links */}
-        {(post.customUrl || post.shortUrl) && (
-          <div className="px-6 pb-4">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-              <Globe className="h-4 w-4 mr-2" />
-              {t('pages:dashboard.shareLinks')}
-            </h4>
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <div className="space-y-3">
-                {post.customUrl && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">{t('pages:dashboard.customUrl')}</label>
-                    <div className="flex items-center justify-between bg-white rounded p-2 border">
-                      <span className="text-xs text-gray-600 truncate flex-1 mr-2">
-                        {post.customUrl}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => navigator.clipboard.writeText(post.customUrl)}
-                      >
-                        {t('pages:dashboard.copy')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {post.shortUrl && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-700 mb-1 block">{t('pages:dashboard.shortUrl')}</label>
-                    <div className="flex items-center justify-between bg-white rounded p-2 border">
-                      <span className="text-xs text-gray-600 truncate flex-1 mr-2">
-                        {post.shortUrl}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2 text-xs"
-                        onClick={() => navigator.clipboard.writeText(post.shortUrl)}
-                      >
-                        {t('pages:dashboard.copy')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Post Metadata Footer */}
         <div className="border-t border-gray-100 px-6 py-4 bg-gray-50">
