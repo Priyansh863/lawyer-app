@@ -135,11 +135,48 @@ export default function ProfessionalDashboardPage() {
     });
   };
 
-  const formatContent = (content: string, isExpanded: boolean) => {
+  const formatContent = (content: string, isExpanded: boolean): string => {
     if (!content) return "";
-    if (content.length <= 400 || isExpanded) return content;
-    return content.substring(0, 400) + "...";
+  
+    // Create a temporary DOM
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, "text/html");
+  
+    const text = doc.body.textContent || "";
+  
+    if (text.length <= 400 || isExpanded) {
+      return content; // return full HTML
+    }
+  
+    let remaining = 400;
+    const truncateNode = (node: Node): Node | null => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.textContent!.length <= remaining) {
+          remaining -= node.textContent!.length;
+          return node.cloneNode(true);
+        } else {
+          const newText = node.textContent!.substring(0, remaining) + "...";
+          remaining = 0;
+          return document.createTextNode(newText);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement;
+        const clone = el.cloneNode(false) as HTMLElement;
+        for (const child of Array.from(el.childNodes)) {
+          if (remaining <= 0) break;
+          const truncatedChild = truncateNode(child);
+          if (truncatedChild) clone.appendChild(truncatedChild);
+        }
+        return clone;
+      }
+      return null;
+    };
+  
+    const truncated = truncateNode(doc.body);
+    return truncated ? (truncated as HTMLElement).innerHTML : "";
   };
+  
+  
 
   const hasImage = (post: Post) => {
     return post.image && post.image.trim() !== "";
@@ -332,9 +369,11 @@ export default function ProfessionalDashboardPage() {
           </h2>
           
           {/* Post Content */}
-          <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-4">
-            {formatContent(post.content || "", isExpanded)}
-          </div>
+          <div
+  className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mb-4"
+  dangerouslySetInnerHTML={{ __html: formatContent(post.content || "", isExpanded) }}
+/>
+
 
           {hasLongContent && (
             <Button
