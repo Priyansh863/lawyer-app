@@ -204,7 +204,7 @@ export async function likeAnswer(id: string): Promise<{ likes: number }> {
 }
 
 // Get available lawyers for Q&A
-export async function getLawyers(): Promise<any[]> {
+export async function getLawyers() {
   const response = await fetch(`${API_BASE_URL}/user/clients-and-lawyers`, {
     method: 'GET',
     headers: getAuthHeaders()

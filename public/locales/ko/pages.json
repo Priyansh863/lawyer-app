@@ -414,9 +414,11 @@
     "supportedFormats": "PDF, DOCX, TXT, 이미지(JPG, PNG), 동영상(MP4, AVI) 파일을 지원합니다",
     "selectFile": "파일 선택",
     "associateWithCase": "사건과 연결 (선택사항)",
+    "associateWithUser": "사용자와 연결 (선택사항)",
     "loadingCases": "사건 목록 불러오는 중...",
-    "selectCasePlaceholder": "사건 선택 (선택사항)",
+    "selectCasePlaceholder": "사건",
     "noCaseAssociation": "사건과 연결하지 않음",
+    "noUserAssociation": "사용자와 연결하지 않음",
     "caseAssociationNote": "이 문서는 선택한 사건과 연결됩니다.",
     "privacySettings": "문서 공개 범위",
     "privacy": {
@@ -1859,6 +1861,9 @@
         
       },
       "statusDescriptions": {
+        "approved": "사건이 승인되어 진행할 수 있습니다",
+        "pending": "사건이 시작을 기다리고 있습니다",
+        "rejected": "사건이 거절되어 진행할 수 없습니다",
         "full_win": "법원 절차에서 완전히 승소함",
         "full_loss": "법원 절차에서 완전히 패소함",
         "partial_win": "일부 청구가 인용된 부분 승소",
@@ -1872,7 +1877,6 @@
         "suspension": "사건 절차가 중지됨",
         "closure": "사건이 공식적으로 종결됨",
         "in_progress": "사건이 현재 진행 중입니다",
-        "pending": "사건이 시작을 기다리고 있습니다",
         "open": "사건이 개시되었습니다",
         "notAvailable": "상태 정보를 사용할 수 없습니다"
       }

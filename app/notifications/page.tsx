@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationsPage() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { 
     notifications, 
     unreadCount, 
@@ -62,6 +62,7 @@ export default function NotificationsPage() {
   const getNavigationUrl = (type: string) => {
     switch (type) {
       case 'chat_started':
+      case 'chat_message':
         return '/chat'
       case 'case_created':
       case 'case_status_changed':
@@ -138,6 +139,22 @@ export default function NotificationsPage() {
       default:
         return t('pages:notificationsa.types.general')
     }
+  }
+
+  // Helper function to get notification title based on current language
+  const getNotificationTitle = (notification: any) => {
+    if (language === 'ko' && notification.titleKo) {
+      return notification.titleKo
+    }
+    return notification.title
+  }
+
+  // Helper function to get notification message based on current language
+  const getNotificationMessage = (notification: any) => {
+    if (language === 'ko' && notification.messageKo) {
+      return notification.messageKo
+    }
+    return notification.message
   }
 
   const filteredNotifications = typeFilter === 'all' 
@@ -252,11 +269,11 @@ export default function NotificationsPage() {
                       </div>
                       
                       <h3 className="font-semibold text-gray-900 mb-1">
-                        {notification.title}
+                        {getNotificationTitle(notification)}
                       </h3>
                       
                       <p className="text-sm text-gray-600 mb-2">
-                        {notification.message}
+                        {getNotificationMessage(notification)}
                       </p>
                       
                       <div className="flex items-center justify-between">

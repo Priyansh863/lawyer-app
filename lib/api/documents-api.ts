@@ -180,6 +180,7 @@ export const uploadDocumentEnhanced = async (data: {
   processWithAI: boolean
   fileSize: number
   fileType: string
+  associatedUserId?: string
   caseId?: string
   documentType?: 'case_related' | 'general'
 }) => {
@@ -195,7 +196,8 @@ export const uploadDocumentEnhanced = async (data: {
       file_size: data.fileSize,
       file_type: data.fileType,
       document_type: data.documentType || 'general',
-      case_id: data.caseId
+      case_id: data.caseId,
+      associated_user_id: data.associatedUserId
     }
     
     const response = await axios.post(`${API_BASE_URL}/document/upload-enhanced`, uploadPayload, {

@@ -79,7 +79,7 @@ export function SimpleChat({
       if (!clientId && !initialChatId) return
       setIsInitializing(true)
       try {
-        let chatData: Chat
+        let chatData
         if (initialChatId) {
           chatData = {
             _id: initialChatId,
@@ -87,13 +87,11 @@ export function SimpleChat({
               _id: "current_user",
               first_name: t("pages:conv.lawyer"),
               last_name: t("pages:conv.user"),
-              email: "lawyer@example.com",
             },
             client_id: {
               _id: clientId || "unknown",
               first_name: clientName.split(" ")[0] || "User",
               last_name: clientName.split(" ")[1] || "",
-              email: "",
               avatar: clientAvatar,
             },
             unreadCount: 0,

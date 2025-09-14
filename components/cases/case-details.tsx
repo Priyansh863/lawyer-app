@@ -95,6 +95,10 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     const displayStatus = statusKey === "open" ? "pending" : statusKey
     
     const statusLabels: Record<string, string> = {
+      // Basic statuses
+      approved: t("pages:caseDetailsq.status.approved"),
+      pending: t("pages:caseDetailsq.status.pending"),
+      rejected: t("pages:caseDetailsq.status.rejected"),
       // Judgment Outcomes (판결 종국)
       full_win: t("pages:caseDetailsq.status.full_win"),
       full_loss: t("pages:caseDetailsq.status.full_loss"),
@@ -110,8 +114,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       suspension: t("pages:caseDetailsq.status.suspension"),
       closure: t("pages:caseDetailsq.status.closure"),
       // Active case statuses
-      in_progress: t("pages:caseDetailqs.status.in_progress"),
-      pending: t("pages:caseDetailsq.status.pending"),
+      in_progress: t("pages:caseDetailsq.status.in_progress"),
       open: t("pages:caseDetailsq.status.pending"), // Map "open" to "pending" translation
     }
     return statusLabels[displayStatus] || displayStatus.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())
@@ -123,6 +126,10 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     const displayStatus = statusKey === "open" ? "pending" : statusKey
     
     const descriptions: Record<string, string> = {
+      // Basic statuses
+      approved: t("pages:caseDetailsq.statusDescriptions.approved"),
+      pending: t("pages:caseDetailsq.statusDescriptions.pending"),
+      rejected: t("pages:caseDetailsq.statusDescriptions.rejected"),
       // Judgment Outcomes
       full_win: t("pages:caseDetailsq.statusDescriptions.full_win"),
       full_loss: t("pages:caseDetailsq.statusDescriptions.full_loss"),
@@ -139,7 +146,6 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
       closure: t("pages:caseDetailsq.statusDescriptions.closure"),
       // Active statuses
       in_progress: t("pages:caseDetailsq.statusDescriptions.in_progress"),
-      pending: t("pages:caseDetailsq.statusDescriptions.pending"),
       open: t("pages:caseDetailsq.statusDescriptions.pending"), // Map "open" to "pending" description
     }
     return descriptions[displayStatus] || t("pages:caseDetailsq.statusDescriptions.notAvailable")
@@ -189,7 +195,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
               <div>
                 <p className="text-sm font-medium text-purple-600">{t("pages:caseDetailsq.courtType")}</p>
                 <p className="text-sm font-semibold text-purple-900">
-                  {caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}
+                  {caseState.court_type ? t(`pages:casesD.courtTypes.${caseState.court_type}`) : t("common:na")}
                 </p>
               </div>
               <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
@@ -340,7 +346,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">{t("pages:caseDetailsq.courtType")}:</span>
                   <span className="px-2 py-1 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-200">
-                    {caseState.court_type ? t(`pages:cases.courtTypes.${caseState.court_type}`) : t("common:na")}
+                    {caseState.court_type ? t(`pages:casesD.courtTypes.${caseState.court_type}`) : t("common:na")}
                   </span>
                 </div>
               </div>

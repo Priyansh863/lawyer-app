@@ -398,9 +398,11 @@
     "supportedFormats": "Supports PDF, DOCX, TXT, Images (JPG, PNG), and Videos (MP4, AVI)",
     "selectFile": "Select File",
     "associateWithCase": "Associate with Case (Optional)",
+    "associateWithUser": "Associate with User (Optional)",
     "loadingCases": "Loading case list...",
-    "selectCasePlaceholder": "Select Case (Optional)",
+    "selectCasePlaceholder": "Select",
     "noCaseAssociation": "Do not associate with a case",
+    "noUserAssociation": "Do not associate with a user",
     "caseAssociationNote": "This document will be associated with the selected case.",
     "privacySettings": "Document Privacy",
     "privacy": {
@@ -656,6 +658,9 @@
     "open": "Open"
   },
   "statusDescriptions": {
+    "approved": "Case has been approved and can proceed",
+    "pending": "Case is waiting to start",
+    "rejected": "Case has been rejected and cannot proceed",
     "full_win": "Completely won in court proceedings",
     "full_loss": "Completely lost in court proceedings",
     "partial_win": "Partial win with some claims granted",
@@ -669,7 +674,6 @@
     "suspension": "Case proceedings suspended",
     "closure": "Case officially closed",
     "in_progress": "Case is currently in progress",
-    "pending": "Case is waiting to start",
     "open": "Case has been opened",
     "notAvailable": "Status information not available"
   }

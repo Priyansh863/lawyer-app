@@ -30,7 +30,10 @@ export async function getLawyers() {
     throw new Error(`Failed to fetch lawyers: ${res.statusText}`);
   }
 
+  
+
   const data = await res.json();
+  console.log('Fetch lawyers response data:', data);
   return { success: true, users: data.data || [] };
 }
 
@@ -51,6 +54,8 @@ export async function getClients() {
       "Content-Type": "application/json",
     },
   });
+
+  console.log('Fetch clients response status:', res);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch clients: ${res.statusText}`);

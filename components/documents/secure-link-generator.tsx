@@ -266,59 +266,6 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
               )}
             </CardContent>
           </Card>
-
-          {/* My Secure Links */}
-          <Card className="w-full">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                {t("pages:secureLink.myLinks")}
-                <Button size="sm" variant="outline" onClick={handleViewMyLinks} disabled={isLoadingLinks}>
-                  {isLoadingLinks ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {showMyLinks ? (
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {myLinks.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      {t("pages:secureLink.noLinks")}
-                    </p>
-                  ) : (
-                    myLinks.map((link) => (
-                      <div key={link.link_id} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium text-sm">{link.client_name}</div>
-                          {getStatusBadge(link)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          <div>{t("pages:secureLink.created")}: {new Date(link.created_at).toLocaleDateString()}</div>
-                          <div>{t("pages:secureLink.expires")}: {new Date(link.expires_at).toLocaleDateString()}</div>
-                          {link.used_at && (
-                            <div>{t("pages:secureLink.used")}: {new Date(link.used_at).toLocaleDateString()}</div>
-                          )}
-                        </div>
-                        {link.uploaded_document && (
-                          <div className="text-xs bg-blue-50 p-2 rounded">
-                            <div className="font-medium">{t("pages:secureLink.documentUploaded")}</div>
-                            <div>{link.uploaded_document.file_name}</div>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  {t("pages:secureLink.clickToView")}
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </DialogContent>
     </Dialog>

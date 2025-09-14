@@ -588,11 +588,11 @@ export default function ProfessionalDashboardPage() {
         />
         <StatsCards />
         
-        {profile?.account_type === "lawyer" && (
+        {/* {profile?.account_type === "lawyer" && ( */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <QuickActions />
           </div>
-        )}
+        {/* )} */}
 
         {/* Professional Posts Feed */}
         <div className="space-y-6">

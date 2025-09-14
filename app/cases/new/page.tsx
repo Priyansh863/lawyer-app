@@ -427,7 +427,7 @@ export default function NewCasePage() {
                             <SelectContent>
                               {lawyers.map((lawyer) => (
                                 <SelectItem key={lawyer.id} value={lawyer.id}>
-                                  {lawyer.name}
+                                  {lawyer.name} 
                                 </SelectItem>
                               ))}
                             </SelectContent>

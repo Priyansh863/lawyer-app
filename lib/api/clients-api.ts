@@ -44,7 +44,7 @@ export async function getClients({
   query = "",
   page = 1,
   limit = 10,
-}: GetClientsParams = {}): Promise<Client[]> {
+}: GetClientsParams = {}) {
   try {
     const currentUser = getCurrentUser()
     if (!currentUser) {

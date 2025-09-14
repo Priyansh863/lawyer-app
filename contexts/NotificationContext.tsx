@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useRe
 import { notificationsApi, Notification } from '../lib/api/notifications-api'
 import { toast } from 'sonner'
 import { useRouter, usePathname } from 'next/navigation'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface NotificationContextType {
   notifications: Notification[]
@@ -32,6 +33,7 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+  const { language } = useTranslation()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const router = useRouter()
   const previousPathnameRef = useRef(pathname)
   const isInitialLoadRef = useRef(true)
+
+  // Helper function to get notification title based on current language
+  const getNotificationTitle = (notification: any) => {
+    if (language === 'ko' && notification.titleKo) {
+      return notification.titleKo
+    }
+    return notification.title
+  }
+
+  // Helper function to get notification message based on current language
+  const getNotificationMessage = (notification: any) => {
+    if (language === 'ko' && notification.messageKo) {
+      return notification.messageKo
+    }
+    return notification.message
+  }
 
   const fetchNotifications = async (params?: { page?: number; limit?: number; unreadOnly?: boolean }) => {
     try {
@@ -103,6 +121,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           const getNavigationUrl = (type: string) => {
             switch (type) {
               case 'chat_started':
+              case 'chat_message':
                 return '/chat'
               case 'case_created':
               case 'case_status_changed':
@@ -118,8 +137,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             }
           }
 
-          toast.success(`${getNotificationIcon(latestUnreadNotification.type)} ${latestUnreadNotification.title}`, {
-            description: latestUnreadNotification.message,
+          toast.success(`${getNotificationIcon(latestUnreadNotification.type)} ${getNotificationTitle(latestUnreadNotification)}`, {
+            description: getNotificationMessage(latestUnreadNotification),
             duration: 5000,
             action: {
               label: 'View',

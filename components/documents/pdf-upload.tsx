@@ -17,6 +17,9 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { toast } from 'sonner'
 import { casesApi } from '@/lib/api/cases-api'
 import type { Case } from '@/types/case'
+import { User } from 'next-auth'
+import { getClients } from '@/lib/api/clients-api'
+import { getLawyers } from '@/lib/api/qa-api'
 
 interface PDFUploadEnhancedProps {
   isOpen: boolean
@@ -81,7 +84,10 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
   const [dragActive, setDragActive] = useState(false)
   const [fileTypeInfo, setFileTypeInfo] = useState<FileTypeConfig | null>(null)
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseId || '')
+  const [selectedUserId, setSelectedUserId] = useState<string>('')
+
   const [availableCases, setAvailableCases] = useState<Case[]>([])
+  const [availableUsers, setAvailableUsers] = useState<any[]>([])
   const [loadingCases, setLoadingCases] = useState(false)
   const user = useSelector((state: RootState) => state.auth.user)
   const isLawyer = user?.account_type === 'lawyer'
@@ -92,12 +98,30 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
     }
   }, [isOpen, user])
 
+  React.useEffect(() => {
+    fetchAvailableUsers()
+  }, [])
+
   const fetchAvailableCases = async () => {
     setLoadingCases(true)
     try {
       const response = await casesApi.getCases({ limit: 100 })
       setAvailableCases(response.cases || [])
     } catch (error) {
+      console.error('Error fetching cases:', error)
+      toast.error(t("pages:cases.error.fetchingCases"))
+    } finally {
+      setLoadingCases(false)
+    }
+  }
+
+  const fetchAvailableUsers = async () => {
+    setLoadingCases(true)
+    try {
+      const response = user?.account_type === 'lawyer' ? await getClients() : await getLawyers();
+      console.log(response, "responseresponseresponseresponseresponseresponse")
+      setAvailableUsers(response)
+    } catch (error) { 
       console.error('Error fetching cases:', error)
       toast.error(t("pages:cases.error.fetchingCases"))
     } finally {
@@ -196,6 +220,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
         processWithAI: processWithAI,
         fileSize: file.size,
         documentType: 'general' as const,
+        associatedUserId: selectedUserId,
         caseId: privacy === 'private' && selectedCaseId ? selectedCaseId : undefined
       }
 
@@ -386,7 +411,9 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                 </Label>
                 <Select 
                   value={selectedCaseId} 
-                  onValueChange={setSelectedCaseId}
+                  onValueChange={(e)=>{
+                    setSelectedUserId('')
+                    setSelectedCaseId(e)}}
                   disabled={loadingCases}
                 >
                   <SelectTrigger>
@@ -397,6 +424,40 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                     {availableCases.map((caseItem) => (
                       <SelectItem key={caseItem.id} value={caseItem.id}>
                         {caseItem.case_number} - {caseItem.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCaseId && (
+                  <p className="text-xs text-gray-500">
+                    {t("pages:upload.caseAssociationNote")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+{privacy === 'private' && (
+            <div className="pt-2 border-t animate-in fade-in-50 slide-in-from-bottom-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {t("pages:upload.associateWithUser")}
+                </Label>
+                <Select 
+                  value={selectedUserId} 
+                  onValueChange={(e)=>{
+                    setSelectedUserId(e)
+                    setSelectedCaseId('')}}
+                  disabled={loadingCases}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingCases ? t("pages:upload.loadingCases") : t("pages:upload.selectCasePlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t("pages:upload.noUserAssociation")}</SelectItem>
+                    {availableUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.first_name} {user.last_name} - {user.email}
                       </SelectItem>
                     ))}
                   </SelectContent>

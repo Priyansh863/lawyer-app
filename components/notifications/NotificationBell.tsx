@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { Button } from '../ui/button'
@@ -18,10 +18,12 @@ import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from '@/hooks/useTranslation'
 
 export default function NotificationBell() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { notifications, unreadCount, loading, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const router = useRouter()
+
+  console.log("notificationsnotificationsnotificationsnotifications:", notifications)
 
   React.useEffect(() => {
     if (isOpen) {
@@ -43,6 +45,7 @@ export default function NotificationBell() {
   const getNavigationUrl = (type: string) => {
     switch (type) {
       case 'chat_started':
+      case 'chat_message':
         return '/chat'
       case 'case_created':
       case 'case_status_changed':
@@ -89,6 +92,30 @@ export default function NotificationBell() {
         return '🔔'
     }
   }
+
+  // Helper function to get notification title based on current language
+  const getNotificationTitle = (notification: any) => {
+    if (language === 'ko' && notification.titleKo) {
+      return notification.titleKo
+    }
+    return notification.title
+  }
+
+  // Helper function to get notification message based on current language
+  const getNotificationMessage = (notification: any) => {
+    if (language === 'ko' && notification.messageKo) {
+      return notification.messageKo
+    }
+    return notification.message
+  }
+
+
+ 
+  // useEffect(()=>{
+  //   translateToKorean("You have a new notification").then(translatedText => {
+  //     console.log(translatedText);
+  //   });
+  // },[])
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -145,14 +172,14 @@ export default function NotificationBell() {
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{getTypeIcon(notification.type)}</span>
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {notification.title}
+                          {getNotificationTitle(notification)}
                         </p>
                         {!notification.isRead && (
                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
                         )}
                       </div>
                       <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                        {notification.message}
+                        {getNotificationMessage(notification)}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}

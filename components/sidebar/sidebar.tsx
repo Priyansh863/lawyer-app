@@ -92,11 +92,11 @@ export default function Sidebar() {
   const navItems = [
     { href: "/dashboard", icon: <LayoutDashboard size={18} />, label: t('navigation.dashboard') },
     { href: "/cases", icon: <FileText size={18} />, label: t('navigation.cases') },
-    { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? t('navigation.clients') : "Lawyers" },
+    { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? t('navigation.clients') : t('navigation.lawyers') },
     { href: "/documents", icon: <FileText size={18} />, label: t('navigation.documents') },
     ...(user?.account_type === "lawyer"
       ? [
-          { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
+          // { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },
           // { href: "/voice-summary", icon: <VoiceIcon size={18} />, label: t('navigation.voiceSummary') },
           { href: "/posts", icon: <FileText size={18} />, label: t('navigation.postsAndContent') },
 

@@ -60,8 +60,24 @@ export default function RecentActivity() {
   const [error, setError] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
   const { notifications, fetchNotifications } = useNotifications()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const router = useRouter()
+
+  // Helper function to get notification title based on current language
+  const getNotificationTitle = (notification: any) => {
+    if (language === 'ko' && notification.titleKo) {
+      return notification.titleKo
+    }
+    return notification.title
+  }
+
+  // Helper function to get notification message based on current language
+  const getNotificationMessage = (notification: any) => {
+    if (language === 'ko' && notification.messageKo) {
+      return notification.messageKo
+    }
+    return notification.message
+  }
 
   useEffect(() => {
     fetchNotifications({ limit: 4 })
@@ -80,8 +96,8 @@ export default function RecentActivity() {
         
         const recentNotifications = notifications.slice(0, 4).map(notification => ({
           icon: getNotificationIcon(notification.type),
-          title: notification.title,
-          description: notification.message,
+          title: getNotificationTitle(notification),
+          description: getNotificationMessage(notification),
           time: formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }),
           iconColor: getNotificationIconColor(notification.type).iconColor,
           bgColor: getNotificationIconColor(notification.type).bgColor,

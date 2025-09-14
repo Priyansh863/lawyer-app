@@ -68,6 +68,7 @@ export default function SendMessageModal({
         
         if (response.success) {
           const userList = response.users || response.data || [];
+          console.log('Raw user list:', userList);
           console.log('Processed user list:', userList);
           setUsers(Array.isArray(userList) ? userList : []);
         } else {
@@ -243,11 +244,11 @@ export default function SendMessageModal({
                           {user.email}
                         </div>
                         {/* Show chat rate for lawyers when clients are selecting */}
-                        {user.account_type === 'lawyer' && currentUser?.account_type === 'client' && user.chat_rate && (
+                        {user.account_type === 'lawyer'  ? (
                           <div className="text-xs text-green-600 font-medium">
                             {t('pages:sendMessage.chatRate', { rate: user.chat_rate })}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {user.account_type === 'lawyer' ? t('pages:sendMessage.lawyer') : t('pages:sendMessage.client')}

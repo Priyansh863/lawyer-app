@@ -51,6 +51,7 @@ export default function ChatUserModal({
       setLoading(true);
       try {
         const response = await getRelatedUsers();
+          console.log('Fetched responseresponseresponseresponseresponse:', response.users);
         setUsers(response.users || []);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -143,14 +144,14 @@ export default function ChatUserModal({
                           {targetUser.first_name} {targetUser.last_name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {targetUser.email}
+                        {targetUser.email} 
                         </p>
                         {/* Show chat rate for lawyers when clients are selecting */}
-                        {targetUser.account_type === 'lawyer' && user?.account_type === 'client' && targetUser.chat_rate && (
+                        {targetUser.account_type === 'lawyer' ? (
                           <p className="text-xs text-green-600 font-medium">
                             Chat: {targetUser.chat_rate} tokens/hour
                           </p>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     <Button size="sm" variant="outline" className="gap-2">
