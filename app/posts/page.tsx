@@ -36,7 +36,8 @@ import {
   Wand2,
   QrCode,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ExternalLink
 } from "lucide-react";
 
 export default function PostsPage() {
@@ -95,6 +96,11 @@ export default function PostsPage() {
       description: t("pages:posts.urlCopiedToClipboard", { type }),
       variant: "default",
     });
+  };
+
+  // Open URL in new tab
+  const openUrl = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Toggle post expansion
@@ -346,15 +352,28 @@ export default function PostsPage() {
                         <div className="flex justify-between mt-4 pt-3 border-t">
                           <div className="flex">
                             {post.customUrl && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => copyUrl(post.customUrl!, t("pages:posts.custom"))}
-                                className="text-gray-500 hover:text-purple-500"
-                              >
-                                <Copy className="h-4 w-4 mr-1" />
-                                <span>Copy URL</span>
-                              </Button>
+                              <>
+                               <Button
+  size="sm"
+  variant="ghost"
+  onClick={() => copyUrl(post.customUrl!, t("pages:posts.custom"))}
+  className="text-gray-500 hover:text-purple-500"
+>
+  <Copy className="h-4 w-4 mr-1" />
+  <span>{t("pages:posts.copyUrl")}</span>
+</Button>
+
+<Button
+  size="sm"
+  variant="ghost"
+  onClick={() => openUrl(post.customUrl!)}
+  className="text-gray-500 hover:text-green-500"
+>
+  <ExternalLink className="h-4 w-4 mr-1" />
+  <span>{t("pages:posts.openUrl")}</span>
+</Button>
+
+                              </>
                             )}
                             
                             <QrCodeGenerator 
