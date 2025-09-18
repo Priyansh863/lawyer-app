@@ -19,11 +19,12 @@ import {
   Search, 
   Filter, 
   ExternalLink, 
-  DollarSign, 
+  DollarSign,
   Loader2,
   Check,
   X,
-  Video
+  Video,
+  Coins
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useSelector } from 'react-redux'
@@ -69,6 +70,8 @@ interface Meeting {
   approval_date?: string
   rejection_reason?: string
   notes?: string
+  consultation_type?: 'free' | 'paid'
+  hourly_rate?: number
   createdAt: string
   updatedAt: string
 }
@@ -81,10 +84,42 @@ export default function VideoConsultationTableNew() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [approvingMeeting, setApprovingMeeting] = useState<string | null>(null)
   const [rejectingMeeting, setRejectingMeeting] = useState<string | null>(null)
+  const [lawyerRatesCache, setLawyerRatesCache] = useState<{[key: string]: number}>({})
   const { toast } = useToast()
   const { t } = useTranslation()
   
   const currentUser = useSelector((state: RootState) => state.auth.user)
+
+  // Function to fetch fresh lawyer rates
+  const fetchLawyerRate = async (lawyerId: string): Promise<number> => {
+    // Check cache first
+    if (lawyerRatesCache[lawyerId] !== undefined) {
+      return lawyerRatesCache[lawyerId]
+    }
+
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/charges/charges/${lawyerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        const rate = data.user?.video_rate || data.user?.charges || 0
+        
+        // Cache the rate
+        setLawyerRatesCache(prev => ({ ...prev, [lawyerId]: rate }))
+        return rate
+      }
+    } catch (error) {
+      console.error('Error fetching lawyer rate:', error)
+    }
+    
+    return 0
+  }
 
   useEffect(() => {
     fetchMeetings()
@@ -101,6 +136,22 @@ export default function VideoConsultationTableNew() {
       if (response.success && response.data) {
         const meetingsArray = Array.isArray(response.data) ? response.data : [response.data]
         setMeetings(meetingsArray)
+        
+        // Fetch fresh rates for all lawyers in the meetings
+        const uniqueLawyerIds = new Set<string>()
+        meetingsArray.forEach((meeting: Meeting) => {
+          if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && meeting.lawyer_id._id) {
+            // Only fetch if we don't have hourly_rate in meeting and not cached
+            if (meeting.hourly_rate === undefined && !lawyerRatesCache[meeting.lawyer_id._id]) {
+              uniqueLawyerIds.add(meeting.lawyer_id._id)
+            }
+          }
+        })
+        
+        // Fetch rates for unique lawyers
+        Array.from(uniqueLawyerIds).forEach(lawyerId => {
+          fetchLawyerRate(lawyerId) // This will cache the rate
+        })
       }
     } catch (error) {
       console.error('Error fetching meetings:', error)
@@ -150,9 +201,21 @@ export default function VideoConsultationTableNew() {
   }
 
   const getLawyerCharges = (meeting: Meeting) => {
+    // First priority: Use hourly_rate from the meeting (for new consultations)
+    if (meeting.hourly_rate !== undefined) {
+      return meeting.hourly_rate
+    }
+    
+    // Second priority: Use cached rate if available
+    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && lawyerRatesCache[meeting.lawyer_id._id]) {
+      return lawyerRatesCache[meeting.lawyer_id._id]
+    }
+    
+    // Third priority: Use profile data (may be outdated)
     if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object') {
       return meeting.lawyer_id.video_rate || meeting.lawyer_id.charges || 0
     }
+    
     return 0
   }
 
@@ -394,9 +457,9 @@ export default function VideoConsultationTableNew() {
                     </TableCell>
                     <TableCell className="min-w-[100px]">
                       <div className="flex items-center space-x-1">
-                        <DollarSign className="h-3 w-3 text-green-600" />
+                        <Coins className="h-3 w-3 text-green-600" />
                         <span className="text-sm font-medium text-green-600">
-                          {getLawyerCharges(meeting)}
+                          {getLawyerCharges(meeting)} tokens
                         </span>
                       </div>
                     </TableCell>

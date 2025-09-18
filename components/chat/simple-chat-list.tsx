@@ -207,7 +207,7 @@ export default function SimpleChatList() {
               return (
                 <Card 
                   key={chat._id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow group"
+                  className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => handleChatClick(chat)}
                 >
                   <CardContent className="p-4">
@@ -244,7 +244,7 @@ export default function SimpleChatList() {
                             variant="ghost"
                             size="sm"
                             onClick={(e) => handleDeleteClick(chat._id, e)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="opacity-100 transition-opacity"
                             aria-label={t('pages:chatbox.delete.button')}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
