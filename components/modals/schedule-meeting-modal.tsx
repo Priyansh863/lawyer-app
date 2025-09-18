@@ -63,7 +63,7 @@ export default function ScheduleMeetingModal({
       setLoading(true);
       
       // Get users based on current user's role
-      const response = await getRelatedUsers();
+      const response = await getRelatedUsers(profile);
       
       if (response.success) {
         // Filter by search query if provided

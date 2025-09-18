@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -72,15 +72,17 @@ interface Meeting {
   notes?: string
   consultation_type?: 'free' | 'paid'
   hourly_rate?: number
+  custom_fee?: boolean
   createdAt: string
   updatedAt: string
 }
 
 export default function VideoConsultationTableNew() {
   const [meetings, setMeetings] = useState<Meeting[]>([])
-  const [filteredMeetings, setFilteredMeetings] = useState<Meeting[]>([])
+  // Removed filteredMeetings state - now using useMemo
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [approvingMeeting, setApprovingMeeting] = useState<string | null>(null)
   const [rejectingMeeting, setRejectingMeeting] = useState<string | null>(null)
@@ -125,9 +127,14 @@ export default function VideoConsultationTableNew() {
     fetchMeetings()
   }, [])
 
+  // Debounce search term
   useEffect(() => {
-    filterMeetings()
-  }, [meetings, searchTerm, statusFilter])
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
   const fetchMeetings = async () => {
     try {
@@ -135,6 +142,9 @@ export default function VideoConsultationTableNew() {
       const response = await getMeetings()
       if (response.success && response.data) {
         const meetingsArray = Array.isArray(response.data) ? response.data : [response.data]
+        
+        
+        
         setMeetings(meetingsArray)
         
         // Fetch fresh rates for all lawyers in the meetings
@@ -165,17 +175,18 @@ export default function VideoConsultationTableNew() {
     }
   }
 
-  const filterMeetings = () => {
+  const filteredMeetings = useMemo(() => {
     let filtered = meetings
 
-    if (searchTerm) {
+    if (debouncedSearchTerm) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(meeting => {
         const clientName = getClientName(meeting).toLowerCase()
         const lawyerName = getLawyerName(meeting).toLowerCase()
         const title = (meeting.meeting_title || meeting.title || '').toLowerCase()
-        return clientName.includes(searchTerm.toLowerCase()) ||
-               lawyerName.includes(searchTerm.toLowerCase()) ||
-               title.includes(searchTerm.toLowerCase())
+        return clientName.includes(searchLower) ||
+               lawyerName.includes(searchLower) ||
+               title.includes(searchLower)
       })
     }
 
@@ -183,27 +194,40 @@ export default function VideoConsultationTableNew() {
       filtered = filtered.filter(meeting => meeting.status === statusFilter)
     }
 
-    setFilteredMeetings(filtered)
-  }
+    return filtered;
+  }, [meetings, debouncedSearchTerm, statusFilter]);
 
-  const getClientName = (meeting: Meeting) => {
+  const getClientName = useCallback((meeting: Meeting) => {
     if (meeting.client_id && typeof meeting.client_id === 'object') {
       return `${meeting.client_id.first_name} ${meeting.client_id.last_name}`
     }
     return 'Unknown Client'
-  }
+  }, [])
 
-  const getLawyerName = (meeting: Meeting) => {
+  const getLawyerName = useCallback((meeting: Meeting) => {
     if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object') {
       return `${meeting.lawyer_id.first_name} ${meeting.lawyer_id.last_name}`
     }
     return 'Unknown Lawyer'
-  }
+  }, [])
 
-  const getLawyerCharges = (meeting: Meeting) => {
+  const getLawyerCharges = useCallback((meeting: Meeting) => {
+    
     // First priority: Use hourly_rate from the meeting (for new consultations)
-    if (meeting.hourly_rate !== undefined) {
+    if (meeting.hourly_rate !== undefined && meeting.hourly_rate !== null) {
       return meeting.hourly_rate
+    }
+    
+    // Check if the field has a different name in the API response
+    const anyMeeting = meeting as any;
+    if (anyMeeting.hourlyRate !== undefined && anyMeeting.hourlyRate !== null) {
+      return anyMeeting.hourlyRate
+    }
+    if (anyMeeting.rate !== undefined && anyMeeting.rate !== null) {
+      return anyMeeting.rate
+    }
+    if (anyMeeting.charges !== undefined && anyMeeting.charges !== null) {
+      return anyMeeting.charges
     }
     
     // Second priority: Use cached rate if available
@@ -217,22 +241,32 @@ export default function VideoConsultationTableNew() {
     }
     
     return 0
-  }
+  }, [lawyerRatesCache])
 
-  const formatScheduledTime = (meeting: Meeting) => {
-    const date = meeting.requested_date || meeting.date
-    const time = meeting.requested_time || meeting.time
+  const formatScheduledTime = useCallback((meeting: Meeting) => {
     
-    if (!date) return 'Not scheduled'
+    // Try various field names that might be used by the API
+    const anyMeeting = meeting as any;
+    const date = meeting.requested_date || meeting.date || anyMeeting.requestedDate || anyMeeting.scheduledDate;
+    const time = meeting.requested_time || meeting.time || anyMeeting.requestedTime || anyMeeting.scheduledTime;
     
-    const formattedDate = new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
+    if (!date || date === '' || date === null) {
+      return 'Not scheduled'
+    }
     
-    return time ? `${formattedDate} at ${time}` : formattedDate
-  }
+    try {
+      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric', 
+        year: 'numeric'
+      })
+      
+      return time && time !== '' && time !== null ? `${formattedDate} at ${time}` : formattedDate
+    } catch (error) {
+      console.error('Error formatting date:', date, error);
+      return 'Invalid date'
+    }
+  }, [])
 
   // Check if approve/reject buttons should be shown
   const shouldShowApproveReject = (meeting: Meeting) => {
@@ -458,9 +492,16 @@ export default function VideoConsultationTableNew() {
                     <TableCell className="min-w-[100px]">
                       <div className="flex items-center space-x-1">
                         <Coins className="h-3 w-3 text-green-600" />
-                        <span className="text-sm font-medium text-green-600">
-                          {getLawyerCharges(meeting)} tokens
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-green-600">
+                            {getLawyerCharges(meeting)} tokens
+                          </span>
+                          {(meeting.custom_fee || (meeting as any).customFee) && (
+                            <span className="text-xs text-blue-600 font-medium">
+                              (Custom)
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="min-w-[150px]">

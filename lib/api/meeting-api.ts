@@ -28,6 +28,9 @@ export interface CreateMeetingData {
   meeting_description?: string
   requested_date?: string
   requested_time?: string
+  consultation_type?: 'free' | 'paid'
+  hourly_rate?: number
+  custom_fee?: boolean
 }
 
 export interface User {
@@ -53,6 +56,9 @@ export interface Meeting {
   requested_time?: string
   time?: string // Alias for requested_time
   meeting_link?: string
+  consultation_type?: 'free' | 'paid'
+  hourly_rate?: number
+  custom_fee?: boolean
   status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled'
   approval_date?: string
   rejection_reason?: string
