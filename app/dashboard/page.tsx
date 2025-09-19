@@ -6,7 +6,7 @@ import StatsCards from "@/components/dashboard/stats-cards"
 import QuickActions from "@/components/dashboard/quick-actions"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +41,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { toggleBookmark, checkBookmark, reportPost, checkBatchBookmarks } from "@/lib/api/bookmark-api";
+import { toggleBookmark, checkBookmark, reportPost } from "@/lib/api/bookmark-api";
 import {
   Dialog,
   DialogContent,
@@ -77,48 +77,34 @@ export default function ProfessionalDashboardPage() {
   const [reportReason, setReportReason] = useState("");
   const [isReporting, setIsReporting] = useState(false);
 
-  // Fetch posts with optimized bookmark checking
-  const fetchPosts = useCallback(async () => {
+  // Fetch posts
+  const fetchPosts = async () => {
     try {
       setIsLoading(true);
       const response = await getPosts(1, 8, "published","dashboard");
       
-      const postsData = response.data.posts || [];
-      setPosts(postsData);
+      setPosts(response.data.posts || []);
       
-      // Check bookmark status using batch API (only if user is logged in)
+      // Check bookmark status for each post (only if user is logged in)
       const token = getToken();
-      if (postsData.length > 0 && token) {
+      if (response.data.posts?.length > 0 && token) {
         try {
-          const postIds = postsData.map((post: Post) => post._id);
-          const bookmarkStatus = await checkBatchBookmarks(postIds);
+          const bookmarkChecks = await Promise.allSettled(
+            response.data.posts.map((post: Post) => checkBookmark(post._id))
+          );
+
+          
           
           const bookmarked = new Set<string>();
-          Object.entries(bookmarkStatus).forEach(([postId, isBookmarked]) => {
-            if (isBookmarked) {
-              bookmarked.add(postId);
+          bookmarkChecks.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value.isBookmarked) {
+              bookmarked.add(response.data.posts[index]._id);
             }
           });
           setBookmarkedPosts(bookmarked);
         } catch (error) {
-          // Fallback to individual checks if batch fails
-          console.log('Batch bookmark check failed, falling back to individual checks');
-          try {
-            const bookmarkChecks = await Promise.allSettled(
-              postsData.map((post: Post) => checkBookmark(post._id))
-            );
-
-            const bookmarked = new Set<string>();
-            bookmarkChecks.forEach((result, index) => {
-              if (result.status === 'fulfilled' && result.value.isBookmarked) {
-                bookmarked.add(postsData[index]._id);
-              }
-            });
-            setBookmarkedPosts(bookmarked);
-          } catch (fallbackError) {
-            // Silently fail bookmark checks if authentication fails
-            console.log('Bookmark check failed, user may not be logged in');
-          }
+          // Silently fail bookmark checks if authentication fails
+          console.log('Bookmark check failed, user may not be logged in');
         }
       }
     } catch (error) {
@@ -131,13 +117,13 @@ export default function ProfessionalDashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, t]);
+  };
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  const togglePostExpansion = useCallback((postId: string) => {
+  const togglePostExpansion = (postId: string) => {
     setExpandedPosts(prev => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) {
@@ -147,13 +133,12 @@ export default function ProfessionalDashboardPage() {
       }
       return newSet;
     });
-  }, []);
+  };
 
-  // Memoized function to format content and avoid expensive DOM parsing on every render
-  const formatContent = useCallback((content: string, isExpanded: boolean): string => {
+  const formatContent = (content: string, isExpanded: boolean): string => {
     if (!content) return "";
   
-    // Create a temporary DOM element for parsing
+    // Create a temporary DOM
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, "text/html");
   
@@ -189,20 +174,20 @@ export default function ProfessionalDashboardPage() {
   
     const truncated = truncateNode(doc.body);
     return truncated ? (truncated as HTMLElement).innerHTML : "";
-  }, []);
+  };
   
   
 
-  const hasImage = useCallback((post: Post) => {
+  const hasImage = (post: Post) => {
     return post.image && post.image.trim() !== "";
-  }, []);
+  };
 
-  const getAuthorAvatar = useCallback((author: any) => {
+  const getAuthorAvatar = (author: any) => {
     return author?.profile_image || author?.avatar || null;
-  }, []);
+  };
 
   // Handle bookmark toggle
-  const handleBookmarkToggle = useCallback(async (postId: string) => {
+  const handleBookmarkToggle = async (postId: string) => {
     try {
       const result = await toggleBookmark(postId);
       
@@ -227,10 +212,10 @@ export default function ProfessionalDashboardPage() {
         variant: "destructive",
       });
     }
-  }, [toast, t]);
+  };
 
   // Handle copy URL
-  const handleCopyUrl = useCallback(async (postSlug: string) => {
+  const handleCopyUrl = async (postSlug: string) => {
     try {
       const url = `${window.location.origin}/${postSlug}`;
       await navigator.clipboard.writeText(url);
@@ -245,15 +230,15 @@ export default function ProfessionalDashboardPage() {
         variant: "destructive",
       });
     }
-  }, [toast, t]);
+  };
 
   // Handle report
-  const handleReportClick = useCallback((postId: string) => {
+  const handleReportClick = (postId: string) => {
     setReportingPostId(postId);
     setShowReportDialog(true);
-  }, []);
+  };
 
-  const handleReportSubmit = useCallback(async () => {
+  const handleReportSubmit = async () => {
     if (!reportReason.trim()) {
       toast({
         title: t('pages:dashboard.error'),
@@ -284,29 +269,13 @@ export default function ProfessionalDashboardPage() {
     } finally {
       setIsReporting(false);
     }
-  }, [reportReason, reportingPostId, toast, t]);
+  };
 
-  // Professional post card component (memoized for performance)
-  interface PostCardProps {
-    post: Post;
-    isExpanded: boolean;
-    isBookmarked: boolean;
-    onToggleExpansion: (postId: string) => void;
-    onBookmarkToggle: (postId: string) => void;
-    onCopyUrl: (slug: string) => void;
-    onReportClick: (postId: string) => void;
-  }
-
-  const PostCard = memo(({ 
-    post, 
-    isExpanded, 
-    isBookmarked, 
-    onToggleExpansion, 
-    onBookmarkToggle, 
-    onCopyUrl, 
-    onReportClick 
-  }: PostCardProps) => {
+  // Professional post card component
+  const PostCard = ({ post }: { post: Post }) => {
+    const isExpanded = expandedPosts.has(post._id);
     const hasLongContent = post.content && post.content.length > 400;
+    const isBookmarked = bookmarkedPosts.has(post._id);
 
     return (
       <Card className="w-full bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
@@ -363,7 +332,7 @@ export default function ProfessionalDashboardPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => onBookmarkToggle(post._id)}>
+                  <DropdownMenuItem onClick={() => handleBookmarkToggle(post._id)}>
                     {isBookmarked ? (
                       <BookmarkCheck className="mr-2 h-4 w-4" />
                     ) : (
@@ -372,12 +341,12 @@ export default function ProfessionalDashboardPage() {
                     {isBookmarked ? t('pages:dashboard.bookmarked') : t('pages:dashboard.bookmark')}
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem onClick={() => onCopyUrl(post.slug)}>
+                  <DropdownMenuItem onClick={() => handleCopyUrl(post.slug)}>
                     <Copy className="mr-2 h-4 w-4" />
                     {t('pages:dashboard.copyLink')}
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem onClick={() => onReportClick(post._id)}>
+                  <DropdownMenuItem onClick={() => handleReportClick(post._id)}>
                     <Flag className="mr-2 h-4 w-4" />
                     {t('pages:dashboard.report')}
                   </DropdownMenuItem>
@@ -410,7 +379,7 @@ export default function ProfessionalDashboardPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onToggleExpansion(post._id)}
+              onClick={() => togglePostExpansion(post._id)}
               className="mb-4 p-0 h-auto text-blue-600 hover:text-blue-700 font-medium"
             >
               {isExpanded ? (
@@ -519,7 +488,7 @@ export default function ProfessionalDashboardPage() {
         </div>
       </Card>
     );
-  });
+  };
 
   // Render loading state
   if (isLoading) {
@@ -669,16 +638,7 @@ export default function ProfessionalDashboardPage() {
           ) : (
             <div className="space-y-6">
               {posts.map((post) => (
-                <PostCard 
-                  key={post._id} 
-                  post={post}
-                  isExpanded={expandedPosts.has(post._id)}
-                  isBookmarked={bookmarkedPosts.has(post._id)}
-                  onToggleExpansion={togglePostExpansion}
-                  onBookmarkToggle={handleBookmarkToggle}
-                  onCopyUrl={handleCopyUrl}
-                  onReportClick={handleReportClick}
-                />
+                <PostCard key={post._id} post={post} />
               ))}
             </div>
           )}

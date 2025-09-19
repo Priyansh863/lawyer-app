@@ -67,27 +67,6 @@ export const checkBookmark = async (postId: string): Promise<{ isBookmarked: boo
   }
 };
 
-// Check multiple bookmarks at once (batch)
-export const checkBatchBookmarks = async (postIds: string[]): Promise<{ [postId: string]: boolean }> => {
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/bookmark/check-batch`,
-      { postIds },
-      {
-        headers: getAuthHeaders()
-      }
-    );
-    return response.data.data || {};
-  } catch (error: any) {
-    // If authentication fails or API doesn't support batch, fall back to empty object
-    if (error.response?.status === 401 || error.response?.status === 404) {
-      return {};
-    }
-    console.warn('Batch bookmark check failed, falling back to individual checks');
-    return {};
-  }
-};
-
 // Get user bookmarks
 export const getUserBookmarks = async (page: number = 1, limit: number = 10) => {
   try {

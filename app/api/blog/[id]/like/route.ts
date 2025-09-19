@@ -25,8 +25,9 @@ const blogPosts: BlogPost[] = [
   
 ]
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const index = blogPosts.findIndex((post) => post.id === params.id)
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const index = blogPosts.findIndex((post) => post.id === resolvedParams.id)
 
   if (index === -1) {
     return NextResponse.json({ error: "Blog post not found" }, { status: 404 })

@@ -25,8 +25,9 @@ const blogPosts: BlogPost[] = [
   
 ]
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const post = blogPosts.find((post) => post.id === params.id)
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const post = blogPosts.find((post) => post.id === resolvedParams.id)
 
   if (!post) {
     return NextResponse.json({ error: "Blog post not found" }, { status: 404 })
@@ -37,10 +38,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json(post)
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const resolvedParams = await params
     const data = await request.json()
-    const index = blogPosts.findIndex((post) => post.id === params.id)
+    const index = blogPosts.findIndex((post) => post.id === resolvedParams.id)
 
     if (index === -1) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 })
@@ -51,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       ...blogPosts[index],
       ...data,
       // Don't allow overriding these fields
-      id: params.id,
+      id: resolvedParams.id,
       author: blogPosts[index].author,
       date: blogPosts[index].date,
     }
@@ -65,8 +67,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const index = blogPosts.findIndex((post) => post.id === params.id)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  const index = blogPosts.findIndex((post) => post.id === resolvedParams.id)
 
   if (index === -1) {
     return NextResponse.json({ error: "Blog post not found" }, { status: 404 })
