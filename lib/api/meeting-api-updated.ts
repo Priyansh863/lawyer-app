@@ -28,6 +28,9 @@ export interface CreateMeetingData {
   meeting_description?: string
   requested_date?: string
   requested_time?: string
+  consultation_type?: 'free' | 'paid'
+  hourly_rate?: number
+  custom_fee?: boolean
 }
 
 export interface User {
@@ -55,6 +58,9 @@ export interface Meeting {
   requested_time?: string
   time?: string // Alias for requested_time
   meeting_link?: string
+  consultation_type?: 'free' | 'paid'
+  hourly_rate?: number
+  custom_fee?: boolean
   status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled'
   approval_date?: string
   rejection_reason?: string
@@ -230,6 +236,27 @@ export const checkVideoConsultationTokens = async (lawyerId: string): Promise<an
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to check token balance'
+    }
+  }
+}
+
+// Update meeting details (date, time, rates, etc.)
+export const updateMeeting = async (meetingId: string, updateData: Partial<CreateMeetingData>): Promise<MeetingResponse> => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/meeting/edit/${meetingId}`,
+      {
+        ...updateData,
+        updated_at: new Date().toISOString()
+      },
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Error updating meeting:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update meeting'
     }
   }
 }

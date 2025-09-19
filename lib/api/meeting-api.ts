@@ -209,3 +209,24 @@ export const getPendingMeetings = async (): Promise<MeetingResponse> => {
     }
   }
 }
+
+// Update meeting details (date, time, rates, etc.)
+export const updateMeeting = async (meetingId: string, updateData: Partial<CreateMeetingData>): Promise<MeetingResponse> => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/meeting/edit/${meetingId}`,
+      {
+        ...updateData,
+        updated_at: new Date().toISOString()
+      },
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('Error updating meeting:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update meeting'
+    }
+  }
+}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Video, ExternalLink, Loader2, Calendar, X, Check, DollarSign } from "lucide-react"
+import { Video, ExternalLink, Loader2, Calendar, X, Check, DollarSign, Edit, Clock } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,7 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { getMeetings, updateMeetingStatus, approveMeeting, rejectMeeting, type Meeting } from "@/lib/api/meeting-api"
+import { getMeetings, updateMeetingStatus, approveMeeting, rejectMeeting, updateMeeting, type Meeting } from "@/lib/api/meeting-api"
+import EditMeetingModal from "@/components/modals/edit-meeting-modal"
 
 const searchFormSchema = z.object({
   query: z.string(),
@@ -29,6 +30,8 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
   const [updatingMeeting, setUpdatingMeeting] = useState<string | null>(null)
   const [approvingMeeting, setApprovingMeeting] = useState<string | null>(null)
   const [rejectingMeeting, setRejectingMeeting] = useState<string | null>(null)
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { toast } = useToast()
 
   const searchForm = useForm<SearchFormData>({
@@ -240,6 +243,31 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
     }
   }
 
+  const handleEditMeeting = (meeting: Meeting) => {
+    setEditingMeeting(meeting)
+    setIsEditModalOpen(true)
+  }
+
+  const handleMeetingUpdated = (updatedMeeting: Meeting) => {
+    // Update local state with the updated meeting
+    setMeetings((prev) =>
+      prev.map((meeting) => (meeting._id === updatedMeeting._id ? updatedMeeting : meeting))
+    )
+    setFilteredMeetings((prev) =>
+      prev.map((meeting) => (meeting._id === updatedMeeting._id ? updatedMeeting : meeting))
+    )
+    
+    toast({
+      title: "Meeting Updated",
+      description: "Meeting has been updated successfully",
+    })
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditingMeeting(null)
+  }
+
   const formatScheduledTime = (meeting: Meeting) => {
     if (meeting.date && meeting.time) {
       // Combine date and time for better display
@@ -266,10 +294,20 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
   }
 
   const getLawyerCharges = (meeting: Meeting) => {
-    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && meeting.lawyer_id.charges) {
-      return meeting.lawyer_id.charges
+    // Priority: Custom Rate > Default Lawyer Rate > Free
+    if (meeting.consultation_type === 'free') {
+      return 'Free'
     }
-    return 0
+    
+    if (meeting.custom_fee && meeting.hourly_rate !== undefined) {
+      return `$${meeting.hourly_rate} (Custom)`
+    }
+    
+    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && meeting.lawyer_id.charges) {
+      return `$${meeting.lawyer_id.charges}`
+    }
+    
+    return '$0'
   }
 
   return (
@@ -321,11 +359,11 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
               <TableRow>
                 <TableHead className="min-w-[120px]">Client Name</TableHead>
                 <TableHead className="min-w-[120px]">Lawyer Name</TableHead>
-                <TableHead className="min-w-[100px]">Charges</TableHead>
-                <TableHead className="min-w-[150px]">Scheduled Time</TableHead>
+                <TableHead className="min-w-[120px]">Rate & Type</TableHead>
+                <TableHead className="min-w-[180px]">Scheduled Time</TableHead>
                 <TableHead className="min-w-[100px]">Status</TableHead>
                 <TableHead className="min-w-[200px]">Meeting Link</TableHead>
-                <TableHead className="min-w-[250px]">Actions</TableHead>
+                <TableHead className="min-w-[300px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -356,23 +394,44 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                     <TableCell className="min-w-[120px] font-medium">
                       {getLawyerName(meeting)}
                     </TableCell>
-                    <TableCell className="min-w-[100px]">
-                      <div className="flex items-center space-x-1">
-                        <DollarSign className="h-3 w-3 text-green-600" />
-                        <span className="text-sm font-medium text-green-600">
-                          {getLawyerCharges(meeting)}
-                        </span>
+                    <TableCell className="min-w-[120px]">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-1">
+                          {getLawyerCharges(meeting) === 'Free' ? (
+                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              Free
+                            </span>
+                          ) : (
+                            <>
+                              <DollarSign className="h-3 w-3 text-green-600" />
+                              <span className="text-sm font-medium text-green-600">
+                                {getLawyerCharges(meeting)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {meeting.consultation_type === 'free' ? 'Free Consultation' : 'Paid Consultation'}
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="min-w-[150px]">
-                      <div className="text-sm">
-                        {formatScheduledTime(meeting)}
-                      </div>
-                      {meeting.title && (
-                        <div className="text-xs text-gray-500 mt-1 truncate max-w-[140px]">
-                          {meeting.title}
+                    <TableCell className="min-w-[180px]">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-1 text-sm">
+                          <Clock className="h-3 w-3 text-gray-400" />
+                          <span>{formatScheduledTime(meeting)}</span>
                         </div>
-                      )}
+                        {(meeting.title || meeting.meeting_title) && (
+                          <div className="text-xs text-gray-500 truncate max-w-[160px]">
+                            {meeting.title || meeting.meeting_title}
+                          </div>
+                        )}
+                        {meeting.meeting_description && (
+                          <div className="text-xs text-gray-400 truncate max-w-[160px]">
+                            {meeting.meeting_description}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="min-w-[100px]">
                       {getStatusBadge(meeting.status || "scheduled")}
@@ -389,10 +448,23 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
                         <span className="text-xs text-gray-500">No link available</span>
                       )}
                     </TableCell>
-                    <TableCell className="min-w-[250px]">
+                    <TableCell className="min-w-[300px]">
                       <div className="flex gap-1 flex-wrap">
+                        {/* Edit button for pending/approved meetings */}
+                        {(meeting.status === "pending_approval" || meeting.status === "approved") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 text-xs px-2 py-1"
+                            onClick={() => handleEditMeeting(meeting)}
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                        
                         {/* Approve/Reject buttons for pending meetings */}
-                        {meeting.status === "pending" && (
+                        {(meeting.status === "pending" || meeting.status === "pending_approval") && (
                           <>
                             <Button
                               size="sm"
@@ -462,6 +534,14 @@ export default function VideoConsultationTable({}: VideoConsultationTableProps) 
           </Table>
         </div>
       </div>
+      
+      {/* Edit Meeting Modal */}
+      <EditMeetingModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        meeting={editingMeeting}
+        onMeetingUpdated={handleMeetingUpdated}
+      />
     </div>
   )
 }
