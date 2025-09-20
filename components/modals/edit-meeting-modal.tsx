@@ -71,8 +71,8 @@ export default function EditMeetingModal({
     // Validation
     if (!requestedDate || !requestedTime) {
       toast({
-        title: "Validation Error",
-        description: "Please provide both date and time for the meeting",
+        title: t("pages:consuledit.validationError"),
+        description: t("pages:consuledit.dateTimeRequired"),
         variant: "destructive",
       });
       return;
@@ -80,8 +80,8 @@ export default function EditMeetingModal({
 
     if (consultationType === 'paid' && customFee && (!hourlyRate || hourlyRate <= 0)) {
       toast({
-        title: "Validation Error", 
-        description: "Please provide a valid hourly rate for custom pricing",
+        title: t("pages:consuledit.validationError"),
+        description: t("pages:consuledit.validRateRequired"),
         variant: "destructive",
       });
       return;
@@ -110,19 +110,19 @@ export default function EditMeetingModal({
       
       if (response.success && response.data) {
         toast({
-          title: "Meeting Updated",
-          description: "Meeting details have been updated successfully",
+          title: t("pages:consuledit.meetingUpdated"),
+          description: t("pages:consuledit.meetingUpdatedDesc"),
         });
         
         onMeetingUpdated(response.data);
         handleClose();
       } else {
-        throw new Error(response.message || "Failed to update meeting");
+        throw new Error(response.message || t("pages:consuledit.updateFailed"));
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update meeting",
+        title: t("pages:commonp.error"),
+        description: error.message || t("pages:consuledit.updateFailed"),
         variant: "destructive",
       });
     } finally {
@@ -168,39 +168,39 @@ export default function EditMeetingModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Edit className="w-5 h-5 text-primary" />
-            Edit Meeting Details
+            {t("pages:consuledit.editMeetingDetails")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Meeting Info Display */}
           <div className="p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">Meeting Information</h4>
+            <h4 className="font-medium text-gray-900 mb-2">{t("pages:consuledit.meetingInformation")}</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Client:</span>
+                <span className="text-gray-500">{t("pages:consuledit.client")}:</span>
                 <p className="font-medium">
                   {meeting.client_id && typeof meeting.client_id === 'object'
                     ? `${meeting.client_id.first_name} ${meeting.client_id.last_name}`
-                    : 'Unknown Client'
+                    : t("pages:consuledit.unknownClient")
                   }
                 </p>
               </div>
               <div>
-                <span className="text-gray-500">Lawyer:</span>
+                <span className="text-gray-500">{t("pages:consuledit.lawyer")}:</span>
                 <p className="font-medium">
                   {meeting.lawyer_id && typeof meeting.lawyer_id === 'object'
                     ? `${meeting.lawyer_id.first_name} ${meeting.lawyer_id.last_name}`
-                    : 'Unknown Lawyer'
+                    : t("pages:consuledit.unknownLawyer")
                   }
                 </p>
               </div>
               <div>
-                <span className="text-gray-500">Status:</span>
+                <span className="text-gray-500">{t("pages:consuledit.status")}:</span>
                 <p className="font-medium capitalize">{meeting.status}</p>
               </div>
               <div>
-                <span className="text-gray-500">Default Rate:</span>
+                <span className="text-gray-500">{t("pages:consuledit.defaultRate")}:</span>
                 <p className="font-medium">${meeting.custom_fee ? meeting.hourly_rate : meeting.lawyer_id.charges}</p>
               </div>
             </div>
@@ -209,22 +209,22 @@ export default function EditMeetingModal({
           {/* Basic Details */}
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <Label htmlFor="title">Meeting Title</Label>
+              <Label htmlFor="title">{t("pages:consuledit.meetingTitle")}</Label>
               <Input
                 id="title"
                 value={meetingTitle}
                 onChange={(e) => setMeetingTitle(e.target.value)}
-                placeholder="Enter meeting title"
+                placeholder={t("pages:consuledit.enterMeetingTitle")}
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">{t("pages:consuledit.description")} ({t("pages:commonp.optional")})</Label>
               <Textarea
                 id="description"
                 value={meetingDescription}
                 onChange={(e) => setMeetingDescription(e.target.value)}
-                placeholder="Enter meeting description"
+                placeholder={t("pages:consuledit.enterMeetingDescription")}
                 rows={3}
               />
             </div>
@@ -235,7 +235,7 @@ export default function EditMeetingModal({
             <div>
               <Label htmlFor="date" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Meeting Date
+                {t("pages:consuledit.meetingDate")}
               </Label>
               <Input
                 id="date"
@@ -249,7 +249,7 @@ export default function EditMeetingModal({
             <div>
               <Label htmlFor="time" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Meeting Time
+                {t("pages:consuledit.meetingTime")}
               </Label>
               <Input
                 id="time"
@@ -266,18 +266,18 @@ export default function EditMeetingModal({
               <div className="space-y-4 p-4 border rounded-lg">
               <h4 className="font-medium flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
-                Consultation Pricing
+                {t("pages:consuledit.consultationPricing")}
               </h4>
               
               <div>
-                <Label>Consultation Type</Label>
+                <Label>{t("pages:consuledit.consultationType")}</Label>
                 <Select value={consultationType} onValueChange={(value: 'free' | 'paid') => setConsultationType(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="free">Free Consultation</SelectItem>
-                    <SelectItem value="paid">Paid Consultation</SelectItem>
+                    <SelectItem value="free">{t("pages:consuledit.freeConsultation")}</SelectItem>
+                    <SelectItem value="paid">{t("pages:consuledit.paidConsultation")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -291,20 +291,20 @@ export default function EditMeetingModal({
                       onCheckedChange={(checked) => setCustomFee(checked as boolean)}
                     />
                     <Label htmlFor="custom_fee" className="text-sm">
-                      Use custom rate (override default ${getDefaultRate()})
+                      {t("pages:consuledit.useCustomRate", { rate: getDefaultRate() })}
                     </Label>
                   </div>
   
                   {customFee && (
                     <div>
-                      <Label htmlFor="hourly_rate">Custom Hourly Rate ($)</Label>
+                      <Label htmlFor="hourly_rate">{t("pages:consuledit.customHourlyRate")}</Label>
                       <Input
                         id="hourly_rate"
                         type="number"
                         min="1"
                         value={hourlyRate}
                         onChange={(e) => setHourlyRate(Number(e.target.value))}
-                        placeholder="Enter custom rate"
+                        placeholder={t("pages:consuledit.enterCustomRate")}
                       />
                     </div>
                   )}
@@ -320,12 +320,12 @@ export default function EditMeetingModal({
 
           {/* Meeting Link */}
           <div>
-            <Label htmlFor="link">Meeting Link (Optional)</Label>
+            <Label htmlFor="link">{t("pages:consuledit.meetingLink")} ({t("pages:commonp.optional")})</Label>
             <Input
               id="link"
               value={meetingLink}
               onChange={(e) => setMeetingLink(e.target.value)}
-              placeholder="Enter or paste meeting link"
+              placeholder={t("pages:consuledit.enterMeetingLink")}
             />
           </div>
         </div>
@@ -334,18 +334,18 @@ export default function EditMeetingModal({
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={handleClose}>
             <X className="w-4 h-4 mr-2" />
-            Cancel
+            {t("pages:commonp.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={updating}>
             {updating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Updating...
+                {t("pages:commonp.updating")}...
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Save Changes
+                {t("pages:commonp.saveChanges")}
               </>
             )}
           </Button>

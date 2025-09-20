@@ -92,6 +92,38 @@
       "createPost": "Create Post"
     },
     
+  
+    "consuledit": {
+      "validationError": "Validation Error",
+      "dateTimeRequired": "Please provide both date and time for the meeting",
+      "validRateRequired": "Please provide a valid hourly rate for custom pricing",
+      "meetingUpdated": "Meeting Updated",
+      "meetingUpdatedDesc": "Meeting details have been updated successfully",
+      "updateFailed": "Failed to update meeting",
+      "editMeetingDetails": "Edit Meeting Details",
+      "meetingInformation": "Meeting Information",
+      "client": "Client",
+      "unknownClient": "Unknown Client",
+      "lawyer": "Lawyer",
+      "unknownLawyer": "Unknown Lawyer",
+      "status": "Status",
+      "defaultRate": "Default Rate",
+      "meetingTitle": "Meeting Title",
+      "enterMeetingTitle": "Enter meeting title",
+      "description": "Description",
+      "enterMeetingDescription": "Enter meeting description",
+      "meetingDate": "Meeting Date",
+      "meetingTime": "Meeting Time",
+      "consultationPricing": "Consultation Pricing",
+      "consultationType": "Consultation Type",
+      "freeConsultation": "Free Consultation",
+      "paidConsultation": "Paid Consultation",
+      "useCustomRate": "Use custom rate (override default ${{rate}})",
+      "customHourlyRate": "Custom Hourly Rate ($)",
+      "enterCustomRate": "Enter custom rate",
+      "meetingLink": "Meeting Link",
+      "enterMeetingLink": "Enter or paste meeting link"
+    },
   "commonp": {
     "error": "Error",
     "cancel": "Cancel",
@@ -99,7 +131,13 @@
     "sending": "Sending",
     "client": "client",
     "success": "Success",
-    "lawyer": "lawyer"
+    "lawyer": "lawyer",
+    
+    "optional": "Optional",
+    
+    "updating": "Updating",
+    "saveChanges": "Save Changes"
+
   },
   "consultation": {
     "failedToFetchUsers": "Failed to fetch users",
@@ -2181,6 +2219,14 @@
       "title": "Meeting Management",
       "description": "Manage your scheduled meetings, connect to video calls, and track meeting status."
     },
+     "toasta": {
+    "updatedTitle": "Meeting Updated",
+    "updatedDescription": "Meeting has been updated successfully"
+  },
+     "consultation": {
+    "free": "Free Consultation",
+    "paid": "Paid Consultation"
+  },
     "filter": {
       "placeholder": "Filter by status",
       "all": "All Status",
@@ -2201,7 +2247,8 @@
       "time": "Scheduled Time",
       "status": "Status",
       "link": "Meeting Link",
-      "actions": "Actions"
+      "actions": "Actions",
+      "rateType": "Rate & Type"
     },
     "status": {
       "pending": "Pending",
@@ -2217,7 +2264,9 @@
       "approve": "Approve",
       "reject": "Reject",
       "connect": "Connect",
-      "close": "Close"
+      "close": "Close",
+       "edit": "Edit"
+
     },
     "time": {
       "scheduled": "{date} at {time}",

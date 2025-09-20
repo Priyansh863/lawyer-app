@@ -378,8 +378,8 @@ export default function VideoConsultationTableNew() {
     )
     
     toast({
-      title: "Meeting Updated",
-      description: "Meeting has been updated successfully",
+      title: t("pages:meeting.toasta.updatedTitle"),
+      description: t("pages:meeting.toasta.updatedDescription"),
     })
   }
 
@@ -464,7 +464,7 @@ export default function VideoConsultationTableNew() {
               <TableRow className="bg-gray-50">
                 <TableHead className="min-w-[120px]">{t('pages:meeting.table.client')}</TableHead>
                 <TableHead className="min-w-[120px]">{t('pages:meeting.table.lawyer')}</TableHead>
-                <TableHead className="min-w-[120px]">Rate & Type</TableHead>
+                <TableHead className="min-w-[120px]"> {t("pages:meeting.table.rateType")}</TableHead>
                 <TableHead className="min-w-[180px]">{t('pages:meeting.table.time')}</TableHead>
                 <TableHead className="min-w-[100px]">{t('pages:meeting.table.status')}</TableHead>
                 <TableHead className="min-w-[200px]">{t('pages:meeting.table.link')}</TableHead>
@@ -528,7 +528,10 @@ export default function VideoConsultationTableNew() {
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {meeting.consultation_type === 'free' ? 'Free Consultation' : 'Paid Consultation'}
+                        {meeting.consultation_type === "free"
+  ? t("pages:meeting.consultation.free")
+  : t("pages:meeting.consultation.paid")}
+
                         </div>
                       </div>
                     </TableCell>
@@ -576,7 +579,7 @@ export default function VideoConsultationTableNew() {
                             onClick={() => handleEditMeeting(meeting)}
                           >
                             <Edit className="h-3 w-3 mr-1" />
-                            Edit
+                             {t("pages:meeting.actions.edit")}
                           </Button>
                         )}
                         
