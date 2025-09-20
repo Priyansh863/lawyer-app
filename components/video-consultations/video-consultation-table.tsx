@@ -76,6 +76,7 @@ interface Meeting {
   consultation_type?: 'free' | 'paid'
   hourly_rate?: number
   custom_fee?: boolean
+  duration?: number // Assuming duration is in minutes
   createdAt: string
   updatedAt: string
 }
@@ -147,8 +148,6 @@ export default function VideoConsultationTableNew() {
       const response = await getMeetings()
       if (response.success && response.data) {
         const meetingsArray = Array.isArray(response.data) ? response.data : [response.data]
-        
-        
         
         setMeetings(meetingsArray)
         
@@ -270,6 +269,50 @@ export default function VideoConsultationTableNew() {
     } catch (error) {
       console.error('Error formatting date:', date, error);
       return 'Invalid date'
+    }
+  }, [])
+
+  // Function to calculate and format end time with date
+  const formatEndTime = useCallback((meeting: Meeting) => {
+    // Try various field names that might be used by the API
+    const anyMeeting = meeting as any;
+    const date = meeting.requested_date || meeting.date || anyMeeting.requestedDate || anyMeeting.scheduledDate;
+    const time = meeting.requested_time || meeting.time || anyMeeting.requestedTime || anyMeeting.scheduledTime;
+    const duration = meeting.duration || anyMeeting.duration || 60; // Default to 60 minutes if no duration
+    
+    if (!date || date === '' || date === null || !time || time === '' || time === null) {
+      return 'Not scheduled'
+    }
+    
+    try {
+      // Parse the time string (assuming format like "HH:MM" or "HH:MM:SS")
+      const [hours, minutes] = time.split(':').map(Number);
+      
+      // Create a date object for the meeting start time
+      const startDate = new Date(date);
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      // Calculate end time by adding duration (in minutes)
+      const endDate = new Date(startDate.getTime() + duration * 60000);
+      
+      // Format the end date
+      const formattedDate = endDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric', 
+        year: 'numeric'
+      });
+      
+      // Format the end time
+      const formattedTime = endDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return `${formattedDate} at ${formattedTime}`;
+    } catch (error) {
+      console.error('Error calculating end time:', error);
+      return 'Invalid time'
     }
   }, [])
 
@@ -466,6 +509,7 @@ export default function VideoConsultationTableNew() {
                 <TableHead className="min-w-[120px]">{t('pages:meeting.table.lawyer')}</TableHead>
                 <TableHead className="min-w-[120px]"> {t("pages:meeting.table.rateType")}</TableHead>
                 <TableHead className="min-w-[180px]">{t('pages:meeting.table.time')}</TableHead>
+                <TableHead className="min-w-[180px]">{t('pages:meeting.table.endTime')}</TableHead>
                 <TableHead className="min-w-[100px]">{t('pages:meeting.table.status')}</TableHead>
                 <TableHead className="min-w-[200px]">{t('pages:meeting.table.link')}</TableHead>
                 <TableHead className="min-w-[300px]">{t('pages:meeting.table.actions')}</TableHead>
@@ -480,6 +524,7 @@ export default function VideoConsultationTableNew() {
                     <TableCell><Skeleton width={100} /></TableCell>
                     <TableCell><Skeleton width={60} /></TableCell>
                     <TableCell><Skeleton width={120} /></TableCell>
+                    <TableCell><Skeleton width={120} /></TableCell>
                     <TableCell><Skeleton width={80} height={24} /></TableCell>
                     <TableCell><Skeleton width={150} /></TableCell>
                     <TableCell>
@@ -492,7 +537,7 @@ export default function VideoConsultationTableNew() {
                 ))
               ) : filteredMeetings.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
                       <Calendar className="h-8 w-8 text-gray-400" />
                       <span>{t('pages:meeting.empty')}</span>
@@ -549,6 +594,19 @@ export default function VideoConsultationTableNew() {
                         {meeting.meeting_description && (
                           <div className="text-xs text-gray-400 truncate max-w-[160px]">
                             {meeting.meeting_description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="min-w-[180px]">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-1 text-sm">
+                          <Clock className="h-3 w-3 text-gray-400" />
+                          <span>{formatEndTime(meeting)}</span>
+                        </div>
+                        {meeting.duration && (
+                          <div className="text-xs text-gray-500">
+                            Duration: {meeting.duration} minutes
                           </div>
                         )}
                       </div>

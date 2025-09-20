@@ -20,7 +20,8 @@ import {
   DollarSign,
   Users,
   MessageSquare,
-  Calendar
+  Calendar,
+  Calculator
 } from "lucide-react";
 import { getRelatedUsers } from "@/lib/api/users-api";
 import { createMeeting } from "@/lib/api/meeting-api";
@@ -74,6 +75,10 @@ export default function ConsultationTypeModal({
   const [useCustomFee, setUseCustomFee] = useState(false);
   const [consultationDate, setConsultationDate] = useState<string>("");
   const [consultationTime, setConsultationTime] = useState<string>("");
+  const [perMinuteRate, setPerMinuteRate] = useState<string>("");
+  const [reservationEndDate, setReservationEndDate] = useState<string>("");
+  const [reservationEndTime, setReservationEndTime] = useState<string>("");
+  const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
 
   const { toast } = useToast();
   const profile = useSelector((state: RootState) => state.auth.user);
@@ -83,6 +88,40 @@ export default function ConsultationTypeModal({
   // Only use fresh profile for rates
   const currentProfile = profile;
   const profileWithFreshRates = freshUserProfile || profile;
+
+  // Calculate total based on per-minute rate and duration
+  useEffect(() => {
+    if (perMinuteRate && reservationEndDate && reservationEndTime && consultationDate && consultationTime) {
+      try {
+        const rate = parseFloat(perMinuteRate);
+        if (isNaN(rate) || rate <= 0) {
+          setCalculatedTotal(0);
+          return;
+        }
+
+        // Calculate duration in minutes
+        const startDateTime = new Date(`${consultationDate}T${consultationTime}`);
+        const endDateTime = new Date(`${reservationEndDate}T${reservationEndTime}`);
+        
+        if (endDateTime <= startDateTime) {
+          setCalculatedTotal(0);
+          return;
+        }
+        
+        const durationMs = endDateTime.getTime() - startDateTime.getTime();
+        const durationMinutes = Math.ceil(durationMs / (1000 * 60));
+        
+        // Calculate total
+        const total = rate * durationMinutes;
+        setCalculatedTotal(total);
+      } catch (error) {
+        console.error("Error calculating total:", error);
+        setCalculatedTotal(0);
+      }
+    } else {
+      setCalculatedTotal(0);
+    }
+  }, [perMinuteRate, reservationEndDate, reservationEndTime, consultationDate, consultationTime]);
 
   const fetchFreshUserProfile = async () => {
     if (!profile?._id) return;
@@ -188,21 +227,32 @@ export default function ConsultationTypeModal({
       // Get the lawyer's video rate or custom fee
       const lawyerProfile = currentProfile?.account_type === 'lawyer' ? profileWithFreshRates : selectedUser;
       const defaultRate = lawyerProfile?.video_rate || lawyerProfile?.charges || 0;
-      const finalRate = consultationType === 'paid' 
-        ? (useCustomFee && customFee ? parseInt(customFee) : defaultRate)
+      
+      // Use per-minute rate if available, otherwise fall back to hourly rate
+      let finalRate = consultationType === 'paid' 
+        ? (useCustomFee && perMinuteRate ? parseFloat(perMinuteRate) : defaultRate)
         : 0;
+      
+      // If using per-minute rate, convert to hourly rate for display
+      const displayRate = perMinuteRate && consultationType === 'paid' 
+        ? parseFloat(perMinuteRate) 
+        : finalRate;
       
       const meetingData = {
         lawyerId: currentProfile?.account_type === 'lawyer' ? currentProfile._id : selectedUser._id,
         clientId: currentProfile?.account_type === 'client' ? currentProfile._id : selectedUser._id,
         meeting_title: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultation")}`,
-        meeting_description: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.atRate", { rate: finalRate })}` : ''}${useCustomFee ? ` (${t("pages:consultation.customRate")})` : ''}`,
+        meeting_description: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.atRate", { rate: displayRate })}` : ''}${useCustomFee ? ` (${t("pages:consultation.customRate")})` : ''}`,
         requested_date: consultationDate || new Date().toISOString().split('T')[0],
         requested_time: consultationTime || new Date().toTimeString().split(' ')[0].substring(0, 5),
         meetingLink: consultationLink,
         consultation_type: consultationType,
         hourly_rate: finalRate,
         custom_fee: useCustomFee,
+        per_minute_rate: perMinuteRate ? parseFloat(perMinuteRate) : null,
+        reservation_end_date: reservationEndDate,
+        reservation_end_time: reservationEndTime,
+        calculated_total: calculatedTotal,
       };
 
       const response = await createMeeting(meetingData);
@@ -213,7 +263,7 @@ export default function ConsultationTypeModal({
           await notificationsApi.createNotification({
             userId: selectedUser._id,
             title: `${t("pages:consultation.new")} ${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultationRequest")}`,
-            message: `${currentProfile?.first_name} ${currentProfile?.last_name} ${t("pages:consultation.hasSentYouVideoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.withHourlyRate", { rate: finalRate })}` : ''}.`,
+            message: `${currentProfile?.first_name} ${currentProfile?.last_name} ${t("pages:consultation.hasSentYouVideoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.withHourlyRate", { rate: displayRate })}` : ''}.`,
             type: 'video_consultation_started',
             relatedId: response.data?._id,
             relatedType: 'meeting',
@@ -223,9 +273,13 @@ export default function ConsultationTypeModal({
               consultation_type: consultationType,
               hourly_rate: finalRate,
               custom_fee: useCustomFee,
+              per_minute_rate: perMinuteRate ? parseFloat(perMinuteRate) : null,
               meeting_link: consultationLink,
               consultation_date: consultationDate,
               consultation_time: consultationTime,
+              reservation_end_date: reservationEndDate,
+              reservation_end_time: reservationEndTime,
+              calculated_total: calculatedTotal,
               sender: {
                 _id: currentProfile?._id,
                 name: `${currentProfile?.first_name} ${currentProfile?.last_name}`,
@@ -283,6 +337,10 @@ export default function ConsultationTypeModal({
     setUseCustomFee(false);
     setConsultationDate("");
     setConsultationTime("");
+    setPerMinuteRate("");
+    setReservationEndDate("");
+    setReservationEndTime("");
+    setCalculatedTotal(0);
     onClose();
   };
 
@@ -415,16 +473,30 @@ export default function ConsultationTypeModal({
                       </Label>
                     </div>
                     {useCustomFee && (
-                      <div className="flex items-center gap-2">
-                        <Coins className="w-4 h-4 text-blue-600" />
-                        <Input
-                          type="number"
-                          placeholder={t("pages:consultation.enterCustomRate")}
-                          value={customFee}
-                          onChange={(e) => setCustomFee(e.target.value)}
-                          className="flex-1"
-                        />
-                        <span className="text-sm text-muted-foreground">{t("pages:consultation.tokensPerHour")}</span>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Coins className="w-4 h-4 text-blue-600" />
+                          <Input
+                            type="number"
+                            placeholder={t("pages:consultation.enterPerMinuteRate")}
+                            value={perMinuteRate}
+                            onChange={(e) => setPerMinuteRate(e.target.value)}
+                            className="flex-1"
+                            min="0"
+                            step="0.01"
+                          />
+                          <span className="text-sm text-muted-foreground">{t("pages:consultation.tokensPerMinute")}</span>
+                        </div>
+                        
+                        {/* Total calculation display */}
+                        {calculatedTotal > 0 && (
+                          <div className="flex items-center gap-2 p-2 bg-blue-100 rounded-md">
+                            <Calculator className="w-4 h-4 text-blue-700" />
+                            <span className="text-sm font-medium text-blue-800">
+                              {t("pages:consultation.estimatedTotal")}: {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -477,6 +549,58 @@ export default function ConsultationTypeModal({
                   />
                 </div>
               </div>
+              
+              {/* Reservation End Date/Time - Only for paid consultations */}
+              {consultationType === 'paid' && (
+                <>
+                  <div className="border-t pt-3 mt-3">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      {t("pages:consultation.reservationEnd")}
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="reservationEndDate" className="text-sm">
+                          {t("pages:consultation.endDate")}
+                        </Label>
+                        <Input
+                          id="reservationEndDate"
+                          type="date"
+                          value={reservationEndDate}
+                          onChange={(e) => setReservationEndDate(e.target.value)}
+                          min={consultationDate || new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reservationEndTime" className="text-sm">
+                          {t("pages:consultation.endTime")}
+                        </Label>
+                        <Input
+                          id="reservationEndTime"
+                          type="time"
+                          value={reservationEndTime}
+                          onChange={(e) => setReservationEndTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Total calculation for paid consultations */}
+                  {calculatedTotal > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-blue-100 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Calculator className="w-4 h-4 text-blue-700" />
+                        <span className="text-sm font-medium text-blue-800">
+                          {t("pages:consultation.estimatedTotal")}
+                        </span>
+                      </div>
+                      <span className="text-lg font-bold text-blue-800">
+                        {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              
               <p className="text-xs text-muted-foreground">
                 {currentProfile?.account_type === 'lawyer' 
                   ? t("pages:consultation.ifNotSpecifiedLawyer")
@@ -563,8 +687,8 @@ export default function ConsultationTypeModal({
                             <span className="font-medium text-blue-700">
                               {/* Show the rate that will be used */}
                               {currentProfile?.account_type === 'lawyer' 
-                                ? useCustomFee && customFee 
-                                  ? t("pages:consultation.customRateDisplay", { rate: customFee })
+                                ? useCustomFee && perMinuteRate 
+                                  ? t("pages:consultation.customRateDisplay", { rate: perMinuteRate })
                                   : t("pages:consultation.defaultRateDisplay", { rate: profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0 })
                                 : t("pages:consultation.lawyerRateDisplay", { rate: user.video_rate || user.charges || 0 })
                               }
@@ -609,7 +733,7 @@ export default function ConsultationTypeModal({
                     <Coins className="w-4 h-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-700">
                       {t("pages:consultation.rate")}: {currentProfile?.account_type === 'lawyer' 
-                        ? (useCustomFee && customFee ? t("pages:consultation.customRateDisplay", { rate: customFee }) : t("pages:consultation.defaultRateDisplay", { rate: profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0 }))
+                        ? (useCustomFee && perMinuteRate ? t("pages:consultation.customRateDisplay", { rate: perMinuteRate }) : t("pages:consultation.defaultRateDisplay", { rate: profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0 }))
                         : t("pages:consultation.lawyerRateDisplay", { rate: selectedUser.video_rate || selectedUser.charges || 0 })
                       }
                     </span>
@@ -645,16 +769,27 @@ export default function ConsultationTypeModal({
                 <p><span className="font-medium">{t("pages:consultation.type")}:</span> {consultationType === 'free' ? t("pages:consultation.freeConsultation") : t("pages:consultation.paidConsultation")}</p>
                 <p><span className="font-medium">{t("pages:consultation.with")}:</span> {selectedUser.first_name} {selectedUser.last_name}</p>
                 {consultationType === 'paid' && (
-                  <p><span className="font-medium">{t("pages:consultation.rate")}:</span> {currentProfile?.account_type === 'lawyer' 
-                    ? (useCustomFee && customFee ? t("pages:consultation.customRateDisplay", { rate: customFee }) : t("pages:consultation.defaultRateDisplay", { rate: profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0 }))
-                    : t("pages:consultation.lawyerRateDisplay", { rate: selectedUser.video_rate || selectedUser.charges || 0 })
-                  }</p>
+                  <>
+                    <p><span className="font-medium">{t("pages:consultation.rate")}:</span> {currentProfile?.account_type === 'lawyer' 
+                      ? (useCustomFee && perMinuteRate ? t("pages:consultation.customRateDisplay", { rate: perMinuteRate }) : t("pages:consultation.defaultRateDisplay", { rate: profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0 }))
+                      : t("pages:consultation.lawyerRateDisplay", { rate: selectedUser.video_rate || selectedUser.charges || 0 })
+                    }</p>
+                    {calculatedTotal > 0 && (
+                      <p><span className="font-medium">{t("pages:consultation.estimatedTotal")}:</span> {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}</p>
+                    )}
+                  </>
                 )}
                 {consultationDate && (
                   <p><span className="font-medium">{t("pages:consultation.date")}:</span> {new Date(consultationDate).toLocaleDateString()}</p>
                 )}
                 {consultationTime && (
                   <p><span className="font-medium">{t("pages:consultation.time")}:</span> {consultationTime}</p>
+                )}
+                {reservationEndDate && (
+                  <p><span className="font-medium">{t("pages:consultation.endDate")}:</span> {new Date(reservationEndDate).toLocaleDateString()}</p>
+                )}
+                {reservationEndTime && (
+                  <p><span className="font-medium">{t("pages:consultation.endTime")}:</span> {reservationEndTime}</p>
                 )}
                 {!consultationDate && !consultationTime && (
                   <p><span className="font-medium">{t("pages:consultation.schedule")}:</span> {currentProfile?.account_type === 'lawyer' ? t("pages:consultation.immediateSchedule") : t("pages:consultation.toBeScheduled")}</p>

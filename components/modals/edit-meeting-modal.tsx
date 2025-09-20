@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,8 @@ export default function EditMeetingModal({
   const [meetingDescription, setMeetingDescription] = useState("");
   const [requestedDate, setRequestedDate] = useState("");
   const [requestedTime, setRequestedTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [consultationType, setConsultationType] = useState<'free' | 'paid'>('paid');
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const [customFee, setCustomFee] = useState(false);
@@ -41,6 +43,35 @@ export default function EditMeetingModal({
   const { toast } = useToast();
   const profile = useSelector((state: RootState) => state.auth.user);
   const { t } = useTranslation();
+
+  // Calculate meeting duration in minutes
+  const meetingDuration = useMemo(() => {
+    if (!requestedDate || !requestedTime || !endDate || !endTime) return 0;
+
+    try {
+      const startDateTime = new Date(`${requestedDate}T${requestedTime}`);
+      const endDateTime = new Date(`${endDate}T${endTime}`);
+      
+      // Ensure end time is after start time
+      if (endDateTime <= startDateTime) return 0;
+      
+      const durationMs = endDateTime.getTime() - startDateTime.getTime();
+      return Math.round(durationMs / 60000); // Convert to minutes
+    } catch (error) {
+      console.error('Error calculating duration:', error);
+      return 0;
+    }
+  }, [requestedDate, requestedTime, endDate, endTime]);
+
+  // Calculate total cost
+  const totalCost = useMemo(() => {
+    if (consultationType === 'free') return 0;
+    
+    const rate = customFee ? hourlyRate : (meeting?.lawyer_id?.charges || 0);
+    const durationHours = meetingDuration / 60;
+    
+    return rate * durationHours;
+  }, [consultationType, customFee, hourlyRate, meeting?.lawyer_id?.charges, meetingDuration]);
 
   // Reset form when meeting changes
   useEffect(() => {
@@ -62,8 +93,98 @@ export default function EditMeetingModal({
       setHourlyRate(meeting.hourly_rate || 0);
       setCustomFee(meeting.custom_fee || false);
       setMeetingLink(meeting.meeting_link || "");
+      
+      // Set end date and time if available, otherwise calculate from start time and duration
+      if (meeting.end_date) {
+        const endDateValue = new Date(meeting.end_date);
+        setEndDate(endDateValue.toISOString().split('T')[0]);
+      } else if (meeting.requested_date && meeting.requested_time && meeting.duration) {
+        // Calculate end time based on start time and duration
+        calculateEndDateTime(
+          meeting.requested_date || meeting.date,
+          meeting.requested_time || meeting.time,
+          meeting.duration
+        );
+      }
+      
+      if (meeting.end_time) {
+        setEndTime(meeting.end_time);
+      } else if (meeting.requested_date && meeting.requested_time && meeting.duration) {
+        // Calculate end time based on start time and duration
+        calculateEndDateTime(
+          meeting.requested_date || meeting.date,
+          meeting.requested_time || meeting.time,
+          meeting.duration
+        );
+      }
     }
   }, [meeting, isOpen]);
+
+  // Calculate end date and time based on start time and duration
+  const calculateEndDateTime = (startDate: string, startTime: string, duration: number) => {
+    if (!startDate || !startTime) return;
+    
+    try {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const startDateTime = new Date(startDate);
+      startDateTime.setHours(hours, minutes, 0, 0);
+      
+      const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+      
+      setEndDate(endDateTime.toISOString().split('T')[0]);
+      setEndTime(endDateTime.toTimeString().substring(0, 5));
+    } catch (error) {
+      console.error('Error calculating end date/time:', error);
+    }
+  };
+
+  // Update end time when start time changes to maintain duration
+  const handleStartTimeChange = (time: string) => {
+    setRequestedTime(time);
+    
+    // If we have both start and end times, adjust end time to maintain duration
+    if (time && endTime && requestedDate && endDate) {
+      try {
+        const startDateTime = new Date(`${requestedDate}T${time}`);
+        const endDateTime = new Date(`${endDate}T${endTime}`);
+        const durationMs = endDateTime.getTime() - startDateTime.getTime();
+        
+        if (durationMs > 0) {
+          const newEndDateTime = new Date(startDateTime.getTime() + durationMs);
+          setEndTime(newEndDateTime.toTimeString().substring(0, 5));
+          
+          // Also update end date if it crosses midnight
+          if (newEndDateTime.toDateString() !== startDateTime.toDateString()) {
+            setEndDate(newEndDateTime.toISOString().split('T')[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error adjusting end time:', error);
+      }
+    }
+  };
+
+  // Update end time when start date changes
+  const handleStartDateChange = (date: string) => {
+    setRequestedDate(date);
+    
+    // If we have both start and end dates/times, adjust end date to maintain duration
+    if (date && endDate && requestedTime && endTime) {
+      try {
+        const startDateTime = new Date(`${date}T${requestedTime}`);
+        const endDateTime = new Date(`${endDate}T${endTime}`);
+        const durationMs = endDateTime.getTime() - startDateTime.getTime();
+        
+        if (durationMs > 0) {
+          const newEndDateTime = new Date(startDateTime.getTime() + durationMs);
+          setEndDate(newEndDateTime.toISOString().split('T')[0]);
+          setEndTime(newEndDateTime.toTimeString().substring(0, 5));
+        }
+      } catch (error) {
+        console.error('Error adjusting end date:', error);
+      }
+    }
+  };
 
   const handleSave = async () => {
     if (!meeting) return;
@@ -76,6 +197,35 @@ export default function EditMeetingModal({
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate end date and time if provided
+    if ((endDate && !endTime) || (!endDate && endTime)) {
+      toast({
+        title: t("pages:consuledit.validationError"),
+        description: t("pages:consuledit.endDateTimeRequired"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate that end time is after start time
+    if (endDate && endTime) {
+      try {
+        const startDateTime = new Date(`${requestedDate}T${requestedTime}`);
+        const endDateTime = new Date(`${endDate}T${endTime}`);
+        
+        if (endDateTime <= startDateTime) {
+          toast({
+            title: t("pages:consuledit.validationError"),
+            description: t("pages:consuledit.endTimeAfterStart"),
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Error validating time range:', error);
+      }
     }
 
     if (consultationType === 'paid' && customFee && (!hourlyRate || hourlyRate <= 0)) {
@@ -95,6 +245,8 @@ export default function EditMeetingModal({
         meeting_description: meetingDescription,
         requested_date: requestedDate,
         requested_time: requestedTime,
+        end_date: endDate || undefined,
+        end_time: endTime || undefined,
         consultation_type: consultationType,
         hourly_rate: consultationType === 'free' ? 0 : (customFee ? hourlyRate : undefined),
         custom_fee: consultationType === 'paid' ? customFee : false,
@@ -136,6 +288,8 @@ export default function EditMeetingModal({
     setMeetingDescription("");
     setRequestedDate("");
     setRequestedTime("");
+    setEndDate("");
+    setEndTime("");
     setConsultationType('paid');
     setHourlyRate(0);
     setCustomFee(false);
@@ -230,7 +384,7 @@ export default function EditMeetingModal({
             </div>
           </div>
 
-          {/* Date & Time */}
+          {/* Start Date & Time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="date" className="flex items-center gap-2">
@@ -241,7 +395,7 @@ export default function EditMeetingModal({
                 id="date"
                 type="date"
                 value={requestedDate}
-                onChange={(e) => setRequestedDate(e.target.value)}
+                onChange={(e) => handleStartDateChange(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
               />
             </div>
@@ -255,15 +409,73 @@ export default function EditMeetingModal({
                 id="time"
                 type="time"
                 value={requestedTime}
-                onChange={(e) => setRequestedTime(e.target.value)}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
               />
             </div>
           </div>
 
+          {/* End Date & Time */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="endDate" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                {t("pages:consuledit.endMeetingDate")}
+              </Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={requestedDate || new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="endTime" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {t("pages:consuledit.endMeetingTime")}
+              </Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Duration and Cost Display */}
+          {(requestedDate && requestedTime && endDate && endTime) && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                {t("pages:consuledit.meetingDetails")}
+              </h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-blue-700">{t("pages:consuledit.duration")}:</span>
+                  <p className="font-medium text-blue-900">
+                    {meetingDuration > 0 ? `${meetingDuration} minutes` : t("pages:consuledit.invalidDuration")}
+                  </p>
+                </div>
+                {consultationType === 'paid' && meetingDuration > 0 && (
+                  <div>
+                    <span className="text-blue-700">{t("pages:consuledit.estimatedCost")}:</span>
+                    <p className="font-medium text-blue-900">
+                      ${totalCost.toFixed(2)}
+                      <span className="text-xs text-blue-600 ml-1">
+                        ({getCurrentRate()}/hour × {(meetingDuration / 60).toFixed(1)} hours)
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Consultation Type & Pricing */}
-          {
-            profile?.account_type === 'lawyer' ? (
-              <div className="space-y-4 p-4 border rounded-lg">
+          {profile?.account_type === 'lawyer' && (
+            <div className="space-y-4 p-4 border rounded-lg">
               <h4 className="font-medium flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 {t("pages:consuledit.consultationPricing")}
@@ -281,8 +493,8 @@ export default function EditMeetingModal({
                   </SelectContent>
                 </Select>
               </div>
-  
-              {profile?.account_type === 'lawyer' && consultationType === 'paid' && (
+
+              {consultationType === 'paid' && (
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -294,7 +506,7 @@ export default function EditMeetingModal({
                       {t("pages:consuledit.useCustomRate", { rate: getDefaultRate() })}
                     </Label>
                   </div>
-  
+
                   {customFee && (
                     <div>
                       <Label htmlFor="hourly_rate">{t("pages:consuledit.customHourlyRate")}</Label>
@@ -302,6 +514,7 @@ export default function EditMeetingModal({
                         id="hourly_rate"
                         type="number"
                         min="1"
+                        step="0.01"
                         value={hourlyRate}
                         onChange={(e) => setHourlyRate(Number(e.target.value))}
                         placeholder={t("pages:consuledit.enterCustomRate")}
@@ -311,12 +524,7 @@ export default function EditMeetingModal({
                 </div>
               )}
             </div>
-
-            )
-            : null
-            
-          }
-        
+          )}
 
           {/* Meeting Link */}
           <div>

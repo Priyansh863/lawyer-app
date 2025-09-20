@@ -94,6 +94,12 @@
     
   
     "consuledit": {
+      "meetingDetails": "Meeting Details",
+"duration": "Duration",
+"invalidDuration": "Invalid duration",
+"estimatedCost": "Estimated Cost",
+"endMeetingDate": "End Meeting Date",
+"endMeetingTime": "End Meeting Time",
       "validationError": "Validation Error",
       "dateTimeRequired": "Please provide both date and time for the meeting",
       "validRateRequired": "Please provide a valid hourly rate for custom pricing",
@@ -119,7 +125,7 @@
       "freeConsultation": "Free Consultation",
       "paidConsultation": "Paid Consultation",
       "useCustomRate": "Use custom rate (override default ${{rate}})",
-      "customHourlyRate": "Custom Hourly Rate ($)",
+      "customHourlyRate": "Custom minute Rate ($)",
       "enterCustomRate": "Enter custom rate",
       "meetingLink": "Meeting Link",
       "enterMeetingLink": "Enter or paste meeting link"
@@ -140,6 +146,15 @@
 
   },
   "consultation": {
+    "estimatedTotal": "Estimated total",
+    
+     
+      "reservationEnd": "Reservation end time",
+      "endDate": "End date",
+      "endTime": "End time",
+     "tokens": "tokens",
+    "tokensPerMinute": "tokens/minute",
+    "enterPerMinuteRate": "Enter per-minute rate",
     "failedToFetchUsers": "Failed to fetch users",
     "missingInformation": "Missing information",
     "pleaseProvideLink": "Please provide consultation link",
@@ -153,11 +168,11 @@
     "client": "Client",
     "lawyer": "Lawyer",
     "videoConsultation": "Video Consultation",
-    "atRate": "at {{rate}} tokens/hour",
+    "atRate": "at {{rate}} tokens/minute",
     "new": "New",
     "videoConsultationRequest": "Video Consultation Request",
     "hasSentYouVideoLink": "has sent you a video consultation link",
-    "withHourlyRate": "with hourly rate of {{rate}} tokens/hour",
+    "withHourlyRate": "with a rate of {{rate}} tokens/minute",
     "linkSent": "Consultation link sent",
     "linkSentTo": "Video consultation link sent to {{name}}",
     "failedToSendLink": "Failed to send consultation link",
@@ -171,14 +186,14 @@
     "freeConsultationDesc": "Schedule a free video consultation",
     "selectFree": "Select Free",
     "paidConsultation": "Paid Consultation",
-    "paidConsultationDesc": "Schedule a consultation with hourly charges",
+    "paidConsultationDesc": "Schedule a consultation with per minute charges",
     "selectPaid": "Select Paid",
     "paidVideoConsultation": "Paid Video Consultation",
-    "yourDefaultRate": "Your default rate: {{rate}} tokens/hour",
+    "yourDefaultRate": "Your default rate: {{rate}} tokens/minute",
     "seeLawyerRate": "You will see the lawyer's consultation rate when you select them",
     "useCustomFee": "Use custom fee for this consultation",
     "enterCustomRate": "Enter custom rate...",
-    "tokensPerHour": "tokens/hour",
+    "tokensPerHour": "tokens/minute",
     "scheduled": "Scheduled:",
     "requested": "Requested:",
     "at": "at",
@@ -196,9 +211,9 @@
     "noUsersFound": "No {{type}} found",
     "noClientsAvailable": "No clients available for consultation",
     "noLawyersAvailable": "No lawyers available for consultation",
-    "customRateDisplay": "{{rate}} tokens/hour",
-    "defaultRateDisplay": "{{rate}} tokens/hour",
-    "lawyerRateDisplay": "{{rate}} tokens/hour",
+    "customRateDisplay": "{{rate}} tokens/minute",
+    "defaultRateDisplay": "{{rate}} tokens/minute",
+    "lawyerRateDisplay": "{{rate}} tokens/minute",
     "consultationSummary": "Consultation Summary",
     "type": "Type",
     "with": "With",
@@ -237,7 +252,7 @@
       "noLawyersAvailable": "No lawyers are currently available.",
       "lawyer": "lawyer",
       "client": "client",
-      "tokensPerHour": "tokens/hour",
+      "tokensPerHour": "tokens/minute",
       "select": "Select",
       "consultationRate": "Consultation Rate",
       "meetingLink": "Meeting Link",
@@ -260,7 +275,7 @@
         "clients": "clients",
         "lawyers": "lawyers",
         "loadingUsers": "Loading {{userType}}...",
-        "chatRate": "Chat: {{rate}} tokens/hour",
+        "chatRate": "Chat: {{rate}} tokens/minute",
         "noUsersFound": "No {{userType}} found",
         "to": "To:",
         "subject": "Subject:",
@@ -680,9 +695,9 @@
       "videoRate": "Enter your video consultation rate"
     },
     "descriptions": {
-      "generalRate": "Your standard hourly rate for in-person consultations",
-      "chatRate": "Your rate per hour for text-based chat consultations",
-      "videoRate": "Your rate per hour for video call consultations"
+       "generalRate": "Your standard per minute rate for in-person consultations",
+  "chatRate": "Your rate per minute for text-based chat consultations",
+  "videoRate": "Your rate per minute for video call consultations"
     },
     
 
@@ -2248,6 +2263,7 @@
       "status": "Status",
       "link": "Meeting Link",
       "actions": "Actions",
+      "endTime": "End Time",
       "rateType": "Rate & Type"
     },
     "status": {
