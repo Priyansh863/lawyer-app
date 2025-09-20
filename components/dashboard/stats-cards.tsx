@@ -1,5 +1,5 @@
 "use client"
-import type React from "react"
+import React from "react"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, FileArchive, DollarSign, MessageSquare, Users, Home, Coins } from "lucide-react"
@@ -61,9 +61,9 @@ function StatCard({ title, value, icon, index }: StatCardProps) {
   )
 }
 
-export default function StatsCards() {
+function StatsCards() {
   const [stats, setStats] = useState<StatCardProps[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tokenBalance, setTokenBalance] = useState<TokenBalance | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
@@ -77,15 +77,10 @@ export default function StatsCards() {
   }, [profile])
 
   async function fetchStats() {
-    const userId = profile?._id
-    if (!userId) {
-      setLoading(false)
-      return
-    }
     try {
       setLoading(true)
       setError(null)
-      const response = await activityApi.getDashboardSummary(userId)
+      const response = await activityApi.getDashboardSummary(profile?._id || '')
 
       if (response.success && response.data) {
         const statsData = response.data.map((item: DashboardSummary, index: number) => ({
@@ -248,3 +243,6 @@ export default function StatsCards() {
     </div>
   )
 }
+
+
+export default React.memo(StatsCards)

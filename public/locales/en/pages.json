@@ -158,7 +158,7 @@
     "noUsersFound": "No {{type}} found",
     "noClientsAvailable": "No clients available for consultation",
     "noLawyersAvailable": "No lawyers available for consultation",
-    "customRateDisplay": "{{rate}} tokens/hour (Custom)",
+    "customRateDisplay": "{{rate}} tokens/hour",
     "defaultRateDisplay": "{{rate}} tokens/hour",
     "lawyerRateDisplay": "{{rate}} tokens/hour",
     "consultationSummary": "Consultation Summary",

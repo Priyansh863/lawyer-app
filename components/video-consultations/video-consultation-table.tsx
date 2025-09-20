@@ -320,13 +320,7 @@ export default function VideoConsultationTableNew() {
               : meeting
           ),
         )
-        setFilteredMeetings((prev) =>
-          prev.map((meeting) => 
-            meeting._id === meetingId 
-              ? { ...meeting, status: "approved" as const, meeting_link: response.data?.meeting_link || meeting.meeting_link } 
-              : meeting
-          ),
-        )
+       
         toast({
           title: t('pages:meeting.toast.approved.title'),
           description: t('pages:meeting.toast.approved.description'),
@@ -353,9 +347,7 @@ export default function VideoConsultationTableNew() {
         setMeetings((prev) =>
           prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "rejected" as const } : meeting)),
         )
-        setFilteredMeetings((prev) =>
-          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "rejected" as const } : meeting)),
-        )
+     
         toast({
           title: t('pages:meeting.toast.rejected.title'),
           description: t('pages:meeting.toast.rejected.description'),
@@ -529,7 +521,7 @@ export default function VideoConsultationTableNew() {
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-green-600">
                                   ${meeting.custom_fee && meeting.hourly_rate ? meeting.hourly_rate : getLawyerCharges(meeting)}
-                                  {meeting.custom_fee && <span className="text-xs text-blue-600"> (Custom)</span>}
+                                  {meeting.custom_fee && <span className="text-xs text-blue-600"></span>}
                                 </span>
                               </div>
                             </>

@@ -66,29 +66,27 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
   const handleUploadSuccess = () => {
     setShowUploadDialog(false)
     onDocumentUploaded?.()
-    setTimeout(() => {
-      const fetchStats = async () => {
-        try {
-          const response = await getDocuments()
-          if (response.success && response.documents) {
-            const docs = response.documents
-            const publicDocs = docs.filter(d => !d.privacy || d.privacy === 'public').length
-            const privateDocs = docs.filter(d => d.privacy && (d.privacy === 'private')).length
-            const processedDocs = docs.filter(d => ['Completed', 'Approved', 'Processing'].includes(d.status as string)).length
-            
-            setDocumentStats({
-              total: docs.length,
-              public: publicDocs,
-              private: privateDocs,
-              processed: processedDocs
-            })
-          }
-        } catch (error) {
-          console.error('Error refreshing stats:', error)
+    const fetchStats = async () => {
+      try {
+        const response = await getDocuments()
+        if (response.success && response.documents) {
+          const docs = response.documents
+          const publicDocs = docs.filter(d => !d.privacy || d.privacy === 'public').length
+          const privateDocs = docs.filter(d => d.privacy && (d.privacy === 'private')).length
+          const processedDocs = docs.filter(d => ['Completed', 'Approved', 'Processing'].includes(d.status as string)).length
+          
+          setDocumentStats({
+            total: docs.length,
+            public: publicDocs,
+            private: privateDocs,
+            processed: processedDocs
+          })
         }
+      } catch (error) {
+        console.error('Error refreshing stats:', error)
       }
-      fetchStats()
-    }, 1000)
+    }
+    fetchStats()
   }
   
   return (

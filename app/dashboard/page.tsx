@@ -88,24 +88,24 @@ export default function ProfessionalDashboardPage() {
       // Check bookmark status for each post (only if user is logged in)
       const token = getToken();
       if (response.data.posts?.length > 0 && token) {
-        try {
-          const bookmarkChecks = await Promise.allSettled(
-            response.data.posts.map((post: Post) => checkBookmark(post._id))
-          );
+        // try {
+        //   const bookmarkChecks = await Promise.allSettled(
+        //     response.data.posts.map((post: Post) => checkBookmark(post._id))
+        //   );
 
           
           
-          const bookmarked = new Set<string>();
-          bookmarkChecks.forEach((result, index) => {
-            if (result.status === 'fulfilled' && result.value.isBookmarked) {
-              bookmarked.add(response.data.posts[index]._id);
-            }
-          });
-          setBookmarkedPosts(bookmarked);
-        } catch (error) {
-          // Silently fail bookmark checks if authentication fails
-          console.log('Bookmark check failed, user may not be logged in');
-        }
+        //   const bookmarked = new Set<string>();
+        //   bookmarkChecks.forEach((result, index) => {
+        //     if (result.status === 'fulfilled' && result.value.isBookmarked) {
+        //       bookmarked.add(response.data.posts[index]._id);
+        //     }
+        //   });
+        //   setBookmarkedPosts(bookmarked);
+        // } catch (error) {
+        //   // Silently fail bookmark checks if authentication fails
+        //   console.log('Bookmark check failed, user may not be logged in');
+        // }
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -490,53 +490,10 @@ export default function ProfessionalDashboardPage() {
     );
   };
 
-  // Render loading state
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <DashboardHeader 
-          title={t('pages:dashboard.dashboard')} 
-          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
-        />
-        <div className="space-y-6">
-          <StatsCards />
-          <QuickActions />
-          <Card>
-            <CardContent className="p-6">
-              <Skeleton height={200} />
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
+
 
   // Render empty state if no posts
-  if (posts.length === 0) {
-    return (
-      <DashboardLayout>
-        <DashboardHeader 
-          title={t('pages:dashboard.dashboard')} 
-          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
-        />
-        <div className="space-y-6">
-          <StatsCards />
-          <QuickActions />
-          <Card>
-            <CardContent className="p-6 text-center">
-              <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-2 text-lg font-medium">
-                {t('pages:dashboard.noPostsTitle')}
-              </h3>
-              <p className="text-muted-foreground mt-1">
-                {t('pages:dashboard.noPostsDescription')}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
+
 
   // Report Dialog
   const renderReportDialog = () => (

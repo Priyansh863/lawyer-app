@@ -36,7 +36,7 @@ export default function PostPage() {
   const slug = params.slug as string;
   
   const [post, setPost] = useState<Post | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [spatialInfo, setSpatialInfo] = useState<SpatialInfo | null>(null);
 
   // Parse URL parameters for spatial info
@@ -80,7 +80,7 @@ export default function PostPage() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        setIsLoading(true);
+        // setIsLoading(true);
         
         // Fetch by slug (title-based URL)
         const response = await getPostBySlug(slug);
@@ -99,7 +99,7 @@ export default function PostPage() {
     if (slug) {
       fetchPost();
     }
-  }, [slug, toast]);
+  }, [slug]);
 
   // Format date with Korean locale support
   const formatDate = (dateString: string) => {

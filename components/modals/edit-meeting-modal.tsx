@@ -201,7 +201,7 @@ export default function EditMeetingModal({
               </div>
               <div>
                 <span className="text-gray-500">Default Rate:</span>
-                <p className="font-medium">${getDefaultRate()}</p>
+                <p className="font-medium">${meeting.custom_fee ? meeting.hourly_rate : meeting.lawyer_id.charges}</p>
               </div>
             </div>
           </div>
@@ -261,62 +261,62 @@ export default function EditMeetingModal({
           </div>
 
           {/* Consultation Type & Pricing */}
-          <div className="space-y-4 p-4 border rounded-lg">
-            <h4 className="font-medium flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
-              Consultation Pricing
-            </h4>
-            
-            <div>
-              <Label>Consultation Type</Label>
-              <Select value={consultationType} onValueChange={(value: 'free' | 'paid') => setConsultationType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free Consultation</SelectItem>
-                  <SelectItem value="paid">Paid Consultation</SelectItem>
-                </SelectContent>
-              </Select>
+          {
+            profile?.account_type === 'lawyer' ? (
+              <div className="space-y-4 p-4 border rounded-lg">
+              <h4 className="font-medium flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Consultation Pricing
+              </h4>
+              
+              <div>
+                <Label>Consultation Type</Label>
+                <Select value={consultationType} onValueChange={(value: 'free' | 'paid') => setConsultationType(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free Consultation</SelectItem>
+                    <SelectItem value="paid">Paid Consultation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+  
+              {profile?.account_type === 'lawyer' && consultationType === 'paid' && (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="custom_fee"
+                      checked={customFee}
+                      onCheckedChange={(checked) => setCustomFee(checked as boolean)}
+                    />
+                    <Label htmlFor="custom_fee" className="text-sm">
+                      Use custom rate (override default ${getDefaultRate()})
+                    </Label>
+                  </div>
+  
+                  {customFee && (
+                    <div>
+                      <Label htmlFor="hourly_rate">Custom Hourly Rate ($)</Label>
+                      <Input
+                        id="hourly_rate"
+                        type="number"
+                        min="1"
+                        value={hourlyRate}
+                        onChange={(e) => setHourlyRate(Number(e.target.value))}
+                        placeholder="Enter custom rate"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {consultationType === 'paid' && (
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="custom_fee"
-                    checked={customFee}
-                    onCheckedChange={(checked) => setCustomFee(checked as boolean)}
-                  />
-                  <Label htmlFor="custom_fee" className="text-sm">
-                    Use custom rate (override default ${getDefaultRate()})
-                  </Label>
-                </div>
-
-                {customFee && (
-                  <div>
-                    <Label htmlFor="hourly_rate">Custom Hourly Rate ($)</Label>
-                    <Input
-                      id="hourly_rate"
-                      type="number"
-                      min="1"
-                      value={hourlyRate}
-                      onChange={(e) => setHourlyRate(Number(e.target.value))}
-                      placeholder="Enter custom rate"
-                    />
-                  </div>
-                )}
-
-                <div className="p-3 bg-blue-50 rounded-md">
-                  <p className="text-sm text-blue-700">
-                    <strong>Current Rate:</strong> {consultationType === 'free' ? 'Free' : `$${getCurrentRate()}`}
-                    {consultationType === 'paid' && customFee && ' (Custom)'}
-                    {consultationType === 'paid' && !customFee && ' (Default)'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+            )
+            : null
+            
+          }
+        
 
           {/* Meeting Link */}
           <div>

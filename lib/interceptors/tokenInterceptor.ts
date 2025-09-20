@@ -89,7 +89,7 @@ export const setupTokenInterceptors = () => {
         // Use setTimeout to avoid blocking the response
         setTimeout(() => {
           validateTokenAfterApiCall()
-        }, 100)
+        }, 1000)
       }
       
       return response
