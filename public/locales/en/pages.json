@@ -147,6 +147,16 @@
   },
   "consultation": {
     "estimatedTotal": "Estimated total",
+    "startChatConsultation": "Start Chat Consultation",
+    "freeChat": "Free Consultation",
+    "freeChatDesc": "Select this option to start a free consultation with a lawyer.",
+    "startFreeChat": "Start Free Chat",
+    "paidChat": "Paid Consultation",
+    "paidChatDesc": "Select this option to start a paid consultation with a lawyer.",
+    "startPaidChat": "Start Paid Chat",
+     "paidChatConsultation": "Paid Chat Consultation",
+     "selectPaidChatConsultation": "Select Paid Chat Consultation",
+    "selectPaidConsultation": "Select Paid Consultation",
     
      
       "reservationEnd": "Reservation end time",

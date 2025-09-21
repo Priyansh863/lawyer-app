@@ -186,16 +186,27 @@ export default function ConsultationTypeModal({
 
   // Memoize filtered users for better performance
   const filteredUsers = useMemo(() => {
+    let filtered = [...users];
+    
+    // For lawyers, show clients for both free and paid consultations
+    if (currentProfile?.account_type === 'lawyer') {
+      filtered = filtered.filter(user => user.account_type === 'client');
+    } 
+    // For clients, only show lawyers for free consultations
+    else if (consultationType === 'free') {
+      filtered = filtered.filter(user => user.account_type === 'lawyer');
+    }
+    
+    // Apply search filter
     if (searchQuery.trim()) {
       const searchLower = searchQuery.toLowerCase();
-      return users.filter((user: User) => 
-        `${user.first_name} ${user.last_name} ${user.email}`
-          .toLowerCase()
-          .includes(searchLower)
+      filtered = filtered.filter(user => 
+        `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase().includes(searchLower)
       );
     }
-    return users;
-  }, [searchQuery, users]);
+    
+    return filtered;
+  }, [searchQuery, users, consultationType, currentProfile]);
 
   const handleConsultationTypeSelect = (type: ConsultationType) => {
     setConsultationType(type);
@@ -323,61 +334,63 @@ export default function ConsultationTypeModal({
         {currentStep === 'consultationType' && (
           <div className="space-y-6 p-2">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">{t("pages:consultation.chooseConsultationType")}</h3>
-              <p className="text-muted-foreground">
-                {t("pages:consultation.selectFreeOrPaid")}
-              </p>
+              <h3 className="text-lg font-semibold mb-2">
+                {t("pages:consultation.startChatConsultation")}
+              </h3>
+              {currentProfile?.account_type === 'client' ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("pages:consultation.selectPaidChatConsultation")}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("pages:consultation.selectFreeOrPaid")}
+                </p>
+              )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Free Consultation Option */}
-              <div 
-                className="p-6 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all duration-200"
-                onClick={() => handleConsultationTypeSelect('free')}
-              >
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Users className="w-6 h-6 text-green-600" />
+            <div className="grid grid-cols-1 gap-4">
+              {/* Only show free consultation for lawyers */}
+              {currentProfile?.account_type !== 'client' && (
+                <div 
+                  className="p-6 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all duration-200"
+                  onClick={() => handleConsultationTypeSelect('free')}
+                >
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <MessageSquare className="w-6 h-6 text-green-600" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{t("pages:consultation.freeChat")}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {t("pages:consultation.freeChatDesc")}
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-green-300 text-green-600 hover:bg-green-50"
+                    >
+                      {t("pages:consultation.startFreeChat")}
+                    </Button>
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{t("pages:consultation.freeConsultation")}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t("pages:consultation.freeConsultationDesc")}
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-green-300 text-green-600 hover:bg-green-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConsultationTypeSelect('free');
-                    }}
-                  >
-                    {t("pages:consultation.selectFree")}
-                  </Button>
                 </div>
-              </div>
-
-              {/* Paid Consultation Option */}
+              )}
+              
+              {/* Paid Chat Option - Always show */}
               <div 
-                className="p-6 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                className="p-6 border-2 border-blue-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
                 onClick={() => handleConsultationTypeSelect('paid')}
               >
                 <div className="text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <DollarSign className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">{t("pages:consultation.paidConsultation")}</h3>
+                  <h3 className="font-semibold text-lg mb-2">{t("pages:consultation.paidChat")}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {t("pages:consultation.paidConsultationDesc")}
+                    {t("pages:consultation.paidChatDesc")}
                   </p>
                   <Button 
                     variant="outline" 
                     className="w-full border-blue-300 text-blue-600 hover:bg-blue-50"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConsultationTypeSelect('paid');
-                    }}
                   >
-                    {t("pages:consultation.selectPaid")}
+                    {t("pages:consultation.startPaidChat")}
                   </Button>
                 </div>
               </div>
@@ -463,97 +476,93 @@ export default function ConsultationTypeModal({
             )}
 
             {/* Date and Time Selection - Available for both lawyers and clients */}
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-              <p className="text-sm font-medium text-gray-700">
-                {currentProfile?.account_type === 'lawyer' 
-                  ? t("pages:consultation.setConsultationSchedule")
-                  : t("pages:consultation.requestPreferredDateTime")
-                }
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="consultationDate" className="text-sm">
-                    {currentProfile?.account_type === 'lawyer' ? t("pages:consultation.scheduleDate") : t("pages:consultation.preferredDate")}
-                  </Label>
-                  <Input
-                    id="consultationDate"
-                    type="date"
-                    value={consultationDate}
-                    onChange={(e) => setConsultationDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
+            {currentProfile?.account_type === 'lawyer' && (
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <p className="text-sm font-medium text-gray-700">
+                  {t("pages:consultation.setConsultationSchedule")}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="consultationDate" className="text-sm">
+                      {t("pages:consultation.scheduleDate")}
+                    </Label>
+                    <Input
+                      id="consultationDate"
+                      type="date"
+                      value={consultationDate}
+                      onChange={(e) => setConsultationDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="consultationTime" className="text-sm">
+                      {t("pages:consultation.scheduleTime")}
+                    </Label>
+                    <Input
+                      id="consultationTime"
+                      type="time"
+                      value={consultationTime}
+                      onChange={(e) => setConsultationTime(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="consultationTime" className="text-sm">
-                    {currentProfile?.account_type === 'lawyer' ? t("pages:consultation.scheduleTime") : t("pages:consultation.preferredTime")}
-                  </Label>
-                  <Input
-                    id="consultationTime"
-                    type="time"
-                    value={consultationTime}
-                    onChange={(e) => setConsultationTime(e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              {/* Reservation End Date/Time - Only for paid consultations */}
-              {consultationType === 'paid' && (
-                <>
-                  <div className="border-t pt-3 mt-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">
-                      {t("pages:consultation.reservationEnd")}
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="reservationEndDate" className="text-sm">
-                          {t("pages:consultation.endDate")}
-                        </Label>
-                        <Input
-                          id="reservationEndDate"
-                          type="date"
-                          value={reservationEndDate}
-                          onChange={(e) => setReservationEndDate(e.target.value)}
-                          min={consultationDate || new Date().toISOString().split('T')[0]}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="reservationEndTime" className="text-sm">
-                          {t("pages:consultation.endTime")}
-                        </Label>
-                        <Input
-                          id="reservationEndTime"
-                          type="time"
-                          value={reservationEndTime}
-                          onChange={(e) => setReservationEndTime(e.target.value)}
-                        />
+                
+                {/* Reservation End Date/Time - Only for paid consultations */}
+                {consultationType === 'paid' && (
+                  <>
+                    <div className="border-t pt-3 mt-3">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        {t("pages:consultation.reservationEnd")}
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="reservationEndDate" className="text-sm">
+                            {t("pages:consultation.endDate")}
+                          </Label>
+                          <Input
+                            id="reservationEndDate"
+                            type="date"
+                            value={reservationEndDate}
+                            onChange={(e) => setReservationEndDate(e.target.value)}
+                            min={consultationDate || new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="reservationEndTime" className="text-sm">
+                            {t("pages:consultation.endTime")}
+                          </Label>
+                          <Input
+                            id="reservationEndTime"
+                            type="time"
+                            value={reservationEndTime}
+                            onChange={(e) => setReservationEndTime(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Total calculation for paid consultations */}
-                  {calculatedTotal > 0 && (
-                    <div className="flex items-center justify-between p-3 bg-blue-100 rounded-md">
-                      <div className="flex items-center gap-2">
-                        <Calculator className="w-4 h-4 text-blue-700" />
-                        <span className="text-sm font-medium text-blue-800">
-                          {t("pages:consultation.estimatedTotal")}
+                    
+                    {/* Total calculation for paid consultations */}
+                    {calculatedTotal > 0 && (
+                      <div className="flex items-center justify-between p-3 bg-blue-100 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <Calculator className="w-4 h-4 text-blue-700" />
+                          <span className="text-sm font-medium text-blue-800">
+                            {t("pages:consultation.estimatedTotal")}
+                          </span>
+                        </div>
+                        <span className="text-lg font-bold text-blue-800">
+                          {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}
                         </span>
                       </div>
-                      <span className="text-lg font-bold text-blue-800">
-                        {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-              
-              <p className="text-xs text-muted-foreground">
-                {currentProfile?.account_type === 'lawyer' 
-                  ? t("pages:consultation.ifNotSpecifiedLawyer")
-                  : t("pages:consultation.ifNotSpecifiedClient")
-                }
-              </p>
-            </div>
+                    )}
+                  </>
+                )}
+                
+                <p className="text-xs text-muted-foreground">
+                  {t("pages:consultation.ifNotSpecifiedLawyer")}
+                </p>
+              </div>
+            )}
 
             {/* Search Input */}
             <div className="relative">
