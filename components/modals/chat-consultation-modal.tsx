@@ -73,11 +73,7 @@ export default function ConsultationTypeModal({
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [customFee, setCustomFee] = useState<string>("");
   const [useCustomFee, setUseCustomFee] = useState(false);
-  const [consultationDate, setConsultationDate] = useState<string>("");
-  const [consultationTime, setConsultationTime] = useState<string>("");
   const [perMinuteRate, setPerMinuteRate] = useState<string>("");
-  const [reservationEndDate, setReservationEndDate] = useState<string>("");
-  const [reservationEndTime, setReservationEndTime] = useState<string>("");
   const [calculatedTotal, setCalculatedTotal] = useState<number>(0);
 
   const { toast } = useToast();
@@ -91,7 +87,7 @@ export default function ConsultationTypeModal({
 
   // Calculate total based on per-minute rate and duration
   useEffect(() => {
-    if (perMinuteRate && reservationEndDate && reservationEndTime && consultationDate && consultationTime) {
+    if (perMinuteRate) {
       try {
         const rate = parseFloat(perMinuteRate);
         if (isNaN(rate) || rate <= 0) {
@@ -99,20 +95,8 @@ export default function ConsultationTypeModal({
           return;
         }
 
-        // Calculate duration in minutes
-        const startDateTime = new Date(`${consultationDate}T${consultationTime}`);
-        const endDateTime = new Date(`${reservationEndDate}T${reservationEndTime}`);
-        
-        if (endDateTime <= startDateTime) {
-          setCalculatedTotal(0);
-          return;
-        }
-        
-        const durationMs = endDateTime.getTime() - startDateTime.getTime();
-        const durationMinutes = Math.ceil(durationMs / (1000 * 60));
-        
         // Calculate total
-        const total = rate * durationMinutes;
+        const total = rate;
         setCalculatedTotal(total);
       } catch (error) {
         console.error("Error calculating total:", error);
@@ -121,7 +105,7 @@ export default function ConsultationTypeModal({
     } else {
       setCalculatedTotal(0);
     }
-  }, [perMinuteRate, reservationEndDate, reservationEndTime, consultationDate, consultationTime]);
+  }, [perMinuteRate]);
 
   const fetchFreshUserProfile = async () => {
     if (!profile?._id) return;
@@ -292,11 +276,7 @@ export default function ConsultationTypeModal({
     setFreshUserProfile(null);
     setCustomFee("");
     setUseCustomFee(false);
-    setConsultationDate("");
-    setConsultationTime("");
     setPerMinuteRate("");
-    setReservationEndDate("");
-    setReservationEndTime("");
     setCalculatedTotal(0);
     onClose();
   };
@@ -462,105 +442,14 @@ export default function ConsultationTypeModal({
                 )}
                 
                 {/* Show date/time if specified */}
-                {(consultationDate || consultationTime) && (
+                {(consultationType === 'paid' && currentProfile?.account_type === 'client') && (
                   <div className="flex items-center gap-2 mt-2 p-2 bg-gray-50 rounded-md">
                     <Calendar className="w-4 h-4 text-gray-600" />
                     <span className="text-sm font-medium text-gray-700">
-                      {currentProfile?.account_type === 'lawyer' ? t("pages:consultation.scheduled") : t("pages:consultation.requested")} 
-                      {consultationDate && ` ${new Date(consultationDate).toLocaleDateString()}`}
-                      {consultationTime && ` ${t("pages:consultation.at")} ${consultationTime}`}
+                      {t("pages:consultation.scheduled")} 
                     </span>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Date and Time Selection - Available for both lawyers and clients */}
-            {currentProfile?.account_type === 'lawyer' && (
-              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                <p className="text-sm font-medium text-gray-700">
-                  {t("pages:consultation.setConsultationSchedule")}
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="consultationDate" className="text-sm">
-                      {t("pages:consultation.scheduleDate")}
-                    </Label>
-                    <Input
-                      id="consultationDate"
-                      type="date"
-                      value={consultationDate}
-                      onChange={(e) => setConsultationDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="consultationTime" className="text-sm">
-                      {t("pages:consultation.scheduleTime")}
-                    </Label>
-                    <Input
-                      id="consultationTime"
-                      type="time"
-                      value={consultationTime}
-                      onChange={(e) => setConsultationTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                {/* Reservation End Date/Time - Only for paid consultations */}
-                {consultationType === 'paid' && (
-                  <>
-                    <div className="border-t pt-3 mt-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        {t("pages:consultation.reservationEnd")}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="reservationEndDate" className="text-sm">
-                            {t("pages:consultation.endDate")}
-                          </Label>
-                          <Input
-                            id="reservationEndDate"
-                            type="date"
-                            value={reservationEndDate}
-                            onChange={(e) => setReservationEndDate(e.target.value)}
-                            min={consultationDate || new Date().toISOString().split('T')[0]}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="reservationEndTime" className="text-sm">
-                            {t("pages:consultation.endTime")}
-                          </Label>
-                          <Input
-                            id="reservationEndTime"
-                            type="time"
-                            value={reservationEndTime}
-                            onChange={(e) => setReservationEndTime(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Total calculation for paid consultations */}
-                    {calculatedTotal > 0 && (
-                      <div className="flex items-center justify-between p-3 bg-blue-100 rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Calculator className="w-4 h-4 text-blue-700" />
-                          <span className="text-sm font-medium text-blue-800">
-                            {t("pages:consultation.estimatedTotal")}
-                          </span>
-                        </div>
-                        <span className="text-lg font-bold text-blue-800">
-                          {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                <p className="text-xs text-muted-foreground">
-                  {t("pages:consultation.ifNotSpecifiedLawyer")}
-                </p>
               </div>
             )}
 
@@ -732,21 +621,6 @@ export default function ConsultationTypeModal({
                       <p><span className="font-medium">{t("pages:consultation.estimatedTotal")}:</span> {calculatedTotal.toFixed(2)} {t("pages:consultation.tokens")}</p>
                     )}
                   </>
-                )}
-                {consultationDate && (
-                  <p><span className="font-medium">{t("pages:consultation.date")}:</span> {new Date(consultationDate).toLocaleDateString()}</p>
-                )}
-                {consultationTime && (
-                  <p><span className="font-medium">{t("pages:consultation.time")}:</span> {consultationTime}</p>
-                )}
-                {reservationEndDate && (
-                  <p><span className="font-medium">{t("pages:consultation.endDate")}:</span> {new Date(reservationEndDate).toLocaleDateString()}</p>
-                )}
-                {reservationEndTime && (
-                  <p><span className="font-medium">{t("pages:consultation.endTime")}:</span> {reservationEndTime}</p>
-                )}
-                {!consultationDate && !consultationTime && (
-                  <p><span className="font-medium">{t("pages:consultation.schedule")}:</span> {currentProfile?.account_type === 'lawyer' ? t("pages:consultation.immediateSchedule") : t("pages:consultation.toBeScheduled")}</p>
                 )}
               </div>
             </div>
