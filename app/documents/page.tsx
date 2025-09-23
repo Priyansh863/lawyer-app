@@ -24,11 +24,11 @@ export default function DocumentsPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         
-        {/* Tabs */}
-        <div className="flex gap-6 border-b pb-2">
+        {/* Tabs - More space on mobile to ensure no header overlap */}
+        <div className="flex gap-6 border-b pb-2 mt-8 md:-mt-4 lg:-mt-4">
           <button
             onClick={() => setActiveTab("documents")}
-            className={`pb-2 ${
+            className={`pb-2 px-2 text-sm md:text-base ${
               activeTab === "documents"
                 ? "border-b-2 border-blue-500 font-semibold"
                 : "text-gray-500"
@@ -38,7 +38,7 @@ export default function DocumentsPage() {
           </button>
           <button
             onClick={() => setActiveTab("voice")}
-            className={`pb-2 ${
+            className={`pb-2 px-2 text-sm md:text-base ${
               activeTab === "voice"
                 ? "border-b-2 border-blue-500 font-semibold"
                 : "text-gray-500"
@@ -61,7 +61,7 @@ export default function DocumentsPage() {
 
         {activeTab === "voice" && (
           <VoiceSummaryLayout>
-            <div className="flex flex-col gap-6 mt-5">
+            <div className="flex flex-col gap-6 -mt-9">
               <VoiceSummaryHeader />
               <DocumentSummaryList initialSummaries={[]} />
             </div>

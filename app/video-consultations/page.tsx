@@ -26,30 +26,35 @@ export default function VideoConsultationsPage() {
 
   return (
     <VideoConsultationsLayout>
-      <div className="container mx-auto p-6">
+      <div className="container mx-auto p-4 sm:p-6 mt-4">
         {/* Header with New Consultation Button */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Video className="w-6 h-6 text-primary" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Video className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               {t("pages:consultation.videoConsultations")}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
               {t("pages:consultation.manageConsultations")}
             </p>
           </div>
           
-          {/* New Consultation Button on the right side */}
+          {/* New Consultation Button */}
           <Button
             onClick={() => setIsConsultationModalOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-white gap-2"
+            className="bg-primary hover:bg-primary/90 text-white gap-2 w-full sm:w-auto"
+            size="sm"
           >
             <Plus className="w-4 h-4" />
-            {t("pages:consultation.newConsultation")}
+            <span className="hidden xs:inline">{t("pages:consultation.newConsultation")}</span>
+            <span className="xs:hidden">{t("pages:consultation.new")}</span>
           </Button>
         </div>
         
-        <VideoConsultationTable key={refreshTrigger} />
+        {/* Consultation Table */}
+        <div className="overflow-hidden">
+          <VideoConsultationTable key={refreshTrigger} />
+        </div>
       </div>
 
       {/* Consultation Type Modal */}

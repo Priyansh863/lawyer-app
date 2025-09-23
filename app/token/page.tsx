@@ -503,26 +503,26 @@ export default function TokenPage() {
       )}
 
       {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('pages:tok.token.title')}</h1>
-          <p className="text-muted-foreground">{t('pages:tok.token.subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => router.push('/token/history')} 
-            variant="outline" 
-            className="gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            {t('pages:tok.token.viewh')}
-          </Button>
-          <Button onClick={() => fetchAllData()} variant="outline" className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            {t('pages:tok.token.refresh')}
-          </Button>
-        </div>
-      </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+  <div className="text-center md:text-left">
+    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('pages:tok.token.title')}</h1>
+    <p className="text-muted-foreground mt-1 md:mt-0">{t('pages:tok.token.subtitle')}</p>
+  </div>
+  <div className="flex flex-col sm:flex-row items-center gap-2 justify-center">
+    <Button 
+      onClick={() => router.push('/token/history')} 
+      variant="outline" 
+      className="gap-2 w-full sm:w-auto justify-center"
+    >
+      <ExternalLink className="h-4 w-4" />
+      {t('pages:tok.token.viewh')}
+    </Button>
+    <Button onClick={() => fetchAllData()} variant="outline" className="gap-2 w-full sm:w-auto justify-center">
+      <RefreshCw className="h-4 w-4" />
+      {t('pages:tok.token.refresh')}
+    </Button>
+  </div>
+</div>
 
       {/* Token Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -26,7 +26,9 @@ import {
   Video,
   Coins,
   Edit,
-  Clock
+  Clock,
+  User,
+  Users
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useSelector } from 'react-redux'
@@ -452,11 +454,171 @@ export default function VideoConsultationTableNew() {
     }
 
     return (
-      <Badge variant={variants[statusKey as keyof typeof variants] || 'secondary'} className={colors[statusKey as keyof typeof colors]}>
+      <Badge variant={variants[statusKey as keyof typeof variants] || 'secondary'} className={`text-xs ${colors[statusKey as keyof typeof colors]}`}>
         {t(`pages:meeting.status.${statusKey}`)}
       </Badge>
     )
   }
+
+  // Mobile card view for each meeting
+  const MeetingCard = memo(({ meeting }: { meeting: Meeting }) => (
+    <Card className="mb-4 p-4">
+      <div className="space-y-3">
+        {/* Header with Client/Lawyer and Status */}
+        <div className="flex justify-between items-start">
+          <div className="flex items-center space-x-2">
+            <Users className="h-4 w-4 text-gray-500" />
+            <div>
+              <div className="font-medium text-sm">{getClientName(meeting)}</div>
+              <div className="text-xs text-gray-500">Client</div>
+            </div>
+          </div>
+          {getStatusBadge(meeting.status || "scheduled")}
+        </div>
+
+        {/* Lawyer Info */}
+        <div className="flex items-center space-x-2">
+          <User className="h-4 w-4 text-gray-500" />
+          <div>
+            <div className="font-medium text-sm">{getLawyerName(meeting)}</div>
+            <div className="text-xs text-gray-500">Lawyer</div>
+          </div>
+        </div>
+
+        {/* Rate Type */}
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-gray-500">Rate Type</span>
+          <div className="flex items-center space-x-1">
+            {meeting.consultation_type === 'free' ? (
+              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                Free
+              </span>
+            ) : (
+              <>
+                <DollarSign className="h-3 w-3 text-green-600" />
+                <span className="text-sm font-medium text-green-600">
+                  ${meeting.custom_fee && meeting.hourly_rate ? meeting.hourly_rate : getLawyerCharges(meeting)}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Time Information */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-500">Start Time</span>
+            <div className="text-xs text-right">
+              <div className="flex items-center space-x-1">
+                <Clock className="h-3 w-3 text-gray-400" />
+                <span>{formatScheduledTime(meeting)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-500">End Time</span>
+            <div className="text-xs text-right">
+              <div className="flex items-center space-x-1">
+                <Clock className="h-3 w-3 text-gray-400" />
+                <span>{formatEndTime(meeting)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Meeting Link */}
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-gray-500">Meeting Link</span>
+          {meeting.meeting_link ? (
+            <div className="flex items-center space-x-1">
+              <ExternalLink className="h-3 w-3 text-blue-600" />
+              <span className="text-xs text-blue-600 truncate max-w-[120px]">
+                Available
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-gray-500">No link</span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 pt-2">
+          {/* Edit button for pending/approved meetings */}
+          {(meeting.status === 'pending_approval' || meeting.status === 'approved') && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 text-xs px-2 py-1 flex-1 min-w-[80px]"
+              onClick={() => handleEditMeeting(meeting)}
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              {t("pages:meeting.actions.edit")}
+            </Button>
+          )}
+          
+          {/* Show approve/reject buttons only for lawyers when meeting is pending_approval */}
+          {shouldShowApproveReject(meeting) && (
+            <>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 flex-1 min-w-[80px]"
+                onClick={() => handleApproveMeeting(meeting._id)}
+                disabled={approvingMeeting === meeting._id}
+              >
+                {approvingMeeting === meeting._id ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Check className="h-3 w-3 mr-1" />
+                )}
+                {t('pages:meeting.actions.approve')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 flex-1 min-w-[80px]"
+                onClick={() => handleRejectMeeting(meeting._id)}
+                disabled={rejectingMeeting === meeting._id}
+              >
+                {rejectingMeeting === meeting._id ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <X className="h-3 w-3 mr-1" />
+                )}
+                {t('pages:meeting.actions.reject')}
+              </Button>
+            </>
+          )}
+          
+          {/* Connect button for approved/active meetings */}
+          {(meeting.status === 'approved' || meeting.status === 'active') && meeting.meeting_link && (
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 flex-1 min-w-[80px]"
+              onClick={() => handleConnectToMeeting(meeting)}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              {t('pages:meeting.actions.connect')}
+            </Button>
+          )}
+        </div>
+
+        {/* Meeting Title/Description */}
+        {(meeting.meeting_title || meeting.meeting_description) && (
+          <div className="border-t pt-2 mt-2">
+            {meeting.meeting_title && (
+              <div className="text-xs font-medium truncate">{meeting.meeting_title}</div>
+            )}
+            {meeting.meeting_description && (
+              <div className="text-xs text-gray-500 line-clamp-2">{meeting.meeting_description}</div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
+  ))
+
+  MeetingCard.displayName = 'MeetingCard'
 
   return (
     <Card>
@@ -484,30 +646,30 @@ export default function VideoConsultationTableNew() {
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-500" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t('pages:meeting.filter.placeholder')} />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder={t('pages:meeting.filter.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-              <SelectItem value="all">{t('pages:meeting.filter.all')}</SelectItem>
-              <SelectItem value="pending_approval">{t('pages:meeting.filter.pending_approval')}</SelectItem>
-      <SelectItem value="approved">{t('pages:meeting.filter.approved')}</SelectItem>
-      <SelectItem value="active">{t('pages:meeting.filter.active')}</SelectItem>
-      <SelectItem value="completed">{t('pages:meeting.filter.completed')}</SelectItem>
-      <SelectItem value="cancelled">{t('pages:meeting.filter.cancelled')}</SelectItem>
-      <SelectItem value="rejected">{t('pages:meeting.filter.rejected')}</SelectItem>
+                <SelectItem value="all">{t('pages:meeting.filter.all')}</SelectItem>
+                <SelectItem value="pending_approval">{t('pages:meeting.filter.pending_approval')}</SelectItem>
+                <SelectItem value="approved">{t('pages:meeting.filter.approved')}</SelectItem>
+                <SelectItem value="active">{t('pages:meeting.filter.active')}</SelectItem>
+                <SelectItem value="completed">{t('pages:meeting.filter.completed')}</SelectItem>
+                <SelectItem value="cancelled">{t('pages:meeting.filter.cancelled')}</SelectItem>
+                <SelectItem value="rejected">{t('pages:meeting.filter.rejected')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Meetings Table */}
-        <div className="rounded-md border overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="min-w-[120px]">{t('pages:meeting.table.client')}</TableHead>
                 <TableHead className="min-w-[120px]">{t('pages:meeting.table.lawyer')}</TableHead>
-                <TableHead className="min-w-[120px]"> {t("pages:meeting.table.rateType")}</TableHead>
+                <TableHead className="min-w-[120px]">{t("pages:meeting.table.rateType")}</TableHead>
                 <TableHead className="min-w-[180px]">{t('pages:meeting.table.time')}</TableHead>
                 <TableHead className="min-w-[180px]">{t('pages:meeting.table.endTime')}</TableHead>
                 <TableHead className="min-w-[100px]">{t('pages:meeting.table.status')}</TableHead>
@@ -573,10 +735,9 @@ export default function VideoConsultationTableNew() {
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                        {meeting.consultation_type === "free"
-  ? t("pages:meeting.consultation.free")
-  : t("pages:meeting.consultation.paid")}
-
+                          {meeting.consultation_type === "free"
+                            ? t("pages:meeting.consultation.free")
+                            : t("pages:meeting.consultation.paid")}
                         </div>
                       </div>
                     </TableCell>
@@ -637,7 +798,7 @@ export default function VideoConsultationTableNew() {
                             onClick={() => handleEditMeeting(meeting)}
                           >
                             <Edit className="h-3 w-3 mr-1" />
-                             {t("pages:meeting.actions.edit")}
+                            {t("pages:meeting.actions.edit")}
                           </Button>
                         )}
                         
@@ -692,6 +853,35 @@ export default function VideoConsultationTableNew() {
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="lg:hidden">
+          {loading ? (
+            // Mobile skeleton loading state
+            Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index} className="mb-4 p-4">
+                <div className="space-y-3">
+                  <Skeleton width={120} height={20} />
+                  <Skeleton width={100} height={16} />
+                  <Skeleton width={80} height={16} />
+                  <Skeleton width={140} height={16} />
+                  <Skeleton width={100} height={32} />
+                </div>
+              </Card>
+            ))
+          ) : filteredMeetings.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <div className="flex flex-col items-center space-y-2">
+                <Calendar className="h-8 w-8 text-gray-400" />
+                <span>{t('pages:meeting.empty')}</span>
+              </div>
+            </div>
+          ) : (
+            filteredMeetings.map((meeting: Meeting) => (
+              <MeetingCard key={meeting._id} meeting={meeting} />
+            ))
+          )}
         </div>
       </CardContent>
       
