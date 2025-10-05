@@ -43,6 +43,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const previousPathnameRef = useRef(pathname)
   const isInitialLoadRef = useRef(true)
 
+  // Helper function to check if user is logged in
+  const isUserLoggedIn = () => {
+    if (typeof window !== "undefined") {
+      const user = localStorage.getItem("user")
+      return user && JSON.parse(user).token
+    }
+    return false
+  }
+
   // Helper function to get notification title based on current language
   const getNotificationTitle = (notification: any) => {
     if (language === 'ko' && notification.titleKo) {
@@ -60,6 +69,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const fetchNotifications = async (params?: { page?: number; limit?: number; unreadOnly?: boolean }) => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       setLoading(true)
       const response = await notificationsApi.getNotifications(params)
@@ -80,6 +93,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const refreshUnreadCount = async () => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       const response = await notificationsApi.getUnreadCount()
       setUnreadCount(response.count)
@@ -89,6 +106,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const checkForNewNotifications = async () => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       const response = await notificationsApi.getNotifications({ page: 1, limit: 5 })
       const newCount = response.unreadCount
@@ -164,6 +185,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const markAsRead = async (notificationId: string) => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       await notificationsApi.markAsRead(notificationId)
       
@@ -185,6 +210,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const markAllAsRead = async () => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       await notificationsApi.markAllAsRead()
       
@@ -194,7 +223,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       
       setUnreadCount(0)
       setLastNotificationCount(0)
-      // Removed toast message for mark all as read
       
     } catch (error) {
       console.error('Error marking all notifications as read:', error)
@@ -203,6 +231,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   }
 
   const deleteNotification = async (notificationId: string) => {
+    if (!isUserLoggedIn()) {
+      return
+    }
+
     try {
       await notificationsApi.deleteNotification(notificationId)
       
@@ -222,18 +254,30 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }
 
-  // Only check on tab/route changes
+  // Only check on tab/route changes and if user is logged in
   useEffect(() => {
-    if (previousPathnameRef.current !== pathname) {
+    if (isUserLoggedIn() && previousPathnameRef.current !== pathname) {
       checkForNewNotifications()
       previousPathnameRef.current = pathname
     }
   }, [pathname])
 
-  // Initial load only
+  // Initial load only if user is logged in
   useEffect(() => {
-    checkForNewNotifications()
+    if (isUserLoggedIn()) {
+      checkForNewNotifications()
+    }
   }, [])
+
+  // Clear notifications and counts when user logs out
+  useEffect(() => {
+    if (!isUserLoggedIn()) {
+      setNotifications([])
+      setUnreadCount(0)
+      setLastNotificationCount(0)
+      isInitialLoadRef.current = true
+    }
+  }, [pathname]) // Check on every route change
 
   const value: NotificationContextType = {
     notifications,

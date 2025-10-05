@@ -204,4 +204,21 @@ export const generateQrCode = async (slug: string) => {
     console.error('Error generating QR code:', error);
     throw error.response?.data || error;
   }
+}
+
+/**
+ * Generate AI image
+ */
+export const generateAiImage = async ({ prompt }: { prompt: string }) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/post/generate-image`,
+      { prompt },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating AI image:', error);
+    throw error.response?.data || error;
+  }
 };

@@ -23,6 +23,7 @@ import {
   createPost, 
   generateAiPost, 
   generateQrCode,
+  generateAiImage,
   type CreatePostData, 
   type GenerateAiPostData,
   type SpatialInfo,
@@ -97,6 +98,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     type: 'url',
     content: ''
   });
+
+  // AI image generation state
+  const [aiImagePrompt, setAiImagePrompt] = useState('');
+  const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Add citation
   const addCitation = () => {
@@ -337,6 +343,38 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       description: t('pages:creator.post.url.toast.copiedDesc', { type }),
       variant: "default",
     });
+  };
+
+  // Handle AI image generation
+  const handleGenerateAiImage = async () => {
+    if (!aiImagePrompt.trim()) {
+      toast({
+        title: t('pages:creator.post.ai.image.toast.missingInput'),
+        description: t('pages:creator.post.ai.image.toast.missingInputDesc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      setIsGeneratingImage(true);
+      const response = await generateAiImage({ prompt: aiImagePrompt });
+      setAiImageUrl(response.data.imageUrl);
+      toast({
+        title: t('pages:creator.post.ai.image.toast.generated'),
+        description: t('pages:creator.post.ai.image.toast.generatedDesc'),
+        variant: 'default',
+      });
+      // Optionally add image to postData or aiData
+      setPostData(prev => ({ ...prev, image: response.data.imageUrl }));
+    } catch (error: any) {
+      toast({
+        title: t('pages:creator.post.ai.image.toast.failed'),
+        description: error.message || t('pages:creator.post.ai.image.toast.failedDesc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   const currentCitations = activeTab === 'manual' ? postData.citations : aiData.citations;
@@ -772,66 +810,236 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 </div>
               </div>
 
-              {/* Image Upload for AI */}
-              <div className="space-y-2">
-                <Label htmlFor="ai-image">{t('pages:creator.post.fields.image')}</Label>
-                <Input
-                  id="ai-image"
-                  type="file"
-                  accept="image/*"
-                  disabled={isUploadingImage}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setSelectedFile(file);
-                      handleImageUpload(file);
-                    }
-                  }}
-                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-                />
-                
-                {isUploadingImage && (
+              {/* References Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="h-5 w-5" />
+                    {t('pages:creator.post.citations.title')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* URL Citation */}
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-blue-600">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('pages:creator.post.image.uploading', { progress: uploadProgress })}
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
-                
-                {postData.image && !isUploadingImage && (
-                  <div className="space-y-2">
-                    <div className="text-xs text-green-600">
-                      {t('pages:creator.post.image.success')}
-                    </div>
-                    <div className="relative">
-                      <img 
-                        src={postData.image} 
-                        alt={t('pages:creator.post.image.alt')} 
-                        className="w-full max-w-xs h-32 object-cover rounded-lg border"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => {
-                          setPostData(prev => ({ ...prev, image: undefined }));
-                          setSelectedFile(null);
+                    <Label className="flex items-center gap-2">
+                      <Link className="h-4 w-4" />
+                      {t('pages:creator.post.citations.types.url')}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={currentCitations?.find(c => c.type === 'url')?.content || ''}
+                        onChange={(e) => {
+                          const existingIndex = currentCitations?.findIndex(c => c.type === 'url') ?? -1;
+                          if (existingIndex >= 0) {
+                            // Update existing URL citation
+                            const updatedCitations = [...(currentCitations || [])];
+                            updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value, url: e.target.value };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                            }
+                          } else if (e.target.value.trim()) {
+                            // Add new URL citation
+                            const newCitation = { type: 'url' as const, content: e.target.value, url: e.target.value };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            }
+                          }
                         }}
-                      >
-                        ×
-                      </Button>
+                        placeholder={t('pages:creator.post.citations.placeholders.url')}
+                        className="flex-1"
+                      />
+                      {currentCitations?.find(c => c.type === 'url') && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const filteredCitations = currentCitations?.filter(c => c.type !== 'url') || [];
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* User Citation */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {t('pages:creator.post.citations.types.user')}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={currentCitations?.find(c => c.type === 'user')?.content || ''}
+                        onChange={(e) => {
+                          const existingIndex = currentCitations?.findIndex(c => c.type === 'user') ?? -1;
+                          if (existingIndex >= 0) {
+                            // Update existing user citation with authenticated user's ID
+                            const updatedCitations = [...(currentCitations || [])];
+                            updatedCitations[existingIndex] = { 
+                              ...updatedCitations[existingIndex], 
+                              content: e.target.value,
+                              userId: user?._id
+                            };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                            }
+                          } else if (e.target.value.trim()) {
+                            // Add new user citation with authenticated user's ID
+                            const newCitation = { 
+                              type: 'user' as const, 
+                              content: e.target.value,
+                              userId: user?._id
+                            };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            }
+                          }
+                        }}
+                        placeholder={t('pages:creator.post.citations.placeholders.user')}
+                        className="flex-1"
+                      />
+                      {currentCitations?.find(c => c.type === 'user') && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const filteredCitations = currentCitations?.filter(c => c.type !== 'user') || [];
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Spatial Citation */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t('pages:creator.post.citations.types.spatial')}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={currentCitations?.find(c => c.type === 'spatial')?.content || ''}
+                        onChange={(e) => {
+                          const existingIndex = currentCitations?.findIndex(c => c.type === 'spatial') ?? -1;
+                          if (existingIndex >= 0) {
+                            // Update existing spatial citation
+                            const updatedCitations = [...(currentCitations || [])];
+                            updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: updatedCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: updatedCitations }));
+                            }
+                          } else if (e.target.value.trim()) {
+                            // Add new spatial citation
+                            const newCitation = { type: 'spatial' as const, content: e.target.value };
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
+                            }
+                          }
+                        }}
+                        placeholder={t('pages:creator.post.citations.placeholders.spatial')}
+                        className="flex-1"
+                      />
+                      {currentCitations?.find(c => c.type === 'spatial') && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            const filteredCitations = currentCitations?.filter(c => c.type !== 'spatial') || [];
+                            if (activeTab === 'manual') {
+                              setPostData(prev => ({ ...prev, citations: filteredCitations }));
+                            } else {
+                              setAiData(prev => ({ ...prev, citations: filteredCitations }));
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                </CardContent>
+              </Card>
+
+              {/* AI Image Generation Card - moved below References */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wand2 className="h-5 w-5" />
+                    {t('pages:creator.post.ai.image.cardTitle', 'Generate Image with AI')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-image-prompt">{t('pages:creator.post.ai.image.promptLabel', 'AI Image Prompt')}</Label>
+                    <Textarea
+                      id="ai-image-prompt"
+                      value={aiImagePrompt}
+                      onChange={e => setAiImagePrompt(e.target.value)}
+                      placeholder={t('pages:creator.post.ai.image.promptPlaceholder', 'Describe the image you want to generate...')}
+                      rows={2}
+                      maxLength={200}
+                    />
+                    <Button
+                      onClick={handleGenerateAiImage}
+                      disabled={isGeneratingImage || !aiImagePrompt.trim()}
+                      className="w-full"
+                    >
+                      {isGeneratingImage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {t('pages:creator.post.ai.image.buttons.generating', 'Generating Image...')}
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          {t('pages:creator.post.ai.image.buttons.generate', 'Generate Image')}
+                        </>
+                      )}
+                    </Button>
+                    {aiImageUrl && (
+                      <div className="space-y-2 pt-2">
+                        <Label>{t('pages:creator.post.ai.image.generatedLabel', 'Generated Image')}</Label>
+                        <div className="border rounded-lg overflow-hidden">
+                          <img src={aiImageUrl} alt="AI generated" className="w-full h-auto max-h-64 object-cover" />
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyUrl(aiImageUrl, t('pages:creator.post.ai.image.generatedLabel', 'Generated Image'))}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               <Button 
                 onClick={handleGenerateAiPost} 
@@ -852,182 +1060,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               </Button>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Citations Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
-            {t('pages:creator.post.citations.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* URL Citation */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Link className="h-4 w-4" />
-              {t('pages:creator.post.citations.types.url')}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={currentCitations?.find(c => c.type === 'url')?.content || ''}
-                onChange={(e) => {
-                  const existingIndex = currentCitations?.findIndex(c => c.type === 'url') ?? -1;
-                  if (existingIndex >= 0) {
-                    // Update existing URL citation
-                    const updatedCitations = [...(currentCitations || [])];
-                    updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value, url: e.target.value };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
-                    }
-                  } else if (e.target.value.trim()) {
-                    // Add new URL citation
-                    const newCitation = { type: 'url' as const, content: e.target.value, url: e.target.value };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    }
-                  }
-                }}
-                placeholder={t('pages:creator.post.citations.placeholders.url')}
-                className="flex-1"
-              />
-              {currentCitations?.find(c => c.type === 'url') && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    const filteredCitations = currentCitations?.filter(c => c.type !== 'url') || [];
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* User Citation */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              {t('pages:creator.post.citations.types.user')}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={currentCitations?.find(c => c.type === 'user')?.content || ''}
-                onChange={(e) => {
-                  const existingIndex = currentCitations?.findIndex(c => c.type === 'user') ?? -1;
-                  if (existingIndex >= 0) {
-                    // Update existing user citation with authenticated user's ID
-                    const updatedCitations = [...(currentCitations || [])];
-                    updatedCitations[existingIndex] = { 
-                      ...updatedCitations[existingIndex], 
-                      content: e.target.value,
-                      userId: user?._id
-                    };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
-                    }
-                  } else if (e.target.value.trim()) {
-                    // Add new user citation with authenticated user's ID
-                    const newCitation = { 
-                      type: 'user' as const, 
-                      content: e.target.value,
-                      userId: user?._id
-                    };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    }
-                  }
-                }}
-                placeholder={t('pages:creator.post.citations.placeholders.user')}
-                className="flex-1"
-              />
-              {currentCitations?.find(c => c.type === 'user') && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    const filteredCitations = currentCitations?.filter(c => c.type !== 'user') || [];
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Spatial Citation */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              {t('pages:creator.post.citations.types.spatial')}
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={currentCitations?.find(c => c.type === 'spatial')?.content || ''}
-                onChange={(e) => {
-                  const existingIndex = currentCitations?.findIndex(c => c.type === 'spatial') ?? -1;
-                  if (existingIndex >= 0) {
-                    // Update existing spatial citation
-                    const updatedCitations = [...(currentCitations || [])];
-                    updatedCitations[existingIndex] = { ...updatedCitations[existingIndex], content: e.target.value };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: updatedCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: updatedCitations }));
-                    }
-                  } else if (e.target.value.trim()) {
-                    // Add new spatial citation
-                    const newCitation = { type: 'spatial' as const, content: e.target.value };
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: [...(prev.citations || []), newCitation] }));
-                    }
-                  }
-                }}
-                placeholder={t('pages:creator.post.citations.placeholders.spatial')}
-                className="flex-1"
-              />
-              {currentCitations?.find(c => c.type === 'spatial') && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    const filteredCitations = currentCitations?.filter(c => c.type !== 'spatial') || [];
-                    if (activeTab === 'manual') {
-                      setPostData(prev => ({ ...prev, citations: filteredCitations }));
-                    } else {
-                      setAiData(prev => ({ ...prev, citations: filteredCitations }));
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
         </CardContent>
       </Card>
 
