@@ -965,6 +965,24 @@
         "length": "길이",
         "hashtags": "해시태그 포함"
       },
+        "image": {
+        "cardTitle": "AI로 이미지 생성",
+        "promptLabel": "AI 이미지 프롬프트",
+        "promptPlaceholder": "생성하고 싶은 이미지를 설명하세요...",
+        "buttons": {
+          "generate": "이미지 생성",
+          "generating": "이미지 생성 중..."
+        },
+        "generatedLabel": "생성된 이미지",
+        "toast": {
+          "missingInput": "입력 필요",
+          "missingInputDesc": "이미지 프롬프트를 입력해주세요",
+          "generated": "AI 이미지 생성 성공",
+          "generatedDesc": "이미지가 성공적으로 생성되었습니다",
+          "failed": "AI 이미지 생성 실패",
+          "failedDesc": "이미지 생성 중 오류가 발생했습니다"
+        }
+      },
       "placeholders": {
         "prompt": "AI가 작성할 내용을 설명하세요...",
         "topic": "계약법 기초"
