@@ -178,7 +178,7 @@
     "lawyer": "Lawyer",
     "videoConsultation": "Video Consultation",
     "atRate": "at {{rate}} tokens/minute",
-    "new": "New",
+    "new": "New consultation",
     "videoConsultationRequest": "Video Consultation Request",
     "hasSentYouVideoLink": "has sent you a video consultation link",
     "withHourlyRate": "with a rate of {{rate}} tokens/minute",
@@ -1366,20 +1366,24 @@
   }
 },
  "conv" :{
-  "messageCannotBeEmpty": "Message cannot be empty",
-  "messageTooLong": "Message too long",
-  "error": "Error",
-  "failedToLoadChat": "Failed to load chat",
-  "failedToSendMessage": "Failed to send message",
-  "chatDeleted": "Chat deleted",
-  "chatDeletedSuccessfully": "The chat has been deleted successfully",
-  "failedToDeleteChat": "Failed to delete chat",
-  "lawyer": "Lawyer",
-  "user": "User",
-  "client": "Client",
-  "noMessagesYet": "No messages yet. Start the conversation!",
-  "typeYourMessage": "Type your message...",
-  "startConversation": "Start the conversation"
+
+    "lawyer": "Lawyer",
+    "user": "User",
+    "error": "Error",
+    "failedToLoadChat": "Failed to load chat",
+    "failedToSendMessage": "Failed to send message",
+    "chatDeleted": "Chat deleted",
+    "chatDeletedSuccessfully": "Chat was successfully deleted",
+    "failedToDeleteChat": "Failed to delete chat",
+    "deletionCancelled": "Deletion cancelled",
+    "chatNotDeleted": "Chat was not deleted",
+    "deleteChatConfirmTitle": "Delete chat?",
+    "deleteChatConfirmDescription": "Are you sure you want to delete this chat? This action cannot be undone and all message history will be lost.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "client": "Client",
+    "noMessagesYet": "No messages yet. Start the conversation!",
+    "typeYourMessage": "Type your message..."
 },
  "authf": {
       "forgotPassword": {

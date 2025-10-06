@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Bell, Check, CheckCheck, Trash2, Filter, RefreshCw } from 'lucide-react'
+import { Bell, Check, CheckCheck, Trash2, Filter, RefreshCw, ArrowLeft } from 'lucide-react'
 import { useNotifications } from '../../contexts/NotificationContext'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
@@ -47,6 +47,10 @@ export default function NotificationsPage() {
       unreadOnly: filter === 'unread' 
     })
     setPage(nextPage)
+  }
+
+  const handleBack = () => {
+    router.back()
   }
 
   const handleNotificationClick = async (notification: any) => {
@@ -163,6 +167,18 @@ export default function NotificationsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Back Button - Positioned above the header */}
+      <div className="mb-4">
+        <Button
+          onClick={handleBack}
+          className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 px-4 py-2 rounded-md"
+        >
+          <ArrowLeft className="h-4 w-4 text-white" />
+          {t('common:back')}
+        </Button>
+      </div>
+
+      {/* Notifications Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Bell className="h-6 w-6" />

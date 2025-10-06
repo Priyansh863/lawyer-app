@@ -47,7 +47,8 @@ import {
   Plus,
   Trash2,
   ExternalLink,
-  X
+  X,
+  Download
 } from "lucide-react";
 
 interface PostCreatorProps {
@@ -345,6 +346,46 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     });
   };
 
+  // Copy image to clipboard
+  const copyImageToClipboard = async (imageUrl: string) => {
+    try {
+      // Fetch the image
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create a clipboard item with the image
+      const clipboardItem = new ClipboardItem({
+        [blob.type]: blob
+      });
+      
+      // Write to clipboard
+      await navigator.clipboard.write([clipboardItem]);
+      
+      toast({
+        title: t('pages:creator.post.ai.image.toast.copied', 'Image copied to clipboard'),
+        description: t('pages:creator.post.ai.image.toast.copiedDesc', 'The AI generated image has been copied to your clipboard'),
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error copying image to clipboard:', error);
+      toast({
+        title: t('pages:creator.post.ai.image.toast.copyFailed', 'Failed to copy image'),
+        description: t('pages:creator.post.ai.image.toast.copyFailedDesc', 'Could not copy the image to clipboard'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Download image
+  const downloadImage = (imageUrl: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Handle AI image generation
   const handleGenerateAiImage = async () => {
     if (!aiImagePrompt.trim()) {
@@ -446,7 +487,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                           url += `?${params.toString()}`;
                         }
                         
-                        
                         copyUrl(url, t('pages:creator.post.created.customUrl'));
                       }}
                     >
@@ -481,7 +521,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                           url += `?${params.toString()}`;
                         }
                       }
-                      
                       
                       return url;
                     })()}
@@ -555,8 +594,15 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 )}
 
                 <div className="flex gap-2 pt-2">
-                  
-                 
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleGenerateQrCode}
+                    disabled={!!createdPost.qrCodeUrl}
+                  >
+                    <QrCodeIcon className="h-4 w-4 mr-1" />
+                    {t('pages:creator.post.qr.buttons.generate')}
+                  </Button>
                 </div>
 
                 {createdPost.qrCodeUrl && (
@@ -1028,13 +1074,32 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                         <div className="border rounded-lg overflow-hidden">
                           <img src={aiImageUrl} alt="AI generated" className="w-full h-auto max-h-64 object-cover" />
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copyUrl(aiImageUrl, t('pages:creator.post.ai.image.generatedLabel', 'Generated Image'))}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyImageToClipboard(aiImageUrl)}
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            {t('pages:creator.post.ai.image.buttons.copyImage', 'Copy Image')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => copyUrl(aiImageUrl, t('pages:creator.post.ai.image.generatedLabel', 'Generated Image'))}
+                          >
+                            <Link className="h-3 w-3 mr-1" />
+                            {t('pages:creator.post.ai.image.buttons.copyUrl', 'Copy URL')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadImage(aiImageUrl, `ai-generated-image-${Date.now()}.png`)}
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            {t('pages:creator.post.ai.image.buttons.download', 'Download')}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

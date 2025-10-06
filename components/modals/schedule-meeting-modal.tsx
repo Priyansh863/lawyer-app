@@ -390,7 +390,7 @@ export default function ScheduleMeetingModal({
                 <Label htmlFor="link">{t("pages:scheduleM.meetingLink")}</Label>
                 <Input
                   id="link"
-                  placeholder={t("scheduleM.pasteMeetingLink")}
+                  placeholder={t("pages:scheduleM.pasteMeetingLink")}
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
                 />

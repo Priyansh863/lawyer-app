@@ -172,7 +172,7 @@
     "lawyer": "변호사",
     "videoConsultation": "영상 상담",
     "atRate": "시간당 {{rate}} 토큰",
-    "new": "새로운",
+    "new": "새 상담",
     "videoConsultationRequest": "영상 상담 요청",
     "hasSentYouVideoLink": "님이 영상 상담 링크를 보냈습니다",
     "withHourlyRate": " {{rate}} 토큰/분 요금으로",
@@ -747,7 +747,7 @@
     "markAllRead": "모두 읽음으로 표시",
     "loading": "알림을 불러오는 중...",
     "empty": "아직 알림이 없습니다",
-    "viewAll": "알림 보기"
+    "viewAll": "전체 보기"
   },
   
   "notificationsa": {
@@ -1908,20 +1908,23 @@
     },
 
 "conv" :{
-  "messageCannotBeEmpty": "메시지를 입력해주세요",
-  "messageTooLong": "메시지가 너무 깁니다",
-  "error": "오류",
-  "failedToLoadChat": "채팅을 불러오지 못했습니다",
-  "failedToSendMessage": "메시지 전송에 실패했습니다",
-  "chatDeleted": "채팅 삭제됨",
-  "chatDeletedSuccessfully": "채팅이 성공적으로 삭제되었습니다",
-  "failedToDeleteChat": "채팅 삭제에 실패했습니다",
   "lawyer": "변호사",
-  "user": "사용자",
-  "client": "고객",
-  "noMessagesYet": "아직 메시지가 없습니다. 대화를 시작해보세요!",
-  "typeYourMessage": "메시지를 입력하세요...",
-  "startConversation": "대화 시작하기"
+    "user": "사용자", 
+    "error": "오류",
+    "failedToLoadChat": "채팅을 불러오지 못했습니다",
+    "failedToSendMessage": "메시지 전송에 실패했습니다",
+    "chatDeleted": "채팅 삭제됨",
+    "chatDeletedSuccessfully": "채팅이 성공적으로 삭제되었습니다",
+    "failedToDeleteChat": "채팅 삭제에 실패했습니다",
+    "deletionCancelled": "삭제 취소됨",
+    "chatNotDeleted": "채팅이 삭제되지 않았습니다",
+    "deleteChatConfirmTitle": "채팅을 삭제하시겠습니까?",
+    "deleteChatConfirmDescription": "정말 이 채팅을 삭제하시겠습니까? 이 작업은 취소할 수 없으며 모든 메시지 기록이 손실됩니다.",
+    "cancel": "취소",
+    "delete": "삭제",
+    "client": "고객",
+    "noMessagesYet": "아직 메시지가 없습니다. 대화를 시작해보세요!",
+    "typeYourMessage": "메시지를 입력하세요..."
 },
 "graph":{
   "analytics": {
