@@ -12,13 +12,13 @@ export default function DashboardHeader({}: DashboardHeaderProps) {
   const { t } = useTranslation()
 
   return (
-    <header className="px-6 py-2.3 border-b mt-2">
+    <header className="px-6 py-2.3 border-b mt-2 hidden md:block">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {t('dashboard.welcome')}{user?.first_name ? `, ${user.first_name}` : ''}
         </h1>
         <NotificationBell />
       </div>
-  </header>
+    </header>
   )
 }

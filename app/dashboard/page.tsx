@@ -543,7 +543,10 @@ export default function ProfessionalDashboardPage() {
           title={t('pages:dashboard.dashboard')} 
           subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
         />
-        <StatsCards />
+       <div className="mt-12 md:mt-0 flex-1">
+    <StatsCards />
+  </div>
+
         
         {/* {profile?.account_type === "lawyer" && ( */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
