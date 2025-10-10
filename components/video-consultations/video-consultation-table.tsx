@@ -490,9 +490,9 @@ export default function VideoConsultationTableNew() {
           <span className="text-xs text-gray-500">Rate Type</span>
           <div className="flex items-center space-x-1">
             {meeting.consultation_type === 'free' ? (
-              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                Free
-              </span>
+             <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+  {t('pages:meeting.labels.free')}
+</span>
             ) : (
               <>
                 <DollarSign className="h-3 w-3 text-green-600" />
@@ -719,8 +719,8 @@ export default function VideoConsultationTableNew() {
                       <div className="space-y-1">
                         <div className="flex items-center space-x-1">
                           {meeting.consultation_type === 'free' ? (
-                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                              Free
+                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full -ml-1">
+                               {t('pages:meeting.consultation.free')}
                             </span>
                           ) : (
                             <>
@@ -759,19 +759,21 @@ export default function VideoConsultationTableNew() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="min-w-[180px]">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1 text-sm">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span>{formatEndTime(meeting)}</span>
-                        </div>
-                        {meeting.duration && (
-                          <div className="text-xs text-gray-500">
-                            Duration: {meeting.duration} minutes
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
+                  <TableCell className="min-w-[210px]">
+  <div className="space-y-1">
+    <div className="flex items-center gap-1.5 text-sm text-gray-700">
+      <Clock className="h-3 w-3 text-gray-500 relative " />
+      <span>{formatEndTime(meeting)}</span>
+    </div>
+    {meeting.duration && (
+      <div className="text-xs text-gray-500 ml-5">
+        Duration: {meeting.duration} minutes
+      </div>
+    )}
+  </div>
+</TableCell>
+
+
                     <TableCell className="min-w-[100px]">
                       {getStatusBadge(meeting.status || "scheduled")}
                     </TableCell>

@@ -122,7 +122,7 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
                   <TableCell className="max-w-[200px] truncate" title={caseItem.title}>
                     {caseItem.title}
                   </TableCell>
-                  <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
+                  <TableCell>{t(`pages:clientCases.status.${caseItem.status}`)}</TableCell>
                   <TableCell className="max-w-[300px] truncate" title={caseItem.description}>
                     {caseItem.description || t("pages:clientCases.noDescription")}
                   </TableCell>

@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import { Loader2, Users, Share2, X } from "lucide-react"
 import { getAvailableLawyers, getAvailableClients, shareDocumentWithLawyers, unshareDocumentFromLawyer } from '@/lib/api/document-sharing-api'
 import { useSelector } from "react-redux"
@@ -43,6 +44,7 @@ export function ShareDocumentDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
   const { toast } = useToast()
+  const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
   const isClient = profile?.account_type === 'client'
 
@@ -64,8 +66,8 @@ export function ShareDocumentDialog({
       setUsers(availableUsers)
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to load ${isClient ? 'lawyers' : 'clients'}`,
+        title: t('error'),
+        description: t('pages:shar.failedToLoadUsers', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') }),
         variant: "destructive"
       })
     } finally {
@@ -84,8 +86,8 @@ export function ShareDocumentDialog({
   const handleShare = async () => {
     if (!profile?._id) {
       toast({
-        title: "Error",
-        description: "User not authenticated",
+        title: t('pages:shar.error'),
+        description: t('pages:shar.userNotAuthenticated'),
         variant: "destructive"
       })
       return
@@ -116,8 +118,8 @@ export function ShareDocumentDialog({
       }
 
       toast({
-        title: "Success",
-        description: "Document sharing updated successfully"
+        title: t('pages:shar.success'),
+        description: t('pages:shar.documentSharingUpdated')
       })
 
       // Update parent component
@@ -132,8 +134,8 @@ export function ShareDocumentDialog({
       onOpenChange(false)
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update document sharing",
+        title: t('error'),
+        description: error.message || t('pages:shar.failedToUpdateSharing'),
         variant: "destructive"
       })
     } finally {
@@ -153,13 +155,16 @@ export function ShareDocumentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Share with {isClient ? 'Lawyers' : 'Clients'}
+            {t('pages:shar.shareWithUserType', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}
           </DialogTitle>
           <DialogDescription>
-            Share "{document.document_name}" with {isClient ? 'lawyers' : 'clients'} in your network.
+            {t('pages:shar.shareDocumentDescription', { 
+              documentName: document.document_name,
+              userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients')
+            })}
             {!isPrivateDocument && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                Note: Only private documents can be shared with {isClient ? 'lawyers' : 'clients'}.
+                {t('pages:shar.privateDocumentSharingNote', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}
               </div>
             )}
           </DialogDescription>
@@ -168,19 +173,19 @@ export function ShareDocumentDialog({
         {!isPrivateDocument ? (
           <div className="py-6 text-center text-gray-500">
             <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>This document must be private to share with lawyers.</p>
+            <p>{t('pages:shar.privateDocumentRequired')}</p>
           </div>
         ) : (
           <div className="py-4">
             {isFetching ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">Loading {isClient ? 'lawyers' : 'clients'}...</span>
+                <span className="ml-2">{t('pages:shar.loadingUsers', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}</span>
               </div>
             ) : users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>No {isClient ? 'lawyers' : 'clients'} available</p>
+                <p>{t('pages:shar.noUsersAvailable', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -214,7 +219,7 @@ export function ShareDocumentDialog({
                       </div>
                       {wasOriginallyShared && (
                         <Badge variant="secondary" className="text-xs">
-                          Currently Shared
+                          {t('pages:shar.currentlyShared')}
                         </Badge>
                       )}
                     </div>
@@ -227,7 +232,7 @@ export function ShareDocumentDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('pages:shar.cancel')}
           </Button>
           {isPrivateDocument && (
             <Button 
@@ -238,12 +243,12 @@ export function ShareDocumentDialog({
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Updating...
+                  {t('pages:shar.updating')}
                 </>
               ) : (
                 <>
                   <Share2 className="h-4 w-4 mr-2" />
-                  Update Sharing
+                  {t('pages:shar.updateSharing')}
                 </>
               )}
             </Button>

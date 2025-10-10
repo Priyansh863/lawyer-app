@@ -105,6 +105,112 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
+  // Download image function
+  const downloadImage = async (imageUrl: string, filename: string) => {
+    try {
+      // Open image in new tab
+      const newWindow = window.open(imageUrl, '_blank');
+      
+      // Download and save to local storage
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      // Create object URL for download
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create download link
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = filename;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      
+      // Clean up object URL
+      URL.revokeObjectURL(blobUrl);
+      
+      // Save to local storage
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        if (e.target?.result) {
+          try {
+            // Get existing downloads from local storage
+            const existingDownloads = JSON.parse(localStorage.getItem('downloadedImages') || '[]');
+            
+            // Add new download
+            const newDownload = {
+              id: Date.now().toString(),
+              url: imageUrl,
+              filename: filename,
+              dataUrl: e.target.result as string,
+              downloadedAt: new Date().toISOString(),
+              type: blob.type,
+              size: blob.size
+            };
+            
+            // Save back to local storage
+            const updatedDownloads = [newDownload, ...existingDownloads.slice(0, 49)]; // Keep last 50 items
+            localStorage.setItem('downloadedImages', JSON.stringify(updatedDownloads));
+            
+          toast({
+  title: t('pages:creator.buttons.success'),
+  description: t('pages:creator.buttons.successDesc'),
+  variant: "default",
+});
+
+} catch (storageError) {
+  console.error('Error saving to local storage:', storageError);
+  toast({
+    title: t('creator.post.download.toast.partialSuccess'),
+    description: t('creator.post.download.toast.partialSuccessDesc'),
+    variant: "default",
+  });
+          }
+        }
+      };
+      
+      reader.readAsDataURL(blob);
+      
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast({
+        title: t('pages:creator.post.download.toast.failed', 'Download Failed'),
+        description: t('pages:creator.post.download.toast.failedDesc', 'Could not download the image. Please try again.'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Get downloaded images from local storage
+  const getDownloadedImages = () => {
+    try {
+      return JSON.parse(localStorage.getItem('downloadedImages') || '[]');
+    } catch (error) {
+      console.error('Error reading downloaded images:', error);
+      return [];
+    }
+  };
+
+  // Clear downloaded images from local storage
+const clearDownloadedImages = () => {
+  try {
+    localStorage.removeItem('downloadedImages');
+    toast({
+      title: t('pages:creator.buttons.cleared'),
+      description: t('pages:creator.buttons.clearedDesc'),
+      variant: "default",
+    });
+  } catch (error) {
+    console.error('Error clearing downloaded images:', error);
+    toast({
+      title: t('pages:creator.buttons.clearFailed'),
+      description: t('pages:creator.buttons.clearFailedDesc'),
+      variant: "destructive",
+    });
+  }
+};
+
+
   // Add citation
   const addCitation = () => {
     if (!newCitation.content.trim()) {
@@ -362,28 +468,18 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       await navigator.clipboard.write([clipboardItem]);
       
       toast({
-        title: t('pages:creator.post.ai.image.toast.copied', 'Image copied to clipboard'),
-        description: t('pages:creator.post.ai.image.toast.copiedDesc', 'The AI generated image has been copied to your clipboard'),
+         title: t('pages:creator.buttons.copied'),
+  description: t('pages:creator.buttons.copiedDesc'),
         variant: "default",
       });
     } catch (error) {
       console.error('Error copying image to clipboard:', error);
       toast({
-        title: t('pages:creator.post.ai.image.toast.copyFailed', 'Failed to copy image'),
-        description: t('pages:creator.post.ai.image.toast.copyFailedDesc', 'Could not copy the image to clipboard'),
+          title: t('pages:creator.buttons.copyFailed'),
+    description: t('pages:creator.buttons.copyFailedDesc'),
         variant: "destructive",
       });
     }
-  };
-
-  // Download image
-  const downloadImage = (imageUrl: string, filename: string) => {
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   // Handle AI image generation
@@ -419,6 +515,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   };
 
   const currentCitations = activeTab === 'manual' ? postData.citations : aiData.citations;
+  const downloadedImages = getDownloadedImages();
 
   return (
     <div className="space-y-6">
@@ -590,6 +687,16 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                         className="w-full h-auto max-h-64 object-cover"
                       />
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadImage(createdPost.image!, `post-${createdPost.slug}-${Date.now()}.jpg`)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {t('pages:creator.post.download.buttons.download', 'Download Image')}
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -624,10 +731,69 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                         className="w-32 h-32"
                       />
                     </div>
+                    <div className="flex justify-center mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadImage(createdPost.qrCodeUrl!, `qr-code-${createdPost.slug}-${Date.now()}.png`)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {t('pages:creator.post.download.buttons.download', 'Download QR Code')}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Download History Section */}
+      {downloadedImages.length > 0 && (
+        <Card>
+         <CardHeader>
+  <CardTitle className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
+      <Download className="h-5 w-5" />
+      {t('pages:creator.buttons.historyTitle')}
+    </div>
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={clearDownloadedImages}
+    >
+      {t('pages:creator.buttons.clear')}
+    </Button>
+  </CardTitle>
+</CardHeader>
+
+          <CardContent>
+            <div className="space-y-3">
+              {downloadedImages.slice(0, 5).map((image: any) => (
+                <div key={image.id} className="flex items-center gap-3 p-2 border rounded">
+                  <img 
+                    src={image.dataUrl} 
+                    alt={image.filename}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{image.filename}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(image.downloadedAt).toLocaleDateString()} • 
+                      {(image.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => downloadImage(image.url, image.filename)}
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -735,6 +901,16 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                         }}
                       >
                         ×
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadImage(postData.image!, `post-image-${Date.now()}.jpg`)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {t('pages:creator.post.download.buttons.download', 'Download Image')}
                       </Button>
                     </div>
                   </div>
@@ -1081,7 +1257,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                             onClick={() => copyImageToClipboard(aiImageUrl)}
                           >
                             <Copy className="h-3 w-3 mr-1" />
-                            {t('pages:creator.post.ai.image.buttons.copyImage', 'Copy Image')}
+                            {t('pages:creator.buttons.copyImage')}
                           </Button>
                           <Button
                             size="sm"
@@ -1089,15 +1265,15 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                             onClick={() => copyUrl(aiImageUrl, t('pages:creator.post.ai.image.generatedLabel', 'Generated Image'))}
                           >
                             <Link className="h-3 w-3 mr-1" />
-                            {t('pages:creator.post.ai.image.buttons.copyUrl', 'Copy URL')}
+                            {t('pages:creator.buttons.copyUrl')}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => downloadImage(aiImageUrl, `ai-generated-image-${Date.now()}.png`)}
+                            onClick={() => downloadImage(aiImageUrl, `ai-generated-${Date.now()}.jpg`)}
                           >
                             <Download className="h-3 w-3 mr-1" />
-                            {t('pages:creator.post.ai.image.buttons.download', 'Download')}
+                            {t('pages:creator.buttons.download')}
                           </Button>
                         </div>
                       </div>

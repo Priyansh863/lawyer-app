@@ -16,6 +16,27 @@
       "saving": "Saving...",
       "saveRates": "Save Rates"
     },
+   
+    "shar": {
+      "error": "Error",
+      "success": "Success",
+      "lawyers": "lawyers",
+      "clients": "clients",
+      "failedToLoadUsers": "Failed to load {{userType}}",
+      "userNotAuthenticated": "User not authenticated",
+      "documentSharingUpdated": "Document sharing updated successfully",
+      "failedToUpdateSharing": "Failed to update document sharing",
+      "shareWithUserType": "Share with {{userType}}",
+      "shareDocumentDescription": "Share \"{{documentName}}\" with {{userType}} in your network.",
+      "privateDocumentSharingNote": "Note: Only private documents can be shared with {{userType}}.",
+      "privateDocumentRequired": "This document must be private to share with lawyers.",
+      "loadingUsers": "Loading {{userType}}...",
+      "noUsersAvailable": "No {{userType}} available",
+      "currentlyShared": "Currently Shared",
+      "updating": "Updating...",
+      "cancel": "Cancel",
+      "updateSharing": "Update Sharing"
+    },
   "client": {
       "onboard": {
         "button": "Onboard Client",
@@ -564,7 +585,7 @@
     },
     "error": {
       "unsupportedType": "Unsupported file type. Upload PDF, DOCX, TXT, Images, or Video files.",
-      "sizeExceeded": "File size exceeds {size}MB limit for {type} files",
+      "sizeExceeded": "File size exceeds {{size}}MB limit for {{type}} files",
       "missingFileOrAuth": "Please select a file and ensure you are logged in",
       "storageFailed": "Failed to upload file to storage",
       "general": "Document upload failed"
@@ -981,6 +1002,28 @@
   "cardTitle": "Case Information",
   "cardDescription": "Provide the basic information for the new case.",
   "backButton": "Back",
+  "clientOnboarding": {
+        "addNewClient": "Add New Client",
+        "dialogTitle": "Onboard New Client",
+        "firstName": "First Name",
+        "firstNamePlaceholder": "Enter first name",
+        "lastName": "Last Name",
+        "lastNamePlaceholder": "Enter last name",
+        "email": "Email Address",
+        "emailPlaceholder": "Enter email address",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number",
+        "createClient": "Create Client",
+        "creating": "Creating...",
+        "cancel": "Cancel",
+        "clientCreatedTitle": "Client Created Successfully",
+        "otpSent": "OTP sent to {{email}}: {{otp}}",
+        "clientOnboardedTitle": "Client Onboarded",
+        "clientOnboardedDescription": "New client has been created and selected for this case.",
+        "creationFailed": "Failed to create client",
+        "errorTitle": "Error Creating Client",
+        "errorDescription": "Please try again later."
+      },
   "form": {
     "title": "Case Title",
     "titlePlaceholder": "Enter case title",
@@ -1451,7 +1494,9 @@
     "answer": "Write Answer",
     "edit": "Edit Answer",
     "delete": "Delete",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+        "alreadyAnswered": "Question already answered - cannot edit or delete"
+      
   },
   "error": {
     "loadFailed": "Failed to load questions. Please try again later.",
@@ -1575,7 +1620,7 @@
   "postCreated": "Post created",
   "postAddedToList": "Your post has been added to the list",
   "urlCopied": "URL copied",
-  "urlCopiedToClipboard": "{type} URL copied to clipboard"
+  "urlCopiedToClipboard": "{{type}} URL copied to clipboard"
 },
 "graph":{
   "analytics": {
@@ -1726,6 +1771,25 @@
 
   
   "creator": {
+   "buttons": {
+    "historyTitle": "Download History",
+    "clear": "Clear History",
+    "copyImage": "Copy Image",
+    "copyUrl": "Copy URL",
+    "download": "Download",
+    "copied": "Image copied to clipboard",
+    "copiedDesc": "The AI generated image has been copied to your clipboard",
+    "copyFailed": "Failed to copy image",
+    "copyFailedDesc": "Could not copy the image to clipboard",
+    "success": "Image Downloaded",
+    "successDesc": "Image has been downloaded and saved to your local storage",
+    "partialSuccess": "Image Downloaded",
+    "partialSuccessDesc": "Image downloaded but could not be saved to local storage",
+    "cleared": "Download History Cleared",
+    "clearedDesc": "All downloaded images have been removed from local storage",
+    "clearFailed": "Clear Failed",
+    "clearFailedDesc": "Could not clear download history"
+  },
     "post": {
       "title": "Create New Post",
       "tabs": {
@@ -1821,7 +1885,11 @@
           "successDesc": "The image has been uploaded and will be included in the post",
           "failed": "Upload Failed",
           "failedDesc": "Failed to upload image. Please try again."
-        }
+        },
+          "buttons": {
+            "copyImage": "Copy Image",
+            "copyUrl": "Copy URL"
+          }
       },
       "characters": "characters",
       "citations": {
@@ -1862,7 +1930,7 @@
       "url": {
         "toast": {
           "copied": "URL Copied",
-          "copiedDesc": "{type} URL has been copied to clipboard"
+          "copiedDesc": "{{type}} URL has been copied to clipboard"
         }
       }
     }

@@ -281,33 +281,36 @@ export default function DocumentsTable({
   }
 
   // Privacy badge with enhanced privacy levels
-  const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
-    switch (privacy) {
-      case 'fully_private':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800">
-            <Lock className="h-3 w-3" />
-            {t('pages:documentT.table.privacy.fullyPrivate')}
-          </Badge>
-        )
-      case 'private':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800">
-            <Lock className="h-3 w-3" />
+// Privacy badge with better layout
+const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
+  switch (privacy) {
+    case 'fully_private':
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 min-w-[100px] justify-center">
+          <Lock className="h-3 w-3" />
+          <span className="text-xs">{t('pages:documentT.table.privacy.fullyPrivate')}</span>
+        </Badge>
+      )
+    case 'private':
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-1 py-1 min-w-[80px] justify-center">
+          <Lock className="h-3 w-3" />
+          <span className="text-xs">
             {isShared 
               ? t('pages:documentT.table.privacy.sharedPrivate') 
               : t('pages:documentT.table.privacy.private')}
-          </Badge>
-        )
-      default:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800">
-            <Globe className="h-3 w-3" />
-            {t('pages:documentT.table.privacy.public')}
-          </Badge>
-        )
-    }
+          </span>
+        </Badge>
+      )
+    default:
+      return (
+        <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 min-w-[100px] justify-center">
+          <Globe className="h-3 w-3" />
+          <span className="text-xs">{t('pages:documentT.table.privacy.public')}</span>
+        </Badge>
+      )
   }
+}
 
   // Handle document deletion
   const handleDelete = async (documentId: string) => {
@@ -398,7 +401,7 @@ export default function DocumentsTable({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <Skeleton width={70} />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <Skeleton width={80} />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -503,31 +506,32 @@ export default function DocumentsTable({
         <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('pages:documentT.table.headers.document')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('pages:documentT.table.headers.type')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('pages:documentT.table.headers.status')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('pages:documentT.table.headers.privacy')}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('pages:documentT.table.headers.uploaded')}
-                    </th>
-                    <th className="relative px-6 py-3">
-                      <span className="sr-only">{t('pages:documentT.table.headers.actions')}</span>
-                    </th>
-                  </tr>
-                </thead>
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('pages:documentT.table.headers.document')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('pages:documentT.table.headers.type')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('pages:documentT.table.headers.status')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('pages:documentT.table.headers.privacy')}
+                  </th>
+                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('pages:documentT.table.headers.uploaded')}
+                  </th>
+                  <th className="relative px-6 py-3">
+                    <span className="sr-only">{t('pages:documentT.table.headers.actions')}</span>
+                  </th>
+                </tr>
+              </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {documents.map((doc) => (
                   <tr key={doc._id} className="hover:bg-gray-50 transition-colors">
+                    {/* Document Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {(() => {
@@ -551,6 +555,8 @@ export default function DocumentsTable({
                         </div>
                       </div>
                     </td>
+                    
+                    {/* Type Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {(() => {
@@ -562,67 +568,83 @@ export default function DocumentsTable({
                         </span>
                       </div>
                     </td>
+                    
+                    {/* Status Column */}
                     <td className="px-6 py-4">
-                      {getStatusBadge(doc.status)}
+                      <div className="flex justify-start">
+                        {getStatusBadge(doc.status)}
+                      </div>
                     </td>
+                    
+                    {/* Privacy Column */}
                     <td className="px-6 py-4">
-                      {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
+                      <div className="flex justify-start">
+                        {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {formatDistanceToNow(new Date(doc.created_at || doc.createdAt), { addSuffix: true })}
+                    
+                    {/* Uploaded Column */}
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 whitespace-nowrap">
+                        {formatDistanceToNow(new Date(doc.created_at || doc.createdAt), { addSuffix: true })}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem 
-                            onClick={() => handleDownloadSummary(doc)}
-                            className="flex items-center gap-2"
-                            disabled={downloadingSummaryId === doc._id}
-                          >
-                            <FileText className="h-4 w-4" />
-                            {downloadingSummaryId === doc._id 
-                              ? t('pages:documentT.documents.downloadingSummary')
-                              : t('pages:documentT.table.actions.downloadSummary')}
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem 
-                            onClick={() => handleDownloadDocument(doc)}
-                            className="flex items-center gap-2"
-                            disabled={downloadingDocumentId === doc._id}
-                          >
-                            <Download className="h-4 w-4" />
-                            {downloadingDocumentId === doc._id 
-                              ? t('pages:documentT.documents.downloadingDocument')
-                              : t('pages:documentT.table.actions.downloadDocument')}
-                          </DropdownMenuItem>
-                          
-                          { (doc.privacy === 'private') && (
+                    
+                    {/* Actions Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem 
-                              onClick={() => handleShareWithLawyer(doc)}
+                              onClick={() => handleDownloadSummary(doc)}
                               className="flex items-center gap-2"
+                              disabled={downloadingSummaryId === doc._id}
                             >
-                              <Share2 className="h-4 w-4" />
-                              {t('pages:documentT.table.actions.shareDocument')}
+                              <FileText className="h-4 w-4" />
+                              {downloadingSummaryId === doc._id 
+                                ? t('pages:documentT.documents.downloadingSummary')
+                                : t('pages:documentT.table.actions.downloadSummary')}
                             </DropdownMenuItem>
-                          )}
-                          
-                          <DropdownMenuSeparator />
-                          
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(doc._id)}
-                            className="flex items-center gap-2 text-red-600"
-                            disabled={deletingId === doc._id}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {t('pages:documentT.table.actions.delete')}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+
+                            <DropdownMenuItem 
+                              onClick={() => handleDownloadDocument(doc)}
+                              className="flex items-center gap-2"
+                              disabled={downloadingDocumentId === doc._id}
+                            >
+                              <Download className="h-4 w-4" />
+                              {downloadingDocumentId === doc._id 
+                                ? t('pages:documentT.documents.downloadingDocument')
+                                : t('pages:documentT.table.actions.downloadDocument')}
+                            </DropdownMenuItem>
+                            
+                            { (doc.privacy === 'private') && (
+                              <DropdownMenuItem 
+                                onClick={() => handleShareWithLawyer(doc)}
+                                className="flex items-center gap-2"
+                              >
+                                <Share2 className="h-4 w-4" />
+                                {t('pages:documentT.table.actions.shareDocument')}
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(doc._id)}
+                              className="flex items-center gap-2 text-red-600"
+                              disabled={deletingId === doc._id}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {t('pages:documentT.table.actions.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -18,7 +18,7 @@ import { createCase } from "@/lib/api/cases-api"
 import { ArrowLeft, Loader2, Plus, UserPlus } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Sidebar from "@/components/sidebar/sidebar"
-import { useTranslation } from "@/hooks/useTranslation" // ✅ Added translation hook
+import { useTranslation } from "@/hooks/useTranslation"
 
 const newCaseSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be less than 100 characters"),
@@ -47,7 +47,7 @@ export default function NewCasePage() {
 
   const router = useRouter()
   const { toast } = useToast()
-  const { t } = useTranslation() // ✅ Initialize translations
+  const { t } = useTranslation()
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}")
@@ -171,14 +171,13 @@ export default function NewCasePage() {
           email: newClientData.email,
           phone: newClientData.phone,
           account_type: 'client',
-          password: 'TempPassword123!', // Temporary password
+          password: 'TempPassword123!',
         }),
       })
 
       const result = await response.json()
 
       if (result.success) {
-        // Send OTP for verification
         const otpResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/send-signup-otp`, {
           method: 'POST',
           headers: {
@@ -191,38 +190,38 @@ export default function NewCasePage() {
 
         if (otpResult.success && otpResult.data?.otp) {
           toast({
-            title: "Client Created Successfully",
-            description: `OTP sent to ${newClientData.email}: ${otpResult.data.otp}`,
+            title: t("pages:newcases.clientOnboarding.clientCreatedTitle"),
+            description: t("pages:newcases.clientOnboarding.otpSent", { 
+              email: newClientData.email, 
+              otp: otpResult.data.otp 
+            }),
             duration: 10000,
           })
         }
 
-        // Add new client to the list
         const newClient = {
           id: result.data.user._id,
           name: `${newClientData.firstName} ${newClientData.lastName}`,
         }
         setClients([...clients, newClient])
         
-        // Select the new client
         form.setValue('clientId', newClient.id)
         
-        // Reset form and close modal
         setNewClientData({ firstName: '', lastName: '', email: '', phone: '' })
         setShowClientOnboarding(false)
         
         toast({
-          title: "Client Onboarded",
-          description: "New client has been created and selected for this case.",
+          title: t("pages:newcases.clientOnboarding.clientOnboardedTitle"),
+          description: t("pages:newcases.clientOnboarding.clientOnboardedDescription"),
         })
       } else {
-        throw new Error(result.message || 'Failed to create client')
+        throw new Error(result.message || t("pages:newcases.clientOnboarding.creationFailed"))
       }
     } catch (error: any) {
       console.error('Client creation error:', error)
       toast({
-        title: "Error Creating Client",
-        description: error.message || "Please try again later.",
+        title: t("pages:newcases.clientOnboarding.errorTitle"),
+        description: error.message || t("pages:newcases.clientOnboarding.errorDescription"),
         variant: "destructive",
       })
     } finally {
@@ -307,91 +306,100 @@ export default function NewCasePage() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                            {/* Add New Client Button */}
-                            {isLawyer && (
-                              <Dialog open={showClientOnboarding} onOpenChange={setShowClientOnboarding}>
-                                <DialogTrigger asChild>
-                                  <Button type="button" variant="outline" size="sm" className="w-full">
-                                    <UserPlus className="h-4 w-4 mr-2" />
-                                    Add New Client
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-md">
-                                  <DialogHeader>
-                                    <DialogTitle>Onboard New Client</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                              
+                              {/* Add New Client Button */}
+                              {isLawyer && (
+                                <Dialog open={showClientOnboarding} onOpenChange={setShowClientOnboarding}>
+                                  <DialogTrigger asChild>
+                                    <Button type="button" variant="outline" size="sm" className="w-full">
+                                      <UserPlus className="h-4 w-4 mr-2" />
+                                      {t("pages:newcases.clientOnboarding.addNewClient")}
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                      <DialogTitle>{t("pages:newcases.clientOnboarding.dialogTitle")}</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label htmlFor="firstName">
+                                            {t("pages:newcases.clientOnboarding.firstName")}
+                                          </Label>
+                                          <Input
+                                            id="firstName"
+                                            value={newClientData.firstName}
+                                            onChange={(e) => setNewClientData({...newClientData, firstName: e.target.value})}
+                                            placeholder={t("pages:newcases.clientOnboarding.firstNamePlaceholder")}
+                                          />
+                                        </div>
+                                        <div>
+                                          <Label htmlFor="lastName">
+                                            {t("pages:newcases.clientOnboarding.lastName")}
+                                          </Label>
+                                          <Input
+                                            id="lastName"
+                                            value={newClientData.lastName}
+                                            onChange={(e) => setNewClientData({...newClientData, lastName: e.target.value})}
+                                            placeholder={t("pages:newcases.clientOnboarding.lastNamePlaceholder")}
+                                          />
+                                        </div>
+                                      </div>
                                       <div>
-                                        <Label htmlFor="firstName">First Name</Label>
+                                        <Label htmlFor="email">
+                                          {t("pages:newcases.clientOnboarding.email")}
+                                        </Label>
                                         <Input
-                                          id="firstName"
-                                          value={newClientData.firstName}
-                                          onChange={(e) => setNewClientData({...newClientData, firstName: e.target.value})}
-                                          placeholder="Enter first name"
+                                          id="email"
+                                          type="email"
+                                          value={newClientData.email}
+                                          onChange={(e) => setNewClientData({...newClientData, email: e.target.value})}
+                                          placeholder={t("pages:newcases.clientOnboarding.emailPlaceholder")}
                                         />
                                       </div>
                                       <div>
-                                        <Label htmlFor="lastName">Last Name</Label>
+                                        <Label htmlFor="phone">
+                                          {t("pages:newcases.clientOnboarding.phone")}
+                                        </Label>
                                         <Input
-                                          id="lastName"
-                                          value={newClientData.lastName}
-                                          onChange={(e) => setNewClientData({...newClientData, lastName: e.target.value})}
-                                          placeholder="Enter last name"
+                                          id="phone"
+                                          value={newClientData.phone}
+                                          onChange={(e) => setNewClientData({...newClientData, phone: e.target.value})}
+                                          placeholder={t("pages:newcases.clientOnboarding.phonePlaceholder")}
                                         />
                                       </div>
+                                      <div className="flex gap-2">
+                                        <Button 
+                                          type="button" 
+                                          onClick={handleCreateNewClient}
+                                          disabled={!newClientData.firstName || !newClientData.email || isSubmitting}
+                                          className="flex-1"
+                                        >
+                                          {isSubmitting ? (
+                                            <>
+                                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                              {t("pages:newcases.clientOnboarding.creating")}
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Plus className="h-4 w-4 mr-2" />
+                                              {t("pages:newcases.clientOnboarding.createClient")}
+                                            </>
+                                          )}
+                                        </Button>
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          onClick={() => setShowClientOnboarding(false)}
+                                          disabled={isSubmitting}
+                                        >
+                                          {t("pages:newcases.clientOnboarding.cancel")}
+                                        </Button>
+                                      </div>
                                     </div>
-                                    <div>
-                                      <Label htmlFor="email">Email Address</Label>
-                                      <Input
-                                        id="email"
-                                        type="email"
-                                        value={newClientData.email}
-                                        onChange={(e) => setNewClientData({...newClientData, email: e.target.value})}
-                                        placeholder="Enter email address"
-                                      />
-                                    </div>
-                                    <div>
-                                      <Label htmlFor="phone">Phone Number</Label>
-                                      <Input
-                                        id="phone"
-                                        value={newClientData.phone}
-                                        onChange={(e) => setNewClientData({...newClientData, phone: e.target.value})}
-                                        placeholder="Enter phone number"
-                                      />
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        type="button" 
-                                        onClick={handleCreateNewClient}
-                                        disabled={!newClientData.firstName || !newClientData.email || isSubmitting}
-                                        className="flex-1"
-                                      >
-                                        {isSubmitting ? (
-                                          <>
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            Creating...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Plus className="h-4 w-4 mr-2" />
-                                            Create Client
-                                          </>
-                                        )}
-                                      </Button>
-                                      <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        onClick={() => setShowClientOnboarding(false)}
-                                        disabled={isSubmitting}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            )}
+                                  </DialogContent>
+                                </Dialog>
+                              )}
                             </div>
                           )}
                           <FormMessage />
@@ -399,44 +407,44 @@ export default function NewCasePage() {
                       )}
                     />
 
-                  {/* Assigned To */}
-                  <FormField
-                    control={form.control}
-                    name="assignedTo"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("pages:newcases.form.assignedTo")}</FormLabel>
-                        {isLawyer ? (
-                          <div className="flex items-center p-2 border rounded-md bg-gray-50">
-                            <span className="text-sm">
-                              {currentUser?.first_name || currentUser?.email || t("pages:newcases.you")}
-                            </span>
-                            <input type="hidden" {...field} value={currentUser?._id} />
-                          </div>
-                        ) : (
-                          <Select
-                            onValueChange={(value) => field.onChange([value])}
-                            defaultValue={field.value?.[0]}
-                            disabled={isClient && lawyers.length === 1}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={t("pages:newcases.form.selectLawyer")} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {lawyers.map((lawyer) => (
-                                <SelectItem key={lawyer.id} value={lawyer.id}>
-                                  {lawyer.name} 
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Assigned To */}
+                    <FormField
+                      control={form.control}
+                      name="assignedTo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("pages:newcases.form.assignedTo")}</FormLabel>
+                          {isLawyer ? (
+                            <div className="flex items-center p-2 border rounded-md bg-gray-50">
+                              <span className="text-sm">
+                                {currentUser?.first_name || currentUser?.email || t("pages:newcases.you")}
+                              </span>
+                              <input type="hidden" {...field} value={currentUser?._id} />
+                            </div>
+                          ) : (
+                            <Select
+                              onValueChange={(value) => field.onChange([value])}
+                              defaultValue={field.value?.[0]}
+                              disabled={isClient && lawyers.length === 1}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t("pages:newcases.form.selectLawyer")} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {lawyers.map((lawyer) => (
+                                  <SelectItem key={lawyer.id} value={lawyer.id}>
+                                    {lawyer.name} 
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     {/* Status */}
                     <FormField

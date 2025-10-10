@@ -15,6 +15,26 @@
     "saving": "저장 중...",
     "saveRates": "요금 저장"
   },
+    "shar": {
+    "error": "오류",
+    "success": "성공",
+    "lawyers": "변호사",
+    "clients": "고객",
+    "failedToLoadUsers": "{{userType}} 불러오기 실패",
+    "userNotAuthenticated": "사용자가 인증되지 않았습니다",
+    "documentSharingUpdated": "문서 공유가 성공적으로 업데이트되었습니다",
+    "failedToUpdateSharing": "문서 공유 업데이트에 실패했습니다",
+    "shareWithUserType": "{{userType}}와 공유",
+    "shareDocumentDescription": "\"{{documentName}}\" 문서를 네트워크의 {{userType}}와 공유합니다.",
+    "privateDocumentSharingNote": "참고: 비공개 문서만 {{userType}}와 공유할 수 있습니다.",
+    "privateDocumentRequired": "변호사와 공유하려면 이 문서가 비공개로 설정되어야 합니다.",
+    "loadingUsers": "{{userType}} 불러오는 중...",
+    "noUsersAvailable": "사용 가능한 {{userType}}가 없습니다",
+    "currentlyShared": "현재 공유 중",
+    "cancel": "취소",
+    "updating": "업데이트 중...",
+    "updateSharing": "공유 업데이트"
+  },
   "client": {
       "onboard": {
         "button": "클라이언트 등록",
@@ -533,6 +553,35 @@
       "other": "기타"
     },
     "courtTypes": {
+      "Seoul Central District Court": "서울중앙지방법원",
+      "Seoul Eastern District Court": "서울동부지방법원",
+      "Seoul Western District Court": "서울서부지방법원",
+      "Seoul Southern District Court": "서울남부지방법원",
+      "Seoul Northern District Court": "서울북부지방법원",
+      "Incheon District Court": "인천지방법원",
+      "Suwon District Court": "수원지방법원",
+      "Uijeongbu District Court": "의정부지방법원",
+      "Chuncheon District Court": "춘천지방법원",
+      "Cheongju District Court": "청주지방법원",
+      "Daejeon District Court": "대전지방법원",
+      "Daegu District Court": "대구지방법원",
+      "Busan District Court": "부산지방법원",
+      "Ulsan District Court": "울산지방법원",
+      "Gwangju District Court": "광주지방법원",
+      "Changwon District Court": "창원지방법원",
+      "Jeju District Court": "제주지방법원",
+      "Seoul High Court": "서울고등법원",
+      "Daejeon High Court": "대전고등법원",
+      "Daegu High Court": "대구고등법원",
+      "Busan High Court": "부산고등법원",
+      "Gwangju High Court": "광주고등법원",
+      "Constitutional Court": "헌법재판소",
+      "Supreme Court": "대법원",
+      "Seoul Family Court": "서울가정법원",
+     
+      "administrative_court": "행정법원",
+      "constitutional_court": "헌법재판소",
+      "other": "기타",
       "district_court": "지방법원",
       "high_court": "고등법원",
       "supreme_court": "대법원",
@@ -542,8 +591,7 @@
       "labor_court": "노동법원",
       "tax_court": "세무법원",
       "tribunal": "심판소",
-      "arbitration": "중재",
-      "other": "기타"
+      "arbitration": "중재"
     }
   },
   
@@ -577,7 +625,7 @@
     },
     "error": {
       "unsupportedType": "지원되지 않는 파일 형식입니다. PDF, DOCX, TXT, 이미지 또는 동영상 파일을 업로드하세요.",
-      "sizeExceeded": "파일 크기가 {type} 파일의 {size}MB 제한을 초과했습니다",
+      "sizeExceeded": "파일 크기가 {{type}} 파일의 {size}MB 제한을 초과했습니다",
       "missingFileOrAuth": "파일을 선택하고 로그인 상태를 확인하세요",
       "storageFailed": "파일 저장소 업로드 실패",
       "general": "문서 업로드 실패"
@@ -632,6 +680,28 @@
   "cardTitle": "사건 정보",
   "cardDescription": "새 사건의 기본 정보를 입력하세요.",
   "backButton": "뒤로",
+  "clientOnboarding": {
+        "addNewClient": "새 클라이언트 추가",
+        "dialogTitle": "새 클라이언트 등록",
+        "firstName": "이름",
+        "firstNamePlaceholder": "이름을 입력하세요",
+        "lastName": "성",
+        "lastNamePlaceholder": "성을 입력하세요",
+        "email": "이메일 주소",
+        "emailPlaceholder": "이메일 주소를 입력하세요",
+        "phone": "전화번호",
+        "phonePlaceholder": "전화번호를 입력하세요",
+        "createClient": "클라이언트 생성",
+        "creating": "생성 중...",
+        "cancel": "취소",
+        "clientCreatedTitle": "클라이언트 생성 성공",
+        "otpSent": "{{email}}로 OTP가 전송되었습니다: {{otp}}",
+        "clientOnboardedTitle": "클라이언트 등록 완료",
+        "clientOnboardedDescription": "새 클라이언트가 생성되어 이 사건에 선택되었습니다.",
+        "creationFailed": "클라이언트 생성 실패",
+        "errorTitle": "클라이언트 생성 오류",
+        "errorDescription": "나중에 다시 시도해 주세요."
+      },
   "form": {
     "title": "사건 제목",
     "titlePlaceholder": "사건 제목을 입력하세요",
@@ -863,7 +933,7 @@
     "addressSearch": "주소로 검색",
     "placeSearch": "장소명으로 검색",
     "getCurrentLocation": "현재 위치 가져오기",
-    "currentAltitude": "현재 고도: {altitude} 미터",
+    "currentAltitude": "현재 고도: {{altitude}} 미터",
     "searchResults": "검색 결과",
     "generatedUrls": "생성된 URL",
     "fullUrl": "전체 URL",
@@ -945,6 +1015,25 @@
     }
   },
   "creator" :{
+     "buttons": {
+      "historyTitle": "다운로드 기록",
+      "clear": "기록 삭제",
+            "copyImage": "이미지 복사",
+            "copyUrl": "URL 복사",
+              "download": "다운로드",
+               "copied": "이미지가 클립보드에 복사되었습니다",
+            "copiedDesc": "AI가 생성한 이미지가 클립보드에 복사되었습니다",
+            "copyFailed": "이미지 복사 실패",
+            "copyFailedDesc": "이미지를 클립보드에 복사할 수 없습니다",
+             "success": "이미지 다운로드 완료",
+          "successDesc": "이미지가 다운로드되어 로컬 저장소에 저장되었습니다",
+          "partialSuccess": "이미지 다운로드 완료",
+          "partialSuccessDesc": "이미지는 다운로드되었지만 로컬 저장소에 저장할 수 없습니다",
+           "cleared": "다운로드 기록 삭제 완료",
+          "clearedDesc": "모든 다운로드된 이미지가 로컬 저장소에서 제거되었습니다",
+          "clearFailed": "삭제 실패",
+          "clearFailedDesc": "다운로드 기록을 삭제할 수 없습니다"
+          },
   "post": {
     "title": "새 게시물 작성",
     "tabs": {
@@ -1027,7 +1116,7 @@
       "requiredFields": "필수 항목 누락",
       "requiredFieldsDesc": "제목과 내용은 필수입니다",
       "created": "게시물 작성 성공",
-      "createdDesc": "\"{title}\" 게시물이 작성되었습니다",
+      "createdDesc": "\"{{title}}\" 게시물이 작성되었습니다",
       "failed": "게시물 작성 실패",
       "failedDesc": "문제가 발생했습니다"
     },
@@ -1040,7 +1129,11 @@
         "successDesc": "이미지가 업로드되어 게시물에 포함됩니다",
         "failed": "업로드 실패",
         "failedDesc": "이미지 업로드에 실패했습니다. 다시 시도해주세요."
-      }
+      },
+       "buttons": {
+            "copyImage": "이미지 복사",
+            "copyUrl": "URL 복사"
+          }
     },
     "characters": "자",
     "citations": {
@@ -1081,7 +1174,7 @@
     "url": {
       "toast": {
         "copied": "URL 복사됨",
-        "copiedDesc": "{type} URL이 클립보드에 복사되었습니다"
+        "copiedDesc": "{{type}} URL이 클립보드에 복사되었습니다"
       }
     }
   }
@@ -1199,7 +1292,7 @@
       "popular": "인기 상품",
       "button": {
         "loading": "Stripe로 이동 중...",
-        "default": "{tokens} 토큰 구매"
+        "default": "{{tokens}} 토큰 구매"
       },
       "packages": {
         "starter": {
@@ -1233,7 +1326,7 @@
       "pagination": {
         "previous": "이전",
         "next": "다음",
-        "page": "{current} / {total} 페이지"
+        "page": "{{current}} / {{total}} 페이지"
       },
       "types": {
         "purchase": "구매",
@@ -1372,7 +1465,7 @@
       "edit": "수정"
     },
     "time": {
-      "scheduled": "{date} {time}",
+      "scheduled": "{{date}} {{time}}",
       "notScheduled": "예약되지 않음"
     },
     "unknown": {
@@ -1406,8 +1499,10 @@
       "rejected": {
         "title": "미팅 거절",
         "description": "미팅이 거절되었습니다"
+      },
+      "labels": {
+        "free": "무료"
       }
-      
 
     },
     "errors": {
@@ -1476,10 +1571,10 @@
       "video": "영상 상담"
     },
     "pagination": {
-      "showing": "총 {total}건 중 {start}에서 {end}까지 표시 중",
+      "showing": "총 {{total}}건 중 {{start}}에서 {{end}}까지 표시 중",
       "previous": "이전",
       "next": "다음",
-      "pageInfo": "{current} / {total} 페이지"
+      "pageInfo": "{{current}} / {{total}} 페이지"
     },
     "noTransactions": {
       "title": "아직 거래 내역이 없습니다",
@@ -1819,7 +1914,7 @@
         "otpSent": {
           "title": "비밀번호 재설정 OTP",
           "description": "비밀번호 재설정 OTP를 이메일로 보냈습니다.",
-          "descriptionWithCode": "비밀번호 재설정 OTP는 {otp}입니다. 이 OTP는 10분 후에 만료됩니다."
+          "descriptionWithCode": "비밀번호 재설정 OTP는 {{otp}}입니다. 이 OTP는 10분 후에 만료됩니다."
         },
         "errors": {
           "sendFailed": "OTP 전송 실패",
@@ -1865,7 +1960,7 @@
         "fetchError": "오류: {status}",
         "loadFailed": "질문 데이터를 불러오지 못했습니다",
         "loadQuestionError": "질문 불러오기 실패:",
-        "submitError": "오류: {status}",
+        "submitError": "오류: {{status}}",
         "saveAnswerError": "답변 저장 실패:",
         "saveFailed": "답변 저장에 실패했습니다. 다시 시도해주세요."
       }
@@ -1899,7 +1994,7 @@
   "postCreated": "게시물 생성됨",
   "postAddedToList": "게시물이 목록에 추가되었습니다",
   "urlCopied": "URL 복사됨",
-  "urlCopiedToClipboard": "{type} URL이 클립보드에 복사되었습니다"
+  "urlCopiedToClipboard": "{{type}} URL이 클립보드에 복사되었습니다"
 },
  "quick": {
       "quickActions":"빠른 실행",
@@ -2012,7 +2107,7 @@
       "caseClassification": "사건 분류",
       "statusLabel": "상태:",
       "statusUpdated": "상태 업데이트 완료",
-      "caseHasBeen": "사건 상태가 {status}(으)로 변경되었습니다",
+      "caseHasBeen": "사건 상태가 {{status}}(으)로 변경되었습니다",
       "error": "오류 발생",
       "failedToUpdate": "사건 상태 업데이트 실패",
       "status": {
@@ -2133,7 +2228,8 @@
       "answer": "답변 작성",
       "edit": "답변 수정",
       "delete": "삭제",
-      "deleting": "삭제 중..."
+      "deleting": "삭제 중...",
+       "alreadyAnswered": "이미 답변된 질문입니다. 수정하거나 삭제할 수 없습니다."
     },
     "error": {
       "loadFailed": "질문을 불러오지 못했습니다. 나중에 다시 시도해 주세요.",

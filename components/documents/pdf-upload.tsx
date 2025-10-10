@@ -260,10 +260,10 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto w-full">
         <DialogHeader className="pb-4 border-b">
-          <DialogTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Upload className="h-6 w-6" />
             {t("pages:upload.title")}
           </DialogTitle>
         </DialogHeader>
@@ -272,7 +272,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
           {/* Fixed Top Section - File Upload Area */}
           <div className="space-y-4">
             <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 dragActive
                   ? 'border-primary bg-primary/5'
                   : file
@@ -285,7 +285,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
               onDrop={handleDrop}
             >
               {file ? (
-                <div className="space-y-2 relative">
+                <div className="space-y-3 relative">
                   {/* Remove button */}
                   <button
                     onClick={handleRemoveFile}
@@ -298,29 +298,29 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                   
                   {fileTypeInfo && (
                     <div className="flex items-center justify-center">
-                      <fileTypeInfo.icon className="h-8 w-8 text-green-600" />
+                      <fileTypeInfo.icon className="h-10 w-10 text-green-600" />
                     </div>
                   )}
                   <div>
-                    <p className="font-medium text-green-700">{file.name}</p>
+                    <p className="font-medium text-green-700 text-base">{file.name}</p>
                     <p className="text-sm text-green-600">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                     {fileTypeInfo && (
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${fileTypeInfo.color}`}>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${fileTypeInfo.color}`}>
                         {t(`pages:upload.fileTypes.${fileTypeInfo.label.toLowerCase()}`)}
                       </span>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                <div className="space-y-3">
+                  <Upload className="h-12 w-12 mx-auto text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">
+                    <p className="text-base font-medium text-gray-700">
                       {t("pages:upload.dragDrop")}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       {t("pages:upload.supportedFormats")}
                     </p>
                   </div>
@@ -339,7 +339,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
               {!file && (
                 <Label
                   htmlFor="file-upload"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 cursor-pointer mt-4"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-6 py-3 cursor-pointer mt-4"
                 >
                   {t("pages:upload.selectFile")}
                 </Label>
@@ -348,8 +348,8 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
 
             {/* Privacy Settings - Always visible but compact */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
+              <Label className="text-base font-medium flex items-center gap-2">
+                {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
                 {t("pages:upload.privacySettings")}
               </Label>
               <RadioGroup
@@ -360,26 +360,26 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                     setSelectedCaseId('')
                   }
                 }}
-                className="grid grid-cols-3 gap-2"
+                className="grid grid-cols-3 gap-3"
               >
-                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
-                  <RadioGroupItem value="public" id="public" className="mt-1" />
-                  <Label htmlFor="public" className="text-xs text-center flex flex-col items-center">
-                    <Globe className="h-3 w-3 mb-1" />
+                <div className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
+                  <RadioGroupItem value="public" id="public" className="mt-1 scale-110" />
+                  <Label htmlFor="public" className="text-sm text-center flex flex-col items-center">
+                    <Globe className="h-4 w-4 mb-1" />
                     {t("pages:upload.privacy.public")}
                   </Label>
                 </div>
-                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
-                  <RadioGroupItem value="private" id="private" className="mt-1" />
-                  <Label htmlFor="private" className="text-xs text-center flex flex-col items-center">
-                    <Lock className="h-3 w-3 mb-1" />
+                <div className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
+                  <RadioGroupItem value="private" id="private" className="mt-1 scale-110" />
+                  <Label htmlFor="private" className="text-sm text-center flex flex-col items-center">
+                    <Lock className="h-4 w-4 mb-1" />
                     {t("pages:upload.privacy.private")}
                   </Label>
                 </div>
-                <div className="flex flex-col items-center space-y-1 p-2 border rounded-md">
-                  <RadioGroupItem value="fully_private" id="fully_private" className="mt-1" />
-                  <Label htmlFor="fully_private" className="text-xs text-center flex flex-col items-center">
-                    <Lock className="h-3 w-3 mb-1" />
+                <div className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
+                  <RadioGroupItem value="fully_private" id="fully_private" className="mt-1 scale-110" />
+                  <Label htmlFor="fully_private" className="text-sm text-center flex flex-col items-center">
+                    <Lock className="h-4 w-4 mb-1" />
                     {t("pages:upload.privacy.fullyPrivate")}
                   </Label>
                 </div>
@@ -387,16 +387,16 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
             </div>
 
             {/* AI Processing Option - Always visible */}
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="flex items-center space-x-3 pt-2">
               <input
                 type="checkbox"
                 id="processWithAI"
                 checked={processWithAI}
                 onChange={(e) => setProcessWithAI(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-gray-300 w-5 h-5"
                 disabled={isUploading}
               />
-              <Label htmlFor="processWithAI" className="text-sm font-medium">
+              <Label htmlFor="processWithAI" className="text-base font-medium">
                 {t("pages:upload.aiProcessing")}
               </Label>
             </div>
@@ -404,9 +404,9 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
 
           {/* Dynamic Bottom Section - Case Selection appears here when privacy is private */}
           {privacy === 'private' && (
-            <div className="pt-2 border-t animate-in fade-in-50 slide-in-from-bottom-2">
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">
+            <div className="pt-4 border-t animate-in fade-in-50 slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <Label className="text-base font-medium">
                   {t("pages:upload.associateWithCase")}
                 </Label>
                 <Select 
@@ -416,20 +416,20 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                     setSelectedCaseId(e)}}
                   disabled={loadingCases}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full h-11 text-base">
                     <SelectValue placeholder={loadingCases ? t("pages:upload.loadingCases") : t("pages:upload.selectCasePlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t("pages:upload.noCaseAssociation")}</SelectItem>
+                  <SelectContent className="w-full max-w-full">
+                    <SelectItem value="" className="text-base">{t("pages:upload.noCaseAssociation")}</SelectItem>
                     {availableCases.map((caseItem) => (
-                      <SelectItem key={caseItem.id} value={caseItem.id}>
+                      <SelectItem key={caseItem.id} value={caseItem.id} className="text-base">
                         {caseItem.case_number} - {caseItem.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedCaseId && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-gray-500">
                     {t("pages:upload.caseAssociationNote")}
                   </p>
                 )}
@@ -437,10 +437,10 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
             </div>
           )}
 
-{privacy === 'private' && (
-            <div className="pt-2 border-t animate-in fade-in-50 slide-in-from-bottom-2">
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">
+          {privacy === 'private' && (
+            <div className="pt-4 border-t animate-in fade-in-50 slide-in-from-bottom-2">
+              <div className="space-y-4">
+                <Label className="text-base font-medium">
                   {t("pages:upload.associateWithUser")}
                 </Label>
                 <Select 
@@ -450,20 +450,20 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                     setSelectedCaseId('')}}
                   disabled={loadingCases}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full h-11 text-base">
                     <SelectValue placeholder={loadingCases ? t("pages:upload.loadingCases") : t("pages:upload.selectCasePlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t("pages:upload.noUserAssociation")}</SelectItem>
+                  <SelectContent className="w-full max-w-full">
+                    <SelectItem value="" className="text-base">{t("pages:upload.noUserAssociation")}</SelectItem>
                     {availableUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
+                      <SelectItem key={user.id} value={user.id} className="text-base">
                         {user.first_name} {user.last_name} - {user.email}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {selectedCaseId && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-gray-500">
                     {t("pages:upload.caseAssociationNote")}
                   </p>
                 )}
@@ -473,29 +473,30 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
 
           {/* Upload Progress */}
           {isUploading && (
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-sm">
+            <div className="space-y-3 pt-4">
+              <div className="flex justify-between text-base">
                 <span>{t("pages:upload.uploading")}</span>
                 <span>{Math.round(uploadProgress)}%</span>
               </div>
-              <Progress value={uploadProgress} className="w-full" />
+              <Progress value={uploadProgress} className="w-full h-3" />
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end space-x-3 pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isUploading}
+              className="h-11 px-6 text-base"
             >
               {t("pages:commons.cancel")}
             </Button>
             <Button
               onClick={handleUpload}
               disabled={!file || isUploading}
-              className="min-w-[100px]"
+              className="min-w-[120px] h-11 px-6 text-base"
             >
               {isUploading ? t("pages:upload.uploadingButton") : t("pages:upload.uploadButton")}
             </Button>
