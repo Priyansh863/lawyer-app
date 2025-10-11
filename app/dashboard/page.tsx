@@ -311,9 +311,13 @@ export default function ProfessionalDashboardPage() {
                     {formatDate(post.createdAt)}
                   </span>
                   <span className="hidden sm:inline">•</span>
-                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'} className="text-xs mt-1 sm:mt-0">
-                    {post.status}
-                  </Badge>
+                 <Badge 
+  variant={post.status === 'published' ? 'default' : 'secondary'} 
+  className="text-xs mt-1 sm:mt-0"
+>
+  {t(`pages:dashboard.postStatus.${post.status}`)}
+</Badge>
+
                 </div>
               </div>
             </div>

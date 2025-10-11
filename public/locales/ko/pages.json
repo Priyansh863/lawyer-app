@@ -69,6 +69,12 @@
       "submitting": "제출 중...",
       "failedToLoadPosts": "게시물을 불러오지 못했습니다",
       "bookmarked": "북마크됨",
+      "postStatus": {
+        "published": "게시됨",
+        "draft": "초안",
+        "archived": "보관됨",
+        "pending": "대기 중"
+      },
       "bookmarkRemoved": "북마크 제거됨",
       "failedToUpdateBookmark": "북마크 업데이트에 실패했습니다",
       "linkCopied": "링크 복사됨",
@@ -740,6 +746,7 @@
   "title": "보안 문서 업로드 링크",
   "description": "고객이 안전하게 문서를 업로드할 수 있도록 비밀번호로 보호된 링크를 생성하세요. 링크는 업로드가 완료되거나 시간 제한이 지나면 만료됩니다.",
   "generateNewLink": "새 링크 생성",
+   "viewExistingLinks": "기존 링크 보기",
   "myLinks": "내 보안 링크",
   "form": {
     "clientLabel": "고객 선택",
@@ -760,6 +767,7 @@
   "buttons": {
     "generateLink": "보안 링크 생성",
     "generating": "생성 중...",
+    "viewMyLinks": "내 링크 보기",
     "copy": "복사"
   },
   "success": {
@@ -1626,6 +1634,8 @@
         "loadFailed": "문서 불러오기 실패",
         "loadError": "문서 불러오기 중 오류 발생",
         "loading": "문서를 불러오는 중...",
+          "documentDownloadSuccess": "The document has been downloaded successfully.",
+  "documentDownloadError": "An error occurred while downloading the document.",
         "noDocuments": "문서가 없습니다",
         "noMatches": "일치하는 문서가 없습니다",
         "uploadPrompt": "새 문서를 업로드해 주세요",

@@ -151,20 +151,19 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
         </Button>
       </DialogTrigger>
 
-      <DialogContent
-        className="
-          w-full 
-          max-w-[800px] 
-          sm:max-w-[700px] 
-          lg:max-w-[800px] 
-          max-h-[80vh] 
-          overflow-y-auto 
-          mx-auto 
-          ml-0 
-          md:ml-12 
-          lg:ml-16
-        "
-      >
+    <DialogContent
+  className="
+    w-full 
+    max-w-[800px] 
+    max-h-[80vh] 
+    overflow-y-auto 
+    fixed
+    left-1/2
+    -translate-x-[calc(50%-20px)]
+  "
+>
+
+
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -175,7 +174,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Generate New Link */}
           <Card className="w-full">
             <CardHeader>
@@ -262,6 +261,73 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                   <p className="text-xs text-green-600 mt-2">
                     {t("pages:secureLink.shareInfo")}
                   </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* My Secure Links */}
+          <Card className="w-full">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>{t("pages:secureLink.myLinks")}</span>
+               
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {showMyLinks ? (
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {myLinks.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {t("pages:secureLink.noLinks")}
+                    </p>
+                  ) : (
+                    myLinks.map((link) => (
+                      <div key={link._id} className="p-3 border rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            {link.client_name}
+                          </span>
+                          {getStatusBadge(link)}
+                        </div>
+                        <div className="text-xs text-muted-foreground break-all">
+                          {link.secure_url}
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>
+                            {t("pages:secureLink.created")}: {new Date(link.created_at).toLocaleDateString()}
+                          </span>
+                          <span>
+                            {t("pages:secureLink.expires")}: {new Date(link.expires_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Eye className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {t("pages:secureLink.viewExistingLinks")}
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleViewMyLinks}
+                    disabled={isLoadingLinks}
+                  >
+                    {isLoadingLinks ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {t("pages:secureLink.buttons.loading")}
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {t("pages:secureLink.buttons.viewMyLinks")}
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </CardContent>

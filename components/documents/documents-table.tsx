@@ -511,16 +511,16 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.document')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.type')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-10 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.status')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-9 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.privacy')}
                   </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.uploaded')}
                   </th>
                   <th className="relative px-6 py-3">
@@ -570,17 +570,18 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                     </td>
                     
                     {/* Status Column */}
-                    <td className="px-6 py-4">
-                      <div className="flex justify-start">
-                        {getStatusBadge(doc.status)}
-                      </div>
-                    </td>
+                  <td className="px-6 py-4 min-w-[130px]">
+  <div className="flex justify-start">
+    {getStatusBadge(doc.status)}
+  </div>
+</td>
+
                     
                     {/* Privacy Column */}
-                    <td className="px-6 py-4">
-                      <div className="flex justify-start">
+                    <td className="px-6 py-4 min-w-[150px]">
+                      {/* <div className="flex justify-start"> */}
                         {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
-                      </div>
+                      {/* </div> */}
                     </td>
                     
                     {/* Uploaded Column */}

@@ -306,10 +306,11 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               <TableHead>{t("pages:cases.table.title")}</TableHead>
               <TableHead>{t("pages:cases.table.client")}</TableHead>
               <TableHead>{t("pages:cases.table.lawyer")}</TableHead>
-              <TableHead>{t("pages:cases.table.caseType")}</TableHead>
-              <TableHead>{t("pages:cases.table.courtType")}</TableHead>
-              <TableHead>{t("pages:cases.table.status")}</TableHead>
-              <TableHead>{t("pages:common.actions")}</TableHead>
+              <TableHead className="min-w-[140px]">{t("pages:cases.table.caseType")}</TableHead>
+
+              <TableHead className="pl-7">{t("pages:cases.table.courtType")}</TableHead>
+              <TableHead className="pl-6">{t("pages:cases.table.status")}</TableHead>
+              <TableHead className="pl-8">{t("pages:common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -361,13 +362,14 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                     <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
                       {t(`pages:cases.caseTypes.${caseItem.case_type}`, { defaultValue: caseItem.case_type })}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
+                  </TableCell >
+                  <TableCell >
                     <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
                       {t(`pages:cases.courts.${caseItem.court_type}`, { defaultValue: caseItem.court_type })}
                     </Badge>
                   </TableCell>
-                  <TableCell>{getStatusBadge(caseItem.status)}</TableCell>
+                  <TableCell className="min-w-[130px]">{getStatusBadge(caseItem.status)}</TableCell>
+
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button 

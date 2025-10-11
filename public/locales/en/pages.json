@@ -109,6 +109,12 @@
       "legalPosts": "Legal Posts",
       "professionalContent": "Professional content from legal experts",
       "posts": "posts",
+       "postStatus": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived",
+        "pending": "Pending"
+      },
       "createPost": "Create Post"
     },
     
@@ -882,6 +888,9 @@
         "loadFailed": "Failed to load documents",
         "loadError": "An error occurred while loading documents",
         "loading": "Loading documents...",
+         "documentDownloadSuccess": "The document has been downloaded successfully.",
+  "documentDownloadError": "An error occurred while downloading the document.",
+
         "noDocuments": "No documents available",
         "noMatches": "No matching documents found",
         "uploadPrompt": "Please upload a new document",
@@ -944,6 +953,7 @@
   "title": "Secure Document Upload Links",
   "description": "Generate password-protected links for clients to upload documents securely. Links expire after successful upload or when the time limit is reached.",
   "generateNewLink": "Generate New Link",
+  "viewExistingLinks": "View Existing Links",
   "myLinks": "My Secure Links",
   "form": {
     "clientLabel": "Select Client",
@@ -964,6 +974,7 @@
   "buttons": {
     "generateLink": "Generate Secure Link",
     "generating": "Generating...",
+    "viewMyLinks": "View My Links",
     "copy": "Copy"
   },
   "success": {
@@ -2670,4 +2681,3 @@
     "bonus": "Bonus"
   }
 }
-
