@@ -52,20 +52,23 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
   const onSubmit = async (data: OnboardClientFormData) => {
     setIsLoading(true);
     try {
-      await createClient({  email: data.email.trim() ,account_type: "client" });
-      
+      const res:any = await createClient({ email: data.email.trim(), account_type: "client" });
+      if(res?.success){
       toast({
         title: t("pages:client.onboard.successTitle") || "Success",
         description: t("pages:client.onboard.successDescription") || "Client has been successfully onboarded",
         variant: "success",
       });
-
       form.reset();
       setIsOpen(false);
       
       // Refresh the clients list
       if (onClientCreated) {
         onClientCreated();
+      }
+      }
+      else{
+        throw new Error(res?.message || t("pages:client.onboard.errorDescription") || "Failed to onboard client");
       }
     } catch (error: any) {
       toast({
