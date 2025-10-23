@@ -16,26 +16,27 @@ import { useRouter } from "next/navigation"
 import { useToast } from "./ui/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 
-const sign_up_schema = z.object({
-  first_name: z.string().min(2, "first_name_error"),
-  last_name: z.string().min(2, "last_name_error"),
-  email: z.string().email("email_error"),
-  password: z.string().min(8, "password_error"),
-  account_type: z.enum(["client", "lawyer"]).refine((val) => !!val, {
-    message: "account_type_error",
-  }),
-  agree_to_terms: z.boolean().refine((val) => val === true, {
-    message: "terms_error",
-  }),
-})
-
-type SignUpFormData = z.infer<typeof sign_up_schema>
-
 export default function SignUpForm() {
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { t } = useTranslation()
+
+  // ✅ define schema *inside* component so `t()` can be used
+  const sign_up_schema = z.object({
+    first_name: z.string().min(2, { message: t("pages:signu.first_name_error") }),
+    last_name: z.string().min(2, { message: t("pages:signu.last_name_error") }),
+    email: z.string().email({ message: t("pages:signu.email_error") }),
+    password: z.string().min(8, { message: t("pages:signu.password_error") }),
+    account_type: z.enum(["client", "lawyer"], {
+      required_error: t("pages:signu.account_type_error"),
+    }),
+    agree_to_terms: z.boolean().refine((val) => val === true, {
+      message: t("pages:signu.terms_error"),
+    }),
+  })
+
+  type SignUpFormData = z.infer<typeof sign_up_schema>
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(sign_up_schema),
@@ -55,21 +56,22 @@ export default function SignUpForm() {
       const response = await signUp(data)
 
       if (response?.data?.success) {
-        // Show OTP in toast message since email service may not be working
         if (response?.data?.data?.otp) {
           toast({
-            title: "Signup OTP Sent",
-            description: response.data.data.message || `Your verification OTP is: ${response.data.data.otp}. This OTP will expire in 10 minutes.`,
+            title: t("pages:signu.signup.otp_sent"),
+            description:
+              response.data.data.message ||
+              `Your verification OTP is: ${response.data.data.otp}. This OTP will expire in 10 minutes.`,
             variant: "success",
           })
         } else {
           toast({
-            title: "Account Created Successfully",
-            description: "Please check your email for the verification OTP.",
+            title: t("pages:signu.signup.account_created"),
+            description: t("pages:signu.signup.check_email"),
             variant: "success",
           })
         }
-        
+
         router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup`)
       } else {
         toast({
@@ -103,7 +105,7 @@ export default function SignUpForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -112,10 +114,10 @@ export default function SignUpForm() {
                   <FormItem>
                     <FormLabel>{t("pages:signu.signup.first_name")}</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder={t("pages:signu.signup.first_name_placeholder")} 
-                        className="bg-gray-50" 
-                        {...field} 
+                      <Input
+                        placeholder={t("pages:signu.signup.first_name_placeholder")}
+                        className="bg-gray-50"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -129,10 +131,10 @@ export default function SignUpForm() {
                   <FormItem>
                     <FormLabel>{t("pages:signu.signup.last_name")}</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder={t("pages:signu.signup.last_name_placeholder")} 
-                        className="bg-gray-50" 
-                        {...field} 
+                      <Input
+                        placeholder={t("pages:signu.signup.last_name_placeholder")}
+                        className="bg-gray-50"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -148,11 +150,11 @@ export default function SignUpForm() {
                 <FormItem>
                   <FormLabel>{t("pages:signu.signup.email")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder={t("pages:signu.signup.email_placeholder")} 
-                      className="bg-gray-50" 
-                      {...field} 
+                    <Input
+                      type="email"
+                      placeholder={t("pages:signu.signup.email_placeholder")}
+                      className="bg-gray-50"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -167,11 +169,11 @@ export default function SignUpForm() {
                 <FormItem>
                   <FormLabel>{t("pages:signu.signup.password")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder={t("pages:signu.signup.password_placeholder")} 
-                      className="bg-gray-50" 
-                      {...field} 
+                    <Input
+                      type="password"
+                      placeholder={t("pages:signu.signup.password_placeholder")}
+                      className="bg-gray-50"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -224,7 +226,9 @@ export default function SignUpForm() {
               className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? t("pages:signu.signup.creating_account") : t("pages:signu.signup.create_account")}
+              {form.formState.isSubmitting
+                ? t("pages:signu.signup.creating_account")
+                : t("pages:signu.signup.create_account")}
             </Button>
           </form>
         </Form>

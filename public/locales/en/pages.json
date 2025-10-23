@@ -1665,6 +1665,7 @@
     "title": "Notifications",
     "unread": "unread",
     "refresh": "Refresh",
+    "back": "Back",
     "markAllRead": "Mark all read",
     "allNotifications": "All Notifications",
     "filterByType": "Filter by type",
