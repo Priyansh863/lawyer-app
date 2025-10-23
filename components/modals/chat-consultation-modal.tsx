@@ -260,7 +260,7 @@ export default function ConsultationTypeModal({
 
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onClose}>
-          {t("commonp:cancel") || "Cancel"}
+          {t("pages:consultation.cancel")}
         </Button>
       </div>
     </div>
@@ -350,10 +350,10 @@ export default function ConsultationTypeModal({
           {profile?.account_type === 'lawyer' ? (
             <>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              {t("commonp:back") || "Back"}
+              {t("pages:consultation.back") }
             </>
           ) : (
-            t("commonp:cancel") || "Cancel"
+            t("pages:consultation.cancel")
           )}
         </Button>
         <Button 
@@ -382,7 +382,7 @@ export default function ConsultationTypeModal({
       </p>
       <Button variant="outline" onClick={handleBack} className="mt-4">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        {t("commonp:back") || "Back"}
+        {t("pages:consultation.back")}
       </Button>
     </div>
   );

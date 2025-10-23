@@ -1,5 +1,8 @@
 {
   "existing_user_signup_error": "이 이메일로 이미 계정이 존재합니다. 대신 로그인하세요.",
+  "settings": {
+  "title": "설정"
+},
   "common": {
     "error": "오류",
     "loading": "로딩 중...",
@@ -172,6 +175,8 @@
 "reservationEnd": "예약 종료 시간",
 "endDate": "종료 날짜",
 "endTime": "종료 시간",
+"back": "뒤로",
+"cancel": "취소",
 "tokens": "토큰",
 "startChatConsultation": "채팅 상담 시작",
 "selectConsultationType": "상담 유형 선택",
@@ -2200,6 +2205,7 @@
         "uploadedBy": "업로드한 사람",
         "status": "상태",
         "privacy": "공개 범위",
+         "actions": "작업",
         "size": "크기"
       },
       "status": {
