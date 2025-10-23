@@ -174,7 +174,7 @@ export default function NotificationsPage() {
           className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 px-4 py-2 rounded-md"
         >
           <ArrowLeft className="h-4 w-4 text-white" />
-          {t('common:back')}
+          {t('pages:notificationsa.back')}
         </Button>
       </div>
 

@@ -520,7 +520,7 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                   <th className="px-9 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.privacy')}
                   </th>
-                  <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.uploaded')}
                   </th>
                   <th className="relative px-6 py-3">
