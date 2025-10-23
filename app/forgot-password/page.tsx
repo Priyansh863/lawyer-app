@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { toast } from "sonner"
+import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Mail } from "lucide-react"
@@ -25,6 +25,8 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isOtpSent, setIsOtpSent] = useState(false)
   const router = useRouter()
+    const { toast } = useToast()
+
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -47,36 +49,41 @@ export default function ForgotPasswordPage() {
 
       const result = await response.json()
 
+      console.log('Forgot Password response:', result)
+
       if (result.success) {
         setIsOtpSent(true)
         
         // Show OTP in toast message since email service may not be working
         if (result.data?.otp) {
-          toast.success(t('pages:auth.forgotPassword.otpSent.title'), {
+           toast({
+            title: t('pages:auth.forgotPassword.otpSent.title'),
             description: result.data.message || t('pages:authf.forgotPassword.otpSent.descriptionWithCode', { otp: result.data.otp }),
-            duration: 10000, // Show for 10 seconds
-          })
+            variant: "success" as const,
+          });
         } else {
-          toast.success(t('pages:authf.forgotPassword.otpSent.title'), {
+          toast({
+            title: t('pages:auth.forgotPassword.otpSent.title'),
             description: t('pages:authf.forgotPassword.otpSent.description'),
-            duration: 5000,
-          })
+            variant: "success" as const,
+          });
         }
-
-        // Redirect to reset password page after 2 seconds
         setTimeout(() => {
           router.push(`/reset-password?email=${encodeURIComponent(data.email)}`)
         }, 2000)
       } else {
-        toast.error(t('pages:authf.forgotPassword.errors.sendFailed'), {
-          description: result.message || t('pages:authf.forgotPassword.errors.tryAgain'),
-        })
+        toast({
+            title: t('pages:authf.forgotPassword.errors.sendFailed'),
+            description: t('pages:authf.forgotPassword.errors.sendFailed'),
+            variant: "error" as const,
+          });
       }
     } catch (error) {
-      console.error(t('pages:authf.forgotPassword.errors.networkError'), error)
-      toast.error(t('pages:authf.forgotPassword.errors.networkTitle'), {
-        description: t('pages:authf.forgotPassword.errors.checkConnection'),
-      })
+      toast({
+            title: t('pages:authf.forgotPassword.errors.networkTitle'),
+            description: t('pages:authf.forgotPassword.errors.checkConnection'),
+            variant: "error" as const,
+          });
     } finally {
       setIsLoading(false)
     }

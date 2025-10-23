@@ -60,12 +60,14 @@ export default function QAListWithSearch() {
     if (searchTerm) {
       filtered = filtered.filter(question => {
         const questionText = question.question.toLowerCase();
-        const answerText = (question.answer || '').toLowerCase();
-        const authorName = `${question.userId?.first_name || ''} ${question.userId?.last_name || ''}`.toLowerCase();
+        const answerText = question.answer?.map(ans => ans.answer).join(' ').toLowerCase() || '';
+        const lawyerNames = question.answer?.map(ans => ans.lawyer_name).join(' ').toLowerCase() || '';
+        const authorName = `${question.clientId?.first_name || ''} ${question.clientId?.last_name || ''}`.toLowerCase();
         const searchLower = searchTerm.toLowerCase();
         
         return questionText.includes(searchLower) ||
                answerText.includes(searchLower) ||
+               lawyerNames.includes(searchLower) ||
                authorName.includes(searchLower);
       });
     }
@@ -73,9 +75,9 @@ export default function QAListWithSearch() {
     // Filter by status
     if (statusFilter !== 'all') {
       if (statusFilter === 'answered') {
-        filtered = filtered.filter(question => question.answer);
+        filtered = filtered.filter(question => question.answer && question.answer.length > 0);
       } else if (statusFilter === 'pending') {
-        filtered = filtered.filter(question => !question.answer);
+        filtered = filtered.filter(question => !question.answer || question.answer.length === 0);
       }
     }
 
@@ -94,7 +96,7 @@ export default function QAListWithSearch() {
     try {
       // Check if question is already answered
       const question = questions.find(q => q._id === questionId);
-      if (question?.answer) {
+      if (question?.answer && question.answer.length > 0) {
         setError(t("pages:qa.errors.cannotDeleteAnswered") || "Cannot delete answered questions");
         return;
       }
@@ -279,14 +281,14 @@ export default function QAListWithSearch() {
                 <div className="flex-1 flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={item.answer ? "default" : "outline"}>
-                        {item.answer ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
+                      <Badge variant={item.answer && item.answer.length > 0 ? "default" : "outline"}>
+                        {item.answer && item.answer.length > 0 ? t("pages:qa.status.answered")  : t("pages:qa.status.pending")}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {t('pages:qa.byAuthorOnDate', {
-                          author: `${item.userId?.first_name} ${item.userId?.last_name}`,
+                          author: `${item.clientId?.first_name} ${item.clientId?.last_name}`,
                           date: formatDate(item.createdAt)
-                        }) || `by ${item.userId?.first_name} ${item.userId?.last_name} • ${formatDate(item.createdAt)}`}
+                        }) || `by ${item.clientId?.first_name} ${item.clientId?.last_name} • ${formatDate(item.createdAt)}`}
                       </span>
                     </div>
                     <p className="text-left font-normal">{item.question}</p>
@@ -302,7 +304,7 @@ export default function QAListWithSearch() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {!item.answer ? (
+                          {/* {!item.answer || item.answer.length === 0 ? (
                             <>
                               <DropdownMenuItem asChild>
                                 <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer") || "Answer"}</Link>
@@ -324,7 +326,24 @@ export default function QAListWithSearch() {
                             <DropdownMenuItem disabled className="text-gray-400">
                               {t("pages:qa.menu.alreadyAnswered") || "Question already answered - cannot edit or delete"}
                             </DropdownMenuItem>
-                          )}
+                          )} */}
+                           <>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/qa/${item._id}/answer`}>{t("pages:qa.menu.answer") || "Answer"}</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleDelete(item._id)}
+                                disabled={deleteLoading === item._id}
+                              >
+                                {deleteLoading === item._id ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                                    {t("pages:qa.menu.deleting") || "Deleting..."}
+                                  </>
+                                ) : t("pages:qa.menu.delete") || "Delete"}
+                              </DropdownMenuItem>
+                            </>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -332,8 +351,21 @@ export default function QAListWithSearch() {
                 </div>
               </div>
               <AccordionContent className="px-4 pb-4 pt-0">
-                {item.answer ? (
-                  <div className="mt-2 text-gray-700">{item.answer}</div>
+                {item.answer && item.answer.length > 0 ? (
+                  <div className="mt-2 space-y-4">
+                    {item.answer.map((answer, index) => (
+                      <div key={answer._id} className="border-l-4 border-blue-200 pl-4 py-2 bg-gray-50 rounded-r-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-blue-700 text-sm">
+                            {answer.lawyer_name}
+                          </span>
+                        </div>
+                        <div className="text-gray-700 whitespace-pre-wrap">
+                          {answer.answer}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="mt-2 italic text-gray-500">{t("pages:qa.unanswered") || "This question hasn't been answered yet."}</div>
                 )}

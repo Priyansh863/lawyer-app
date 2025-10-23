@@ -1,4 +1,5 @@
 {
+  "existing_user_signup_error": "이 이메일로 이미 계정이 존재합니다. 대신 로그인하세요.",
   "navigation": {
     "dashboard": "대시보드",
     "cases": "사건",

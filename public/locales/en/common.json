@@ -1,4 +1,5 @@
 {
+  "existing_user_signup_error": "An account with this email already exists. Please log in instead.",
   "navigation": {
     "dashboard": "Dashboard",
     "cases": "Cases",

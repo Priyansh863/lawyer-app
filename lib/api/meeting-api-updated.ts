@@ -4,18 +4,21 @@ import { RootState } from '@/lib/store'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
 // Helper function to get auth headers
-const getAuthHeaders = () => {
-  if (typeof window !== 'undefined') {
-    const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
-    const authState = JSON.parse(state.auth || '{}')
-    const token = authState.token
-    
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
   }
+  return null;
+};
+
+const getAuthHeaders = () => {
+  if (typeof window === 'undefined') return {}
+  
+  const token = getToken()
+  console.log('Using token for auth headers:', token);
   return {
+    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   }
 }
@@ -116,6 +119,8 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
  */
 export const getMeetings = async (): Promise<MeetingResponse> => {
   try {
+
+    console.log('Fetching meetings from API...')
     const response = await axios.get(
       `${API_BASE_URL}/meeting/list`,
       {

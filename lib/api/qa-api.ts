@@ -21,14 +21,20 @@ const getAuthHeaders = () => {
 }
 
 // Interfaces for API responses
+export interface QAAnswer {
+  lawyer_name: string
+  answer: string
+  _id: string
+}
+
 export interface QAQuestion {
   _id: string
   title: string
   question: string
-  answer?: string
+  answer?: QAAnswer[]
   category: string
   tags: string[]
-  userId: {
+  clientId: {
     _id: string
     first_name: string
     last_name: string

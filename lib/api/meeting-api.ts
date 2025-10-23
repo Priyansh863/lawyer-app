@@ -114,6 +114,7 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
  */
 export const getMeetings = async (): Promise<MeetingResponse> => {
   try {
+    console.log('Fetching meetings from API...')
     const response = await axios.get(
       `${API_BASE_URL}/meeting/list`,
       {

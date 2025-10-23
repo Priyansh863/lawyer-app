@@ -102,7 +102,7 @@ export default function LoginForm() {
     } catch (error) {
       toast({
         title: t('auth.loginFailed'),
-        description: error instanceof Error ? error.message : t('auth.unexpectedError'),
+        description:t('auth.unexpectedError'),
         variant: "error",
       });
     } finally {

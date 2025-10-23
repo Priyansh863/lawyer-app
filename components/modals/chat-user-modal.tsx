@@ -10,7 +10,6 @@ import { getRelatedUsers } from "@/lib/api/users-api";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
-import { createOrGetChat } from "@/lib/api/simple-chat-api";
 import { SimpleChat } from "@/components/chat/simple-chat";
 
 interface User {

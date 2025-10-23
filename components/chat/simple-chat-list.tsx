@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
 import { Search, MessageSquare, Trash2, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -28,8 +28,12 @@ import { useTranslation } from "@/hooks/useTranslation"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
 
-export default function SimpleChatList() {
-  const { t } = useTranslation('chat')
+export interface SimpleChatListRef {
+  refreshChats: () => void;
+}
+
+const SimpleChatList = forwardRef<SimpleChatListRef>((props, ref) => {
+  const { t } = useTranslation()
   const [chats, setChats] = useState<Chat[]>([])
   const [filteredChats, setFilteredChats] = useState<Chat[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -39,6 +43,11 @@ export default function SimpleChatList() {
   const [chatToDelete, setChatToDelete] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const { toast } = useToast()
+
+  // Expose refresh method to parent components
+  useImperativeHandle(ref, () => ({
+    refreshChats: loadChats
+  }))
 
   useEffect(() => {
     loadChats()
@@ -306,4 +315,8 @@ export default function SimpleChatList() {
       </AlertDialog>
     </>
   )
-}
+})
+
+SimpleChatList.displayName = "SimpleChatList"
+
+export default SimpleChatList

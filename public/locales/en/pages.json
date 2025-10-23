@@ -1,4 +1,5 @@
 {
+  "existing_user_signup_error": "An account with this email already exists. Please log in instead.",
   "common": {
     "error": "Error",
     "loading": "Loading...",
@@ -174,6 +175,13 @@
   "consultation": {
     "estimatedTotal": "Estimated total",
     "startChatConsultation": "Start Chat Consultation",
+    "selectConsultationType": "Select Consultation Type",
+    "selectType": "Select Consultation Type",
+    "selectTypeDescription": "Choose the type of consultation you want to offer",
+    "freeConsultation": "Free Consultation",
+    "freeConsultationDescription": "Offer free legal advice to help clients",
+    "paidConsultation": "Paid Consultation",
+    "paidConsultationDescription": "Provide professional legal services for a fee",
     "freeChat": "Free Consultation",
     "freeChatDesc": "Select this option to start a free consultation with a lawyer.",
     "startFreeChat": "Start Free Chat",
@@ -183,6 +191,21 @@
      "paidChatConsultation": "Paid Chat Consultation",
      "selectPaidChatConsultation": "Select Paid Chat Consultation",
     "selectPaidConsultation": "Select Paid Consultation",
+    "searchUsers": "Search users...",
+    "loading": "Loading users...",
+    "noUsersFound": "No users found matching your search.",
+    "noUsersAvailable": "No users available for chat.",
+    "lawyer": "Lawyer",
+    "client": "Client",
+    "chatRate": "Chat Rate",
+    "startChat": "Start Chat",
+    "startingChat": "Starting Chat...",
+    "connectingWith": "Connecting with",
+    "success": "Success",
+    "error": "Error",
+    "chatStarted": "Chat started successfully",
+    "failedToFetchUsers": "Failed to fetch users",
+    "failedToStartChat": "Failed to start chat",
     
      
       "reservationEnd": "Reservation end time",
@@ -191,7 +214,6 @@
      "tokens": "tokens",
     "tokensPerMinute": "tokens/minute",
     "enterPerMinuteRate": "Enter per-minute rate",
-    "failedToFetchUsers": "Failed to fetch users",
     "missingInformation": "Missing information",
     "pleaseProvideLink": "Please provide consultation link",
     "free": "Free",
@@ -201,8 +223,6 @@
     "videoConsultations": "Video Consultations",
     "manageConsultations": "Manage video consultations, schedule new meetings, and track consultation status.",
     "newConsultation": "New Consultation",
-    "client": "Client",
-    "lawyer": "Lawyer",
     "videoConsultation": "Video Consultation",
     "atRate": "at {{rate}} tokens/minute",
     "new": "New consultation",
@@ -218,10 +238,8 @@
     "sendConsultationLink": "Send Consultation Link",
     "chooseConsultationType": "Choose Consultation Type",
     "selectFreeOrPaid": "Select whether it's a free or paid consultation",
-    "freeConsultation": "Free Consultation",
     "freeConsultationDesc": "Schedule a free video consultation",
     "selectFree": "Select Free",
-    "paidConsultation": "Paid Consultation",
     "paidConsultationDesc": "Schedule a consultation with per minute charges",
     "selectPaid": "Select Paid",
     "paidVideoConsultation": "Paid Video Consultation",
@@ -244,7 +262,6 @@
     "searchPlaceholder": "Search {{type}}...",
     "clients": "Clients",
     "lawyers": "Lawyers",
-    "noUsersFound": "No {{type}} found",
     "noClientsAvailable": "No clients available for consultation",
     "noLawyersAvailable": "No lawyers available for consultation",
     "customRateDisplay": "{{rate}} tokens/minute",
@@ -1819,9 +1836,10 @@
           "topic": "Or Topic",
           "tone": "Tone",
           "length": "Length",
-          "hashtags": "Include Hashtags"
+          "hashtags": "Include Hashtags",
+          "language": "Language"
         },
-          "image": {
+        "image": {
         "cardTitle": "AI Image Generation",
         "promptLabel": "AI Image Prompt",
         "promptPlaceholder": "Describe the image you want to generate...",
@@ -1853,6 +1871,10 @@
           "length": {
             "short": "Short (400–600 characters)",
             "long": "Long (800–1200 characters)"
+          },
+          "language": {
+            "korean": "한국어 (Korean)",
+            "english": "English"
           },
           "yes": "Yes",
           "no": "No"
@@ -2466,7 +2488,7 @@
       "popular": "Popular Packages",
       "button": {
         "loading": "Redirecting to Stripe...",
-        "default": "Purchase {tokens} tokens"
+        "default": "Purchase tokens"
       },
       "packages": {
         "starter": {
@@ -2679,5 +2701,40 @@
     "tokenUsage": "Token Usage",
     "refund": "Refund",
     "bonus": "Bonus"
+  },
+  "aiPost": {
+    "title": "AI Post Generator",
+    "description": "Generate stunning content using AI by entering a description",
+    "createNewPost": "Create New Post",
+    "createNewPostDescription": "Describe the content you want to generate",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "korean": "한국어 (Korean)",
+    "english": "English",
+    "promptLabel": "Describe your post",
+    "promptPlaceholder": "Describe what you want to post about...",
+    "promptPlaceholderKo": "게시물에 대해 설명해주세요...",
+    "generating": "Generating...",
+    "generatingKo": "생성 중...",
+    "generatePost": "Generate Post",
+    "generatePostKo": "게시물 생성",
+    "generatedPost": "Generated Post",
+    "generatedPostKo": "생성된 게시물",
+    "title_label": "Title",
+    "titleKo": "제목",
+    "content_label": "Content",
+    "contentKo": "내용",
+    "hashtags": "Hashtags",
+    "hashtagsKo": "해시태그",
+    "generateNew": "Generate New",
+    "generateNewKo": "새로 생성",
+    "copy": "Copy",
+    "copyKo": "복사",
+    "publish": "Publish",
+    "publishKo": "게시",
+    "success": "Success",
+    "successDescription": "AI post generated successfully!",
+    "error": "Error",
+    "errorDescription": "Failed to generate AI post. Please try again."
   }
 }

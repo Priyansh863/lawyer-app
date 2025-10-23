@@ -74,7 +74,7 @@ export default function SignUpForm() {
       } else {
         toast({
           title: t("pages:signu.error"),
-          description: response?.data?.message ?? t("pages:signu.signup.error"),
+          description: t(response?.data?.message ?? "pages:signu.signup.error"),
           variant: "error",
         })
       }

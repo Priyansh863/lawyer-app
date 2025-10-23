@@ -289,14 +289,15 @@ export function SimpleChat({
           </div>
           
           {/* Chat Rate Display for Clients */}
-          {profile?.account_type === 'client' && chatRate && (
+          {profile?.account_type === 'client' && chatRate ? 
+          (
             <div className="px-4 pb-3">
               <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-md">
                 <MessageCircle className="w-3 h-3" />
                 <span className="font-medium">Chat Rate: {chatRate} tokens/hour</span>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Messages */}

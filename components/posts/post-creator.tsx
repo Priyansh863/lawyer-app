@@ -90,6 +90,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     tone: 'professional',
     length: 'long',
     includeHashtags: true,
+    language: 'ko',
     spatialInfo: undefined,
     citations: []
   });
@@ -1027,6 +1028,22 @@ const clearDownloadedImages = () => {
                     <SelectContent>
                       <SelectItem value="yes">{t('pages:creator.post.ai.options.yes')}</SelectItem>
                       <SelectItem value="no">{t('pages:creator.post.ai.options.no')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{t('pages:creator.post.ai.fields.language')}</Label>
+                  <Select 
+                    value={aiData.language || 'ko'} 
+                    onValueChange={(value: 'en' | 'ko') => setAiData(prev => ({ ...prev, language: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ko">{t('pages:creator.post.ai.options.language.korean')}</SelectItem>
+                      <SelectItem value="en">{t('pages:creator.post.ai.options.language.english')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -86,6 +86,7 @@ export interface GenerateAiPostData {
   spatialInfo?: SpatialInfo;
   citations?: Citation[];
   image?: string;
+  language?: 'en' | 'ko';
 }
 
 // API Functions

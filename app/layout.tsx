@@ -5,7 +5,7 @@ import "./globals.css"
 import ReduxProvider from "@/lib/redux-provider"
 import TokenValidationProvider from "@/components/providers/TokenValidationProvider"
 import { I18nProvider } from "@/contexts/i18nContext"
-import { Toaster } from "@/components/ui/toaster"
+import toast, { Toaster } from 'react-hot-toast';
 import { NotificationProvider } from "@/contexts/NotificationContext"
 import { Toaster as SonnerToaster } from "sonner"
 import NotificationToastProvider from "@/components/providers/NotificationToastProvider"
@@ -40,11 +40,11 @@ export default function RootLayout({
                 <NotificationProvider>
                   <NotificationToastProvider />
                   {children}
-                  <Toaster />
-                  <SonnerToaster position="top-right" />
+                  {/* <SonnerToaster position="top-right" /> */}
                 </NotificationProvider>
               </TokenValidationProvider>
             </I18nProvider>
+              <Toaster />
           </ReduxProvider>
       </body>
     </html>

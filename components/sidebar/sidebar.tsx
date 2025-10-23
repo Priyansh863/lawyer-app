@@ -55,7 +55,6 @@ export default function Sidebar() {
   const [isMobile, setIsMobile] = useState(false)
   const user = useSelector((state: any) => state.auth.user)
   const { t } = useTranslation()
-  console.log("User from Redux:", user)
 
   // Check if mobile on mount and when window resizes
   useEffect(() => {

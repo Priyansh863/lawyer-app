@@ -1,11 +1,5 @@
 "use client"
-
-// Inspired by react-hot-toast library
-import * as React from "react"
 import { toast as h } from 'react-hot-toast';
-
-
-
 function toast({ title, description, variant }: { title: string; description: string; variant: "success" | "error" }) {
   console.log("Toast called with props:", { title, description, variant });
 
@@ -13,6 +7,8 @@ function toast({ title, description, variant }: { title: string; description: st
     h.success(description);
   } else if (variant === "error") {
     h.error(description);
+  } else {
+    console.log("Toast called with props:", { title, description, variant });
   }
 }
 

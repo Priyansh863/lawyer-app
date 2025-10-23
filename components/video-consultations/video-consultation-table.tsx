@@ -145,39 +145,48 @@ export default function VideoConsultationTableNew() {
   }, [searchTerm])
 
   const fetchMeetings = async () => {
+    console.log('fetchMeetings: called');
     try {
-      setLoading(true)
-      const response = await getMeetings()
+      setLoading(true);
+      console.log('fetchMeetings: setLoading(true)');
+      const response = await getMeetings();
+      console.log('fetchMeetings: getMeetings() response:', response);
       if (response.success && response.data) {
-        const meetingsArray = Array.isArray(response.data) ? response.data : [response.data]
-        
-        setMeetings(meetingsArray)
-        
+        const meetingsArray = Array.isArray(response.data) ? response.data : [response.data];
+        console.log('fetchMeetings: meetingsArray:', meetingsArray);
+
+        setMeetings(meetingsArray);
+        console.log('fetchMeetings: setMeetings called');
+
         // Fetch fresh rates for all lawyers in the meetings
-        const uniqueLawyerIds = new Set<string>()
+        const uniqueLawyerIds = new Set<string>();
         meetingsArray.forEach((meeting: Meeting) => {
+          console.log('fetchMeetings: iterating meeting:', meeting);
           if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && meeting.lawyer_id._id) {
             // Only fetch if we don't have hourly_rate in meeting and not cached
             if (meeting.hourly_rate === undefined && !lawyerRatesCache[meeting.lawyer_id._id]) {
-              uniqueLawyerIds.add(meeting.lawyer_id._id)
+              uniqueLawyerIds.add(meeting.lawyer_id._id);
+              console.log('fetchMeetings: added lawyerId to uniqueLawyerIds:', meeting.lawyer_id._id);
             }
           }
-        })
-        
+        });
+
         // Fetch rates for unique lawyers
         Array.from(uniqueLawyerIds).forEach(lawyerId => {
-          fetchLawyerRate(lawyerId) // This will cache the rate
-        })
+          console.log('fetchMeetings: fetching rate for lawyerId:', lawyerId);
+          fetchLawyerRate(lawyerId); // This will cache the rate
+        });
       }
     } catch (error) {
-      console.error('Error fetching meetings:', error)
+      console.error('Error fetching meetings:', error);
       toast({
         title: t('pages:meeting.toast.error.title'),
         description: t('pages:meeting.errors.fetchFailed'),
         variant: 'destructive'
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
+      console.log('fetchMeetings: setLoading(false)');
     }
   }
 
