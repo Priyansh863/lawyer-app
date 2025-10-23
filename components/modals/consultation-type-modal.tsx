@@ -356,7 +356,8 @@ export default function ConsultationTypeModal({
   };
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    if(firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    else return "NA";
   };
 
   const getUserTypeLabel = () => {

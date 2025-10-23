@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import VideoConsultationsLayout from "@/components/layouts/video-consultations-layout";
 import VideoConsultationTable from "@/components/video-consultations/video-consultation-table";
 import ConsultationTypeModal from "@/components/modals/consultation-type-modal";
@@ -14,6 +14,16 @@ export default function VideoConsultationsPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  // Check URL parameters to auto-open modal
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('openModal') === 'true') {
+        setIsConsultationModalOpen(true);
+      }
+    }
+  }, []);
 
   const handleConsultationScheduled = () => {
     toast({

@@ -143,9 +143,10 @@ export function ShareDocumentDialog({
     }
   }
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
+   const getInitials = (firstName: string, lastName: string) => {
+    if(firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    else return "NA";
+  };
 
   const isPrivateDocument = document.privacy === 'private'
 
