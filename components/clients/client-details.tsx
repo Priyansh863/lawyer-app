@@ -85,7 +85,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       if (response.success) {
         toast({
           title: "Meeting Request Sent",
-          description: `Meeting request sent to ${client.first_name}`,
+          description: `Meeting request sent to ${client?.first_name}`,
         })
         setMeetingLink("")
         setMeetingDialogOpen(false)
@@ -204,13 +204,13 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client.first_name} />
-              <AvatarFallback>{client.first_name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client?.first_name} />
+              <AvatarFallback>{client?.first_name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="text-xl">{client.first_name}</CardTitle>
+              <CardTitle className="text-xl">{client?.first_name}</CardTitle>
               <div className="flex items-center gap-2 mt-1">
-                {getStatusBadge(client.status)}
+                {getStatusBadge(client?.status)}
               </div>
             </div>
           </div>
@@ -252,11 +252,11 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                   </DialogHeader>
                   
                   {/* Show video consultation rate in dialog */}
-                  {user?.account_type === 'client' && client.video_rate && (
+                  {user?.account_type === 'client' && client?.video_rate && (
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md mb-4">
                       <Video className="w-4 h-4 text-blue-600" />
                       <span className="text-sm font-medium text-blue-700">
-                        Video Consultation Rate: {client.video_rate} tokens/hour
+                        Video Consultation Rate: {client?.video_rate} tokens/hour
                       </span>
                     </div>
                   )}
@@ -380,9 +380,9 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         <SimpleChat
           onClose={() => setShowChat(false)}
           clientId={client.id}
-          clientName={`${client.first_name} ${client.last_name}`}
-          clientAvatar={client.avatar}
-          chatRate={client.chat_rate} // Pass chat rate to SimpleChat
+          clientName={`${client?.first_name} ${client?.last_name}`}
+          clientAvatar={client?.avatar}
+          chatRate={client?.chat_rate} // Pass chat rate to SimpleChat
         />
       )}
     </div>

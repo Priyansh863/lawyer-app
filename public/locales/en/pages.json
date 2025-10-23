@@ -2737,5 +2737,29 @@
     "successDescription": "AI post generated successfully!",
     "error": "Error",
     "errorDescription": "Failed to generate AI post. Please try again."
+  },
+  "bookmarks": {
+    "title": "Bookmarked Posts",
+    "description": "View and manage your saved posts",
+    "totalBookmarks": "bookmarks",
+    "loading": "Loading bookmarks...",
+    "refreshing": "Refreshing...",
+    "refresh": "Refresh",
+    "searchPlaceholder": "Search bookmarks...",
+    "noBookmarks": "No bookmarks yet",
+    "noBookmarksDesc": "Start bookmarking posts to see them here",
+    "noSearchResults": "No bookmarks found",
+    "noSearchResultsDesc": "Try different search terms",
+    "clearSearch": "Clear Search",
+    "removed": "Bookmark Removed",
+    "removedDesc": "Post has been removed from your bookmarks",
+    "removeError": "Failed to remove bookmark",
+    "fetchError": "Failed to fetch bookmarks",
+    "error": "Error",
+    "viewPost": "View Post",
+    "bookmarkedOn": "Bookmarked",
+    "previous": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {current} of {total}"
   }
 }

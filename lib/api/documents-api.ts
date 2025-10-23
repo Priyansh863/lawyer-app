@@ -6,11 +6,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 const getAuthHeaders = () => {
   if (typeof window !== 'undefined') {
     // Try to get token from Redux state first, then localStorage
-    const authData = localStorage.getItem('authUser')
-    if (authData) {
-      try {
-        const user = JSON.parse(authData)
-        const token = user.token || localStorage.getItem('authToken')
+    try {
+        const token =getToken()
         return {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -18,12 +15,21 @@ const getAuthHeaders = () => {
       } catch (error) {
         console.error('Error parsing auth user:', error)
       }
-    }
   }
   return {
     'Content-Type': 'application/json'
   }
 }
+
+
+
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
 
 // Get user ID from localStorage
 const getUserId = () => {
@@ -92,10 +98,7 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
     
     // Try multiple endpoints to ensure compatibility
     const endpoints = [
-      '/document/accessible',
       '/document/list',
-      '/documents/list',
-      '/documents'
     ]
     
     let lastError = null

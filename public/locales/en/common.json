@@ -16,7 +16,8 @@
     "token": "Tokens",
     "settings": "Settings",
     "logout": "Logout",
-     "postsAndContent": "Post and Content"
+    "postsAndContent": "Post and Content",
+    "bookmarks": "Bookmarks"
   },
   "common": {
     "save": "Save",

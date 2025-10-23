@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import ChatLayout from "@/components/layouts/chat-layout"
 import SimpleChatList, { SimpleChatListRef } from "@/components/chat/simple-chat-list"
 import { SimpleChat } from "@/components/chat/simple-chat"
@@ -22,12 +23,27 @@ interface User {
 
 export default function ChatPage() {
   const { t } = useTranslation()
+  const router = useRouter()
   const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showChat, setShowChat] = useState(false)
   const chatListRef = useRef<SimpleChatListRef | null>(null)
   const { toast } = useToast()
+
+  console.log(router,"routerrouterrouterrouterrouter")
+
+  // Check for openModal parameter on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const shouldOpenModal = urlParams.get('openModal')
+      console.log("URL Params:", shouldOpenModal)
+      if (shouldOpenModal === 'true') {
+        setIsConsultationModalOpen(true)
+      }
+    }
+  }, [])
 
   const handleConsultationScheduled = () => {
     toast({

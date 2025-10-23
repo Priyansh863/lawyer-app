@@ -218,16 +218,6 @@ export default function PostPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={copyUrl}>
-                  <Copy className="h-4 w-4 mr-1" />
-                  URL 복사
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-1" />
-                  공유
-                </Button>
-              </div>
             </div>
           </CardHeader>
         </Card>

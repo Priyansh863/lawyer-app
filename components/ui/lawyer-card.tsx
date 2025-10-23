@@ -35,9 +35,10 @@ export default function LawyerCard({
   const profile = useSelector((state: RootState) => state.auth.user)
   const isClient = profile?.account_type === 'client'
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
-  }
+   const getInitials = (firstName: string, lastName: string) => {
+    if(firstName && lastName) return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    else return "NA";
+  };
 
   const formatExperience = (experience: string) => {
     const expMap: Record<string, string> = {

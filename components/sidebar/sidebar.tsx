@@ -22,6 +22,7 @@ import {
   Settings,
   Menu,
   X,
+  Bookmark,
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
@@ -102,6 +103,7 @@ export default function Sidebar() {
 
         ]
       : []),
+    { href: "/bookmarks", icon: <Bookmark size={18} />, label: t('navigation.bookmarks') },
     { href: "/chat", icon: <MessageSquare size={18} />, label: t('navigation.chat') },
     { href: "/video-consultations", icon: <Video size={18} />, label: t('navigation.videoConsultations') },
     { href: "/qa", icon: <HelpCircle size={18} />, label: t('navigation.qa') },
@@ -143,7 +145,7 @@ export default function Sidebar() {
               <Avatar>
                 <AvatarImage src={user?.profile_image ?? "/placeholder.svg?height=32&width=32"} alt="User" />
                 <AvatarFallback>
-                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  {user?.first_name ? user?.first_name : "N/A"} {user?.last_name ? user?.last_name : "N/A"}
                 </AvatarFallback>
               </Avatar>
               <span className="font-medium">{user?.first_name + " " + user?.last_name || "User"}</span>

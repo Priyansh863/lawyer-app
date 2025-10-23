@@ -31,7 +31,7 @@ export default function QuickActions() {
       description: t("pages:quickActions.startChat"),
       color: "from-blue-100 to-purple-100",
       iconColor: "text-blue-500",
-      onClick: () => setIsSendMessageOpen(true)
+      onClick: () => router.push("/chat?openModal=true")
     },
     {
       icon: <Calendar className="w-5 h-5" />,
@@ -39,7 +39,7 @@ export default function QuickActions() {
       description: t("pages:quickActions.bookWithClients"),
       color: "from-green-100 to-emerald-100", 
       iconColor: "text-green-500",
-      onClick: () => setIsScheduleMeetingOpen(true)
+      onClick: () => router.push("/video-consultations?openModal=true")
     },
   ];
 

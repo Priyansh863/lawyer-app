@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/hooks/useTranslation";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -63,7 +63,6 @@ const getToken = () => {
 };
 
 export default function ProfessionalDashboardPage() {
-  const profile = useSelector((state: RootState) => state.auth.user);
   const { toast } = useToast();
   const { t } = useTranslation();
   
@@ -88,31 +87,31 @@ export default function ProfessionalDashboardPage() {
       // Check bookmark status for each post (only if user is logged in)
       const token = getToken();
       if (response.data.posts?.length > 0 && token) {
-        // try {
-        //   const bookmarkChecks = await Promise.allSettled(
-        //     response.data.posts.map((post: Post) => checkBookmark(post._id))
-        //   );
+        try {
+          const bookmarkChecks = await Promise.allSettled(
+            response.data.posts.map((post: Post) => checkBookmark(post._id))
+          );
 
           
           
-        //   const bookmarked = new Set<string>();
-        //   bookmarkChecks.forEach((result, index) => {
-        //     if (result.status === 'fulfilled' && result.value.isBookmarked) {
-        //       bookmarked.add(response.data.posts[index]._id);
-        //     }
-        //   });
-        //   setBookmarkedPosts(bookmarked);
-        // } catch (error) {
-        //   // Silently fail bookmark checks if authentication fails
-        //   console.log('Bookmark check failed, user may not be logged in');
-        // }
+          const bookmarked = new Set<string>();
+          bookmarkChecks.forEach((result, index) => {
+            if (result.status === 'fulfilled' && result.value.isBookmarked) {
+              bookmarked.add(response.data.posts[index]._id);
+            }
+          });
+          setBookmarkedPosts(bookmarked);
+        } catch (error) {
+          // Silently fail bookmark checks if authentication fails
+          console.log('Bookmark check failed, user may not be logged in');
+        }
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
       toast({
         title: t('pages:dashboard.error'),
         description: t('pages:dashboard.failedToLoadPosts'),
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsLoading(false);
@@ -190,6 +189,8 @@ export default function ProfessionalDashboardPage() {
   const handleBookmarkToggle = async (postId: string) => {
     try {
       const result = await toggleBookmark(postId);
+
+      console.log('Bookmark toggle result:', result);
       
       setBookmarkedPosts(prev => {
         const newSet = new Set(prev);
@@ -204,12 +205,13 @@ export default function ProfessionalDashboardPage() {
       toast({
         title: result.data.isBookmarked ? t('pages:dashboard.bookmarked') : t('pages:dashboard.bookmarkRemoved'),
         description: result.message,
+        variant: "success",
       });
     } catch (error: any) {
       toast({
         title: t('pages:dashboard.error'),
         description: error.message || t('pages:dashboard.failedToUpdateBookmark'),
-        variant: "destructive",
+        variant: "error",
       });
     }
   };
@@ -222,12 +224,13 @@ export default function ProfessionalDashboardPage() {
       toast({
         title: t('pages:dashboard.linkCopied'),
         description: t('pages:dashboard.postUrlCopied'),
+        variant: "success",
       });
     } catch (error) {
       toast({
         title: t('pages:dashboard.error'),
         description: t('pages:dashboard.failedToCopyLink'),
-        variant: "destructive",
+        variant: "error",
       });
     }
   };
@@ -243,7 +246,7 @@ export default function ProfessionalDashboardPage() {
       toast({
         title: t('pages:dashboard.error'),
         description: t('pages:dashboard.pleaseEnterReason'),
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -255,6 +258,7 @@ export default function ProfessionalDashboardPage() {
       toast({
         title: t('pages:dashboard.success'),
         description: t('pages:dashboard.reportSubmitted'),
+        variant: "success",
       });
       
       setShowReportDialog(false);
@@ -264,7 +268,7 @@ export default function ProfessionalDashboardPage() {
       toast({
         title: t('pages:dashboard.error'),
         description: error.message || t('pages:dashboard.reportFailed'),
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsReporting(false);
@@ -301,9 +305,9 @@ export default function ProfessionalDashboardPage() {
                   <h3 className="font-semibold text-gray-900 text-sm truncate">
                     {post.author ? `${post.author.first_name} ${post.author.last_name}` : t('pages:dashboard.unknownAuthor')}
                   </h3>
-                  <Badge variant="secondary" className="text-xs px-2 py-0.5 mt-1 sm:mt-0 hidden sm:inline-flex">
+                  {/* <Badge variant="secondary" className="text-xs px-2 py-0.5 mt-1 sm:mt-0 hidden sm:inline-flex">
                     {post.author?.account_type || t('pages:dashboard.user')}
-                  </Badge>
+                  </Badge> */}
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-gray-500 mt-1 flex-wrap">
                   <Calendar className="h-3 w-3 flex-shrink-0" />
@@ -544,8 +548,8 @@ export default function ProfessionalDashboardPage() {
     <DashboardLayout>
       <div className="flex flex-col gap-8">
         <DashboardHeader 
-          title={t('pages:dashboard.dashboard')} 
-          subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
+          // title={t('pages:dashboard.dashboard')} 
+          // subtitle={t('pages:dashboard.welcomeBack', { name: profile?.first_name || '' })}
         />
        <div className="mt-12 md:mt-0 flex-1">
     <StatsCards />

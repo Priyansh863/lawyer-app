@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Sidebar from "@/components/sidebar/sidebar"
+import { Toaster } from "react-hot-toast"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <main className={`p-4 md:p-6 ${isMobile && isSidebarOpen ? "hidden md:block" : "block"}`}>
           <div className="max-w-7xl mx-auto w-full">
             {children}
+            <Toaster />
           </div>
         </main>
       </div>

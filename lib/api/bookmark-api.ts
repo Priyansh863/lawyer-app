@@ -67,7 +67,7 @@ export const checkBookmark = async (postId: string): Promise<{ isBookmarked: boo
   }
 };
 
-// Get user bookmarks
+// Get user bookmarks (with pagination)
 export const getUserBookmarks = async (page: number = 1, limit: number = 10) => {
   try {
     const token = getToken();
@@ -84,6 +84,26 @@ export const getUserBookmarks = async (page: number = 1, limit: number = 10) => 
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to get bookmarks');
+  }
+};
+
+// Get all bookmarked posts (no pagination)
+export const getAllBookmarkedPosts = async () => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Please login to view bookmarks');
+    }
+    
+    const response = await axios.get(
+      `${API_BASE_URL}/post/bookmarked`,
+      {
+        headers: getAuthHeaders()
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to get bookmarked posts');
   }
 };
 

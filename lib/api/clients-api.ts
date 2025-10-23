@@ -356,25 +356,7 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
     }
 
     const client = response.data.data
-    return {
-      id: client._id,
-      name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email,
-      first_name: client.first_name,
-      last_name: client.last_name,
-      email: client.email,
-      phone: client.phone || 'N/A',
-      address: client.address || 'N/A',
-      status: 'active' as ClientStatus,
-      createdAt: client.created_at || new Date().toISOString(),
-      lastContactDate: client.updated_at || client.created_at || new Date().toISOString(),
-      caseId: '',
-      contactInfo: client.bio || '',
-      activeCases: 0,
-      isFavorite: false,
-      isBlocked: false,
-      account_type: client.account_type,
-      _id: client._id
-    }
+    return client
   } catch (error) {
     console.error('Error creating client:', error)
     throw error

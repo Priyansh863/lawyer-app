@@ -21,19 +21,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/hooks/useTranslation";
 import { UserPlus, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/api/clients-api";
 
 const onboardClientSchema = z.object({
-  first_name: z.string().min(1, "First name is required"),
-  last_name: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  account_type: z.literal("client"),
 });
 
 type OnboardClientFormData = z.infer<typeof onboardClientSchema>;
@@ -51,25 +45,20 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
   const form = useForm<OnboardClientFormData>({
     resolver: zodResolver(onboardClientSchema),
     defaultValues: {
-      first_name: "",
-      last_name: "",
       email: "",
-      phone: "",
-      password: "",
-      account_type: "client",
     },
   });
 
   const onSubmit = async (data: OnboardClientFormData) => {
     setIsLoading(true);
     try {
-      await createClient(data);
-      
+      const res:any = await createClient({ email: data.email.trim(), account_type: "client" });
+      if(res?.success){
       toast({
         title: t("pages:client.onboard.successTitle") || "Success",
         description: t("pages:client.onboard.successDescription") || "Client has been successfully onboarded",
+        variant: "success",
       });
-
       form.reset();
       setIsOpen(false);
       
@@ -77,11 +66,16 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       if (onClientCreated) {
         onClientCreated();
       }
+      }
+      else{
+        throw new Error(res?.message || t("pages:client.onboard.errorDescription") || "Failed to onboard client");
+      }
     } catch (error: any) {
       toast({
         title: t("pages:client.onboard.errorTitle") || "Error",
         description: error.message || t("pages:client.onboard.errorDescription") || "Failed to onboard client",
-        variant: "destructive",
+        variant: "error",
+
       });
     } finally {
       setIsLoading(false);
@@ -105,44 +99,6 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("pages:client.onboard.firstName") || "First Name"} *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t("pages:client.onboard.firstNamePlaceholder") || "Enter first name"}
-                        {...field}
-                        className="bg-[#F5F5F5] border-gray-200"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("pages:client.onboard.lastName") || "Last Name"} *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t("pages:client.onboard.lastNamePlaceholder") || "Enter last name"}
-                        {...field}
-                        className="bg-[#F5F5F5] border-gray-200"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
               name="email"
@@ -153,44 +109,6 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
                     <Input
                       type="email"
                       placeholder={t("pages:client.onboard.emailPlaceholder") || "Enter email address"}
-                      {...field}
-                      className="bg-[#F5F5F5] border-gray-200"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("pages:client.onboard.phone") || "Phone Number"} *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="tel"
-                      placeholder={t("pages:client.onboard.phonePlaceholder") || "Enter phone number"}
-                      {...field}
-                      className="bg-[#F5F5F5] border-gray-200"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("pages:client.onboard.password") || "Password"} *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder={t("pages:client.onboard.passwordPlaceholder") || "Enter password (min 6 characters)"}
                       {...field}
                       className="bg-[#F5F5F5] border-gray-200"
                     />
