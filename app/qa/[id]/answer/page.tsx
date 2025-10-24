@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 export default function AnswerQuestionPage({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Answer Question</h1>
+      <h1 className="text-2xl font-semibold">질문에 답하기</h1>
+
       <QAAnswerForm questionId={params.id} />
     </div>
   )

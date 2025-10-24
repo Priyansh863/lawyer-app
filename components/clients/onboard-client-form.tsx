@@ -51,40 +51,41 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
     },
   });
 
-  const onSubmit = async (data: OnboardClientFormData) => {
-    setIsLoading(true);
-    try {
-      const res: any = await createClient({
-        email: data.email.trim(),
-        account_type: "client",
-      });
+const onSubmit = async (data: OnboardClientFormData) => {
+  setIsLoading(true);
+  try {
+    const res: any = await createClient({
+      email: data.email.trim(),
+      account_type: "client",
+    });
 
-      if (res?.success) {
-        toast({
-          title: t("pages:client.onboard.successTitle"),
-          description: t("pages:client.onboard.successDescription"),
-          variant: "success",
-        });
-        form.reset();
-        setIsOpen(false);
-
-        if (onClientCreated) onClientCreated();
-      } else {
-        throw new Error(
-          res?.message || t("pages:client.onboard.errorDescription")
-        );
-      }
-    } catch (error: any) {
+    if (res?.email) {
       toast({
-        title: t("pages:client.onboard.errorTitle"),
-        description:
-          error.message || t("pages:client.onboard.errorDescription"),
-        variant: "error",
+        title: t("pages:client.onboard.successTitle"),
+        description: t("pages:client.onboard.successDescription"),
+        variant: "success",
       });
-    } finally {
-      setIsLoading(false);
+      form.reset();
+      setIsOpen(false);
+
+      if (onClientCreated) onClientCreated();
+    } else {
+      throw new Error(
+        res?.message || t("pages:client.onboard.errorDescription")
+      );
     }
-  };
+  } catch (error: any) {
+    toast({
+      title: t("pages:client.onboard.errorTitle"),
+      description:
+        error.message || t("pages:client.onboard.errorDescription"),
+      variant: "error",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -154,4 +155,4 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       </DialogContent>
     </Dialog>
   );
-}
+}  

@@ -1051,6 +1051,7 @@
     }
   },
   "creator" :{
+    "generate": "QR 코드 생성",
      "buttons": {
       "historyTitle": "다운로드 기록",
       "clear": "기록 삭제",

@@ -709,7 +709,7 @@ const clearDownloadedImages = () => {
                     disabled={!!createdPost.qrCodeUrl}
                   >
                     <QrCodeIcon className="h-4 w-4 mr-1" />
-                    {t('pages:creator.post.qr.buttons.generate')}
+                    {t('pages:creator.generate')}
                   </Button>
                 </div>
 

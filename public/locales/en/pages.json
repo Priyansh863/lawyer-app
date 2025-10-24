@@ -1779,9 +1779,7 @@
       "cancel": "Cancel",
       "uploadPDF": "Upload PDF"
 },
-"lawyers":{
-  "details": "변호사 세부정보" 
-},
+
   "clients": {
     "title": "Clients",
     "newClient": "New Client",
