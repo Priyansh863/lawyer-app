@@ -156,8 +156,9 @@ export default function PostPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
           <CardContent className="text-center py-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Post Not Found</h1>
-            <p className="text-gray-600">The requested post could not be found.</p>
+           <h1 className="text-2xl font-bold text-gray-900 mb-2">게시물을 찾을 수 없습니다</h1>
+<p className="text-gray-600">요청하신 게시물을 찾을 수 없습니다.</p>
+
           </CardContent>
         </Card>
       </div>

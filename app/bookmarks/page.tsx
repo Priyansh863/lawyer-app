@@ -243,7 +243,8 @@ function BookmarkPostsContent() {
                           <>
                             <span>•</span>
                             <Badge variant="secondary" className="text-xs">
-                              AI Generated
+                              
+                               {t("pages:bookmarks.AI Generated")}
                             </Badge>
                           </>
                         )}
@@ -322,7 +323,10 @@ function BookmarkPostsContent() {
 export default function BookmarkPostsPage() {
   return (
     <DashboardLayout>
-      <BookmarkPostsContent />
+          <div className="pt-12"> {/* Add top padding here (adjust value as needed) */}
+        <BookmarkPostsContent />
+      </div>
+
     </DashboardLayout>
   );
 }

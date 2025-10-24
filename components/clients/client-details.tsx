@@ -189,9 +189,10 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       
       {/* Header */}
      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-  <h1 className="text-2xl font-bold">
-    {isLawyer ? "" : "Lawyer Details"}
-  </h1>
+ <h1 className="text-2xl font-bold">
+  {isLawyer ? "" : t("pages:lawyers.details")}
+</h1>
+
 
   <Button variant="outline" onClick={() => router.back()}>
     {isLawyer
@@ -255,9 +256,10 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                   {user?.account_type === 'client' && client?.video_rate && (
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md mb-4">
                       <Video className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">
-                        Video Consultation Rate: {client?.video_rate} tokens/hour
-                      </span>
+                     <span className="text-sm font-medium text-blue-700">
+  {t("pages:clientDetails.videoConsultationRate", { rate: client?.video_rate })}
+</span>
+
                     </div>
                   )}
                   

@@ -681,7 +681,7 @@ export default function VideoConsultationTableNew() {
                 <TableHead className="min-w-[120px] text left pl-0">{t("pages:meeting.table.rateType")}</TableHead>
                 <TableHead className="min-w-[180px] pl-9">{t('pages:meeting.table.time')}</TableHead>
                 <TableHead className="min-w-[180px] pl-11">{t('pages:meeting.table.endTime')}</TableHead>
-                <TableHead className="min-w-[100px] pl-5">{t('pages:meeting.table.status')}</TableHead>
+                <TableHead className="min-w-[160px] pl-7">{t('pages:meeting.table.status')}</TableHead>
                 <TableHead className="min-w-[200px] pl-10">{t('pages:meeting.table.link')}</TableHead>
                 <TableHead className="min-w-[300px] pl-16">{t('pages:meeting.table.actions')}</TableHead>
               </TableRow>

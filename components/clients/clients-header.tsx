@@ -21,7 +21,11 @@ export default function ClientsHeader({ onClientCreated }: ClientsHeaderProps) {
         {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
       </h1>
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">{user?.account_type==="client" ? "Lawyers" : t('pages:clients.title')}</h2>
+       <h2 className="text-xl font-semibold">
+    {user?.account_type === "client" 
+      ? t("pages:lawyers.title") 
+      : t('pages:clients.title')}
+  </h2>
         {user?.account_type === "lawyer" && (
           <OnboardClientForm onClientCreated={onClientCreated} />
         )}

@@ -771,7 +771,6 @@ export default function ConsultationTypeModal({
                 placeholder={t("pages:consultation.linkPlaceholder")}
               />
             </div>
-
             {/* Summary */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-medium mb-2">{t("pages:consultation.consultationSummary")}</h4>

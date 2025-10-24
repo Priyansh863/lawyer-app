@@ -177,6 +177,8 @@
 "endTime": "종료 시간",
 "back": "뒤로",
 "cancel": "취소",
+    "consultationLink": "회의 링크"
+,
 "tokens": "토큰",
 "startChatConsultation": "채팅 상담 시작",
 "selectConsultationType": "상담 유형 선택",
@@ -1722,6 +1724,11 @@
         }
       }
     },
+    "lawyers":{
+       "title": "변호사",
+       
+  "details": "변호사 세부정보" 
+    },
   "clients": {
     "title": "고객",
     "newClient": "새 고객",
@@ -1749,6 +1756,7 @@
       "statusa": "상태",
       "courtType": "법원 유형",
       "caseType": "사건 유형",
+       "videoConsultationRate": "화상 상담 요금: {{rate}} 토큰/시간",
       "basicInfo": "기본 정보",
       "caseTitle": "사건 제목",
       "client": "의뢰인",
@@ -2837,6 +2845,7 @@
     "description": "저장된 게시물을 보고 관리하세요",
     "totalBookmarks": "개의 북마크",
     "loading": "북마크를 불러오는 중...",
+    "AI Generated": "AI 생성됨",
     "refreshing": "새로고침 중...",
     "refresh": "새로고침",
     "searchPlaceholder": "북마크 검색...",
@@ -2854,6 +2863,6 @@
     "bookmarkedOn": "북마크 날짜",
     "previous": "이전",
     "next": "다음",
-    "pageInfo": "페이지 {current} / {total}"
+    "pageInfo": "페이지 {{current}} / {{total}}"
   }
 }

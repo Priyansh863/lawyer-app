@@ -310,7 +310,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
               <TableHead className="pl-7">{t("pages:cases.table.courtType")}</TableHead>
               <TableHead className="pl-6">{t("pages:cases.table.status")}</TableHead>
-              <TableHead className="pl-8">{t("pages:common.actions")}</TableHead>
+              <TableHead className="pl-4">{t("pages:common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
