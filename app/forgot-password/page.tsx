@@ -14,22 +14,25 @@ import Link from "next/link"
 import { ArrowLeft, Mail } from "lucide-react"
 import { useTranslation } from "@/hooks/useTranslation"
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-})
+// ✅ Schema with translation support
+const createForgotPasswordSchema = (t: any) =>
+  z.object({
+    email: z.string().email(t("pages:authf.forgotPassword.errors.invalidEmail")),
+  })
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
+type ForgotPasswordFormData = {
+  email: string
+}
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [isOtpSent, setIsOtpSent] = useState(false)
   const router = useRouter()
-    const { toast } = useToast()
-
+  const { toast } = useToast()
 
   const form = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(createForgotPasswordSchema(t)),
     defaultValues: {
       email: "",
     },
@@ -40,50 +43,52 @@ export default function ForgotPasswordPage() {
       setIsLoading(true)
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email: data.email }),
       })
 
       const result = await response.json()
-
-      console.log('Forgot Password response:', result)
+      console.log("Forgot Password response:", result)
 
       if (result.success) {
         setIsOtpSent(true)
-        
-        // Show OTP in toast message since email service may not be working
+
+        // ✅ Show OTP in toast message if email service not available
         if (result.data?.otp) {
-           toast({
-            title: t('pages:auth.forgotPassword.otpSent.title'),
-            description: result.data.message || t('pages:authf.forgotPassword.otpSent.descriptionWithCode', { otp: result.data.otp }),
+          toast({
+            title: t("pages:authf.forgotPassword.otpSent.title"),
+            description:
+              result.data.message ||
+              t("pages:authf.forgotPassword.otpSent.descriptionWithCode", { otp: result.data.otp }),
             variant: "success" as const,
-          });
+          })
         } else {
           toast({
-            title: t('pages:auth.forgotPassword.otpSent.title'),
-            description: t('pages:authf.forgotPassword.otpSent.description'),
+            title: t("pages:authf.forgotPassword.otpSent.title"),
+            description: t("pages:authf.forgotPassword.otpSent.description"),
             variant: "success" as const,
-          });
+          })
         }
+
         setTimeout(() => {
           router.push(`/reset-password?email=${encodeURIComponent(data.email)}`)
         }, 2000)
       } else {
         toast({
-            title: t('pages:authf.forgotPassword.errors.sendFailed'),
-            description: t('pages:authf.forgotPassword.errors.sendFailed'),
-            variant: "error" as const,
-          });
+          title: t("pages:authf.forgotPassword.errors.sendFailed"),
+          description: t("pages:authf.forgotPassword.errors.sendFailed"),
+          variant: "error" as const,
+        })
       }
     } catch (error) {
       toast({
-            title: t('pages:authf.forgotPassword.errors.networkTitle'),
-            description: t('pages:authf.forgotPassword.errors.checkConnection'),
-            variant: "error" as const,
-          });
+        title: t("pages:authf.forgotPassword.errors.networkTitle"),
+        description: t("pages:authf.forgotPassword.errors.checkConnection"),
+        variant: "error" as const,
+      })
     } finally {
       setIsLoading(false)
     }
@@ -92,14 +97,14 @@ export default function ForgotPasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[url('/background.jpg')] bg-cover bg-center">
       <div className="max-w-md w-full mx-4">
-        {/* Adjusted back link with negative margin-top */}
+        {/* Back to Login Link */}
         <div className="text-center mb-6 -mt-6">
-          <Link 
-            href="/login" 
-            className="inline-flex items-center text-sm text-white hover:text-gray-200" 
+          <Link
+            href="/login"
+            className="inline-flex items-center text-sm text-white hover:text-gray-200"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('pages:authf.forgotPassword.backToLogin')}
+            {t("pages:authf.forgotPassword.backToLogin")}
           </Link>
         </div>
 
@@ -109,14 +114,14 @@ export default function ForgotPasswordPage() {
               <Mail className="h-6 w-6 text-blue-600" />
             </div>
             <CardTitle className="text-2xl font-bold">
-              {isOtpSent 
-                ? t('pages:authf.forgotPassword.checkEmail') 
-                : t('pages:authf.forgotPassword.title')}
+              {isOtpSent
+                ? t("pages:authf.forgotPassword.checkEmail")
+                : t("pages:authf.forgotPassword.title")}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-2">
-              {isOtpSent 
-                ? t('pages:authf.forgotPassword.otpSentMessage')
-                : t('pages:authf.forgotPassword.instructions')}
+              {isOtpSent
+                ? t("pages:authf.forgotPassword.otpSentMessage")
+                : t("pages:authf.forgotPassword.instructions")}
             </p>
           </CardHeader>
 
@@ -129,11 +134,11 @@ export default function ForgotPasswordPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('pages:authf.forgotPassword.emailLabel')}</FormLabel>
+                        <FormLabel>{t("pages:authf.forgotPassword.emailLabel")}</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder={t('pages:authf.forgotPassword.emailPlaceholder')}
+                            placeholder={t("pages:authf.forgotPassword.emailPlaceholder")}
                             className="bg-white"
                             {...field}
                           />
@@ -148,9 +153,9 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
                     disabled={isLoading}
                   >
-                    {isLoading 
-                      ? t('pages:authf.forgotPassword.sendingOtp') 
-                      : t('pages:authf.forgotPassword.sendOtpButton')}
+                    {isLoading
+                      ? t("pages:authf.forgotPassword.sendingOtp")
+                      : t("pages:authf.forgotPassword.sendOtpButton")}
                   </Button>
                 </form>
               </Form>
@@ -158,17 +163,19 @@ export default function ForgotPasswordPage() {
               <div className="text-center space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-sm text-green-800">
-                    {t('pages:authf.forgotPassword.otpSuccess')}
+                    {t("pages:authf.forgotPassword.otpSuccess")}
                   </p>
                 </div>
-                
+
                 <Button
-                  onClick={() => router.push(`/reset-password?email=${encodeURIComponent(form.getValues('email'))}`)}
+                  onClick={() =>
+                    router.push(`/reset-password?email=${encodeURIComponent(form.getValues("email"))}`)
+                  }
                   className="w-full bg-[#0f0921] hover:bg-[#0f0921]/90 text-white"
                 >
-                  {t('pages:authf.forgotPassword.continueButton')}
+                  {t("pages:authf.forgotPassword.continueButton")}
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -177,14 +184,14 @@ export default function ForgotPasswordPage() {
                   }}
                   className="w-full"
                 >
-                  {t('pages:authf.forgotPassword.sendAnotherOtp')}
+                  {t("pages:authf.forgotPassword.sendAnotherOtp")}
                 </Button>
               </div>
             )}
 
             <div className="text-center mt-6">
               <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                {t('pages:authf.forgotPassword.rememberPassword')}
+                {t("pages:authf.forgotPassword.rememberPassword")}
               </Link>
             </div>
           </CardContent>
