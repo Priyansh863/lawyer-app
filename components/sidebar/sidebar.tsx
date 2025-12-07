@@ -23,6 +23,7 @@ import {
   Menu,
   X,
   Bookmark,
+  HardDrive,
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
@@ -95,6 +96,7 @@ export default function Sidebar() {
     { href: "/cases", icon: <FileText size={18} />, label: t('navigation.cases') },
     { href: "/client", icon: <Users size={18} />, label: user?.account_type === "lawyer" ? t('navigation.clients') : t('navigation.lawyers') },
     { href: "/documents", icon: <FileText size={18} />, label: t('navigation.documents') },
+    { href: "/linked-documents", icon: <HardDrive size={18} />, label: t('navigation.linkedDocuments') },
     ...(user?.account_type === "lawyer"
       ? [
           // { href: "/ai-assistants", icon: <Bot size={18} />, label: t('navigation.aiAssistants') },

@@ -1312,7 +1312,7 @@ const clearDownloadedImages = () => {
                 ) : (
                   <>
                     <Wand2 className="h-4 w-4 mr-2" />
-                    {t('pages:creator.post.ai.buttons.generate')}
+                    {t('pages:.post.ai.buttons.generate')}
                   </>
                 )}
               </Button>
