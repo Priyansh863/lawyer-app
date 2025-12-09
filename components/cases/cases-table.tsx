@@ -36,6 +36,19 @@ const searchFormSchema = z.object({
 })
 type SearchFormData = z.infer<typeof searchFormSchema>
 
+const statusUpdateSchema = z.object({
+  caseId: z.string(),
+  status: z.enum([
+    // Judgment Outcomes (판결 종국)
+    "full_win", "full_loss", "partial_win", "partial_loss", "dismissal", "rejection",
+    // Non-Judgment Outcomes (판결 외 종국)
+    "withdrawal", "mediation", "settlement", "trial_cancellation", "suspension", "closure",
+    // Active case statuses
+    "in_progress", "pending"
+  ]),
+})
+type StatusUpdateData = z.infer<typeof statusUpdateSchema>
+
 interface CasesTableProps {
   initialCases?: Case[]
 }
@@ -101,34 +114,72 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   // View case details
   const viewCaseDetails = (caseItem: Case) => {
-    const caseId = caseItem._id || caseItem.id
-    if (!caseId) {
-      toast({
-        title: t("pages:common.error"),
-        description: "Case ID not found",
-        variant: "destructive",
-      })
-      return
-    }
-    router.push(`/cases/${caseId}`)
+    // Encode case data as URL search params to pass to details page
+    const caseData = encodeURIComponent(JSON.stringify(caseItem))
+    router.push(`/cases/${caseItem._id}?data=${caseData}`)
   }
 
   // Get status badge
   const STATUS_CONFIG = {
-    full_win: { label: t("pages:cases.status.fullWin"), color: "bg-green-100 text-green-800" },
-    full_loss: { label: t("pages:cases.status.fullLoss"), color: "bg-red-100 text-red-800" },
-    partial_win: { label: t("pages:cases.status.partialWin"), color: "bg-emerald-100 text-emerald-800" },
-    partial_loss: { label: t("pages:cases.status.partialLoss"), color: "bg-orange-100 text-orange-800" },
-    dismissal: { label: t("pages:cases.status.dismissal"), color: "bg-red-200 text-red-900" },
-    rejection: { label: t("pages:cases.status.rejection"), color: "bg-red-300 text-red-900" },
-    withdrawal: { label: t("pages:cases.status.withdrawal"), color: "bg-gray-100 text-gray-800" },
-    mediation: { label: t("pages:cases.status.mediation"), color: "bg-blue-100 text-blue-800" },
-    settlement: { label: t("pages:cases.status.settlement"), color: "bg-teal-100 text-teal-800" },
-    trial_cancellation: { label: t("pages:cases.status.trialCancellation"), color: "bg-purple-100 text-purple-800" },
-    suspension: { label: t("pages:cases.status.suspension"), color: "bg-yellow-100 text-yellow-800" },
-    closure: { label: t("pages:cases.status.closure"), color: "bg-slate-100 text-slate-800" },
-    in_progress: { label: t("pages:cases.status.inProgress"), color: "bg-blue-50 text-blue-700" },
-    pending: { label: t("pages:cases.status.pending"), color: "bg-amber-50 text-amber-700" }
+    // Judgment Outcomes (판결 종국)
+    full_win: { 
+      label: t("pages:cases.status.fullWin"), 
+      color: "bg-green-100 text-green-800" 
+    },
+    full_loss: { 
+      label: t("pages:cases.status.fullLoss"), 
+      color: "bg-red-100 text-red-800" 
+    },
+    partial_win: { 
+      label: t("pages:cases.status.partialWin"), 
+      color: "bg-emerald-100 text-emerald-800" 
+    },
+    partial_loss: { 
+      label: t("pages:cases.status.partialLoss"), 
+      color: "bg-orange-100 text-orange-800" 
+    },
+    dismissal: { 
+      label: t("pages:cases.status.dismissal"), 
+      color: "bg-red-200 text-red-900" 
+    },
+    rejection: { 
+      label: t("pages:cases.status.rejection"), 
+      color: "bg-red-300 text-red-900" 
+    },
+    // Non-Judgment Outcomes (판결 외 종국)
+    withdrawal: { 
+      label: t("pages:cases.status.withdrawal"), 
+      color: "bg-gray-100 text-gray-800" 
+    },
+    mediation: { 
+      label: t("pages:cases.status.mediation"), 
+      color: "bg-blue-100 text-blue-800" 
+    },
+    settlement: { 
+      label: t("pages:cases.status.settlement"), 
+      color: "bg-teal-100 text-teal-800" 
+    },
+    trial_cancellation: { 
+      label: t("pages:cases.status.trialCancellation"), 
+      color: "bg-purple-100 text-purple-800" 
+    },
+    suspension: { 
+      label: t("pages:cases.status.suspension"), 
+      color: "bg-yellow-100 text-yellow-800" 
+    },
+    closure: { 
+      label: t("pages:cases.status.closure"), 
+      color: "bg-slate-100 text-slate-800" 
+    },
+    // Active case statuses
+    in_progress: { 
+      label: t("pages:cases.status.inProgress"), 
+      color: "bg-blue-50 text-blue-700" 
+    },
+    pending: { 
+      label: t("pages:cases.status.pending"), 
+      color: "bg-amber-50 text-amber-700" 
+    }
   } as const
 
   const getStatusBadge = (status: string) => {
@@ -213,10 +264,14 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                     className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
                   >
                     <option value="all">{t("common.allStatuses")}</option>
+
+                    {/* Active Case Statuses */}
                     <optgroup label={t("pages:cases.statusGroup.active")}>
                       <option value="pending">{t("pages:cases.status.pending")}</option>
                       <option value="in_progress">{t("pages:cases.status.inProgress")}</option>
                     </optgroup>
+
+                    {/* Judgment Outcomes */}
                     <optgroup label={t("pages:cases.statusGroup.judgment")}>
                       <option value="full_win">{t("pages:cases.status.fullWin")}</option>
                       <option value="full_loss">{t("pages:cases.status.fullLoss")}</option>
@@ -225,6 +280,8 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                       <option value="dismissal">{t("pages:cases.status.dismissal")}</option>
                       <option value="rejection">{t("pages:cases.status.rejection")}</option>
                     </optgroup>
+
+                    {/* Non-Judgment Outcomes */}
                     <optgroup label={t("pages:cases.statusGroup.nonJudgment")}>
                       <option value="withdrawal">{t("pages:cases.status.withdrawal")}</option>
                       <option value="mediation">{t("pages:cases.status.mediation")}</option>
@@ -250,13 +307,15 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               <TableHead>{t("pages:cases.table.client")}</TableHead>
               <TableHead>{t("pages:cases.table.lawyer")}</TableHead>
               <TableHead className="min-w-[140px]">{t("pages:cases.table.caseType")}</TableHead>
+
               <TableHead className="pl-7">{t("pages:cases.table.courtType")}</TableHead>
               <TableHead className="pl-6">{t("pages:cases.table.status")}</TableHead>
-              <TableHead className="pl-4">{t("pages:common.actions")}</TableHead>
+              <TableHead className="pl-8">{t("pages:common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
+              // Show skeleton loading state
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={index} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                   <TableCell><Skeleton width={80} /></TableCell>
@@ -284,7 +343,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
               </TableRow>
             ) : (
               cases.map((caseItem, index) => (
-                <TableRow key={caseItem._id || caseItem.id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                <TableRow key={caseItem._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
                   <TableCell className="font-mono">{caseItem.case_number}</TableCell>
                   <TableCell>{caseItem.title}</TableCell>
                   <TableCell>
@@ -303,33 +362,34 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
                     <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
                       {t(`pages:cases.caseTypes.${caseItem.case_type}`, { defaultValue: caseItem.case_type })}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
+                  </TableCell >
+                  <TableCell >
                     <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
                       {t(`pages:cases.courts.${caseItem.court_type}`, { defaultValue: caseItem.court_type })}
                     </Badge>
                   </TableCell>
                   <TableCell className="min-w-[130px]">{getStatusBadge(caseItem.status)}</TableCell>
+
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         onClick={() => viewCaseDetails(caseItem)} 
-                        className="h-8 w-8 hover:bg-blue-50"
-                        title={t("pages:common.viewDetails")}
+                        className="h-8 w-8"
+                        aria-label={t("pages:common.viewDetails")}
                       >
-                        <Eye className="h-4 w-4 text-blue-600" />
+                        <Eye className="h-4 w-4" />
                       </Button>
                       {profile?.account_type === 'lawyer' && (
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleUpdateStatus(caseItem)} 
-                          className="h-8 w-8 hover:bg-green-50"
-                          title={t("pages:cases.updateStatus")}
+                          className="h-8 w-8"
+                          aria-label={t("pages:cases.updateStatus")}
                         >
-                          <Edit3 className="h-4 w-4 text-green-600" />
+                          <Edit3 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>

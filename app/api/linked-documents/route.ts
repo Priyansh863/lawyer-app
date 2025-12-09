@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server"
 // FIXED: Use the deployed backend URL instead of localhost
 // When running in production/server-side, localhost won't work
 const BACKEND_API_URL = 'https://lawyer-b-b5ud.vercel.app'
-
+// const BACKEND_API_URL = 'https://lawyer-b-b5ud.vercel.app'  // Hardcoded, ignore env variable
 /**
  * GET /api/linked-documents
  * Fetches all linked documents for a user
