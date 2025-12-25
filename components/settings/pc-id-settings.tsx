@@ -28,8 +28,8 @@ export default function PcIdSettings() {
     // Validate input
     if (!pcId || pcId.trim() === '') {
       toast({
-        title: t('pages:commonb:error') || 'Error',
-        description: 'Please enter a PC Unique ID',
+        title: t('pages:pcId.toast.error.title') || 'Error',
+        description: t('pages:pcId.form.validation.pcIdRequired'),
         variant: 'destructive'
       })
       return
@@ -41,8 +41,8 @@ export default function PcIdSettings() {
       
       if (!token) {
         toast({
-          title: 'Authentication Error',
-          description: 'You are not logged in. Please log in and try again.',
+          title: t('pages:pcId.toast.authError.title'),
+          description: t('pages:pcId.toast.authError.description'),
           variant: 'destructive'
         })
         setSaving(false)
@@ -64,24 +64,24 @@ export default function PcIdSettings() {
 
       if (response.ok) {
         toast({
-          title: 'Success',
-          description: 'PC linked successfully',
+          title: t('pages:pcId.toast.saveSuccess.title'),
+          description: t('pages:pcId.toast.saveSuccess.description'),
           variant: 'default'
         })
       } else {
         // Handle different error status codes
-        let errorMessage = data.message || 'Failed to save PC ID'
+        let errorMessage = data.message || t('pages:pcId.toast.saveError.default')
         
         if (response.status === 401) {
-          errorMessage = 'User not logged in. Please log in and try again.'
+          errorMessage = t('pages:pcId.toast.authError.description')
         } else if (response.status === 400) {
-          errorMessage = 'Invalid PC ID. Please check and try again.'
+          errorMessage = t('pages:pcId.toast.saveError.invalidPcId')
         } else if (response.status === 409) {
-          errorMessage = 'PC ID already registered. Please use a different PC ID.'
+          errorMessage = t('pages:pcId.toast.saveError.pcIdExists')
         }
 
         toast({
-          title: 'Error',
+          title: t('pages:pcId.toast.error.title'),
           description: errorMessage,
           variant: 'destructive'
         })
@@ -89,8 +89,8 @@ export default function PcIdSettings() {
     } catch (error: any) {
       console.error('Error saving PC ID:', error)
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save PC ID. Please try again.',
+        title: t('pages:pcId.toast.error.title'),
+        description: error.message || t('pages:pcId.toast.saveError.default'),
         variant: 'destructive'
       })
     } finally {
@@ -105,8 +105,8 @@ export default function PcIdSettings() {
       
       if (!token) {
         toast({
-          title: 'Authentication Error',
-          description: 'You are not logged in. Please log in and try again.',
+          title: t('pages:pcId.toast.authError.title'),
+          description: t('pages:pcId.toast.authError.description'),
           variant: 'destructive'
         })
         setResetting(false)
@@ -125,23 +125,23 @@ export default function PcIdSettings() {
 
       if (response.ok) {
         toast({
-          title: 'Success',
-          description: 'PC license reset successfully. Please register your PC again.',
+          title: t('pages:pcId.toast.resetSuccess.title'),
+          description: t('pages:pcId.toast.resetSuccess.description'),
           variant: 'default'
         })
         // Clear the PC ID input field after successful reset
         setPcId('')
       } else {
-        let errorMessage = data.message || 'Failed to reset PC license'
+        let errorMessage = data.message || t('pages:pcId.toast.resetError.default')
         
         if (response.status === 401) {
-          errorMessage = 'User not logged in. Please log in and try again.'
+          errorMessage = t('pages:pcId.toast.authError.description')
         } else if (response.status === 403) {
-          errorMessage = 'You do not have permission to reset PC license.'
+          errorMessage = t('pages:pcId.toast.resetError.noPermission')
         }
 
         toast({
-          title: 'Error',
+          title: t('pages:pcId.toast.error.title'),
           description: errorMessage,
           variant: 'destructive'
         })
@@ -149,8 +149,8 @@ export default function PcIdSettings() {
     } catch (error: any) {
       console.error('Error resetting PC license:', error)
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to reset PC license. Please try again.',
+        title: t('pages:pcId.toast.error.title'),
+        description: error.message || t('pages:pcId.toast.resetError.default'),
         variant: 'destructive'
       })
     } finally {
@@ -163,22 +163,22 @@ export default function PcIdSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Computer className="h-5 w-5" />
-          PC Unique ID
+          {t('pages:pcId.title')}
         </CardTitle>
         <CardDescription>
-          Link your PC by entering a unique identifier
+          {t('pages:pcId.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="pcId">PC Unique ID</Label>
+          <Label htmlFor="pcId">{t('pages:pcId.form.pcId.label')}</Label>
           <div className="flex gap-2">
             <Input
               id="pcId"
               type="text"
               value={pcId}
               onChange={(e) => setPcId(e.target.value)}
-              placeholder="Enter PC Unique ID"
+              placeholder={t('pages:pcId.form.pcId.placeholder')}
               className="flex-1"
               disabled={saving || resetting}
             />
@@ -192,9 +192,11 @@ export default function PcIdSettings() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? t('pages:pcId.buttons.saving') : t('pages:pcId.buttons.save')}
             </Button>
           </div>
+        </div>
+        <div className="space-y-2">
           <Button
             onClick={handleResetPcLicense}
             disabled={resetting || saving}
@@ -206,12 +208,11 @@ export default function PcIdSettings() {
             ) : (
               <RotateCcw className="h-4 w-4" />
             )}
-            {resetting ? 'Resetting...' : 'Reset PC License'}
+            {resetting ? t('pages:pcId.buttons.resetting') : t('pages:pcId.buttons.resetLicense')}
           </Button>
+         
         </div>
       </CardContent>
     </Card>
   )
 }
-
-

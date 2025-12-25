@@ -283,6 +283,54 @@
     "customRate": "맞춤 요금",
     "sendLink": "링크 보내기"
   },
+  "pcId": {
+    "title": "PC 고유 ID",
+"description": "고유 식별자를 입력하여 PC를 연결하세요",
+"form": {
+  "pcId": {
+    "label": "PC 고유 ID",
+    "placeholder": "PC 고유 ID 입력"
+  },
+  "validation": {
+    "pcIdRequired": "PC 고유 ID를 입력해주세요"
+  }
+},
+"buttons": {
+  "save": "저장",
+  "saving": "저장 중...",
+  "resetLicense": "PC 라이선스 초기화",
+  "resetting": "초기화 중..."
+},
+"resetNote": "참고: 초기화하면 현재 PC 연결이 해제됩니다. 다시 등록해야 합니다.",
+"toast": {
+  "error": {
+    "title": "오류"
+  },
+  "authError": {
+    "title": "인증 오류",
+    "description": "로그인되어 있지 않습니다. 로그인 후 다시 시도해주세요."
+  },
+  "saveSuccess": {
+    "title": "성공",
+    "description": "PC가 성공적으로 연결되었습니다"
+  },
+  "saveError": {
+    "default": "PC ID 저장에 실패했습니다",
+    "invalidPcId": "유효하지 않은 PC ID입니다. 확인 후 다시 시도해주세요.",
+    "pcIdExists": "이미 등록된 PC ID입니다. 다른 PC ID를 사용해주세요."
+  },
+  "resetSuccess": {
+    "title": "성공",
+    "description": "PC 라이선스가 성공적으로 초기화되었습니다. PC를 다시 등록해주세요."
+  },
+  "resetError": {
+    "default": "PC 라이선스 초기화에 실패했습니다",
+    "noPermission": "PC 라이선스를 초기화할 권한이 없습니다."
+  }
+}
+
+    
+  },
     "scheduleM": {
       "error": "오류",
       "failedToFetchUsers": "사용자 목록을 불러오지 못했습니다",

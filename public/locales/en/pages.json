@@ -280,6 +280,53 @@
     "customRate": "Custom Rate",
     "sendLink": "Send Link"
   },
+   "pcId": {
+    "title": "PC Unique ID",
+"description": "Link your PC by entering a unique identifier",
+"form": {
+  "pcId": {
+    "label": "PC Unique ID",
+    "placeholder": "Enter PC Unique ID"
+  },
+  "validation": {
+    "pcIdRequired": "Please enter a PC Unique ID"
+  }
+},
+"buttons": {
+  "save": "Save",
+  "saving": "Saving...",
+  "resetLicense": "Reset PC License",
+  "resetting": "Resetting..."
+},
+"resetNote": "Note: Resetting will unlink your current PC. You'll need to register again.",
+"toast": {
+  "error": {
+    "title": "Error"
+  },
+  "authError": {
+    "title": "Authentication Error",
+    "description": "You are not logged in. Please log in and try again."
+  },
+  "saveSuccess": {
+    "title": "Success",
+    "description": "PC linked successfully"
+  },
+  "saveError": {
+    "default": "Failed to save PC ID",
+    "invalidPcId": "Invalid PC ID. Please check and try again.",
+    "pcIdExists": "PC ID already registered. Please use a different PC ID."
+  },
+  "resetSuccess": {
+    "title": "Success",
+    "description": "PC license reset successfully. Please register your PC again."
+  },
+  "resetError": {
+    "default": "Failed to reset PC license",
+    "noPermission": "You do not have permission to reset PC license."
+  }
+}
+
+  },
     "scheduleM": {
       "error": "Error",
       "failedToFetchUsers": "Failed to fetch users",
