@@ -4,6 +4,7 @@ import SettingsLayout from "@/components/layouts/settings-layout"
 import ProfileSettings from "@/components/settings/profile-settings"
 import LanguageSettings from "@/components/settings/language-settings"
 import LawyerChargesSettings from "@/components/settings/lawyer-charges-settings"
+import PcIdSettings from "@/components/settings/pc-id-settings"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 
@@ -19,6 +20,7 @@ export default function SettingsPage() {
       <div className="space-y-10" style={{ marginTop: "2.25rem" }}>
         <ProfileSettings />
         {profile?.account_type === 'lawyer' && <LawyerChargesSettings />}
+        <PcIdSettings />
         <LanguageSettings />
       </div>
     </SettingsLayout>
