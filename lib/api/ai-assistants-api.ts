@@ -15,11 +15,11 @@ const getToken = () => {
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-const token = getToken()
-return {
-  'Authorization': `Bearer ${token}`,
-  'Content-Type': 'application/json'
-}
+  const token = getToken()
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
 }
 
 /**
@@ -48,7 +48,7 @@ export async function processFile(file: File, userId: string): Promise<Processed
     } else {
       fileUrl = await getUploadDocumentUrl(userId, fileData)
     }
-    
+
     if (!fileUrl) {
       throw new Error('Failed to upload file')
     }

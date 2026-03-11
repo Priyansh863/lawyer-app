@@ -51,47 +51,46 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
     },
   });
 
-const onSubmit = async (data: OnboardClientFormData) => {
-  setIsLoading(true);
-  try {
-    const res: any = await createClient({
-      email: data.email.trim(),
-      account_type: "client",
-    });
-
-    if (res?.email) {
-      toast({
-        title: t("pages:client.onboard.successTitle"),
-        description: t("pages:client.onboard.successDescription"),
-        variant: "success",
+  const onSubmit = async (data: OnboardClientFormData) => {
+    setIsLoading(true);
+    try {
+      const res: any = await createClient({
+        email: data.email.trim(),
+        account_type: "client",
       });
-      form.reset();
-      setIsOpen(false);
 
-      if (onClientCreated) onClientCreated();
-    } else {
-      throw new Error(
-        res?.message || t("pages:client.onboard.errorDescription")
-      );
+      if (res?.email) {
+        toast({
+          title: t("pages:client.onboard.successTitle"),
+          description: t("pages:client.onboard.successDescription"),
+          variant: "success",
+        });
+        form.reset();
+        setIsOpen(false);
+
+        if (onClientCreated) onClientCreated();
+      } else {
+        throw new Error(
+          res?.message || t("pages:client.onboard.errorDescription")
+        );
+      }
+    } catch (error: any) {
+      toast({
+        title: t("pages:client.onboard.errorTitle"),
+        description:
+          error.message || t("pages:client.onboard.errorDescription"),
+        variant: "error",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    toast({
-      title: t("pages:client.onboard.errorTitle"),
-      description:
-        error.message || t("pages:client.onboard.errorDescription"),
-      variant: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-black hover:bg-gray-800 text-white">
-          <UserPlus className="h-4 w-4 mr-2" />
+        <Button className="bg-[#0F172A] hover:bg-slate-800 text-white px-6 h-10 rounded-md font-medium">
           {t("pages:client.onboard.button")}
         </Button>
       </DialogTrigger>

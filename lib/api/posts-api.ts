@@ -5,17 +5,34 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 // Get token from localStorage
 const getToken = () => {
   if (typeof window !== "undefined") {
+    // Try to get token directly first
+    const token = localStorage.getItem("token");
+    if (token) return token;
+
+    // Fallback to user object
     const user = localStorage.getItem("user");
-    return user ? JSON.parse(user).token : null;
+    try {
+      return user ? JSON.parse(user).token : null;
+    } catch (e) {
+      return null;
+    }
   }
   return null;
 };
 
 // Get auth headers
-const getAuthHeaders = () => ({
-  'Authorization': `Bearer ${getToken()}`,
-  'Content-Type': 'application/json'
-});
+const getAuthHeaders = () => {
+  const token = getToken();
+  const headers: any = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
 
 // Interfaces
 export interface SpatialInfo {

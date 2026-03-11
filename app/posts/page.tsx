@@ -3,41 +3,46 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import PostCreator from "@/components/posts/post-creator";
-import QrCodeGenerator from "@/components/posts/qr-code-generator";
-import { 
-  getPosts, 
-  type Post 
+import {
+  getPosts,
+  type Post
 } from "@/lib/api/posts-api";
-import { 
-  FileText, 
-  Plus, 
-  Copy,
-  User,
-  MapPin,
-  Hash,
-  Wand2,
+import {
+  Search,
+  MoreHorizontal,
+  MessageSquare,
+  Link2,
   QrCode,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink
+  EyeOff,
+  Slash,
+  AlertTriangle,
+  User
 } from "lucide-react";
 
 export default function PostsPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
-  
+
   // State
-  const [activeTab, setActiveTab] = useState<'list' | 'create'>('list');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,8 +53,10 @@ export default function PostsPage() {
     try {
       setIsLoading(true);
       const response = await getPosts(page, 10, "published");
-      
-      setPosts(response.data.posts || []);
+
+      const postsData = response.data.posts || [];
+      setPosts(postsData);
+      setFilteredPosts(postsData);
       setTotalPages(response.data.totalPages || 1);
       setCurrentPage(page);
     } catch (error: any) {
@@ -68,9 +75,24 @@ export default function PostsPage() {
     fetchPosts(1);
   }, []);
 
+  // Filter posts based on search
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredPosts(posts);
+    } else {
+      const lowerSearch = searchTerm.toLowerCase();
+      setFilteredPosts(posts.filter(post =>
+        post.title.toLowerCase().includes(lowerSearch) ||
+        post.content.toLowerCase().includes(lowerSearch) ||
+        (post.hashtag && post.hashtag.toLowerCase().includes(lowerSearch))
+      ));
+    }
+  }, [searchTerm, posts]);
+
   // Handle post creation
   const handlePostCreated = (post: Post) => {
     setPosts(prev => [post, ...prev]);
+    setIsDialogOpen(false);
     toast({
       title: t("pages:posts.postCreated"),
       description: t("pages:posts.postAddedToList"),
@@ -78,355 +100,198 @@ export default function PostsPage() {
     });
   };
 
-  // Copy URL to clipboard
-  const copyUrl = (url: string, type: string) => {
-    navigator.clipboard.writeText(url);
-    toast({
-      title: t("urlCopied"),
-      description: t("pages:posts.urlCopiedToClipboard", { type }),
-      variant: "default",
-    });
-  };
-
-  // Open URL in new tab
-  const openUrl = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  // Mask user name like fag2***
+  const maskName = (firstName: string) => {
+    if (firstName.length <= 4) return firstName + "***";
+    return firstName.substring(0, 4) + "***";
   };
 
   // Toggle post expansion
-  const toggleExpandPost = (postId: string) => {
+  const toggleExpand = (id: string) => {
     setExpandedPosts(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(postId)) {
-        newSet.delete(postId);
-      } else {
-        newSet.add(postId);
-      }
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
       return newSet;
     });
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Skeleton components
-  const PostRowSkeleton = () => (
-    <Card className="hover:shadow-md transition-shadow mb-4">
-      <CardContent className="p-4">
-        <div className="flex">
-          {/* Avatar placeholder */}
-          <div className="mr-4">
-            <Skeleton width={48} height={48} circle />
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center mb-1 flex-wrap">
-              <Skeleton width={120} height={16} className="mr-2 mb-1" />
-              <Skeleton width={80} height={14} />
+  return (
+    <div className="flex flex-col space-y-4">
+      {/* Header - Aligned title and search same row */}
+      <div className="max-w-7xl mx-auto w-full mb-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <h1 className="text-2xl font-bold text-[#0F172A]">Post Creation & Management</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search"
+                className="pl-10 bg-white border-slate-200 w-full md:w-[320px] h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 focus-visible:ring-offset-0 text-[#0F172A] font-medium placeholder:text-slate-400 shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            
-            <Skeleton count={3} height={16} className="mb-2" />
-            
-            {/* Image placeholder */}
-            <Skeleton height={200} className="rounded-lg mb-2" />
-            
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Skeleton width={80} height={32} />
-              <Skeleton width={80} height={32} />
-            </div>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-8 rounded-lg shadow-lg active:scale-95 transition-all"
+            >
+              Create Content
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-
-  return (
-    <div className="space-y-6 mt-7">
-      <div className="px-4 sm:px-6 py-4 border-b">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          {t("pages:posts.postsContentTitle")}
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
-          {t("pages:posts.postsContentDescription")}
-        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
-        <TabsList className="grid w-full grid-cols-2 mx-4 sm:mx-6">
-          <TabsTrigger value="list" className="flex items-center gap-2 text-xs sm:text-sm">
-            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
-            {t("pages:posts.myPosts")}
-          </TabsTrigger>
-          <TabsTrigger value="create" className="flex items-center gap-2 text-xs sm:text-sm">
-            <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-            {t("pages:posts.createNew")}
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Posts List */}
-        <TabsContent value="list" className="space-y-6 px-4 sm:px-6">
-          {/* Posts List - Twitter style rows */}
-          {isLoading ? (
-            <div className="space-y-4">
-              <PostRowSkeleton />
-              <PostRowSkeleton />
-              <PostRowSkeleton />
+      {/* Grid - Masonry Layout */}
+      <div className="max-w-7xl mx-auto w-full">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[1, 2, 3, 4].map(i => (
+              <Card key={i} className="border-none shadow-sm rounded-2xl overflow-hidden bg-white">
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-4 mb-6">
+                    <Skeleton circle width={48} height={48} />
+                    <Skeleton width={100} height={20} />
+                  </div>
+                  <Skeleton count={4} className="mb-6" />
+                  <div className="flex gap-3">
+                    <Skeleton width={80} height={80} className="rounded-xl" />
+                    <Skeleton width={80} height={80} className="rounded-xl" />
+                    <Skeleton width={80} height={80} className="rounded-xl" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-32 bg-white rounded-3xl border border-dashed border-slate-200 shadow-sm max-w-2xl mx-auto">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="h-10 w-10 text-slate-300" />
             </div>
-          ) : posts.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{t("pages:posts:noPostsFound")}</h3>
-                <p className="text-sm sm:text-base text-gray-600 mb-4">
-                  {t("pages:posts.noPostsCreatedYet")}
-                </p>
-                <Button onClick={() => setActiveTab('create')} className="text-xs sm:text-sm">
-                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                  {t("pages:posts.createFirstPost")}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {posts.map((post) => {
-                const isExpanded = expandedPosts.has(post._id);
-                const contentPreview = post.content.length > 300 && !isExpanded 
-                  ? post.content.substring(0, 300) + '...' 
-                  : post.content;
-                  
-                return (
-                <Card key={post._id} className="hover:shadow-md transition-shadow overflow-hidden">
-                  <CardContent className="p-3 sm:p-4">
-                    <div className="flex">
-                      {/* Author Avatar */}
-                      <div className="mr-3 sm:mr-4 flex-shrink-0">
-                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="h-4 w-4 sm:h-6 sm:w-6 text-gray-500" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        {/* Author info and timestamp */}
-                        <div className="flex items-center mb-1 flex-wrap">
-                          <span className="font-semibold text-gray-900 truncate text-sm sm:text-base">
-                            {post.author.first_name} {post.author.last_name}
-                          </span>
-                          <span className="mx-1 sm:mx-2 text-gray-500 text-xs sm:text-sm">·</span>
-                          <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                            {formatDate(post.createdAt)}
-                          </span>
-                        </div>
-                        
-                        {/* Post title */}
-                        <h3 className="font-bold text-base sm:text-lg mb-2 break-words">{post.title}</h3>
-                        
-                        {/* Post content with read more/less */}
-                        <div className="text-gray-800 mb-3 text-sm sm:text-base">
-                          <div 
-                            className="break-words"
-                            dangerouslySetInnerHTML={{
-                              __html: contentPreview
-                                .replace(/\n/g, '<br>')
-                                .replace(/### (.*?)\n/g, '<h3 class="text-sm sm:text-base font-bold mt-3 mb-2 break-words">$1</h3>')
-                                .replace(/#### (.*?)\n/g, '<h4 class="text-xs sm:text-sm font-semibold mt-2 mb-1 break-words">$1</h4>')
-                                .replace(/\*\*(.*?)\*\*/g, '<strong class="break-words">$1</strong>')
-                                .replace(/- (.*?)\n/g, '<li class="ml-4 mb-1 break-words">$1</li>')
-                            }}
-                          />
-                          
-                          {post.content.length > 300 && (
-                            <Button 
-                              variant="link" 
-                              className="p-0 h-auto text-blue-500 hover:text-blue-700 text-xs sm:text-sm"
-                              onClick={() => toggleExpandPost(post._id)}
-                            >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  {t("pages:posts.showless")}
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  {t("pages:posts.readmore")}
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                        
-                        {/* Post Image */}
-                        {post.image && (
-                          <div className="mb-3 rounded-lg overflow-hidden border">
-                            <img
-                              src={post.image}
-                              alt={post.title}
-                              className="w-full h-auto max-h-48 sm:max-h-96 object-cover"
-                            />
-                          </div>
-                        )}
-                        
-                        {/* Badges */}
-                        <div className="flex flex-wrap gap-1 sm:gap-2 mb-3">
-                          {post.isAiGenerated && (
-                            <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                              <Wand2 className="h-3 w-3" />
-                              <span className="hidden xs:inline">{t("pages:posts.aiGenerated")}</span>
-                              <span className="xs:hidden">AI</span>
-                            </Badge>
-                          )}
-                          {post.spatialInfo?.latitude && (
-                            <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                              <MapPin className="h-3 w-3" />
-                              <span className="hidden xs:inline">{t("pages:posts.location")}</span>
-                              <span className="xs:hidden">Loc</span>
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        {/* Hashtags */}
-                        {(post.hashtags && post.hashtags.length > 0) ? (
-                          <div className="flex items-center gap-1 flex-wrap mb-3">
-                            <Hash className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <div className="flex flex-wrap gap-1">
-                              {post.hashtags.map((tag, index) => (
-                                <span key={index} className="text-xs sm:text-sm text-blue-500 break-words">
-                                  {tag}{index < post.hashtags!.length - 1 ? ', ' : ''}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : post.hashtag && (
-                          <div className="flex items-center gap-1 mb-3 flex-wrap">
-                            <Hash className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                            <span className="text-xs sm:text-sm text-blue-500 break-words">{post.hashtag}</span>
-                          </div>
-                        )}
-                        
-                        {/* Citations */}
-                        {post.citations && post.citations.length > 0 && (
-                          <div className="text-xs text-gray-500 mb-3">
-                            {post.citations.length} {t("pages:posts.citation", { count: post.citations.length })}
-                          </div>
-                        )}
-                        
-                        {/* Useful links */}
-                        {post.usefulLinks && post.usefulLinks.length > 0 && (
-                          <div className="space-y-1 mb-3">
-                            <div className="text-xs font-medium text-gray-700">{t("pages:posts.usefulResources")}:</div>
-                            {post.usefulLinks.slice(0, 2).map((link, index) => (
-                              <div key={index} className="text-xs break-words">
-                                <a 
-                                  href={link.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline break-all"
-                                >
-                                  {link.title}
-                                </a>
-                                {link.description && (
-                                  <span className="text-gray-500 ml-1 hidden sm:inline">- {link.description}</span>
-                                )}
-                              </div>
-                            ))}
-                            {post.usefulLinks.length > 2 && (
-                              <div className="text-xs text-gray-500">+{post.usefulLinks.length - 2} {t("pages:posts.moreResources")}</div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Action buttons */}
-                        <div className="flex flex-col sm:flex-row sm:justify-between mt-4 pt-3 border-t gap-2 sm:gap-0">
-                          <div className="flex flex-wrap gap-1 sm:gap-2">
-                            {post.customUrl && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => copyUrl(post.customUrl!, t("pages:posts.custom"))}
-                                  className="text-gray-500 hover:text-purple-500 text-xs h-8 px-2"
-                                >
-                                  <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  <span className="hidden sm:inline">{t("pages:posts.copyUrl")}</span>
-                                  <span className="sm:hidden">Copy</span>
-                                </Button>
+            <h3 className="text-xl font-bold text-[#0F172A] mb-2">No results found</h3>
+            <p className="text-slate-500 font-medium px-6">We couldn't find any posts matching your search. Try broadening your criteria or create a new post.</p>
+          </div>
+        ) : (
+          <div className="columns-1 md:columns-2 gap-8 space-y-8">
+            {filteredPosts.map((post) => {
+              const isExpanded = expandedPosts.has(post._id);
+              const isLong = post.content.length > 220;
 
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openUrl(post.customUrl!)}
-                                  className="text-gray-500 hover:text-green-500 text-xs h-8 px-2"
-                                >
-                                  <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  <span className="hidden sm:inline">{t("pages:posts.openUrl")}</span>
-                                  <span className="sm:hidden">Open</span>
-                                </Button>
-                              </>
-                            )}
-                            
-                            <QrCodeGenerator 
-                              post={post}
-                              trigger={
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-gray-500 hover:text-blue-500 text-xs h-8 px-2"
-                                >
-                                  <QrCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  <span className="hidden sm:inline">QR Code</span>
-                                  <span className="sm:hidden">QR</span>
-                                </Button>
-                              }
-                            />
-                          </div>
+              return (
+                <Card key={post._id} className="break-inside-avoid border border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white hover:shadow-xl transition-all duration-300 group">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                          {post.author.avatar ? (
+                            <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="h-6 w-6 text-slate-400" />
+                          )}
                         </div>
+                        <span className="text-base font-bold text-[#0F172A] tracking-tight">{maskName(post.author.first_name)}</span>
                       </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-[#0F172A] hover:bg-slate-50 transition-all rounded-full">
+                            <MoreHorizontal className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-200 shadow-2xl animate-in fade-in zoom-in duration-200">
+                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                            <Link2 className="mr-3 h-4 w-4" /> Copy Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                            <QrCode className="mr-3 h-4 w-4" /> QR Code
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                            <EyeOff className="mr-3 h-4 w-4" /> Not Interested
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                            <Slash className="mr-3 h-4 w-4" /> Block
+                          </DropdownMenuItem>
+                          <div className="h-px bg-slate-100 my-1 mx-2"></div>
+                          <DropdownMenuItem className="text-sm font-bold text-red-500 py-3 px-4 cursor-pointer focus:bg-red-50 focus:text-red-600 rounded-xl transition-colors">
+                            <AlertTriangle className="mr-3 h-4 w-4" /> Report
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-[15px] font-medium text-slate-700 leading-relaxed break-words whitespace-pre-wrap">
+                          {isExpanded ? post.content : (isLong ? post.content.substring(0, 220) + "..." : post.content)}
+                        </p>
+                        {isLong && (
+                          <button
+                            onClick={() => toggleExpand(post._id)}
+                            className="mt-2 text-sm font-bold text-slate-400 hover:text-[#0F172A] transition-colors"
+                          >
+                            {isExpanded ? "Show Less" : "View More"}
+                          </button>
+                        )}
+                      </div>
+
+                      {post.hashtag && (
+                        <p className="text-sm font-bold text-[#0F172A] bg-slate-50 inline-block px-3 py-1 rounded-full border border-slate-100 italic">
+                          # {post.hashtag.replace("#", "").trim()}
+                        </p>
+                      )}
+
+                      {post.image && (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
+                            <img src={post.image} alt="" className="w-full h-full object-cover" />
+                          </div>
+                          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
+                          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
+                        </div>
+                      )}
+
+
                     </div>
                   </CardContent>
                 </Card>
-              )})}
-            </div>
-          )}
+              )
+            })}
+          </div>
+        )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6 flex-wrap">
-              <Button
-                variant="outline"
-                disabled={currentPage === 1 || isLoading}
-                onClick={() => fetchPosts(currentPage - 1)}
-                className="text-xs sm:text-sm h-8 sm:h-9 px-3"
-              >
-                {t("pages:posts.previous")}
-              </Button>
-              <span className="flex items-center px-2 sm:px-4 text-xs sm:text-sm">
-                {t("pages:posts.pageInfo", { current: currentPage, total: totalPages })}
-              </span>
-              <Button
-                variant="outline"
-                disabled={currentPage === totalPages || isLoading}
-                onClick={() => fetchPosts(currentPage + 1)}
-                className="text-xs sm:text-sm h-8 sm:h-9 px-3"
-              >
-                {t("pages:posts.next")}
-              </Button>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-3 mt-16 pb-12 flex-wrap">
+            <Button
+              variant="outline"
+              disabled={currentPage === 1 || isLoading}
+              onClick={() => fetchPosts(currentPage - 1)}
+              className="border-slate-200 text-slate-600 font-bold h-11 px-8 rounded-xl hover:bg-white hover:border-[#0F172A] shadow-sm transition-all"
+            >
+              Previous
+            </Button>
+            <div className="flex items-center px-6 text-sm font-bold text-[#0F172A] bg-white border border-slate-200 rounded-xl shadow-sm">
+              Page {currentPage} of {totalPages}
             </div>
-          )}
-        </TabsContent>
+            <Button
+              variant="outline"
+              disabled={currentPage === totalPages || isLoading}
+              onClick={() => fetchPosts(currentPage + 1)}
+              className="border-slate-200 text-slate-600 font-bold h-11 px-8 rounded-xl hover:bg-white hover:border-[#0F172A] shadow-sm transition-all"
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
 
-        {/* Create Post */}
-        <TabsContent value="create">
-          <PostCreator onPostCreated={handlePostCreated} />
-        </TabsContent>
-      </Tabs>
+      {/* Create Post Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] p-6 overflow-hidden rounded-md border border-slate-200 shadow-lg bg-white">
+          <div className="max-h-[85vh] overflow-y-auto scrollbar-hide">
+            <PostCreator onPostCreated={handlePostCreated} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

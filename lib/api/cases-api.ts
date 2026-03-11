@@ -50,11 +50,11 @@ export const casesApi = {
         page: page.toString(),
         limit: limit.toString()
       }
-      
+
       if (status && status !== "all") {
         params.status = status
       }
-      
+
       if (query && query.trim()) {
         params.query = query.trim()
       }
@@ -95,7 +95,7 @@ export const casesApi = {
   /**
    * Create new case
    */
-   createCase: async (caseData: any): Promise<{ success: boolean; case: Case }> => {
+  createCase: async (caseData: any): Promise<{ success: boolean; case: Case }> => {
     try {
       const response = await axios.post(`${API_BASE_URL}/user/CreateCases`, caseData, {
         headers: getAuthHeaders()
@@ -112,13 +112,53 @@ export const casesApi = {
    */
   updateCaseStatus: async (caseId: string, status: CaseStatus): Promise<{ success: boolean; case: Case }> => {
     try {
-      const response = await axios.patch(`${API_BASE_URL}/user/cases/${caseId}/status`, 
-        { status }, 
+      const response = await axios.patch(`${API_BASE_URL}/user/cases/${caseId}/status`,
+        { status },
         { headers: getAuthHeaders() }
       )
       return response.data
     } catch (error) {
       console.error('Error updating case status:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update case details (title, description, case_type, court_type, status, priority, notes, est_duration)
+   */
+  updateCase: async (caseId: string, updateData: {
+    title?: string
+    description?: string
+    case_type?: string
+    court_type?: string
+    status?: CaseStatus
+    priority?: string
+    notes?: string
+    est_duration?: string
+  }): Promise<{ success: boolean; case: Case }> => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/user/cases/${caseId}`,
+        updateData,
+        { headers: getAuthHeaders() }
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error updating case:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Delete a case
+   */
+  deleteCase: async (caseId: string): Promise<{ success: boolean }> => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/user/cases/${caseId}`, {
+        headers: getAuthHeaders()
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error deleting case:', error)
       throw error
     }
   }
@@ -128,11 +168,13 @@ export const casesApi = {
 export const getCases = casesApi.getCases
 export const createCase = casesApi.createCase
 export const updateCaseStatus = casesApi.updateCaseStatus
+export const updateCase = casesApi.updateCase
+export const deleteCase = casesApi.deleteCase
 
 /**
  * Get cases for a specific client
  */
-export async function getClientCases(clientId: string,account_type:string): Promise<Case[]> {
+export async function getClientCases(clientId: string, account_type: string): Promise<Case[]> {
   try {
     const response = await axios.get(`${API_BASE_URL}/case/${account_type}/${clientId}`, {
       headers: getAuthHeaders(),
@@ -147,12 +189,15 @@ export async function getClientCases(clientId: string,account_type:string): Prom
     const cases = response.data.data || []
     return cases.map((caseData: any) => ({
       id: caseData._id,
+      _id: caseData._id,
       case_number: caseData.case_number,
       title: caseData.title,
       description: caseData.description,
       summary: caseData.summary,
       key_points: caseData.key_points || [],
       status: caseData.status.toLowerCase(),
+      case_type: caseData.case_type || '',
+      court_type: caseData.court_type || '',
       client_id: caseData.client_id,
       lawyer_id: caseData.lawyer_id,
       files: caseData.files || [],

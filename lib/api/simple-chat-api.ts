@@ -66,8 +66,8 @@ export const createOrGetChat = async (participantId: string): Promise<any> => {
       { participantId },
       { headers: getAuthHeaders() }
     )
-    console.log(response.data,"responseresponseresponseresponseresponseresponse")
-    if(response.data.data){
+    console.log(response.data, "responseresponseresponseresponseresponseresponse")
+    if (response.data.data) {
       return response.data.data
     }
     return response.data
@@ -113,7 +113,7 @@ export const sendMessage = async (chatId: string, content: string, messageType: 
   try {
     const response = await axios.post<ApiResponse<Message>>(
       `${API_BASE_URL}/chat/${chatId}/send`,
-      { 
+      {
         message: content.trim(),
         messageType
       },

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import Sidebar from "@/components/sidebar/sidebar"
+import ClientLayout from "@/components/layouts/client-layout"
 
 interface SettingsLayoutProps {
   children: ReactNode
@@ -7,9 +7,8 @@ interface SettingsLayoutProps {
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="flex-1">{children}</div>
-    </div>
+    <ClientLayout fullWidth>
+      {children}
+    </ClientLayout>
   )
 }

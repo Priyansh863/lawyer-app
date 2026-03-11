@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import VideoConsultationsLayout from "@/components/layouts/video-consultations-layout";
+import ClientLayout from "@/components/layouts/client-layout";
 import VideoConsultationTable from "@/components/video-consultations/video-consultation-table";
 import ConsultationTypeModal from "@/components/modals/consultation-type-modal";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 
 export default function VideoConsultationsPage() {
   const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -35,35 +36,23 @@ export default function VideoConsultationsPage() {
   };
 
   return (
-    <VideoConsultationsLayout>
-      <div className="container mx-auto p-4 sm:p-6 mt-4">
-        {/* Header with New Consultation Button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div className="flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Video className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+    <ClientLayout fullWidth>
+      <div className="pt-1 pb-4 px-2 max-w-[1700px] mx-auto">
+        <div className="flex flex-col space-y-6">
+          {/* Header Section */}
+          <div className="flex justify-between items-center px-1">
+            <h1 className="text-[22px] font-bold text-[#0F172A] tracking-tight">
               {t("pages:consultation.videoConsultations")}
             </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              {t("pages:consultation.manageConsultations")}
-            </p>
           </div>
-          
-          {/* New Consultation Button */}
-          <Button
-            onClick={() => setIsConsultationModalOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-white gap-2 w-full sm:w-auto"
-            size="sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden xs:inline">{t("pages:consultation.newConsultation")}</span>
-            <span className="xs:hidden">{t("pages:consultation.new")}</span>
-          </Button>
-        </div>
-        
-        {/* Consultation Table */}
-        <div className="overflow-hidden">
-          <VideoConsultationTable key={refreshTrigger} />
+
+          {/* Consultation Table */}
+          <div className="overflow-hidden">
+            <VideoConsultationTable
+              key={refreshTrigger}
+              onNewConsultation={() => setIsConsultationModalOpen(true)}
+            />
+          </div>
         </div>
       </div>
 
@@ -73,6 +62,6 @@ export default function VideoConsultationsPage() {
         onClose={() => setIsConsultationModalOpen(false)}
         onConsultationScheduled={handleConsultationScheduled}
       />
-    </VideoConsultationsLayout>
+    </ClientLayout>
   );
 }

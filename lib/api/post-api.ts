@@ -59,7 +59,7 @@ const getAuthToken = () => {
 // Generate post content from prompt using backend AI
 export const generatePost = async (prompt: string): Promise<{ content: string }> => {
   const token = getAuthToken()
-  
+
   if (!token) {
     throw new Error('Authentication required')
   }
@@ -91,7 +91,7 @@ export const generatePost = async (prompt: string): Promise<{ content: string }>
 // Create a new post with spatial metadata
 export const createPost = async (postData: CreatePostRequest): Promise<Post> => {
   const token = getAuthToken()
-  
+
   if (!token) {
     throw new Error('Authentication required')
   }
@@ -118,7 +118,7 @@ export const createPost = async (postData: CreatePostRequest): Promise<Post> => 
 // Generate QR code for a post
 export const generateQRCode = async (slug: string): Promise<{ qrCodeUrl: string }> => {
   const token = getAuthToken()
-  
+
   if (!token) {
     throw new Error('Authentication required')
   }
@@ -152,7 +152,7 @@ export const generateCustomUrl = (
 
   if (spatialInfo && spatialInfo.latitude && spatialInfo.longitude) {
     const params = new URLSearchParams()
-    
+
     if (spatialInfo.planet) params.append('planet', spatialInfo.planet)
     params.append('lat', spatialInfo.latitude.toString())
     params.append('lng', spatialInfo.longitude.toString())
@@ -208,7 +208,7 @@ export const validateFloor = (floor?: number): boolean => {
 
 export const validateTimestamp = (timestamp?: string): boolean => {
   if (!timestamp) return true // Optional field
-  
+
   try {
     const date = new Date(timestamp)
     return !isNaN(date.getTime()) && timestamp.includes('T')

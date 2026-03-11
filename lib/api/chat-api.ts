@@ -1,11 +1,11 @@
 import axios from 'axios'
-import type { 
-  Message, 
-  Chat, 
-  ChatResponse, 
-  ChatsResponse, 
+import type {
+  Message,
+  Chat,
+  ChatResponse,
+  ChatsResponse,
   MessagesResponse,
-  ChatSummary 
+  ChatSummary
 } from '@/types/chat'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
@@ -22,7 +22,7 @@ const getToken = () => {
 
 const getAuthHeaders = () => {
   if (typeof window === 'undefined') return {}
-  
+
   const token = getToken()
   return {
     'Authorization': `Bearer ${token}`,
@@ -33,10 +33,10 @@ const getAuthHeaders = () => {
 // Helper function to get current user ID
 const getCurrentUserId = (): string | null => {
   if (typeof window === 'undefined') return null
-  
+
   const userStr = localStorage.getItem('user')
   if (!userStr) return null
-  
+
   try {
     const user = JSON.parse(userStr)
     return user._id || user.id
@@ -71,10 +71,10 @@ export async function createChat({ lawyerId }: CreateChatParams): Promise<ChatRe
       { lawyerId },
       { headers: getAuthHeaders() }
     )
-    console.log(response.data,"responseresponseresponseresponseresponseresponse")
+    console.log(response.data, "responseresponseresponseresponseresponseresponse")
     return response.data
   } catch (error: any) {
-    console.log(error,"errorerrorerrorerrorerrorerrorerrorerror")
+    console.log(error, "errorerrorerrorerrorerrorerrorerrorerror")
     console.error('Create chat error:', error)
     throw new Error(error.response?.data?.message || 'Failed to create chat')
   }
@@ -83,13 +83,13 @@ export async function createChat({ lawyerId }: CreateChatParams): Promise<ChatRe
 /**
  * Get user's chats with pagination
  */
-export async function getChats({ query = '', page = 1, limit = 20 }: GetChatsParams = {}){
+export async function getChats({ query = '', page = 1, limit = 20 }: GetChatsParams = {}) {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString()
     })
-    
+
     if (query) {
       params.append('query', query)
     }
@@ -239,10 +239,10 @@ export async function getUnreadCount(): Promise<{ count: number }> {
 export function transformChatToSummary(chat: Chat, currentUserId: string): ChatSummary {
   // Find the other participant (not current user)
   const otherParticipant = chat.participantDetails?.find(p => p._id !== currentUserId)
-  
+
   return {
     chatId: chat._id,
-    participantName: otherParticipant 
+    participantName: otherParticipant
       ? `${otherParticipant.first_name} ${otherParticipant.last_name}`.trim()
       : 'Unknown User',
     participantAvatar: otherParticipant?.avatar,

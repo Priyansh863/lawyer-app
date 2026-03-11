@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,13 +18,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { 
-  FileText, 
-  MoreVertical, 
-  Eye, 
-  Share2, 
-  Trash2, 
-  Lock, 
+import {
+  FileText,
+  MoreVertical,
+  Eye,
+  Share2,
+  Trash2,
+  Lock,
   Globe,
   Users,
   Search,
@@ -39,7 +39,9 @@ import {
   Video,
   Image,
   File,
-  Download
+  Download,
+  Cloud,
+  HardDrive
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
@@ -73,6 +75,7 @@ interface Document {
   is_shared?: boolean
   created_at?: string
   updated_at?: string
+  syncLocationLabel?: string
   createdAt: string
   updatedAt: string
 }
@@ -80,19 +83,19 @@ interface Document {
 interface DocumentsTableProps {
   onDocumentUpdate?: () => void
   refreshTrigger?: number
+  searchTerm: string
 }
 
-export default function DocumentsTable({ 
-  onDocumentUpdate, 
-  refreshTrigger 
+export default function DocumentsTable({
+  onDocumentUpdate,
+  refreshTrigger,
+  searchTerm
 }: DocumentsTableProps) {
   const { t } = useTranslation();
   // Separate state for all documents and filtered documents
   const [allDocuments, setAllDocuments] = useState<Document[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'Pending' | 'Completed' | 'Failed' | 'Rejected' | 'Approved' | 'Processing' | 'Cancelled'>('all')
   const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private' | 'fully_private'>('all')
   const [fileTypeFilter, setFileTypeFilter] = useState<'all' | 'PDF' | 'DOCX' | 'TXT' | 'Image' | 'Video'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -114,7 +117,7 @@ export default function DocumentsTable({
   // Apply filters when search term or any filter changes
   useEffect(() => {
     applyFilters()
-  }, [searchTerm, statusFilter, privacyFilter, fileTypeFilter, allDocuments])
+  }, [searchTerm, privacyFilter, fileTypeFilter, allDocuments])
 
   const loadDocuments = async () => {
     setIsLoading(true)
@@ -143,7 +146,7 @@ export default function DocumentsTable({
   // Get file type icon and color
   const getFileTypeIcon = (fileType: string | undefined) => {
     if (!fileType) return { icon: FileText, color: 'text-gray-500' }
-    
+
     const type = fileType.toLowerCase()
     if (type.includes('pdf')) return { icon: FileText, color: 'text-red-500' }
     if (type.includes('word') || type.includes('docx')) return { icon: FileText, color: 'text-blue-500' }
@@ -160,17 +163,14 @@ export default function DocumentsTable({
     // Apply search filter
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase()
-      filteredDocs = filteredDocs.filter(doc => 
+      filteredDocs = filteredDocs.filter(doc =>
         doc.document_name.toLowerCase().includes(searchLower) ||
         (doc.summary && doc.summary.toLowerCase().includes(searchLower)) ||
         (doc.file_type && doc.file_type.toLowerCase().includes(searchLower))
       )
     }
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filteredDocs = filteredDocs.filter(doc => doc.status === statusFilter)
-    }
+    // Status filter removed (always show all)
 
     // Apply privacy filter
     if (privacyFilter !== 'all') {
@@ -199,44 +199,44 @@ export default function DocumentsTable({
   // Enhanced status badge styling with better colors and visual indicators
   const getStatusBadge = (status: Document['status']) => {
     const statusConfig = {
-      'Pending': { 
-        color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100', 
+      'Pending': {
+        color: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
         icon: Clock,
         label: t('pages:documentT.status.pending'),
         dotColor: 'bg-amber-500'
       },
-      'Completed': { 
-        color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100', 
+      'Completed': {
+        color: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
         icon: CheckCircle,
         label: t('pages:documentT.status.completed'),
         dotColor: 'bg-emerald-500'
       },
-      'Failed': { 
-        color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100', 
+      'Failed': {
+        color: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100',
         icon: XCircle,
         label: t('pages:documentT.status.failed'),
         dotColor: 'bg-red-500'
       },
-      'Rejected': { 
-        color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100', 
+      'Rejected': {
+        color: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100',
         icon: Ban,
         label: t('pages:documentT.status.rejected'),
         dotColor: 'bg-rose-500'
       },
-      'Approved': { 
-        color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100', 
+      'Approved': {
+        color: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
         icon: CheckCircle,
         label: t('pages:documentT.status.approved'),
         dotColor: 'bg-blue-500'
       },
-      'Processing': { 
-        color: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100', 
+      'Processing': {
+        color: 'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100',
         icon: Loader2,
         label: t('pages:documentT.status.processing'),
         dotColor: 'bg-violet-500'
       },
-      'Cancelled': { 
-        color: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100', 
+      'Cancelled': {
+        color: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
         icon: Ban,
         label: t('pages:documentT.status.cancelled'),
         dotColor: 'bg-slate-500'
@@ -247,13 +247,34 @@ export default function DocumentsTable({
     const IconComponent = config.icon
 
     return (
-      <Badge 
-        variant="outline" 
+      <Badge
+        variant="outline"
         className={`${config.color} border-2 flex items-center gap-2 px-1 py-1.5 font-medium transition-colors shadow-sm w-24`}
       >
         <div className={`w-2 h-2 rounded-full ${config.dotColor} shadow-sm`} />
         <IconComponent className={`h-3 w-3 ${status === 'Processing' ? 'animate-spin' : ''}`} />
         <span className="text-sm font-medium">{config.label}</span>
+      </Badge>
+    )
+  }
+
+  // Get sync location badge
+  const getSyncLocationBadge = (label: string | undefined) => {
+    if (!label) return <span className="text-gray-400 text-xs">—</span>
+
+    const isCloud = label.toLowerCase() === 'cloud'
+    const isApp = label.toLowerCase() === 'app'
+    const isBoth = label.toLowerCase() === 'both'
+
+    return (
+      <Badge
+        variant="secondary"
+        className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 text-gray-600 border-gray-200"
+      >
+        {isCloud && <Cloud className="h-3 w-3" />}
+        {isApp && <HardDrive className="h-3 w-3" />}
+        {isBoth && <Globe className="h-3 w-3" />}
+        <span className="text-[11px] font-medium uppercase tracking-wider">{label}</span>
       </Badge>
     )
   }
@@ -267,13 +288,13 @@ export default function DocumentsTable({
   // Handle share update
   const handleShareUpdate = (updatedDocument: any) => {
     // Update the document in both allDocuments and documents arrays
-    setAllDocuments(prevDocs => 
-      prevDocs.map(doc => 
+    setAllDocuments(prevDocs =>
+      prevDocs.map(doc =>
         doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
       )
     )
-    setDocuments(prevDocs => 
-      prevDocs.map(doc => 
+    setDocuments(prevDocs =>
+      prevDocs.map(doc =>
         doc._id === updatedDocument.id ? { ...doc, ...updatedDocument } : doc
       )
     )
@@ -281,41 +302,41 @@ export default function DocumentsTable({
   }
 
   // Privacy badge with enhanced privacy levels
-// Privacy badge with better layout
-const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
-  switch (privacy) {
-    case 'fully_private':
-      return (
-        <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 min-w-[100px] justify-center">
-          <Lock className="h-3 w-3" />
-          <span className="text-xs">{t('pages:documentT.table.privacy.fullyPrivate')}</span>
-        </Badge>
-      )
-    case 'private':
-      return (
-        <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-1 py-1 min-w-[80px] justify-center">
-          <Lock className="h-3 w-3" />
-          <span className="text-xs">
-            {isShared 
-              ? t('pages:documentT.table.privacy.sharedPrivate') 
-              : t('pages:documentT.table.privacy.private')}
-          </span>
-        </Badge>
-      )
-    default:
-      return (
-        <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 min-w-[100px] justify-center">
-          <Globe className="h-3 w-3" />
-          <span className="text-xs">{t('pages:documentT.table.privacy.public')}</span>
-        </Badge>
-      )
+  // Privacy badge with better layout
+  const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
+    switch (privacy) {
+      case 'fully_private':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 min-w-[100px] justify-center">
+            <Lock className="h-3 w-3" />
+            <span className="text-xs">{t('pages:documentT.table.privacy.fullyPrivate')}</span>
+          </Badge>
+        )
+      case 'private':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-1 py-1 min-w-[80px] justify-center">
+            <Lock className="h-3 w-3" />
+            <span className="text-xs">
+              {isShared
+                ? t('pages:documentT.table.privacy.sharedPrivate')
+                : t('pages:documentT.table.privacy.private')}
+            </span>
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 min-w-[100px] justify-center">
+            <Globe className="h-3 w-3" />
+            <span className="text-xs">{t('pages:documentT.table.privacy.public')}</span>
+          </Badge>
+        )
+    }
   }
-}
 
   // Handle document deletion
   const handleDelete = async (documentId: string) => {
     if (!confirm(t('pages:documentT.documents.deleteConfirm'))) return
-    
+
     setDeletingId(documentId)
     try {
       const response = await deleteDocument(documentId)
@@ -381,7 +402,7 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
             <div className="flex-1 min-w-[200px] relative">
               <Skeleton height={40} />
             </div>
-            
+
             <Skeleton width={160} height={40} />
           </div>
         </div>
@@ -396,12 +417,9 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                     <Skeleton width={80} />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <Skeleton width={60} />
+                    <Skeleton width={80} />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <Skeleton width={70} />
-                  </th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <Skeleton width={80} />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -426,16 +444,10 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Skeleton circle width={16} height={16} />
-                        <Skeleton width={60} height={16} />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
                       <Skeleton width={80} height={24} />
                     </td>
                     <td className="px-6 py-4">
-                      <Skeleton width={100} height={24} />
+                      <Skeleton width={80} height={24} />
                     </td>
                     <td className="px-6 py-4">
                       <Skeleton width={100} height={16} />
@@ -455,51 +467,13 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Header with single search bar and filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        {/* Single search and filter section */}
-        <div className="flex items-center gap-4 mb-6 flex-wrap">
-          <div className="flex-1 min-w-[200px] relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder={t('pages:documentT.documents.searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder={t('pages:documentT.table.headers.status')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('pages:documentT.table.filters.allStatuses')}</SelectItem>
-              <SelectItem value="Pending">{t('pages:documentT.status.pending')}</SelectItem>
-              <SelectItem value="Processing">{t('pages:documentT.status.processing')}</SelectItem>
-              <SelectItem value="Completed">{t('pages:documentT.status.completed')}</SelectItem>
-              <SelectItem value="Failed">{t('pages:documentT.status.failed')}</SelectItem>
-              <SelectItem value="Approved">{t('pages:documentT.status.approved')}</SelectItem>
-              <SelectItem value="Rejected">{t('pages:documentT.status.rejected')}</SelectItem>
-              <SelectItem value="Cancelled">{t('pages:documentT.status.cancelled')}</SelectItem>
-            </SelectContent>
-          </Select>
-
-        </div>
-      </div>
-
       {/* Documents Table */}
       {documents.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            {allDocuments.length === 0 ? t('pages:documentT.documents.noDocuments') : t('pages:documentT.documents.noMatches')}
-          </h3>
-          <p className="text-muted-foreground">
-            {allDocuments.length === 0 
-              ? t('pages:documentT.documents.uploadPrompt')
-              : t('pages:documentT.documents.adjustFilters')
-            }
+        <div className="bg-white rounded-lg border border-gray-200 min-h-[400px] flex flex-col items-center justify-center p-12 text-center shadow-sm">
+          <p className="text-gray-600 font-medium text-lg">
+            {allDocuments.length === 0
+              ? 'Click "Add Documents" to get started.'
+              : 'No documents match your filters.'}
           </p>
         </div>
       ) : (
@@ -514,8 +488,8 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                   <th className="px-8 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.type')}
                   </th>
-                  <th className="px-10 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('pages:documentT.table.headers.status')}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sync Location
                   </th>
                   <th className="px-9 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {t('pages:documentT.table.headers.privacy')}
@@ -555,7 +529,7 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                         </div>
                       </div>
                     </td>
-                    
+
                     {/* Type Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -568,29 +542,29 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                         </span>
                       </div>
                     </td>
-                    
-                    {/* Status Column */}
-                  <td className="px-6 py-4 min-w-[130px]">
-  <div className="flex justify-start">
-    {getStatusBadge(doc.status)}
-  </div>
-</td>
 
-                    
+                    {/* Sync Location Column */}
+                    <td className="px-6 py-4">
+                      {getSyncLocationBadge(doc.syncLocationLabel)}
+                    </td>
+
+
+
+
                     {/* Privacy Column */}
                     <td className="px-6 py-4 min-w-[150px]">
                       {/* <div className="flex justify-start"> */}
-                        {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
+                      {getPrivacyBadge(doc.privacy, doc.is_shared || false)}
                       {/* </div> */}
                     </td>
-                    
+
                     {/* Uploaded Column */}
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500 whitespace-nowrap">
                         {formatDistanceToNow(new Date(doc.created_at || doc.createdAt), { addSuffix: true })}
                       </div>
                     </td>
-                    
+
                     {/* Actions Column */}
                     <td className="px-6 py-4">
                       <div className="flex justify-end">
@@ -601,30 +575,30 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleDownloadSummary(doc)}
                               className="flex items-center gap-2"
                               disabled={downloadingSummaryId === doc._id}
                             >
                               <FileText className="h-4 w-4" />
-                              {downloadingSummaryId === doc._id 
+                              {downloadingSummaryId === doc._id
                                 ? t('pages:documentT.documents.downloadingSummary')
                                 : t('pages:documentT.table.actions.downloadSummary')}
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleDownloadDocument(doc)}
                               className="flex items-center gap-2"
                               disabled={downloadingDocumentId === doc._id}
                             >
                               <Download className="h-4 w-4" />
-                              {downloadingDocumentId === doc._id 
+                              {downloadingDocumentId === doc._id
                                 ? t('pages:documentT.documents.downloadingDocument')
                                 : t('pages:documentT.table.actions.downloadDocument')}
                             </DropdownMenuItem>
-                            
-                            { (doc.privacy === 'private') && (
-                              <DropdownMenuItem 
+
+                            {(doc.privacy === 'private') && (
+                              <DropdownMenuItem
                                 onClick={() => handleShareWithLawyer(doc)}
                                 className="flex items-center gap-2"
                               >
@@ -632,10 +606,10 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
                                 {t('pages:documentT.table.actions.shareDocument')}
                               </DropdownMenuItem>
                             )}
-                            
+
                             <DropdownMenuSeparator />
-                            
-                            <DropdownMenuItem 
+
+                            <DropdownMenuItem
                               onClick={() => handleDelete(doc._id)}
                               className="flex items-center gap-2 text-red-600"
                               disabled={deletingId === doc._id}
@@ -654,7 +628,7 @@ const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
           </div>
         </div>
       )}
-      
+
       {/* Share Document Dialog */}
       {selectedDocument && (
         <ShareDocumentDialog

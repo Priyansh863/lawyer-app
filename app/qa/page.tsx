@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function QAPage() {
   return (
-    <div className="space-y-6" style={{ marginTop: "2.25rem" }}>
+    <div className="space-y-8">
       <QAHeader />
       <QAListWithSearch />
     </div>

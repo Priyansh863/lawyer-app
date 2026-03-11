@@ -24,7 +24,7 @@ export default function EmailVerificationPage() {
       setError(null);
       try {
         const res = await fetch(
-          `https://d3qiclz5mtkmyk.cloudfront.net/api/v1/user/verify-email?token=${token}`
+          `${process.env.NEXT_PUBLIC_API_URL}/user/verify-email?token=${token}`
         );
         if (!res.ok) {
           throw new Error("Network response was not ok");

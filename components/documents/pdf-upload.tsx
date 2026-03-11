@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Upload, FileText, Lock, Globe, AlertCircle, Video, Image, File, X } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
-import { uploadPDFToS3, validatePDFFile } from '@/lib/helpers/pdf-upload'
+import { validatePDFFile } from '@/lib/helpers/pdf-upload'
 import { uploadDocumentEnhanced } from '@/lib/api/documents-api'
 import { useTranslation } from '@/hooks/useTranslation'
 import { toast } from 'sonner'
@@ -121,7 +121,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
       const response = user?.account_type === 'lawyer' ? await getClients() : await getLawyers();
       console.log(response, "responseresponseresponseresponseresponseresponse")
       setAvailableUsers(response)
-    } catch (error) { 
+    } catch (error) {
       console.error('Error fetching cases:', error)
       toast.error(t("pages:cases.error.fetchingCases"))
     } finally {
@@ -161,18 +161,18 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
 
   const handleFileSelection = (selectedFile: File) => {
     const fileType = getFileType(selectedFile.name)
-    
+
     if (!fileType) {
       toast.error(t("pages:upload.error.unsupportedType"))
       return
     }
-    
+
     if (selectedFile.size > fileType.maxSize) {
       const maxSizeMB = Math.round(fileType.maxSize / (1024 * 1024))
       toast.error(t("pages:upload.error.sizeExceeded", { size: maxSizeMB, type: t(`pages:upload.fileTypes.${fileType.label.toLowerCase()}`) }))
       return
     }
-    
+
     setFile(selectedFile)
     setFileTypeInfo(fileType)
   }
@@ -202,18 +202,22 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
     setIsUploading(true)
     setUploadProgress(0)
 
+    const fileToBase64 = (f: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(f)
+      })
+    }
+
     try {
-      setUploadProgress(25)
-      const fileUrl = await uploadPDFToS3(file, user._id)
+      setUploadProgress(50)
+      const base64 = await fileToBase64(file)
 
-      if (!fileUrl) {
-        throw new Error(t("pages:upload.error.storageFailed"))
-      }
-
-      setUploadProgress(75)
       const uploadData = {
         userId: user._id,
-        fileUrl: fileUrl,
+        fileUrl: "",
         fileName: file.name,
         fileType: fileTypeInfo?.label || 'Document',
         privacy: privacy,
@@ -221,7 +225,8 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
         fileSize: file.size,
         documentType: 'general' as const,
         associatedUserId: selectedUserId,
-        caseId: privacy === 'private' && selectedCaseId ? selectedCaseId : undefined
+        caseId: privacy === 'private' && selectedCaseId ? selectedCaseId : undefined,
+        file_base64: base64
       }
 
       const result = await uploadDocumentEnhanced(uploadData)
@@ -229,7 +234,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
       if (result.success) {
         setUploadProgress(100)
         toast.success(t("pages:upload.success.message"))
-        
+
         setFile(null)
         setFileTypeInfo(null)
         setUploadProgress(0)
@@ -272,13 +277,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
           {/* Fixed Top Section - File Upload Area */}
           <div className="space-y-4">
             <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                dragActive
-                  ? 'border-primary bg-primary/5'
-                  : file
-                  ? 'border-green-300 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-primary bg-primary/5' : file ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-gray-400'}`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
@@ -295,7 +294,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  
+
                   {fileTypeInfo && (
                     <div className="flex items-center justify-center">
                       <fileTypeInfo.icon className="h-10 w-10 text-green-600" />
@@ -335,7 +334,7 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                 id="file-upload"
                 disabled={isUploading}
               />
-              
+
               {!file && (
                 <Label
                   htmlFor="file-upload"
@@ -409,11 +408,12 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                 <Label className="text-base font-medium">
                   {t("pages:upload.associateWithCase")}
                 </Label>
-                <Select 
-                  value={selectedCaseId} 
-                  onValueChange={(e)=>{
+                <Select
+                  value={selectedCaseId}
+                  onValueChange={(e) => {
                     setSelectedUserId('')
-                    setSelectedCaseId(e)}}
+                    setSelectedCaseId(e)
+                  }}
                   disabled={loadingCases}
                 >
                   <SelectTrigger className="w-full h-11 text-base">
@@ -443,11 +443,12 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                 <Label className="text-base font-medium">
                   {t("pages:upload.associateWithUser")}
                 </Label>
-                <Select 
-                  value={selectedUserId} 
-                  onValueChange={(e)=>{
+                <Select
+                  value={selectedUserId}
+                  onValueChange={(e) => {
                     setSelectedUserId(e)
-                    setSelectedCaseId('')}}
+                    setSelectedCaseId('')
+                  }}
                   disabled={loadingCases}
                 >
                   <SelectTrigger className="w-full h-11 text-base">

@@ -1,5 +1,6 @@
 import type React from "react"
 import Sidebar from "@/components/sidebar/sidebar"
+import Header from "@/components/header/header"
 
 interface CasesLayoutProps {
   children: React.ReactNode
@@ -7,11 +8,14 @@ interface CasesLayoutProps {
 
 export default function CasesLayout({ children }: CasesLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-6 overflow-y-auto">
-        <div className="max-w-7xl mx-auto">{children}</div>
-      </main>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Header />
+        <main className="flex-1 pt-1 px-8 pb-8 overflow-y-auto bg-transparent">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

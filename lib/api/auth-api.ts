@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 // Get auth token from localStorage (with SSR safety)
 const getAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null
-  
+
   try {
     const user = localStorage.getItem('user')
     return user ? JSON.parse(user).token : null
@@ -38,12 +38,12 @@ export interface TokenValidationResponse {
  * @returns Promise<TokenValidationResponse>
  */
 export const validateToken = async (
-  token?: string, 
+  token?: string,
   tone: 'friendly' | 'default' = 'default'
 ): Promise<TokenValidationResponse> => {
   // Use provided token or get from localStorage
   const authToken = token || getAuthToken()
-  
+
   if (!authToken) {
     return {
       success: false,
@@ -59,9 +59,9 @@ export const validateToken = async (
   try {
     const response = await axios.post(
       `${API_BASE_URL}/auth/validate-token`,
-      { 
+      {
         token: authToken,
-        tone 
+        tone
       },
       {
         headers: {
@@ -73,7 +73,7 @@ export const validateToken = async (
     return response.data
   } catch (error: any) {
     console.error('Token validation error:', error)
-    
+
     // Handle different error scenarios
     if (error.response?.status === 400) {
       return {
@@ -86,7 +86,7 @@ export const validateToken = async (
         }
       }
     }
-    
+
     return {
       success: false,
       message: tone === 'friendly' ? 'Unable to check session. Please try again!' : 'Token validation failed',

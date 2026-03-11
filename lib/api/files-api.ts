@@ -4,6 +4,11 @@ import axios from 'axios'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
 const getAuthHeaders = () => {
+  if (typeof window === 'undefined') {
+    return {
+      'Content-Type': 'application/json'
+    }
+  }
   const token = localStorage.getItem('token')
   return {
     'Authorization': `Bearer ${token}`,
@@ -38,12 +43,23 @@ export async function getClientFiles(clientId: string): Promise<FileMetadata[]> 
       }
     )
 
+    console.log('📄 getClientFiles raw response:', JSON.stringify(response.data, null, 2))
+
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch client documents')
     }
 
-    // Transform backend document format to frontend FileMetadata format
-    return response.data.data
+    // Handle both 'data' and 'documents' response formats
+    const docs = response.data.data || response.data.documents || []
+    const result = Array.isArray(docs) ? docs : []
+
+    console.log('📄 getClientFiles parsed docs count:', result.length)
+    if (result.length > 0) {
+      console.log('📄 First doc keys:', Object.keys(result[0]))
+      console.log('📄 First doc summary:', result[0].summary)
+    }
+
+    return result
 
   } catch (error) {
     console.error('Error fetching client files:', error)
@@ -69,7 +85,7 @@ export async function getLawyerFiles(clientId: string): Promise<FileMetadata[]> 
     }
 
     // Transform backend document format to frontend FileMetadata format
-    return response.data.data
+    return Array.isArray(response.data.data) ? response.data.data : []
 
   } catch (error) {
     console.error('Error fetching client files:', error)

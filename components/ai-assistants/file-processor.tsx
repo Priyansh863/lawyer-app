@@ -20,36 +20,36 @@ import {
   X
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { uploadUniversalFile } from "@/lib/helpers/fileupload"
 import { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
 
-// Enhanced API function for multi-file upload
+// Enhanced API function for multi-file upload using base64
 const uploadDocumentEnhanced = async (data: {
   userId: string
-  fileUrl: string
   fileName: string
   fileType?: string
+  file_base64: string
 }) => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  const token = localStorage.getItem('authToken')
+  const token = localStorage.getItem('token')
   
   const response = await fetch(`${API_BASE_URL}/document/upload-enhanced`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
       user_id: data.userId,
-      link: data.fileUrl,
+      link: "",
       document_name: data.fileName,
       file_type: data.fileType,
       privacy: 'public',
       process_with_ai: true,
       file_size: 0,
-      case_id: null
-    })
+      case_id: null,
+      file_base64: data.file_base64,
+    }),
   })
   
   if (!response.ok) {
@@ -166,6 +166,15 @@ export default function FileProcessor() {
     setSelectedFile(file)
   }
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleFileUpload = async () => {
     if (!selectedFile || !profile?._id) {
       toast({
@@ -181,31 +190,21 @@ export default function FileProcessor() {
     setIsProcessing(true)
 
     try {
-      // Step 1: Upload file to S3
-      setUploadProgress(20)
-      toast({
-        title: t("pages:fileProcessor.uploadProgress.uploading.title"),
-        description: t("pages:fileProcessor.uploadProgress.uploading.description")
-      })
-
-      // Upload file using universal upload function
-      const fileUrl = await uploadUniversalFile(profile?._id || '', selectedFile)
-      
+      // Step 1: Convert file to Base64 and send to backend
       setUploadProgress(40)
-      
-      // Step 2: Process with AI
       toast({
         title: t("pages:fileProcessor.uploadProgress.processing.title"),
         description: t("pages:fileProcessor.uploadProgress.processing.description")
       })
 
       const fileType = getFileType(selectedFile.name)
+      const base64 = await fileToBase64(selectedFile)
       
       const result = await uploadDocumentEnhanced({
         userId: profile._id as string,
-        fileUrl: fileUrl,
         fileName: selectedFile.name,
-        fileType: fileType?.type
+        fileType: fileType?.type,
+        file_base64: base64,
       })
 
       setUploadProgress(100)

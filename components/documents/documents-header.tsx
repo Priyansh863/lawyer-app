@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText, Lock, Globe, Users, TrendingUp } from "lucide-react"
+import { Upload, FileText, Lock, Globe, Users, TrendingUp, Search, FolderPlus } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useTranslation } from "@/hooks/useTranslation"
 import { useState, useEffect } from "react"
 import PDFUpload from "./pdf-upload"
@@ -19,9 +26,19 @@ interface Client {
 
 interface DocumentsHeaderProps {
   onDocumentUploaded?: () => void
+  searchTerm: string
+  onSearchChange: (value: string) => void
+  statusFilter: string
+  onStatusChange: (value: string) => void
 }
 
-export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
+export function DocumentsHeader({
+  onDocumentUploaded,
+  searchTerm,
+  onSearchChange,
+  statusFilter,
+  onStatusChange
+}: DocumentsHeaderProps) {
   const { t } = useTranslation()
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
@@ -32,14 +49,14 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
     processed: 0
   })
   const user = useSelector((state: RootState) => state.auth.user)
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (user?.account_type === 'lawyer') {
         const res = await getClientsAndLawyers()
         setClients(res.clients)
       }
-      
+
       try {
         const response = await getDocuments()
         if (response.success && response.documents) {
@@ -47,7 +64,7 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
           const publicDocs = docs.filter(d => !d.privacy || d.privacy === 'public').length
           const privateDocs = docs.filter(d => (d.privacy as any) === 'private').length + docs.filter(d => (d.privacy as any) === 'fully_private').length
           const processedDocs = docs.filter(d => (d.status as any) === 'Completed' || (d.status as any) === 'Approved' || (d.status as any) === 'Processing').length
-          
+
           setDocumentStats({
             total: docs.length,
             public: publicDocs,
@@ -62,7 +79,7 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
 
     fetchData()
   }, [user])
-  
+
   const handleUploadSuccess = () => {
     setShowUploadDialog(false)
     onDocumentUploaded?.()
@@ -74,7 +91,7 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
           const publicDocs = docs.filter(d => !d.privacy || d.privacy === 'public').length
           const privateDocs = docs.filter(d => d.privacy && (d.privacy === 'private')).length
           const processedDocs = docs.filter(d => ['Completed', 'Approved', 'Processing'].includes(d.status as string)).length
-          
+
           setDocumentStats({
             total: docs.length,
             public: publicDocs,
@@ -88,96 +105,58 @@ export function DocumentsHeader({ onDocumentUploaded }: DocumentsHeaderProps) {
     }
     fetchStats()
   }
-  
+
   return (
     <div className="flex flex-col space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t('pages:headDo.documents.header.title')}</h2>
-          <p className="text-muted-foreground">
-            {t('pages:headDo.documents.header.description')}
-          </p>
-        </div>
-
-        <div className="flex flex-col xs:flex-row items-start xs:items-center gap-3 w-full sm:w-auto">
-          {user?.account_type === 'lawyer' && (
-            <div className="w-full xs:w-auto">
-              <SecureLinkGenerator clients={clients} />
-            </div>
-          )}
-          
-          <Button 
-            onClick={() => setShowUploadDialog(true)}
-            className="bg-gray-900 hover:bg-gray-800 w-full xs:w-auto"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {t('pages:headDo.documents.upload.button')}
-          </Button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">Documents Management</h2>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('pages:headDo.documents.stats.total')}
-            </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{documentStats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('pages:headDo.documents.stats.totalDescription')}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Toolbar Row */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[240px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search"
+            className="pl-10 h-10 border-gray-200"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('pages:headDo.documents.stats.public')}
-            </CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{documentStats.public}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('pages:headDo.documents.stats.publicDescription')}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Sort Dropdown */}
+        <Select defaultValue="newest">
+          <SelectTrigger className="w-[140px] h-10 border-gray-200">
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('pages:headDo.documents.stats.private')}
-            </CardTitle>
-            <Lock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{documentStats.private}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('pages:headDo.documents.stats.privateDescription')}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex-1" />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('pages:headDo.documents.stats.processed')}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{documentStats.processed}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('pages:headDo.documents.stats.processedDescription')}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3">
+          {user?.account_type === 'lawyer' && (
+            <SecureLinkGenerator clients={clients} />
+          )}
+
+          <Button variant="outline" className="h-10 border-gray-200 bg-gray-50/50">
+            Add Folder
+          </Button>
+
+          <Button
+            onClick={() => setShowUploadDialog(true)}
+            className="h-10 bg-gray-900 hover:bg-gray-800 text-white flex items-center gap-2 px-5"
+          >
+            <FolderPlus className="h-4 w-4" />
+            Add Documents
+          </Button>
+        </div>
       </div>
 
       <PDFUpload

@@ -35,12 +35,13 @@ interface Client {
 
 interface SecureLinkGeneratorProps {
   clients: Client[];
+  customTrigger?: React.ReactNode;
 }
 
-export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProps) {
+export default function SecureLinkGenerator({ clients, customTrigger }: SecureLinkGeneratorProps) {
   const { toast } = useToast();
-  const { t } = useTranslation("secureLinks");
-  
+  const { t } = useTranslation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
@@ -132,7 +133,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
     const expiresAt = new Date(link.expires_at);
 
     if (link.is_used) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">{t("status.used")}</Badge>;
+      return <Badge variant="default" className="bg-green-100 text-green-800">{t("pages:secureLink.status.used")}</Badge>;
     } else if (expiresAt < now) {
       return <Badge variant="destructive">{t("pages:secureLink.status.expired")}</Badge>;
     } else {
@@ -145,14 +146,16 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Shield className="h-4 w-4" />
-          {t("pages:secureLink.buttons.generateLink")}
-        </Button>
+        {customTrigger ? customTrigger : (
+          <Button variant="outline" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            {t("pages:secureLink.buttons.generateLink")}
+          </Button>
+        )}
       </DialogTrigger>
 
-    <DialogContent
-  className="
+      <DialogContent
+        className="
     w-full 
     max-w-[800px] 
     max-h-[80vh] 
@@ -161,7 +164,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
     left-1/2
     -translate-x-[calc(50%-20px)]
   "
->
+      >
 
 
         <DialogHeader>
@@ -226,8 +229,8 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                 </Select>
               </div>
 
-              <Button 
-                onClick={handleGenerateLink} 
+              <Button
+                onClick={handleGenerateLink}
                 disabled={isGenerating || !selectedClient || !password}
                 className="w-full"
               >
@@ -271,7 +274,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
             <CardHeader>
               <CardTitle className="text-lg flex items-center justify-between">
                 <span>{t("pages:secureLink.myLinks")}</span>
-               
+
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -283,7 +286,7 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                     </p>
                   ) : (
                     myLinks.map((link) => (
-                      <div key={link._id} className="p-3 border rounded-lg space-y-2">
+                      <div key={link.link_id} className="p-3 border rounded-lg space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">
                             {link.client_name}
@@ -311,8 +314,8 @@ export default function SecureLinkGenerator({ clients }: SecureLinkGeneratorProp
                   <p className="text-sm text-muted-foreground mb-3">
                     {t("pages:secureLink.viewExistingLinks")}
                   </p>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleViewMyLinks}
                     disabled={isLoadingLinks}
                   >

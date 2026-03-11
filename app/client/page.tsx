@@ -15,16 +15,20 @@ function ClientContent() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <ClientsHeader onClientCreated={handleClientCreated} />
-      <ClientsTable key={refreshKey} initialClients={[]} />
+    <div className="flex flex-col">
+      <ClientsHeader />
+      <ClientsTable
+        key={refreshKey}
+        initialClients={[]}
+        onClientCreated={handleClientCreated}
+      />
     </div>
   )
 }
 
 export default function ClientPage() {
   const { t } = useTranslation()
-  
+
   return (
     <ClientLayout>
       <Suspense fallback={

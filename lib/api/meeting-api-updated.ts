@@ -14,7 +14,7 @@ const getToken = () => {
 
 const getAuthHeaders = () => {
   if (typeof window === 'undefined') return {}
-  
+
   const token = getToken()
   console.log('Using token for auth headers:', token);
   return {
@@ -64,7 +64,7 @@ export interface Meeting {
   consultation_type?: 'free' | 'paid'
   hourly_rate?: number
   custom_fee?: boolean
-  status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled'
+  status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled' | 'declined' | 'expired'
   approval_date?: string
   rejection_reason?: string
   notes?: string
@@ -88,8 +88,8 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
     // Get current user info
     const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
     const authState = JSON.parse(state.auth || '{}')
-    const user = authState.user ? JSON.parse(authState.user) : null
-    
+    const user = authState.user || null
+
     // Add createdBy and status if not provided
     const meetingData = {
       ...data,
@@ -103,7 +103,7 @@ export const createMeeting = async (data: any): Promise<MeetingResponse> => {
     const response = await axios.post(`${API_BASE_URL}/meeting/create`, meetingData, {
       headers: getAuthHeaders()
     })
-    
+
     return response.data
   } catch (error: any) {
     console.error('Error creating meeting:', error)
@@ -141,7 +141,7 @@ export const updateMeetingStatus = async (meetingId: string, status: string, rea
   try {
     const response = await axios.put(
       `${API_BASE_URL}/meeting/status/${meetingId}`,
-      { 
+      {
         status,
         ...(reason && { rejection_reason: reason }),
         updated_at: new Date().toISOString()
@@ -165,7 +165,7 @@ export const approveMeeting = async (meetingId: string): Promise<MeetingResponse
   try {
     const response = await axios.put(
       `${API_BASE_URL}/meeting/approve/${meetingId}`,
-      { 
+      {
         approval_date: new Date().toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -185,7 +185,7 @@ export const rejectMeeting = async (meetingId: string, reason: string = 'Meeting
   try {
     const response = await axios.put(
       `${API_BASE_URL}/meeting/reject/${meetingId}`,
-      { 
+      {
         rejection_reason: reason,
         updated_at: new Date().toISOString()
       },
@@ -224,8 +224,8 @@ export const checkVideoConsultationTokens = async (lawyerId: string): Promise<an
   try {
     const state = JSON.parse(localStorage.getItem('persist:root') || '{}')
     const authState = JSON.parse(state.auth || '{}')
-    const user = authState.user ? JSON.parse(authState.user) : null
-    
+    const user = authState.user || null
+
     const response = await axios.post(
       `${API_BASE_URL}/charges/check-token-balance`,
       {

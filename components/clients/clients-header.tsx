@@ -8,28 +8,17 @@ interface ClientsHeaderProps {
   onClientCreated?: () => void;
 }
 
-export default function ClientsHeader({ onClientCreated }: ClientsHeaderProps) {
+export default function ClientsHeader() {
   const user = useSelector((state: RootState) => state.auth.user)
   const { t } = useTranslation()
 
-  // Get greeting based on time of day
-  
-
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight">
-        {/* {user ? `${getGreeting()}, ${user.first_name} ${user.last_name}!` : "Welcome, User!"} */}
-      </h1>
-      <div className="flex justify-between items-center">
-       <h2 className="text-xl font-semibold">
-    {user?.account_type === "client" 
-      ? t("pages:lawyers.title") 
-      : t('pages:clients.title')}
-  </h2>
-        {user?.account_type === "lawyer" && (
-          <OnboardClientForm onClientCreated={onClientCreated} />
-        )}
-      </div>
+    <div className="mb-2">
+      <h2 className="text-2xl font-bold text-[#0F172A]">
+        {user?.account_type === "client"
+          ? t('pages:client.lawyerManagement')
+          : t('pages:client.clientManagement')}
+      </h2>
     </div>
   )
 }

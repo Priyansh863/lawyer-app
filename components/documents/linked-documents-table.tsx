@@ -10,9 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { 
-  FileText, 
-  MoreVertical, 
+import {
+  FileText,
+  MoreVertical,
   ExternalLink,
   Search,
   Loader2,
@@ -84,11 +84,11 @@ export default function LinkedDocumentsTable({ refreshTrigger }: LinkedDocuments
         setDocuments(sortedDocs)
       } else {
         console.error('Failed to load linked documents:', result.message)
-        toast.error('Failed to load linked documents')
+        toast.error(t('linkedDocuments.toastLoadFailed'))
       }
     } catch (error) {
       console.error('Error loading linked documents:', error)
-      toast.error('Error loading linked documents. Make sure the backend server is running on http://localhost:5000')
+      toast.error(t('linkedDocuments.toastLoadError'))
     } finally {
       setIsLoading(false)
     }
@@ -99,7 +99,7 @@ export default function LinkedDocumentsTable({ refreshTrigger }: LinkedDocuments
 
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase()
-      filtered = filtered.filter(doc => 
+      filtered = filtered.filter(doc =>
         doc.fileName.toLowerCase().includes(searchLower) ||
         doc.folderName.toLowerCase().includes(searchLower) ||
         doc.fileType.toLowerCase().includes(searchLower)
@@ -139,15 +139,15 @@ export default function LinkedDocumentsTable({ refreshTrigger }: LinkedDocuments
       const result = await response.json()
 
       if (result.success) {
-        toast.success(`Opening file: ${doc.fileName}`)
+        toast.success(t('linkedDocuments.toastOpeningFile', { fileName: doc.fileName }))
         // In production, this would trigger the Electron app to open the file
         console.log('File path:', result.data.localPath)
       } else {
-        toast.error(`Failed to open file: ${result.message}`)
+        toast.error(t('linkedDocuments.toastOpenFailed', { message: result.message }))
       }
     } catch (error) {
       console.error('Error opening file:', error)
-      toast.error('Error opening file. Please try again.')
+      toast.error(t('linkedDocuments.toastOpenError'))
     } finally {
       setOpeningFileId(null)
     }
@@ -284,7 +284,7 @@ export default function LinkedDocumentsTable({ refreshTrigger }: LinkedDocuments
             {documents.length === 0 ? t('linkedDocuments.noLinkedDocuments') : t('linkedDocuments.noMatchesFound')}
           </h3>
           <p className="text-muted-foreground mb-4">
-            {documents.length === 0 
+            {documents.length === 0
               ? t('linkedDocuments.linkFilesMessage')
               : t('linkedDocuments.adjustSearchMessage')}
           </p>

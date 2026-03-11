@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
       <div className="flex-1 flex flex-col md:ml-0">
         {/* Header positioned to not overlap sidebar on desktop */}
-        
+
         <main className={`flex-1 w-full ${isMobile && isSidebarOpen ? "hidden" : "block"}`}>
           <div className="md:p-4 px-3">
             <div className="pt-20 md:pt-4 max-w-7xl mx-auto">{children}</div>

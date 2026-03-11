@@ -7,12 +7,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 const store = makeStore()
 
 const getToken = () => {
-    if (typeof window !== "undefined") {
-      const user = localStorage.getItem("user");
-      return user ? JSON.parse(user).token : null;
-    }
-    return null;
-  };
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user).token : null;
+  }
+  return null;
+};
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

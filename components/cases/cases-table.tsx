@@ -18,6 +18,7 @@ import { Eye, Edit3 } from "lucide-react"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import CaseStatusUpdateDialog from "./case-status-update-dialog"
+import CaseDetailsDialog from "./case-details-dialog"
 import { caseTypeConfig, courtTypeConfig } from "@/types/case"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
@@ -49,16 +50,28 @@ const statusUpdateSchema = z.object({
 })
 type StatusUpdateData = z.infer<typeof statusUpdateSchema>
 
+import { MoreHorizontal } from "lucide-react"
+import CaseCreationForm from "./case-creation-form"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+
 interface CasesTableProps {
   initialCases?: Case[]
+  onCaseCreated?: () => void
 }
 
-export default function CasesTable({ initialCases }: CasesTableProps) {
+export default function CasesTable({ initialCases, onCaseCreated }: CasesTableProps) {
   const [cases, setCases] = useState<Case[]>(initialCases || [])
   const profile = useSelector((state: RootState) => state.auth.user)
+  const [activeTab, setActiveTab] = useState<"in_progress" | "completed">("in_progress")
 
   const [isLoading, setIsLoading] = useState(false)
   const [statusUpdateDialog, setStatusUpdateDialog] = useState<{
+    open: boolean
+    case: Case | null
+  }>({ open: false, case: null })
+  const [caseDetailsDialog, setCaseDetailsDialog] = useState<{
     open: boolean
     case: Case | null
   }>({ open: false, case: null })
@@ -82,11 +95,23 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
       setIsLoading(true)
       try {
         const formData = searchForm.getValues()
+        // If we want to filter by tab as well, we can incorporate activeTab here
+        let statusFilter = formData.status === "all" ? undefined : formData.status;
+
         const fetchedCases = await getCases({
-          status: formData.status === "all" ? undefined : formData.status,
+          status: statusFilter,
           query: formData.query || undefined,
         })
-        setCases(fetchedCases.cases || [])
+
+        let filtered = fetchedCases.cases || [];
+        // Apply tab filtering logic locally if not handled by API
+        if (activeTab === "in_progress") {
+          filtered = filtered.filter((c: Case) => c.status === "in_progress" || c.status === "pending");
+        } else {
+          filtered = filtered.filter((c: Case) => c.status !== "in_progress" && c.status !== "pending");
+        }
+
+        setCases(filtered)
       } catch (error) {
         toast({
           title: t("pages:common.error"),
@@ -98,7 +123,7 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
       }
     }
     fetchCases()
-  }, [searchForm.watch('query'), searchForm.watch('status'),searchForm])
+  }, [searchForm.watch('query'), searchForm.watch('status'), activeTab, searchForm])
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -114,83 +139,34 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   // View case details
   const viewCaseDetails = (caseItem: Case) => {
-    // Encode case data as URL search params to pass to details page
-    const caseData = encodeURIComponent(JSON.stringify(caseItem))
-    router.push(`/cases/${caseItem._id}?data=${caseData}`)
+    setCaseDetailsDialog({ open: true, case: caseItem })
   }
 
-  // Get status badge
-  const STATUS_CONFIG = {
-    // Judgment Outcomes (판결 종국)
-    full_win: { 
-      label: t("pages:cases.status.fullWin"), 
-      color: "bg-green-100 text-green-800" 
-    },
-    full_loss: { 
-      label: t("pages:cases.status.fullLoss"), 
-      color: "bg-red-100 text-red-800" 
-    },
-    partial_win: { 
-      label: t("pages:cases.status.partialWin"), 
-      color: "bg-emerald-100 text-emerald-800" 
-    },
-    partial_loss: { 
-      label: t("pages:cases.status.partialLoss"), 
-      color: "bg-orange-100 text-orange-800" 
-    },
-    dismissal: { 
-      label: t("pages:cases.status.dismissal"), 
-      color: "bg-red-200 text-red-900" 
-    },
-    rejection: { 
-      label: t("pages:cases.status.rejection"), 
-      color: "bg-red-300 text-red-900" 
-    },
-    // Non-Judgment Outcomes (판결 외 종국)
-    withdrawal: { 
-      label: t("pages:cases.status.withdrawal"), 
-      color: "bg-gray-100 text-gray-800" 
-    },
-    mediation: { 
-      label: t("pages:cases.status.mediation"), 
-      color: "bg-blue-100 text-blue-800" 
-    },
-    settlement: { 
-      label: t("pages:cases.status.settlement"), 
-      color: "bg-teal-100 text-teal-800" 
-    },
-    trial_cancellation: { 
-      label: t("pages:cases.status.trialCancellation"), 
-      color: "bg-purple-100 text-purple-800" 
-    },
-    suspension: { 
-      label: t("pages:cases.status.suspension"), 
-      color: "bg-yellow-100 text-yellow-800" 
-    },
-    closure: { 
-      label: t("pages:cases.status.closure"), 
-      color: "bg-slate-100 text-slate-800" 
-    },
-    // Active case statuses
-    in_progress: { 
-      label: t("pages:cases.status.inProgress"), 
-      color: "bg-blue-50 text-blue-700" 
-    },
-    pending: { 
-      label: t("pages:cases.status.pending"), 
-      color: "bg-amber-50 text-amber-700" 
-    }
-  } as const
+  const getStatusDisplay = (status: string) => {
+    const s = status.toLowerCase();
 
-  const getStatusBadge = (status: string) => {
-    const validStatuses = Object.keys(STATUS_CONFIG)
-    const normalizedStatus = (
-      validStatuses.includes(status.toLowerCase()) ? status.toLowerCase() : "pending"
-    ) as keyof typeof STATUS_CONFIG
+    // Map snake_case to camelCase for translation keys if needed
+    const translationKey = status.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+    let label = t(`pages:cases.status.${translationKey}`);
+
+    // Fallback if not found
+    if (label === `pages:cases.status.${translationKey}`) {
+      if (s === "pending") label = t('pages:cases.status.pending');
+      else if (s === "in_progress") label = t('pages:cases.status.inProgress');
+      else label = status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+    }
+
+    let colorClass = "bg-slate-400";
+    if (s === "pending") colorClass = "bg-orange-500";
+    else if (s === "in_progress") colorClass = "bg-emerald-500";
+    else if (s === "full_win") colorClass = "bg-blue-600";
+    else if (s === "full_loss") colorClass = "bg-red-600";
+
     return (
-      <Badge variant="outline" className={STATUS_CONFIG[normalizedStatus].color}>
-        {STATUS_CONFIG[normalizedStatus].label}
-      </Badge>
+      <div className="flex items-center gap-2">
+        <div className={cn("w-2 h-2 rounded-full", colorClass)} />
+        <span className="text-sm font-medium text-slate-900">{label}</span>
+      </div>
     )
   }
 
@@ -212,187 +188,157 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
 
   return (
     <div className="space-y-4">
-      <Form {...searchForm}>
-        <form
-          onSubmit={searchForm.handleSubmit(onSearchSubmit)}
-          className="flex flex-col sm:flex-row gap-4 justify-between"
-        >
-          <div className="flex w-full max-w-sm items-center space-x-2">
-            <FormField
-              control={searchForm.control}
-              name="query"
-              render={({ field }) => (
-                <FormItem className="flex-1 relative">
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        placeholder={t("pages:common.searchPlaceholder")}
-                        {...field}
-                        value={field.value || ""}
-                        className="bg-[#F5F5F5] border-gray-200 pl-10"
-                      />
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-0">
+        {/* Tabs */}
+        <div className="flex items-center gap-8">
+          <button
+            onClick={() => setActiveTab("in_progress")}
+            className={cn(
+              "pb-4 text-sm font-bold transition-all relative px-1",
+              activeTab === "in_progress" ? "text-slate-900" : "text-slate-700 hover:text-slate-900"
+            )}
+          >
+            {t('pages:cases.status.inProgress')}
+            {activeTab === "in_progress" && (
+              <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-slate-900" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("completed")}
+            className={cn(
+              "pb-4 text-sm font-bold transition-all relative px-1",
+              activeTab === "completed" ? "text-slate-900" : "text-slate-700 hover:text-slate-900"
+            )}
+          >
+            {t('pages:cases.status.closure')}
+            {activeTab === "completed" && (
+              <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-slate-900" />
+            )}
+          </button>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <div className="relative w-full sm:w-64">
+            <Input
+              placeholder={t('pages:common.search')}
+              {...searchForm.register("query")}
+              className="bg-white border-slate-200 h-10 pl-4 pr-10 rounded-md text-sm font-bold text-slate-700 placeholder:text-slate-500 focus:ring-0 focus:border-slate-400"
             />
           </div>
-          <FormField
-            control={searchForm.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <select
-                    {...field}
-                    className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
-                  >
-                    <option value="all">{t("common.allStatuses")}</option>
+          <select
+            {...searchForm.register("status")}
+            className="bg-white border border-slate-200 rounded-md h-10 px-3 text-sm font-bold text-slate-700 focus:outline-none focus:ring-0 focus:border-slate-400 min-w-[130px]"
+          >
+            <option value="all">{t('pages:common.allStatuses')}</option>
+            <option value="pending">{t('pages:cases.status.pending')}</option>
+            <option value="in_progress">{t('pages:cases.status.inProgress')}</option>
+            <option value="full_win">{t('pages:cases.status.fullWin')}</option>
+            <option value="full_loss">{t('pages:cases.status.fullLoss')}</option>
+          </select>
+          {profile?.account_type === 'lawyer' && (
+            <CaseCreationForm
+              onCaseCreated={onCaseCreated}
+              trigger={
+                <Button className="bg-[#0F172A] hover:bg-[#1E293B] text-white flex items-center gap-2 h-10 px-6 font-medium text-sm rounded-md transition-colors">
+                  {t('pages:cases.newCase')}
+                </Button>
+              }
+            />
+          )}
+        </div>
+      </div>
 
-                    {/* Active Case Statuses */}
-                    <optgroup label={t("pages:cases.statusGroup.active")}>
-                      <option value="pending">{t("pages:cases.status.pending")}</option>
-                      <option value="in_progress">{t("pages:cases.status.inProgress")}</option>
-                    </optgroup>
-
-                    {/* Judgment Outcomes */}
-                    <optgroup label={t("pages:cases.statusGroup.judgment")}>
-                      <option value="full_win">{t("pages:cases.status.fullWin")}</option>
-                      <option value="full_loss">{t("pages:cases.status.fullLoss")}</option>
-                      <option value="partial_win">{t("pages:cases.status.partialWin")}</option>
-                      <option value="partial_loss">{t("pages:cases.status.partialLoss")}</option>
-                      <option value="dismissal">{t("pages:cases.status.dismissal")}</option>
-                      <option value="rejection">{t("pages:cases.status.rejection")}</option>
-                    </optgroup>
-
-                    {/* Non-Judgment Outcomes */}
-                    <optgroup label={t("pages:cases.statusGroup.nonJudgment")}>
-                      <option value="withdrawal">{t("pages:cases.status.withdrawal")}</option>
-                      <option value="mediation">{t("pages:cases.status.mediation")}</option>
-                      <option value="settlement">{t("pages:cases.status.settlement")}</option>
-                      <option value="trial_cancellation">{t("pages:cases.status.trialCancellation")}</option>
-                      <option value="suspension">{t("pages:cases.status.suspension")}</option>
-                      <option value="closure">{t("pages:cases.status.closure")}</option>
-                    </optgroup>
-                  </select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("pages:cases.table.caseNumber")}</TableHead>
-              <TableHead>{t("pages:cases.table.title")}</TableHead>
-              <TableHead>{t("pages:cases.table.client")}</TableHead>
-              <TableHead>{t("pages:cases.table.lawyer")}</TableHead>
-              <TableHead className="min-w-[140px]">{t("pages:cases.table.caseType")}</TableHead>
-
-              <TableHead className="pl-7">{t("pages:cases.table.courtType")}</TableHead>
-              <TableHead className="pl-6">{t("pages:cases.table.status")}</TableHead>
-              <TableHead className="pl-8">{t("pages:common.actions")}</TableHead>
+      <div className="rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
+        <Table className="w-full">
+          <TableHeader className="bg-[#f8f9fa]">
+            <TableRow className="hover:bg-transparent border-b border-slate-300">
+              <TableHead className="text-[#0F172A] font-bold py-2 pl-4 text-[13px]">{t('pages:cases.table.caseNumber')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.title')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.client')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.lawyer')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.caseType')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.courtType')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-[13px]">{t('pages:cases.table.status')}</TableHead>
+              <TableHead className="text-[#0F172A] font-bold py-2 text-center pr-4 text-[13px]">{t('pages:common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Show skeleton loading state
               Array.from({ length: 5 }).map((_, index) => (
-                <TableRow key={index} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <TableCell><Skeleton width={80} /></TableCell>
-                  <TableCell><Skeleton width={120} /></TableCell>
-                  <TableCell><Skeleton width={100} /></TableCell>
-                  <TableCell><Skeleton width={100} /></TableCell>
-                  <TableCell><Skeleton width={80} /></TableCell>
-                  <TableCell><Skeleton width={80} /></TableCell>
-                  <TableCell><Skeleton width={70} height={24} /></TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Skeleton circle width={32} height={32} />
-                      {profile?.account_type === 'lawyer' && (
-                        <Skeleton circle width={32} height={32} />
-                      )}
-                    </div>
-                  </TableCell>
+                <TableRow key={index} className="border-b border-slate-300 last:border-0">
+                  <TableCell className="pl-4 py-2"><Skeleton width={80} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={120} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={100} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={100} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={80} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={80} /></TableCell>
+                  <TableCell className="py-2"><Skeleton width={70} height={20} /></TableCell>
+                  <TableCell className="pr-4 py-2 text-center"><Skeleton circle width={24} height={24} className="mx-auto" /></TableCell>
                 </TableRow>
               ))
             ) : cases.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  {t("pages:cases.noCasesFound")}
+                <TableCell colSpan={8} className="text-center py-20 text-slate-400 text-sm">
+                  {t('pages:cases.noCasesFound')}
                 </TableCell>
               </TableRow>
             ) : (
               cases.map((caseItem, index) => (
-                <TableRow key={caseItem._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <TableCell className="font-mono">{caseItem.case_number}</TableCell>
-                  <TableCell>{caseItem.title}</TableCell>
-                  <TableCell>
-                    {caseItem.client_id && typeof caseItem.client_id === 'object' ? 
-                      `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ''}`.trim() 
+                <TableRow key={caseItem._id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-300 last:border-0 text-[#0F172A]">
+                  <TableCell className="text-[13px] pl-4 py-2 font-medium">{caseItem.case_number}</TableCell>
+                  <TableCell className="text-[13px] py-2 font-medium max-w-[150px]">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="block truncate cursor-help decoration-slate-300 transition-all font-semibold">
+                            {caseItem.title}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs break-words">
+                          <p>{caseItem.title}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                  <TableCell className="text-[13px] py-2 font-medium">
+                    {caseItem.client_id && typeof caseItem.client_id === 'object' ?
+                      `${caseItem.client_id.first_name} ${caseItem.client_id.last_name || ''}`.trim()
                       : 'N/A'
                     }
                   </TableCell>
-                  <TableCell>
-                    {caseItem.lawyer_id && typeof caseItem.lawyer_id === 'object' ? 
-                      `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ''}`.trim() 
+                  <TableCell className="text-[13px] py-2 font-medium">
+                    {caseItem.lawyer_id && typeof caseItem.lawyer_id === 'object' ?
+                      `${caseItem.lawyer_id.first_name} ${caseItem.lawyer_id.last_name || ''}`.trim()
                       : 'N/A'
                     }
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={caseTypeConfig[caseItem.case_type as keyof typeof caseTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-                      {t(`pages:cases.caseTypes.${caseItem.case_type}`, { defaultValue: caseItem.case_type })}
-                    </Badge>
-                  </TableCell >
-                  <TableCell >
-                    <Badge variant="outline" className={courtTypeConfig[caseItem.court_type as keyof typeof courtTypeConfig]?.color || "bg-gray-100 text-gray-800"}>
-                      {t(`pages:cases.courts.${caseItem.court_type}`, { defaultValue: caseItem.court_type })}
-                    </Badge>
+                  <TableCell className="text-[13px] py-2 font-medium">
+                    {t(`common:caseTypes.${caseItem.case_type}`)}
                   </TableCell>
-                  <TableCell className="min-w-[130px]">{getStatusBadge(caseItem.status)}</TableCell>
+                  <TableCell className="text-[13px] py-2 font-medium">
+                    {t(`common:courtTypes.${caseItem.court_type}`)}
+                  </TableCell>
+                  <TableCell className="py-2">{getStatusDisplay(caseItem.status)}</TableCell>
 
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => viewCaseDetails(caseItem)} 
-                        className="h-8 w-8"
-                        aria-label={t("pages:common.viewDetails")}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {profile?.account_type === 'lawyer' && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleUpdateStatus(caseItem)} 
-                          className="h-8 w-8"
-                          aria-label={t("pages:cases.updateStatus")}
-                        >
-                          <Edit3 className="h-4 w-4" />
+                  <TableCell className="text-center pr-4 py-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-[#0F172A] hover:bg-slate-100 transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      )}
-                    </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 border-slate-200">
+                        <DropdownMenuItem onClick={() => viewCaseDetails(caseItem)} className="text-sm cursor-pointer">
+                          {t('pages:common.viewDetails')}
+                        </DropdownMenuItem>
+                        {profile?.account_type === 'lawyer' && (
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(caseItem)} className="text-sm cursor-pointer">
+                            {t('pages:cases.updateStatus')}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -401,12 +347,28 @@ export default function CasesTable({ initialCases }: CasesTableProps) {
         </Table>
       </div>
 
-      {/* Status Update Dialog */}
       <CaseStatusUpdateDialog
         case={statusUpdateDialog.case}
         open={statusUpdateDialog.open}
         onOpenChange={(open) => setStatusUpdateDialog({ open, case: open ? statusUpdateDialog.case : null })}
         onStatusUpdated={handleStatusUpdated}
+      />
+
+      <CaseDetailsDialog
+        caseData={caseDetailsDialog.case}
+        open={caseDetailsDialog.open}
+        onOpenChange={(open) => setCaseDetailsDialog({ open, case: open ? caseDetailsDialog.case : null })}
+        onCaseUpdated={(updatedCase) => {
+          setCases(prevCases =>
+            prevCases.map(c =>
+              (c._id || c.id) === (updatedCase._id || updatedCase.id) ? updatedCase : c
+            )
+          )
+          setCaseDetailsDialog({ open: false, case: null })
+        }}
+        onCaseDeleted={(caseId) => {
+          setCases(prevCases => prevCases.filter(c => (c._id || c.id) !== caseId))
+        }}
       />
     </div>
   )

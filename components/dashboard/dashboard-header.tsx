@@ -3,21 +3,24 @@ import { RootState } from "@/lib/store"
 import { useSelector } from "react-redux"
 import { getGreeting } from "@/lib/helpers/greeting"
 import { useTranslation } from "@/hooks/useTranslation"
-import NotificationBell from "@/components/notifications/NotificationBell"
 
-interface DashboardHeaderProps {}
+interface DashboardHeaderProps { }
 
-export default function DashboardHeader({}: DashboardHeaderProps) {
+export default function DashboardHeader() {
   const user = useSelector((state: RootState) => state.auth.user)
   const { t } = useTranslation()
 
   return (
-    <header className="px-6 py-2.3 border-b mt-2 hidden md:block">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          {t('dashboard.welcome')}{user?.first_name ? `, ${user.first_name}` : ''}
-        </h1>
-        <NotificationBell />
+    <header className="h-14 border-b border-gray-100 bg-white/50 backdrop-blur-md flex items-center justify-end px-8 sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">
+            {user?.first_name} {user?.last_name}
+          </p>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-[#0F172A] flex items-center justify-center text-white text-xs font-bold">
+          {user?.first_name?.[0]}{user?.last_name?.[0]}
+        </div>
       </div>
     </header>
   )

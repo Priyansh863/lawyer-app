@@ -20,8 +20,9 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
-        heading: ["var(--font-lato)", "sans-serif"],
+        sans: ["var(--font-dm-sans)", "sans-serif"],
+        heading: ["var(--font-dm-sans)", "sans-serif"],
+        "dm-sans": ["var(--font-dm-sans)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

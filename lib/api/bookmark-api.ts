@@ -31,7 +31,7 @@ export const toggleBookmark = async (postId: string): Promise<BookmarkResponse> 
     if (!token) {
       throw new Error('Please login to bookmark posts');
     }
-    
+
     const response = await axios.post(
       `${API_BASE_URL}/bookmark/toggle`,
       { postId },
@@ -74,7 +74,7 @@ export const getUserBookmarks = async (page: number = 1, limit: number = 10) => 
     if (!token) {
       throw new Error('Please login to view bookmarks');
     }
-    
+
     const response = await axios.get(
       `${API_BASE_URL}/bookmark/user?page=${page}&limit=${limit}`,
       {
@@ -94,7 +94,7 @@ export const getAllBookmarkedPosts = async () => {
     if (!token) {
       throw new Error('Please login to view bookmarks');
     }
-    
+
     const response = await axios.get(
       `${API_BASE_URL}/post/bookmarked`,
       {
@@ -111,7 +111,7 @@ export const getAllBookmarkedPosts = async () => {
 export const reportPost = async (postId: string, reason: string): Promise<BookmarkResponse> => {
   try {
 
-    
+
     const response = await axios.post(
       `${API_BASE_URL}/report/create`,
       { postId, reason },

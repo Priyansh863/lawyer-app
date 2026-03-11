@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/a
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   if (typeof window === 'undefined') return {}
-  
+
   const token = localStorage.getItem('token')
   return {
     'Authorization': `Bearer ${token}`,
@@ -18,7 +18,7 @@ const getAuthHeaders = () => {
 // Helper function to get current user from localStorage
 const getCurrentUser = () => {
   if (typeof window === 'undefined') return null
-  
+
   try {
     const userStr = localStorage.getItem('user')
     return userStr ? JSON.parse(userStr) : null
@@ -62,7 +62,7 @@ export async function getClients({
     }
 
     const offset = (page - 1) * limit
-    
+
     // If client is viewing lawyers, use the lawyers-with-charges endpoint
     let response
     if (currentUser.account_type === 'client' && accountType === 'lawyer') {
@@ -85,10 +85,10 @@ export async function getClients({
     }
 
     // Transform backend response to match Client interface
-    const users = (currentUser.account_type === 'client' && accountType === 'lawyer') 
+    const users = (currentUser.account_type === 'client' && accountType === 'lawyer')
       ? response.data.lawyers || []
       : response.data.data || []
-      
+
     const transformedClients: Client[] = users.map((user: any) => ({
       id: user._id,
       name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,

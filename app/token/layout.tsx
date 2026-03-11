@@ -1,6 +1,5 @@
 import type React from "react"
-import Sidebar from "@/components/sidebar/sidebar"
-import DashboardHeader from "@/components/dashboard/dashboard-header"
+import ClientLayout from "@/components/layouts/client-layout"
 
 interface TokenLayoutProps {
   children: React.ReactNode
@@ -8,12 +7,8 @@ interface TokenLayoutProps {
 
 export default function TokenLayout({ children }: TokenLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 p-6 overflow-y-auto">
-        {/* <DashboardHeader /> */}
-        <div className="max-w-7xl mx-auto">{children}</div>
-      </main>
-    </div>
+    <ClientLayout fullWidth>
+      {children}
+    </ClientLayout>
   )
 }

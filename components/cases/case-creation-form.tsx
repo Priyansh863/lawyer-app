@@ -154,8 +154,8 @@ const caseCreationSchema = z.object({
   case_code: z.string().min(1, "Please select a case code"),
   case_number: z.string().min(1, "Case number is required").max(50, "Case number must be less than 50 characters"),
   case_status: z.enum([
-    "pending", "in_progress", "full_win", "full_loss", "partial_win", 
-    "partial_loss", "dismissal", "rejection", "withdrawal", "mediation", 
+    "pending", "in_progress", "full_win", "full_loss", "partial_win",
+    "partial_loss", "dismissal", "rejection", "withdrawal", "mediation",
     "settlement", "trial_cancellation", "suspension", "closure"
   ]).default("pending"),
   client_option: z.enum(["existing", "new"]).default("existing"),
@@ -183,9 +183,10 @@ type CaseCreationData = z.infer<typeof caseCreationSchema>
 
 interface CaseCreationFormProps {
   onCaseCreated?: () => void
+  trigger?: React.ReactNode
 }
 
-export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProps) {
+export default function CaseCreationForm({ onCaseCreated, trigger }: CaseCreationFormProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [clients, setClients] = useState<Client[]>([])
@@ -233,7 +234,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       const courtData = courtCaseMapping[courtName as keyof typeof courtCaseMapping];
       const caseTypes = Object.keys(courtData);
       setAvailableCaseTypes(caseTypes);
-      
+
       // Reset case type and case code when court changes
       form.setValue("case_type", "");
       form.setValue("case_code", "");
@@ -248,12 +249,12 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   useEffect(() => {
     const courtName = form.watch("court_name");
     const caseType = form.watch("case_type");
-    
+
     if (courtName && caseType && courtCaseMapping[courtName as keyof typeof courtCaseMapping]) {
       const courtData = courtCaseMapping[courtName as keyof typeof courtCaseMapping];
       const caseCodes = courtData[caseType as keyof typeof courtData] || [];
       setAvailableCaseCodes(caseCodes as string[]);
-      
+
       // Reset case code when case type changes
       form.setValue("case_code", "");
     } else {
@@ -308,14 +309,14 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
       }
 
       const response = await createCase(caseData)
-      
+
       if (response.success) {
         toast({
           title: t("pages:commona.success"),
           description: t("pages:casesD.success.caseCreated"),
           variant: "default"
         })
-        
+
         form.reset()
         setIsOpen(false)
         onCaseCreated?.()
@@ -344,22 +345,24 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          {t("pages:casesD.createNewCase")}
-        </Button>
+        {trigger || (
+          <Button className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            {t("pages:casesD.createNewCase")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("pages:casesD.createNewCase")}</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t("pages:casesD.caseInformation")}</h3>
-              
+
               <FormField
                 control={form.control}
                 name="title"
@@ -381,10 +384,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   <FormItem>
                     <FormLabel>{t("pages:casesD.form.description")} *</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder={t("pages:casesD.form.descriptionPlaceholder")}
                         className="min-h-[100px]"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -401,14 +404,14 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                         <SelectValue placeholder={t("pages:casesD.form.selectCourt")} />
+                          <SelectValue placeholder={t("pages:casesD.form.selectCourt")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {Object.keys(courtCaseMapping).map((courtName) => (
-                         <SelectItem key={courtName} value={courtName}>
-  {t(`common:courtTypes.${courtName}`)}
-</SelectItem>
+                          <SelectItem key={courtName} value={courtName}>
+                            {t(`common:courtTypes.${courtName}`)}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -424,27 +427,27 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pages:casesD.form.caseType")} *</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         value={field.value}
                         disabled={availableCaseTypes.length === 0}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue 
-  placeholder={
-    availableCaseTypes.length === 0 
-      ? t("pages:casesD.form.selectCourtFirst") 
-      : t("pages:casesD.form.selectCaseType")
-  } 
-/>
+                            <SelectValue
+                              placeholder={
+                                availableCaseTypes.length === 0
+                                  ? t("pages:casesD.form.selectCourtFirst")
+                                  : t("pages:casesD.form.selectCaseType")
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {availableCaseTypes.map((caseType) => (
-                           <SelectItem key={caseType} value={caseType}>
-  {t(`common:caseTypes.${caseType}`)}
-</SelectItem>
+                            <SelectItem key={caseType} value={caseType}>
+                              {t(`common:caseTypes.${caseType}`)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -459,27 +462,27 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pages:casesD.form.caseCode")} *</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         value={field.value}
                         disabled={availableCaseCodes.length === 0}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue 
-  placeholder={
-    availableCaseCodes.length === 0 
-      ? t("pages:casesD.form.selectCaseTypeFirst") 
-      : t("pages:casesD.form.selectCaseCode")
-  } 
-/>
+                            <SelectValue
+                              placeholder={
+                                availableCaseCodes.length === 0
+                                  ? t("pages:casesD.form.selectCaseTypeFirst")
+                                  : t("pages:casesD.form.selectCaseCode")
+                              }
+                            />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {availableCaseCodes.map((code) => (
                             <SelectItem key={code} value={code}>
-  {t(`common:caseCodes.${code}`)}
-</SelectItem>
+                              {t(`common:caseCodes.${code}`)}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -510,14 +513,14 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                               {t(status.label)}
                             </SelectItem>
                           ))}
-                          
+
                           {/* Judgment Outcomes */}
                           {caseStatusOptions.judgment.map((status) => (
                             <SelectItem key={status.value} value={status.value}>
                               {t(status.label)}
                             </SelectItem>
                           ))}
-                          
+
                           {/* Non-Judgment Outcomes */}
                           {caseStatusOptions.nonJudgment.map((status) => (
                             <SelectItem key={status.value} value={status.value}>
@@ -538,9 +541,9 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                     <FormItem>
                       <FormLabel>{t("pages:casesD.form.caseNumber")} *</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder={t("pages:casesD.form.caseNumberPlaceholder")} 
-                          {...field} 
+                        <Input
+                          placeholder={t("pages:casesD.form.caseNumberPlaceholder")}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -565,7 +568,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
             {/* Client Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t("pages:casesD.clientInformation")}</h3>
-              
+
               <FormField
                 control={form.control}
                 name="client_option"
@@ -655,7 +658,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       )}
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -664,10 +667,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                         <FormItem>
                           <FormLabel>{t("pages:casesD.form.email")} *</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="email" 
-                              placeholder={t("pages:casesD.form.emailPlaceholder")} 
-                              {...field} 
+                            <Input
+                              type="email"
+                              placeholder={t("pages:casesD.form.emailPlaceholder")}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -682,10 +685,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                         <FormItem>
                           <FormLabel>{t("pages:casesD.form.phone")}</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="tel" 
-                              placeholder={t("pages:casesD.form.phonePlaceholder")} 
-                              {...field} 
+                            <Input
+                              type="tel"
+                              placeholder={t("pages:casesD.form.phonePlaceholder")}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -701,10 +704,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                       <FormItem>
                         <FormLabel>{t("pages:casesD.form.password")} *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password" 
-                            placeholder={t("pages:casesD.form.passwordPlaceholder")} 
-                            {...field} 
+                          <Input
+                            type="password"
+                            placeholder={t("pages:casesD.form.passwordPlaceholder")}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -718,7 +721,7 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
             {/* Case Details */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t("pages:casesD.caseDetails")}</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -752,9 +755,9 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                     <FormItem>
                       <FormLabel>{t("pages:casesD.form.expectedDuration")}</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder={t("pages:casesD.form.durationPlaceholder")} 
-                          {...field} 
+                        <Input
+                          placeholder={t("pages:casesD.form.durationPlaceholder")}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -770,10 +773,10 @@ export default function CaseCreationForm({ onCaseCreated }: CaseCreationFormProp
                   <FormItem>
                     <FormLabel>{t("pages:casesD.form.notes")}</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder={t("pages:casesD.form.notesPlaceholder")}
                         className="min-h-[80px]"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />

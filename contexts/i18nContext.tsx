@@ -26,7 +26,7 @@ i18n
       },
     },
     lng: 'ko', // default language
-    fallbackLng: 'ko',
+    fallbackLng: 'en',
     debug: false,
     interpolation: {
       escapeValue: false,
@@ -68,7 +68,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
     i18nInstance.changeLanguage(lang)
-    
+
     // Save to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('language', lang)

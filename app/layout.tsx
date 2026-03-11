@@ -1,26 +1,27 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Lato } from "next/font/google"
+import { DM_Sans } from "next/font/google"
 import "./globals.css"
 import ReduxProvider from "@/lib/redux-provider"
 import TokenValidationProvider from "@/components/providers/TokenValidationProvider"
 import { I18nProvider } from "@/contexts/i18nContext"
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster as HotToaster } from 'react-hot-toast';
 import { NotificationProvider } from "@/contexts/NotificationContext"
 import { Toaster as SonnerToaster } from "sonner"
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
 import NotificationToastProvider from "@/components/providers/NotificationToastProvider"
 // import { SessionProvider } from "next-auth/react"
 
-// Initialize the Lato font
-const lato = Lato({
+// Initialize the DM Sans font
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["100", "300", "400", "700", "900"],
-  variable: "--font-lato",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-dm-sans",
   display: "swap",
 })
 
 export const metadata: Metadata = {
-  
+
 }
 
 export default function RootLayout({
@@ -33,19 +34,20 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={`${lato.variable} font-lato`}>
-          <ReduxProvider>
-            <I18nProvider>
-              <TokenValidationProvider>
-                <NotificationProvider>
-                  <NotificationToastProvider />
-                  {children}
-                  {/* <SonnerToaster position="top-right" /> */}
-                </NotificationProvider>
-              </TokenValidationProvider>
-            </I18nProvider>
-              <Toaster />
-          </ReduxProvider>
+      <body className={`${dmSans.variable} font-dm-sans`}>
+        <ReduxProvider>
+          <I18nProvider>
+            <TokenValidationProvider>
+              <NotificationProvider>
+                <NotificationToastProvider />
+                {children}
+                {/* <SonnerToaster position="top-right" /> */}
+              </NotificationProvider>
+            </TokenValidationProvider>
+          </I18nProvider>
+          <HotToaster />
+          <ShadcnToaster />
+        </ReduxProvider>
       </body>
     </html>
   )

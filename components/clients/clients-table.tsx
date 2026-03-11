@@ -33,13 +33,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/lib/store";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Eye } from "lucide-react";
+import { Eye, Search } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import OnboardClientForm from "./onboard-client-form";
+import ClientDetailsDialog from "./client-details-dialog";
 
 const searchFormSchema = z.object({
   query: z.string().optional(),
-  status: z.enum(["all", "active", "inactive", "pending"]).default("active")
+  status: z.enum(["all", "active", "inactive", "pending"]).default("all")
 });
 
 type SearchFormData = z.infer<typeof searchFormSchema>;
@@ -54,13 +56,18 @@ type ClientActionData = z.infer<typeof clientActionSchema>;
 
 interface ClientsTableProps {
   initialClients: Client[];
+  onClientCreated?: () => void;
 }
 
-export default function ClientsTable({ initialClients }: ClientsTableProps) {
+export default function ClientsTable({ initialClients, onClientCreated }: ClientsTableProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [filteredClients, setFilteredClients] = useState<Client[]>(initialClients);
   const [isLoading, setIsLoading] = useState(false);
   const [updatingClients, setUpdatingClients] = useState<Set<string>>(new Set());
+  const [clientDetailsDialog, setClientDetailsDialog] = useState<{
+    open: boolean;
+    client: Client | null;
+  }>({ open: false, client: null });
   const profile = useSelector((state: RootState) => state.auth.user);
 
   const router = useRouter();
@@ -73,7 +80,7 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
       query: searchParams?.get("query") || "",
-      status: (searchParams?.get("status") as ClientStatus) || "active"
+      status: (searchParams?.get("status") as ClientStatus) || "all"
     }
   });
 
@@ -146,132 +153,79 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
     router.push(`/client?${params.toString()}`);
   };
 
-  // Handle client actions
-  const handleClientAction = async (actionData: ClientActionData) => {
-    setUpdatingClients((prev) => new Set(prev).add(actionData.clientId));
-
-    try {
-      let updatedClient: Client;
-
-      switch (actionData.action) {
-        case "favorite":
-          updatedClient = await toggleFavorite(
-            actionData.clientId,
-            actionData.value as boolean
-          );
-          break;
-        case "block":
-          updatedClient = await toggleBlocked(
-            actionData.clientId,
-            actionData.value as boolean
-          );
-          break;
-        case "status":
-          updatedClient = await updateClientStatus(
-            actionData.clientId,
-            actionData.value as ClientStatus
-          );
-          break;
-        default:
-          throw new Error("Invalid action");
-      }
-
-      // Update local state
-      setClients(
-        clients.map((c) => (c.id === actionData.clientId ? updatedClient : c))
-      );
-
-      toast({
-        title: t("common.success"),
-        description: t("common.success")
-      });
-    } catch (error) {
-      toast({
-        title: t("common.error"),
-        description: t("common.error"),
-        variant: "destructive"
-      });
-    } finally {
-      setUpdatingClients((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(actionData.clientId);
-        return newSet;
-      });
-    }
-  };
-
   // View client details
   const viewClientDetails = (client: Client) => {
-    console.log(client,"clientclientclientclientclientclientclientclientclientclient")
-    const clientData = encodeURIComponent(JSON.stringify(client));
-    router.push(`/client/${client.id}?data=${clientData}`);
+    setClientDetailsDialog({ open: true, client });
   };
 
-  // Get status badge
-  const getStatusBadge = (status: ClientStatus) => {
+  // Get status dot/text
+  const getStatusDisplay = (status: ClientStatus) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200">
-            {t("pages:cases.pending")}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-amber-500" />
+            <span className="text-sm font-medium text-[#0F172A]">{t('pages:clientsTable.pending')}</span>
+          </div>
         );
       case "active":
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-            {t("pages:cases.active")}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <span className="text-sm font-medium text-[#0F172A]">{t('pages:clientsTable.active')}</span>
+          </div>
         );
       case "inactive":
         return (
-          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-            {t("pages:cases.closed")}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-red-500" />
+            <span className="text-sm font-medium text-[#0F172A]">{t('pages:clientsTable.inactive')}</span>
+          </div>
         );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <span className="text-[#0F172A] font-medium">{status}</span>;
     }
   };
 
+  // Simple date format Oct 31, 2025 - 18:53 PM
+  const formatLastContacted = (dateStr: string | undefined) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = date.getDate();
+    const year = date.getFullYear();
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hoursStr = hours.toString().padStart(2, '0');
+
+    return `${month} ${day}, ${year} - ${hoursStr}:${minutes} ${ampm}`;
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Form {...searchForm}>
         <form
           onSubmit={searchForm.handleSubmit(onSearchSubmit)}
-          className="flex flex-col sm:flex-row gap-4 justify-between"
+          className="flex flex-col sm:flex-row gap-4 justify-end items-center"
         >
-          <div className="flex w-full max-w-sm items-center space-x-2">
+          <div className="flex flex-1 sm:max-w-xs items-center">
             <FormField
               control={searchForm.control}
               name="query"
               render={({ field }) => (
-                <FormItem className="flex-1 relative">
+                <FormItem className="flex-1 text-[#0F172A]">
                   <FormControl>
                     <div className="relative">
                       <Input
-                        placeholder={t("common.search")}
+                        placeholder={t('pages:common.search')}
                         {...field}
                         value={field.value || ""}
-                        className="bg-[#F5F5F5] border-gray-200 pl-10"
+                        className="bg-white border-gray-300 h-10 rounded-md focus-visible:ring-0 text-[#0F172A] placeholder:text-slate-900 font-medium"
                       />
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="m21 21-4.3-4.3" />
-                      </svg>
                     </div>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -285,114 +239,90 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
                 <FormControl>
                   <select
                     {...field}
-                    className="bg-[#F5F5F5] border-gray-200 rounded px-3 py-2"
+                    className="bg-white border border-gray-300 rounded-md px-4 h-10 min-w-[120px] text-sm font-medium focus:outline-none text-[#0F172A]"
                   >
-                    <option value="all">{t("common.allStatuses") || "All Status"}</option>
-                    <option value="active">{t("common.active") || "Active"}</option>
-                    <option value="inactive">{t("common.inactive") || "Inactive"}</option>
-                    <option value="pending">{t("common.pending") || "Pending"}</option>
+                    <option value="all">{t('pages:clientsTable.allStatus')}</option>
+                    <option value="active">{t('pages:clientsTable.active')}</option>
+                    <option value="inactive">{t('pages:clientsTable.inactive')}</option>
+                    <option value="pending">{t('pages:clientsTable.pending')}</option>
                   </select>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
+
+          {profile?.account_type === "lawyer" && (
+            <OnboardClientForm onClientCreated={onClientCreated} />
+          )}
         </form>
       </Form>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("common.name") || "Name"}</TableHead>
-              <TableHead>{t("common.email") || "Email"}</TableHead>
-              <TableHead>{t("common.phone") || "Phone"}</TableHead>
-              <TableHead>{t("common.address") || "Address"}</TableHead>
-              {profile?.account_type === "client" && (
-                <TableHead>{t("common.charges") || "Charges"}</TableHead>
-              )}
-              <TableHead>{t("common.lastContact") || "Last Contact"}</TableHead>
-              <TableHead>{t("common.actions") || "Actions"}</TableHead>
+      <div className="rounded-lg border border-slate-300 overflow-hidden bg-white shadow-sm">
+        <Table className="w-full">
+          <TableHeader className="bg-[#f8f9fa]">
+            <TableRow className="hover:bg-transparent border-b border-slate-300">
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px]">{t('pages:clientsTable.name')}</TableHead>
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px]">{t('pages:clientsTable.email')}</TableHead>
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px]">{t('pages:clientsTable.phoneNumber')}</TableHead>
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px]">{t('pages:clientsTable.lastContacted')}</TableHead>
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px]">{t('pages:clientsTable.status')}</TableHead>
+              <TableHead className="py-2 px-4 font-bold text-[#0F172A] text-[13px] text-center">{t('pages:clientsTable.action')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Show skeleton loading state
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow
                   key={index}
-                  className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}
+                  className="border-b border-slate-300 last:border-0"
                 >
-                  <TableCell><Skeleton width={120} /></TableCell>
-                  <TableCell><Skeleton width={150} /></TableCell>
-                  <TableCell><Skeleton width={100} /></TableCell>
-                  <TableCell><Skeleton width={180} /></TableCell>
-                  {profile?.account_type === "client" && (
-                    <TableCell><Skeleton width={60} /></TableCell>
-                  )}
-                  <TableCell><Skeleton width={80} /></TableCell>
-                  <TableCell><Skeleton circle width={24} height={24} /></TableCell>
+                  <TableCell className="py-2 px-4"><Skeleton width={120} /></TableCell>
+                  <TableCell className="py-2 px-4"><Skeleton width={150} /></TableCell>
+                  <TableCell className="py-2 px-4"><Skeleton width={100} /></TableCell>
+                  <TableCell className="py-2 px-4"><Skeleton width={140} /></TableCell>
+                  <TableCell className="py-2 px-4"><Skeleton width={80} /></TableCell>
+                  <TableCell className="py-2 px-4 flex justify-center"><Skeleton circle width={24} height={24} /></TableCell>
                 </TableRow>
               ))
             ) : filteredClients.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
-                  className="text-center py-8 text-muted-foreground"
+                  colSpan={6}
+                  className="text-center py-12 text-[#0F172A]"
                 >
-                  {t("common.noClientsFound") || "No clients found"}
+                  {t('pages:clientsTable.noClientsFound')}
                 </TableCell>
               </TableRow>
             ) : (
               filteredClients.map((client, index) => (
                 <TableRow
                   key={client.id}
-                  className={`hover:bg-muted/50 cursor-pointer ${
-                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                  }`}
+                  className="hover:bg-slate-50/50 cursor-pointer border-b border-slate-300 transition-colors bg-white last:border-b-0 text-[#0F172A]"
                   onClick={() => viewClientDetails(client)}
                 >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <span>{client.first_name} {client.last_name}</span>
-                      {client.isFavorite && <span className="text-yellow-500">⭐</span>}
-                    </div>
+                  <TableCell className="py-2 px-4 text-[13px] font-medium">
+                    {client.first_name || client.last_name ? `${client.first_name || ''} ${client.last_name || ''}`.trim() : "N/A"}
                   </TableCell>
-                  <TableCell>{client.email || "N/A"}</TableCell>
-                  <TableCell>{client.phone || "N/A"}</TableCell>
-                  <TableCell
-                    className="max-w-[150px] truncate"
-                    title={client.address}
-                  >
-                    {client.address || "N/A"}
+                  <TableCell className="py-2 px-4 text-[13px] font-medium">{client.email || "N/A"}</TableCell>
+                  <TableCell className="py-2 px-4 text-[13px] font-medium">{client.phone || "N/A"}</TableCell>
+                  <TableCell className="py-2 px-4 text-[13px] font-medium">
+                    {formatLastContacted(client.lastContactDate || "2025-10-31T18:53:00")}
                   </TableCell>
-                  {profile?.account_type === "client" && (
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="bg-blue-50 text-blue-600 border-blue-200"
+                  <TableCell className="py-2 px-4">
+                    {getStatusDisplay(client.status)}
+                  </TableCell>
+                  <TableCell className="py-2 px-4">
+                    <div className="flex justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          viewClientDetails(client);
+                        }}
+                        className="p-1 text-[#0F172A] hover:text-black transition-colors"
                       >
-                        {client.charges || 0}
-                      </Badge>
-                    </TableCell>
-                  )}
-                  <TableCell className="text-sm">
-                    {client.lastContactDate
-                      ? new Date(client.lastContactDate).toLocaleDateString()
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {/* Eye icon instead of "View" text */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        viewClientDetails(client);
-                      }}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title={t("common.viewDetails") || "View details"}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                        <Eye className="h-5 w-5" />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -400,6 +330,12 @@ export default function ClientsTable({ initialClients }: ClientsTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <ClientDetailsDialog
+        clientData={clientDetailsDialog.client}
+        open={clientDetailsDialog.open}
+        onOpenChange={(open) => setClientDetailsDialog({ open, client: open ? clientDetailsDialog.client : null })}
+      />
     </div>
   );
 }

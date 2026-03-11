@@ -1,26 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSelector } from "react-redux"
 import { useSearchParams, useRouter } from "next/navigation"
 import type { RootState } from "@/lib/store"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Coins, 
-  CreditCard, 
-  Plus, 
-  CheckCircle, 
-  XCircle, 
-  Loader2, 
-  TrendingUp, 
-  Calendar, 
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
   Download,
-  ArrowUpRight,
-  ArrowDownRight,
-  RefreshCw,
+  Coins,
+  CreditCard,
+  TrendingUp,
+  Calendar,
   ExternalLink
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
@@ -28,6 +23,7 @@ import { useTranslation } from "@/hooks/useTranslation"
 import axios from "axios"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
+import { cn } from "@/lib/utils"
 
 // API Base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
@@ -77,30 +73,36 @@ interface PaymentSession {
   tokenBalance?: TokenBalance
 }
 
-// Token packages configuration - synced with backend
+// Token packages configuration
 const TOKEN_PACKAGES = (t: any) => ({
   starter: {
     id: 'starter',
-    name: t('pages:tok.token.purchase.packages.starter.name'),
+    name: t('pages:tok.token.packages.starter.name'),
     tokens: 1000,
     price: 9.99,
-     description: t('pages:tok.token.purchase.packages.starter.description'),
+    description: t('pages:tok.token.packages.starter.description'),
+    bonus: 0,
+    bonusTokens: 0,
     popular: false
   },
   professional: {
     id: 'professional',
-    name: t('pages:tok.token.purchase.packages.professional.name'),
+    name: t('pages:tok.token.packages.professional.name'),
     tokens: 5000,
     price: 39.99,
-    description: t('pages:tok.token.purchase.packages.professional.description'),
+    description: t('pages:tok.token.packages.professional.description'),
+    bonus: 20,
+    bonusTokens: 1000,
     popular: true
   },
   enterprise: {
     id: 'enterprise',
-    name: t('pages:tok.token.purchase.packages.enterprise.name'),
+    name: t('pages:tok.token.packages.enterprise.name'),
     tokens: 15000,
     price: 99.99,
-     description: t('pages:tok.token.purchase.packages.enterprise.description'),
+    description: t('pages:tok.token.packages.enterprise.description'),
+    bonus: 50,
+    bonusTokens: 7500,
     popular: false
   }
 })
@@ -132,7 +134,7 @@ const getTokenTransactions = async (token: string, page = 1, limit = 20, type?: 
     page: page.toString(),
     limit: limit.toString()
   })
-  
+
   if (type) {
     params.append('type', type)
   }
@@ -176,11 +178,11 @@ const exportTokenTransactions = async (token: string): Promise<Blob> => {
 
 export default function TokenPage() {
   const { t } = useTranslation()
-  const profile:any = useSelector((state: RootState) => state.auth.user)
+  const profile: any = useSelector((state: RootState) => state.auth.user)
   const token = profile?.token
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   // State
   const [tokenBalance, setTokenBalance] = useState<TokenBalance | null>(null)
   const [transactions, setTransactions] = useState<TokenTransaction[]>([])
@@ -192,16 +194,15 @@ export default function TokenPage() {
   const [paymentMessage, setPaymentMessage] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [activeTab, setActiveTab] = useState<'Overview' | 'Buy'>('Overview')
 
-  // Get token packages with translations
   const tokenPackages = TOKEN_PACKAGES(t)
 
-  // Check for payment success/error on page load
   useEffect(() => {
     const success = searchParams.get('success')
     const cancelled = searchParams.get('cancelled')
     const sessionId = searchParams.get('session_id')
-    
+
     if (success === 'true' && sessionId && token) {
       handlePaymentSuccess(sessionId)
     } else if (cancelled === 'true' || success === 'false') {
@@ -214,14 +215,12 @@ export default function TokenPage() {
       })
     }
 
-    // Clean up URL parameters after handling
     if (success || cancelled || sessionId) {
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
     }
   }, [searchParams, token, t])
 
-  // Fetch initial data
   useEffect(() => {
     if (profile && token) {
       fetchAllData()
@@ -230,21 +229,15 @@ export default function TokenPage() {
 
   const fetchAllData = async () => {
     if (!token) return
-    
     setLoading(true)
     try {
       await Promise.all([
         fetchTokenBalance(),
-        fetchTransactions(),
+        fetchTransactions(1),
         fetchTokenStats()
       ])
     } catch (error) {
       console.error('Error fetching token data:', error)
-      toast({
-        title: t('pages:tok.token.toast.error.title'),
-        description: t('pages:tok.token.toast.error.description'),
-        variant: "destructive",
-      })
     } finally {
       setLoading(false)
     }
@@ -252,25 +245,23 @@ export default function TokenPage() {
 
   const fetchTokenBalance = async () => {
     if (!token) return
-    
     try {
       const balance = await getTokenBalance(token)
       setTokenBalance(balance)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching token balance:', error)
     }
   }
 
   const fetchTransactions = async (page = 1) => {
     if (!token) return
-    
     setTransactionsLoading(true)
     try {
       const result = await getTokenTransactions(token, page, 10)
       setTransactions(result.transactions)
       setCurrentPage(result.pagination.currentPage)
       setTotalPages(result.pagination.totalPages)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching transactions:', error)
     } finally {
       setTransactionsLoading(false)
@@ -279,84 +270,50 @@ export default function TokenPage() {
 
   const fetchTokenStats = async () => {
     if (!token) return
-    
     try {
       const stats = await getTokenStats(token)
       setTokenStats(stats)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching token stats:', error)
     }
   }
 
   const handlePaymentSuccess = async (sessionId: string) => {
     if (!token) return
-    
     try {
       setLoading(true)
       const paymentSession = await verifyPaymentSession(token, sessionId)
-      
       if (paymentSession.paymentStatus === 'paid') {
         setPaymentStatus('success')
         const tokensAdded = paymentSession.transaction?.amount || 0
         setPaymentMessage(t('pages:tok.token.payment.success', { tokens: tokensAdded.toLocaleString() }))
-        
-        // Refresh data to show updated balance
         await fetchAllData()
-        
         toast({
           title: t('pages:tok.token.toast.payment.success.title'),
           description: t('pages:tok.token.toast.payment.success.description', { tokens: tokensAdded.toLocaleString() }),
-        })
-      } else {
-        setPaymentStatus('error')
-        setPaymentMessage(t('pages:tok.token.payment.verificationFailed'))
-        toast({
-          title: t('pages:tok.token.toast.payment.verificationFailed.title'),
-          description: t('pages:tok.token.toast.payment.verificationFailed.description'),
-          variant: "destructive",
         })
       }
     } catch (error: any) {
       setPaymentStatus('error')
       setPaymentMessage(error.message || t('pages:tok.token.payment.genericError'))
-      toast({
-        title: t('token.toast.payment.error.title'),
-        description: error.message || t('pages:tok.token.toast.payment.error.description'),
-        variant: "destructive",
-      })
     } finally {
       setLoading(false)
     }
   }
 
   const handlePurchaseTokens = async (packageId: string) => {
-    if (!profile || !token) {
-      toast({
-        title: t('pages:tok.token.toast.auth.title'),
-        description: t('pages:tok.token.toast.auth.description'),
-        variant: "destructive",
-      })
-      return
-    }
-
+    if (!profile || !token) return
     setPurchaseLoading(packageId)
     try {
       const { url, sessionId } = await createCheckoutSession(token, packageId)
-      
       if (url) {
-        // Store session ID for verification later
         sessionStorage.setItem('stripe_session_id', sessionId)
-        
-        // Redirect to Stripe checkout
         window.location.href = url
-      } else {
-        throw new Error(t('pages:tok.token.payment.noCheckoutUrl'))
       }
     } catch (error: any) {
-      console.error('Checkout error:', error)
       toast({
-        title: t('pages:tok.token.toast.checkoutError.title'),
-        description: error.message || t('token.toast.checkoutError.description'),
+        title: "Checkout Error",
+        description: error.message,
         variant: "destructive",
       })
     } finally {
@@ -366,7 +323,6 @@ export default function TokenPage() {
 
   const handleExportTransactions = async () => {
     if (!token) return
-    
     try {
       const blob = await exportTokenTransactions(token)
       const url = URL.createObjectURL(blob)
@@ -377,106 +333,24 @@ export default function TokenPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      
-      toast({
-        title: t('pages:tok.token.toast.export.success.title'),
-        description: t('pages:tok.token.toast.export.success.description'),
-      })
-    } catch (error: any) {
-      toast({
-        title: t('pages:tok.token.toast.export.failed.title'),
-        description: error.message || t('pages:tok.pages:tok.token.toast.export.failed.description'),
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error('Export failed:', error)
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const d = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[d.getMonth()];
+    const day = d.getDate();
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    return `${month} ${day}, ${year} - ${hours}:${minutes} ${ampm}`;
   }
 
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'purchase':
-      case 'bonus':
-        return <ArrowUpRight className="h-4 w-4 text-green-600" />
-      case 'usage':
-        return <ArrowDownRight className="h-4 w-4 text-red-600" />
-      case 'refund':
-        return <RefreshCw className="h-4 w-4 text-blue-600" />
-      default:
-        return <Coins className="h-4 w-4 text-gray-600" />
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      completed: 'default',
-      pending: 'secondary',
-      failed: 'destructive',
-      cancelled: 'outline'
-    } as const
-    
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
-        {t(`pages:tok.token.transactionStatus.${status}`)}
-      </Badge>
-    )
-  }
-
-  // Skeleton components
-  const TokenCardSkeleton = () => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <Skeleton width={120} height={20} />
-        <Skeleton width={16} height={16} circle />
-      </CardHeader>
-      <CardContent>
-        <Skeleton width={80} height={32} className="mb-2" />
-        <Skeleton width={180} height={16} />
-      </CardContent>
-    </Card>
-  )
-
-  const PackageCardSkeleton = () => (
-    <Card>
-      <CardHeader className="text-center">
-        <Skeleton width={120} height={24} className="mx-auto mb-2" />
-        <Skeleton width={80} height={32} className="mx-auto mb-2" />
-        <Skeleton count={2} height={16} className="mx-auto" />
-      </CardHeader>
-      <CardContent className="text-center">
-        <Skeleton width={120} height={40} className="mx-auto" />
-      </CardContent>
-    </Card>
-  )
-
-  const TransactionSkeleton = () => (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
-      <div className="flex items-center gap-3">
-        <Skeleton width={16} height={16} circle />
-        <div>
-          <Skeleton width={150} height={20} className="mb-1" />
-          <Skeleton width={120} height={16} />
-        </div>
-      </div>
-      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-        <div className="text-right">
-          <Skeleton width={80} height={20} className="mb-1" />
-          <Skeleton width={60} height={16} />
-        </div>
-        <Skeleton width={70} height={24} />
-      </div>
-    </div>
-  )
-
-  // Show loading if no token or still loading
   if (!token) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -487,231 +361,260 @@ export default function TokenPage() {
   }
 
   return (
-    <div className="space-y-6" style={{ marginTop: "2.25rem" }}>
-      {/* Payment Status Alert */}
-      {paymentStatus && (
-        <Alert className={paymentStatus === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
-          {paymentStatus === 'success' ? (
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          ) : (
-            <XCircle className="h-4 w-4 text-red-600" />
-          )}
-          <AlertDescription className={paymentStatus === 'success' ? 'text-green-800' : 'text-red-800'}>
-            {paymentMessage}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
-  <div className="text-center md:text-left">
-    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('pages:tok.token.title')}</h1>
-    <p className="text-muted-foreground mt-1 md:mt-0">{t('pages:tok.token.subtitle')}</p>
-  </div>
-  <div className="flex flex-col sm:flex-row items-center gap-2 justify-center">
-    <Button 
-      onClick={() => router.push('/token/history')} 
-      variant="outline" 
-      className="gap-2 w-full sm:w-auto justify-center"
-    >
-      <ExternalLink className="h-4 w-4" />
-      {t('pages:tok.token.viewh')}
-    </Button>
-    <Button onClick={() => fetchAllData()} variant="outline" className="gap-2 w-full sm:w-auto justify-center">
-      <RefreshCw className="h-4 w-4" />
-      {t('pages:tok.token.refresh')}
-    </Button>
-  </div>
-</div>
-
-      {/* Token Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {loading ? (
-          <>
-            <TokenCardSkeleton />
-            <TokenCardSkeleton />
-            <TokenCardSkeleton />
-          </>
-        ) : (
-          <>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.balance.title')}</CardTitle>
-                <Coins className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{tokenBalance?.current_balance?.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.balance.description')}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.purchased.title')}</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{tokenBalance?.total_purchased?.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.purchased.description')}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t('pages:tok.token.cards.usage.title')}</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{tokenBalance?.monthly_usage?.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground">{t('pages:tok.token.cards.usage.description')}</p>
-              </CardContent>
-            </Card>
-          </>
+    <div className="pt-1 pb-4 px-2 max-w-[1700px] mx-auto">
+      <div className="flex flex-col space-y-6">
+        {/* Payment Status Alert */}
+        {paymentStatus && (
+          <Alert className={cn(
+            "border-none shadow-md rounded-xl",
+            paymentStatus === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+          )}>
+            <div className="flex items-center gap-3">
+              {paymentStatus === 'success' ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+              <AlertDescription className="font-bold">{paymentMessage}</AlertDescription>
+            </div>
+          </Alert>
         )}
+
+        {/* Header Section matching Video Consultations */}
+        <div className="flex justify-between items-center px-1">
+          <h1 className="text-[22px] font-bold text-[#0F172A] tracking-tight">
+            {t('pages:tok.token.management')}
+          </h1>
+        </div>
+
+        {/* Tabs & Actions Row */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+          <div className="flex items-center gap-8">
+            <button
+              onClick={() => setActiveTab('Overview')}
+              className={cn(
+                "relative pb-3 text-[15px] font-bold transition-all",
+                activeTab === 'Overview'
+                  ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {t('pages:tok.token.overview')}
+            </button>
+            <button
+              onClick={() => setActiveTab('Buy')}
+              className={cn(
+                "relative pb-3 text-[15px] font-bold transition-all",
+                activeTab === 'Buy'
+                  ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {t('pages:tok.token.buyTokens')}
+            </button>
+          </div>
+
+          {activeTab === 'Overview' && (
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleExportTransactions}
+                variant="outline"
+                className="h-10 bg-[#F1F5F9] border-slate-300 text-[#0F172A] font-bold hover:bg-slate-200 transition-all rounded-md px-4 flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t('pages:tok.token.exportCSV')}
+              </Button>
+              <Button
+                onClick={fetchAllData}
+                className="h-10 bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold rounded-md px-6 transition-all"
+              >
+                {t('pages:tok.token.refresh')}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Token Packages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            {t('pages:tok.token.purchase.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {loading ? (
-              <>
-                <PackageCardSkeleton />
-                <PackageCardSkeleton />
-                <PackageCardSkeleton />
-              </>
-            ) : (
-              Object.values(tokenPackages).map((pkg) => (
-                <Card key={pkg.id} className={`relative ${pkg.popular ? 'border-primary' : ''}`}>
-                  {pkg.popular && (
-                    <Badge className="absolute -top-2 left-4 bg-primary">
-                      {t('pages:tok.token.purchase.popular')}
-                    </Badge>
-                  )}
-                  <CardHeader className="text-center">
-                    <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                    <div className="text-3xl font-bold">${pkg.price}</div>
-                    <p className="text-sm text-muted-foreground">{pkg.description}</p>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <Button 
-                      onClick={() => handlePurchaseTokens(pkg.id)}
-                      disabled={purchaseLoading === pkg.id}
-                      className="w-full"
-                    >
-                      {purchaseLoading === pkg.id ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          {t('pages:tok.token.purchase.button.loading')}
-                        </>
+      <div className="mt-8">
+        {activeTab === 'Overview' ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Stat Cards */}
+              <div className="lg:col-span-4 space-y-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <p className="text-[#0F172A] font-bold text-[15px] mb-4">{t('pages:tok.token.currentBalance')}</p>
+                  <div className="text-right">
+                    <span className="text-[32px] font-bold text-[#0F172A] mr-2">
+                      {loading ? <Skeleton width={60} /> : tokenBalance?.current_balance?.toLocaleString() || 0}
+                    </span>
+                    <span className="text-[20px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <p className="text-[#0F172A] font-bold text-[15px] mb-4">{t('pages:tok.token.tokensUsed')}</p>
+                  <div className="text-right">
+                    <span className="text-[32px] font-bold text-[#0F172A] mr-2">
+                      {loading ? <Skeleton width={60} /> : tokenBalance?.monthly_usage?.toLocaleString() || 0}
+                    </span>
+                    <span className="text-[20px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                  <p className="text-[#0F172A] font-bold text-[15px] mb-4">{t('pages:tok.token.totalPurchased')}</p>
+                  <div className="text-right">
+                    <span className="text-[32px] font-bold text-[#0F172A] mr-2">
+                      {loading ? <Skeleton width={60} /> : tokenBalance?.total_purchased?.toLocaleString() || 0}
+                    </span>
+                    <span className="text-[20px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Transaction Table */}
+              <div className="lg:col-span-8 border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm self-start">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#F1F5F9] border-b border-slate-300 text-left text-[#0F172A] text-[13px] font-bold">
+                        <th className="px-5 py-3 font-bold">{t('pages:tok.token.paymentDetails')}</th>
+                        <th className="px-5 py-3 font-bold">{t('pages:tok.token.tokens')}</th>
+                        <th className="px-5 py-3 font-bold">{t('pages:tok.token.status')}</th>
+                        <th className="px-5 py-3 font-bold">{t('pages:tok.token.date')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading || transactionsLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i} className="animate-pulse border-b border-slate-200 last:border-0">
+                            <td colSpan={4} className="px-6 py-6 bg-slate-50"></td>
+                          </tr>
+                        ))
+                      ) : transactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="text-center py-20 text-slate-500 bg-white italic font-bold">
+                            {t('pages:tok.token.noTransactions')}
+                          </td>
+                        </tr>
                       ) : (
-                        <>
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          {t('pages:tok.token.purchase.button.default', { tokens: pkg.tokens.toLocaleString() })}
-                        </>
+                        transactions.map((transaction) => (
+                          <tr key={transaction._id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50 transition-colors">
+                            <td className="px-5 py-3">
+                              <span className="text-[#0F172A] font-bold text-[13px]">{transaction.description}</span>
+                            </td>
+                            <td className="px-5 py-3">
+                              <span className={cn(
+                                "font-bold text-[13px]",
+                                transaction.type === 'usage' ? 'text-red-600' : 'text-[#0F172A]'
+                              )}>
+                                {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} {t('pages:tok.token.tokens')}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "h-2.5 w-2.5 rounded-full shrink-0",
+                                  transaction.status === 'completed' ? "bg-[#4ADE80]" :
+                                    transaction.status === 'pending' ? "bg-[#FFB600]" : "bg-[#EF4444]"
+                                )} />
+                                <span className="text-[#0F172A] font-bold text-[13px] capitalize">
+                                  {transaction.status}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-3 whitespace-nowrap">
+                              <span className="text-[#0F172A] font-bold text-[13px]">
+                                {formatDate(transaction.created_at)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))
                       )}
+                    </tbody>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-slate-200">
+                    <Button
+                      onClick={() => fetchTransactions(currentPage - 1)}
+                      disabled={currentPage === 1 || transactionsLoading}
+                      variant="outline"
+                      className="h-9 px-4 text-[13px] font-bold border-slate-300 text-[#0F172A] rounded-md transition-all"
+                    >
+                      {t('pages:tok.token.previous')}
                     </Button>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                    <div className="text-[13px] font-bold text-[#0F172A]">
+                      {t('pages:tok.token.pageOf', { current: currentPage, total: totalPages })}
+                    </div>
+                    <Button
+                      onClick={() => fetchTransactions(currentPage + 1)}
+                      disabled={currentPage === totalPages || transactionsLoading}
+                      variant="outline"
+                      className="h-9 px-4 text-[13px] font-bold border-slate-300 text-[#0F172A] rounded-md transition-all"
+                    >
+                      {t('pages:tok.token.next')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Transaction History */}
-      <Card className="w-full max-w-full overflow-x-auto">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <CardTitle className="text-lg sm:text-xl">{t('pages:tok.token.transactions.title')}</CardTitle>
-          <Button 
-            onClick={handleExportTransactions} 
-            variant="outline" 
-            size="sm" 
-            className="gap-2 self-start sm:self-auto"
-            disabled={loading || transactionsLoading}
-          >
-            <Download className="h-4 w-4" />
-            {t('pages:tok.token.transactions.export')}
-          </Button>
-        </CardHeader>
-
-        <CardContent className="px-0 sm:px-4">
-          {loading || transactionsLoading ? (
-            <div className="space-y-4">
-              <TransactionSkeleton />
-              <TransactionSkeleton />
-              <TransactionSkeleton />
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t('pages:tok.token.transactions.empty.title')}</p>
-              <p className="text-sm">{t('pages:tok.token.transactions.empty.description')}</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {transactions.map((transaction) => (
-                <div 
-                  key={transaction._id} 
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3"
-                >
-                  <div className="flex items-center gap-3">
-                    {getTransactionIcon(transaction.type)}
-                    <div>
-                      <div className="font-medium text-sm sm:text-base">{transaction.description}</div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">
-                        {formatDate(transaction.created_at)}
-                        {transaction.package_name && ` • ${transaction.package_name}`}
-                      </div>
-                    </div>
+        ) : (
+          /* Buy Tokens Tab - Perfected layout and alignment */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+            {Object.values(tokenPackages).map((pkg) => (
+              <div
+                key={pkg.id}
+                className="bg-white border border-slate-300 rounded-lg p-6 shadow-sm flex flex-col min-h-[360px]"
+              >
+                <div className="flex-1 flex flex-col">
+                  {/* Title and Subtitle */}
+                  <div className="space-y-1">
+                    <h3 className="text-[20px] font-bold text-[#0F172A] tracking-tight">{pkg.name}</h3>
+                    <p className="text-slate-600 font-bold text-[13px] leading-tight">{pkg.description}</p>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-                    <div className="text-right">
-                      <div className={`font-medium text-sm sm:text-base ${
-                        transaction.type === 'usage' ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {transaction.type === 'usage' ? '-' : '+'}{transaction.amount.toLocaleString()} {t('pages:token.tokens')}
+                  {/* Bonus Badge - positioned directly below the header info */}
+                  {pkg.bonus > 0 && (
+                    <div className="mt-4">
+                      <div className="bg-[#4ADE80] text-white text-[10px] font-black px-3 py-1 rounded-full inline-block">
+                        {t('pages:tok.token.bonus', { bonus: pkg.bonus })}
                       </div>
-                      <div className="text-xs sm:text-sm text-muted-foreground">{transaction.category}</div>
                     </div>
-                    {getStatusBadge(transaction.status)}
+                  )}
+
+                  {/* Token Count & Bonus Info - Pushed to bottom of the card content area */}
+                  <div className="mt-auto text-right pb-1">
+                    {pkg.bonus > 0 && (
+                      <p className="text-[#4ADE80] font-bold text-[13px] mb-[-4px]">
+                        {t('pages:tok.token.includesBonus', { tokens: pkg.bonusTokens.toLocaleString() })}
+                      </p>
+                    )}
+                    <div className="flex items-baseline justify-end gap-2">
+                      <span className="text-[28px] font-bold text-[#0F172A]">
+                        {pkg.tokens.toLocaleString()}
+                      </span>
+                      <span className="text-[16px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-2 sm:gap-0">
-                  <Button 
-                    onClick={() => fetchTransactions(currentPage - 1)}
-                    disabled={currentPage === 1 || transactionsLoading}
-                    variant="outline"
-                    className="w-full sm:w-auto"
+                {/* Purchase Button */}
+                <div className="pt-3">
+                  <Button
+                    onClick={() => handlePurchaseTokens(pkg.id)}
+                    disabled={purchaseLoading === pkg.id}
+                    className="w-full h-13 bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold rounded-lg text-[18px] transition-all shadow-md"
                   >
-                    {t('pages:tok.token.transactions.pagination.previous')}
-                  </Button>
-                  <span className="text-sm text-muted-foreground">{t('pages:tok.token.transactions.pagination.page', { current: currentPage, total: totalPages })}</span>
-                  <Button 
-                    onClick={() => fetchTransactions(currentPage + 1)}
-                    disabled={currentPage === totalPages || transactionsLoading}
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                  >
-                    {t('pages:tok.token.transactions.pagination.next')}
+                    {purchaseLoading === pkg.id ? (
+                      <Loader2 className="h-5 w-5 animate-spin mx-auto" strokeWidth={3} />
+                    ) : (
+                      `$${pkg.price}`
+                    )}
                   </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

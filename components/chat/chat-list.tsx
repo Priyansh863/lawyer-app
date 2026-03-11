@@ -14,6 +14,7 @@ import { getChats } from "@/lib/api/chat-api"
 import { useToast } from "@/hooks/use-toast"
 import { ChatPopup } from "@/components/chat/chat-popup"
 import type { ChatSummary } from "@/types/chat"
+import { useTranslation } from "@/hooks/useTranslation"
 import { Badge } from "@/components/ui/badge"
 
 interface ChatListProps {
@@ -29,6 +30,7 @@ export default function ChatList() {
   const [activeChatClientId, setActiveChatClientId] = useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
 
+  const { t } = useTranslation()
   const router = useRouter()
   const { toast } = useToast()
 
@@ -55,8 +57,8 @@ export default function ChatList() {
       setChats(fetchedChats || [])
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load chats",
+        title: t("pages:conv.error"),
+        description: t("pages:conv.failedToLoadChat"),
         variant: "destructive",
       })
     } finally {
@@ -84,7 +86,7 @@ export default function ChatList() {
               <div className="relative">
                 <Input
                   type="search"
-                  placeholder="Search conversations"
+                  placeholder={t("pages:chat.searchChats")}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   className="bg-[#F5F5F5] border-gray-200 pl-10 w-full"
@@ -113,17 +115,17 @@ export default function ChatList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Last Message</TableHead>
-                <TableHead>Token Usage</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>{t('pages:clientsTable.name')}</TableHead>
+                <TableHead>{t('pages:chat.lastMessage') || 'Last Message'}</TableHead>
+                <TableHead>{t('pages:chat.tokenUsage')}</TableHead>
+                <TableHead>{t('pages:clientsTable.action')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {chats.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    {isLoading ? "Loading chats..." : "No chats found"}
+                    {isLoading ? t("pages:chatbox.loading") : t("pages:chatbox.empty.search")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -142,7 +144,7 @@ export default function ChatList() {
                           <span>{chat.clientName}</span>
                           {chat.unreadCount > 0 && (
                             <Badge variant="secondary" className="text-xs w-fit">
-                              {chat.unreadCount} unread
+                              {chat.unreadCount} {t('pages:chat.unread') || 'unread'}
                             </Badge>
                           )}
                         </div>
@@ -156,7 +158,7 @@ export default function ChatList() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                        {chat.tokenUsage} tokens
+                        {chat.tokenUsage} {t('pages:consultation.tokens') || 'tokens'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -167,7 +169,7 @@ export default function ChatList() {
                         className="flex items-center gap-1"
                       >
                         <MessageSquare size={16} />
-                        Chat
+                        {t('pages:chat.title')}
                       </Button>
                     </TableCell>
                   </TableRow>

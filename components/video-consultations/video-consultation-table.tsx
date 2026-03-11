@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import {
   Table,
   TableBody,
@@ -14,11 +16,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { 
-  Calendar, 
-  Search, 
-  Filter, 
-  ExternalLink, 
+import {
+  Calendar,
+  Search,
+  Filter,
+  ExternalLink,
   DollarSign,
   Loader2,
   Check,
@@ -28,881 +30,592 @@ import {
   Edit,
   Clock,
   User,
-  Users
+  Users,
+  Copy,
+  MoreHorizontal,
+  Trash2,
+  Play
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { useTranslation } from '@/hooks/useTranslation'
-import { getMeetings, approveMeeting, rejectMeeting, updateMeeting } from '@/lib/api/meeting-api-updated'
+import { getMeetings, approveMeeting, rejectMeeting, updateMeeting, updateMeetingStatus, type Meeting } from '@/lib/api/meeting-api-updated'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import EditMeetingModal from '@/components/modals/edit-meeting-modal'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import ConsultationTypeModal from "@/components/modals/consultation-type-modal"
 
-interface Meeting {
-  _id: string
-  lawyer_id: {
-    _id: string
-    first_name: string
-    last_name: string
-    email: string
-    account_type: string
-    charges?: number
-    video_rate?: number
-    chat_rate?: number
-  }
-  client_id: {
-    _id: string
-    first_name: string
-    last_name: string
-    email: string
-    account_type: string
-  }
-  created_by?: {
-    _id: string
-    account_type: string
-  }
-  meeting_title?: string
-  title?: string
-  meeting_description?: string
-  description?: string
-  requested_date?: string
-  date?: string
-  requested_time?: string
-  time?: string
-  meeting_link?: string
-  status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled'
-  approval_date?: string
-  rejection_reason?: string
-  notes?: string
-  consultation_type?: 'free' | 'paid'
-  hourly_rate?: number
-  custom_fee?: boolean
-  duration?: number // Assuming duration is in minutes
-  createdAt: string
-  updatedAt: string
+interface VideoConsultationTableProps {
+  searchQueryProp?: string;
+  onNewConsultation: () => void;
 }
 
-export default function VideoConsultationTableNew() {
+export default function VideoConsultationTableNew({ searchQueryProp, onNewConsultation }: VideoConsultationTableProps) {
   const [meetings, setMeetings] = useState<Meeting[]>([])
-  // Removed filteredMeetings state - now using useMemo
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [activeTab, setActiveTab] = useState<'Approved' | 'Pending' | 'History'>('Approved')
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<string>('all')
+
+  // Use searchQueryProp if available, otherwise use internal searchTerm
+  const currentSearchTerm = searchQueryProp !== undefined ? searchQueryProp : searchTerm;
+
   const [approvingMeeting, setApprovingMeeting] = useState<string | null>(null)
   const [rejectingMeeting, setRejectingMeeting] = useState<string | null>(null)
-  const [lawyerRatesCache, setLawyerRatesCache] = useState<{[key: string]: number}>({})
   const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [meetingToCancel, setMeetingToCancel] = useState<Meeting | null>(null)
+  const [cancellingStatus, setCancellingStatus] = useState(false)
+
   const { toast } = useToast()
   const { t } = useTranslation()
-  
   const currentUser = useSelector((state: RootState) => state.auth.user)
-
-  // Function to fetch fresh lawyer rates
-  const fetchLawyerRate = async (lawyerId: string): Promise<number> => {
-    // Check cache first
-    if (lawyerRatesCache[lawyerId] !== undefined) {
-      return lawyerRatesCache[lawyerId]
-    }
-
-    try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/charges/charges/${lawyerId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        const rate = data.user?.video_rate || data.user?.charges || 0
-        
-        // Cache the rate
-        setLawyerRatesCache(prev => ({ ...prev, [lawyerId]: rate }))
-        return rate
-      }
-    } catch (error) {
-      console.error('Error fetching lawyer rate:', error)
-    }
-    
-    return 0
-  }
 
   useEffect(() => {
     fetchMeetings()
   }, [])
 
-  // Debounce search term
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
   const fetchMeetings = async () => {
-    console.log('fetchMeetings: called');
     try {
       setLoading(true);
-      console.log('fetchMeetings: setLoading(true)');
       const response = await getMeetings();
-      console.log('fetchMeetings: getMeetings() response:', response);
       if (response.success && response.data) {
         const meetingsArray = Array.isArray(response.data) ? response.data : [response.data];
-        console.log('fetchMeetings: meetingsArray:', meetingsArray);
-
         setMeetings(meetingsArray);
-        console.log('fetchMeetings: setMeetings called');
-
-        // Fetch fresh rates for all lawyers in the meetings
-        const uniqueLawyerIds = new Set<string>();
-        meetingsArray.forEach((meeting: Meeting) => {
-          console.log('fetchMeetings: iterating meeting:', meeting);
-          if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && meeting.lawyer_id._id) {
-            // Only fetch if we don't have hourly_rate in meeting and not cached
-            if (meeting.hourly_rate === undefined && !lawyerRatesCache[meeting.lawyer_id._id]) {
-              uniqueLawyerIds.add(meeting.lawyer_id._id);
-              console.log('fetchMeetings: added lawyerId to uniqueLawyerIds:', meeting.lawyer_id._id);
-            }
-          }
-        });
-
-        // Fetch rates for unique lawyers
-        Array.from(uniqueLawyerIds).forEach(lawyerId => {
-          console.log('fetchMeetings: fetching rate for lawyerId:', lawyerId);
-          fetchLawyerRate(lawyerId); // This will cache the rate
-        });
       }
     } catch (error) {
       console.error('Error fetching meetings:', error);
       toast({
-        title: t('pages:meeting.toast.error.title'),
-        description: t('pages:meeting.errors.fetchFailed'),
+        title: "Error",
+        description: "Failed to fetch meetings",
         variant: 'destructive'
       });
     } finally {
       setLoading(false);
-      console.log('fetchMeetings: setLoading(false)');
+    }
+  }
+
+  const getClientName = (meeting: Meeting) => {
+    if (meeting.client_id && typeof meeting.client_id === 'object') {
+      const first = (meeting.client_id as any).first_name || '';
+      const last = (meeting.client_id as any).last_name || '';
+      const name = `${first} ${last}`.trim();
+      return name || 'N/A';
+    }
+    return 'N/A'
+  }
+
+  const getClientContact = (meeting: Meeting) => {
+    if (meeting.client_id && typeof meeting.client_id === 'object') {
+      return (meeting.client_id as any).phone || '-'
+    }
+    return '-'
+  }
+
+  const getRateAndType = (meeting: Meeting) => {
+    if (meeting.consultation_type === 'free') return 'Free';
+    const rate = meeting.hourly_rate || (meeting.lawyer_id as any).video_rate || 0;
+    return `$${rate}`;
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      // DD.MM.YY format as seen in target design
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+      }).replace(/\//g, '.');
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  const formatTimeRange = (meeting: Meeting) => {
+    const time = meeting.requested_time || (meeting as any).time;
+    if (!time) return '-';
+
+    try {
+      const duration = (meeting as any).duration || 60;
+      const [hours, minutes] = time.split(':').map(Number);
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0, 0);
+
+      const endDate = new Date(startDate.getTime() + duration * 60000);
+
+      const formatTime = (date: Date) => {
+        return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+      };
+
+      // 24h format (15:00 - 15:30) as seen in target design
+      return `${formatTime(startDate)} - ${formatTime(endDate)}`;
+    } catch (e) {
+      return time;
     }
   }
 
   const filteredMeetings = useMemo(() => {
-    let filtered = meetings
+    let filtered = meetings.filter(m => {
+      if (activeTab === 'Approved') return ['approved', 'scheduled', 'active'].includes(m.status);
+      if (activeTab === 'Pending') return m.status === 'pending_approval';
+      if (activeTab === 'History') {
+        const historyStatuses = ['completed', 'cancelled', 'rejected', 'expired', 'declined'];
+        if (!historyStatuses.includes(m.status)) return false;
 
-    if (debouncedSearchTerm) {
-      const searchLower = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(meeting => {
-        const clientName = getClientName(meeting).toLowerCase()
-        const lawyerName = getLawyerName(meeting).toLowerCase()
-        const title = (meeting.meeting_title || meeting.title || '').toLowerCase()
-        return clientName.includes(searchLower) ||
-               lawyerName.includes(searchLower) ||
-               title.includes(searchLower)
-      })
-    }
+        if (historyStatusFilter === 'all') return true;
+        if (historyStatusFilter === 'completed') return m.status === 'completed';
+        if (historyStatusFilter === 'cancelled') return m.status === 'cancelled';
+        if (historyStatusFilter === 'declined') return m.status === 'declined';
+        if (historyStatusFilter === 'expired') return m.status === 'expired';
+        return true;
+      }
+      return true;
+    });
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(meeting => meeting.status === statusFilter)
+    if (currentSearchTerm) {
+      const lower = currentSearchTerm.toLowerCase();
+      filtered = filtered.filter(m =>
+        getClientName(m).toLowerCase().includes(lower) ||
+        (m.meeting_title || m.title || '').toLowerCase().includes(lower)
+      );
     }
 
     return filtered;
-  }, [meetings, debouncedSearchTerm, statusFilter]);
+  }, [meetings, activeTab, currentSearchTerm]);
 
-  const getClientName = useCallback((meeting: Meeting) => {
-    if (meeting.client_id && typeof meeting.client_id === 'object') {
-      return `${meeting.client_id.first_name} ${meeting.client_id.last_name}`
-    }
-    return 'Unknown Client'
-  }, [])
+  const counts = useMemo(() => ({
+    Approved: meetings.filter(m => ['approved', 'scheduled', 'active'].includes(m.status)).length,
+    Pending: meetings.filter(m => m.status === 'pending_approval').length,
+    History: meetings.filter(m => ['completed', 'cancelled', 'rejected'].includes(m.status)).length,
+  }), [meetings]);
 
-  const getLawyerName = useCallback((meeting: Meeting) => {
-    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object') {
-      return `${meeting.lawyer_id.first_name} ${meeting.lawyer_id.last_name}`
-    }
-    return 'Unknown Lawyer'
-  }, [])
-
-  const getLawyerCharges = useCallback((meeting: Meeting) => {
-    
-    // First priority: Use hourly_rate from the meeting (for new consultations)
-    if (meeting.hourly_rate !== undefined && meeting.hourly_rate !== null) {
-      return meeting.hourly_rate
-    }
-    
-    // Check if the field has a different name in the API response
-    const anyMeeting = meeting as any;
-    if (anyMeeting.hourlyRate !== undefined && anyMeeting.hourlyRate !== null) {
-      return anyMeeting.hourlyRate
-    }
-    if (anyMeeting.rate !== undefined && anyMeeting.rate !== null) {
-      return anyMeeting.rate
-    }
-    if (anyMeeting.charges !== undefined && anyMeeting.charges !== null) {
-      return anyMeeting.charges
-    }
-    
-    // Second priority: Use cached rate if available
-    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' && lawyerRatesCache[meeting.lawyer_id._id]) {
-      return lawyerRatesCache[meeting.lawyer_id._id]
-    }
-    
-    // Third priority: Use profile data (may be outdated)
-    if (meeting.lawyer_id && typeof meeting.lawyer_id === 'object') {
-      return meeting.lawyer_id.video_rate || meeting.lawyer_id.charges || 0
-    }
-    
-    return 0
-  }, [lawyerRatesCache])
-
-  const formatScheduledTime = useCallback((meeting: Meeting) => {
-    
-    // Try various field names that might be used by the API
-    const anyMeeting = meeting as any;
-    const date = meeting.requested_date || meeting.date || anyMeeting.requestedDate || anyMeeting.scheduledDate;
-    const time = meeting.requested_time || meeting.time || anyMeeting.requestedTime || anyMeeting.scheduledTime;
-    
-    if (!date || date === '' || date === null) {
-      return 'Not scheduled'
-    }
-    
-    try {
-      const formattedDate = new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric', 
-        year: 'numeric'
-      })
-      
-      return time && time !== '' && time !== null ? `${formattedDate} at ${time}` : formattedDate
-    } catch (error) {
-      console.error('Error formatting date:', date, error);
-      return 'Invalid date'
-    }
-  }, [])
-
-  // Function to calculate and format end time with date
-  const formatEndTime = useCallback((meeting: Meeting) => {
-    // Try various field names that might be used by the API
-    const anyMeeting = meeting as any;
-    const date = meeting.requested_date || meeting.date || anyMeeting.requestedDate || anyMeeting.scheduledDate;
-    const time = meeting.requested_time || meeting.time || anyMeeting.requestedTime || anyMeeting.scheduledTime;
-    const duration = meeting.duration || anyMeeting.duration || 60; // Default to 60 minutes if no duration
-    
-    if (!date || date === '' || date === null || !time || time === '' || time === null) {
-      return 'Not scheduled'
-    }
-    
-    try {
-      // Parse the time string (assuming format like "HH:MM" or "HH:MM:SS")
-      const [hours, minutes] = time.split(':').map(Number);
-      
-      // Create a date object for the meeting start time
-      const startDate = new Date(date);
-      startDate.setHours(hours, minutes, 0, 0);
-      
-      // Calculate end time by adding duration (in minutes)
-      const endDate = new Date(startDate.getTime() + duration * 60000);
-      
-      // Format the end date
-      const formattedDate = endDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric', 
-        year: 'numeric'
-      });
-      
-      // Format the end time
-      const formattedTime = endDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      return `${formattedDate} at ${formattedTime}`;
-    } catch (error) {
-      console.error('Error calculating end time:', error);
-      return 'Invalid time'
-    }
-  }, [])
-
-  // Check if approve/reject buttons should be shown
-  const shouldShowApproveReject = (meeting: Meeting) => {
-    if (!currentUser) return false
-    
-    // Only lawyers can see approve/reject buttons
-    if (currentUser.account_type !== 'lawyer') return false
-    
-    // Only show for pending_approval meetings
-    if (meeting.status !== 'pending_approval') return false
-    
-    // Check if meeting was created by a client
-    if (meeting.created_by && typeof meeting.created_by === 'object') {
-      return meeting.created_by.account_type === 'client'
-    }
-    
-    // Fallback: check if client_id exists and is different from current user
-    if (meeting.client_id && typeof meeting.client_id === 'object') {
-      return meeting.client_id._id !== currentUser._id
-    }
-    
-    return false
-  }
-
-  const handleConnectToMeeting = (meeting: Meeting) => {
-    if (meeting.meeting_link) {
-      window.open(meeting.meeting_link, '_blank')
-    } else {
+  const handleCopyLink = (link?: string) => {
+    if (!link) {
       toast({
-        title: t('pages:meeting.toast.error.title'),
-        description: t('pages:meeting.errors.noLink'),
-        variant: 'destructive'
-      })
+        title: "No link available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      navigator.clipboard.writeText(link);
+      toast({
+        description: (
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 bg-green-500 rounded-full flex items-center justify-center shrink-0">
+              <Check className="h-3 w-3 text-white" strokeWidth={4} />
+            </div>
+            <span className="font-bold text-[#0F172A] text-[14px]">
+              Meeting link copied
+            </span>
+          </div>
+        ),
+        // Simplified className to avoid potential issues
+        className: "bg-white border-slate-200 shadow-lg",
+      });
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast({
+        title: "Copy failed",
+        description: "Please try again or copy manually",
+        variant: "destructive"
+      });
     }
   }
 
-  const handleApproveMeeting = async (meetingId: string) => {
+  const handleJoin = (link?: string) => {
+    if (!link) {
+      toast({ title: "No link available", variant: "destructive" });
+      return;
+    }
+    window.open(link, '_blank');
+  }
+
+  const openCancelModal = (meeting: Meeting) => {
+    setMeetingToCancel(meeting)
+    setShowCancelModal(true)
+  }
+
+  const handleConfirmCancel = async () => {
+    if (!meetingToCancel) return
+
     try {
-      setApprovingMeeting(meetingId)
-      const response = await approveMeeting(meetingId)
+      setCancellingStatus(true)
+      const response = await updateMeetingStatus(meetingToCancel._id, 'cancelled')
       if (response.success) {
-        setMeetings((prev) =>
-          prev.map((meeting) => 
-            meeting._id === meetingId 
-              ? { ...meeting, status: "approved" as const, meeting_link: response.data?.meeting_link || meeting.meeting_link } 
-              : meeting
-          ),
-        )
-       
-        toast({
-          title: t('pages:meeting.toast.approved.title'),
-          description: t('pages:meeting.toast.approved.description'),
-        })
+        setMeetings(prev => prev.map(m => m._id === meetingToCancel._id ? { ...m, status: 'cancelled' } : m))
+        toast({ title: "Meeting cancelled successfully" })
+        setShowCancelModal(false)
       } else {
-        throw new Error(response.message || t('pages:meeting.errors.approveFailed'))
+        throw new Error(response.message)
       }
     } catch (error: any) {
-      toast({
-        title: t('pages:meeting.toast.error.title'),
-        description: error.message || t('pages:meeting.errors.generic'),
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: error.message || "Failed to cancel meeting", variant: "destructive" })
     } finally {
-      setApprovingMeeting(null)
+      setCancellingStatus(false)
     }
-  }
-
-  const handleRejectMeeting = async (meetingId: string) => {
-    try {
-      setRejectingMeeting(meetingId)
-      const response = await rejectMeeting(meetingId)
-      if (response.success) {
-        setMeetings((prev) =>
-          prev.map((meeting) => (meeting._id === meetingId ? { ...meeting, status: "rejected" as const } : meeting)),
-        )
-     
-        toast({
-          title: t('pages:meeting.toast.rejected.title'),
-          description: t('pages:meeting.toast.rejected.description'),
-        })
-      } else {
-        throw new Error(response.message || t('pages:meeting.errors.rejectFailed'))
-      }
-    } catch (error: any) {
-      toast({
-        title: t('pages:meeting.toast.error.title'),
-        description: error.message || t('pages:meeting.errors.generic'),
-        variant: "destructive",
-      })
-    } finally {
-      setRejectingMeeting(null)
-    }
-  }
-
-  const handleEditMeeting = (meeting: Meeting) => {
-    setEditingMeeting(meeting)
-    setIsEditModalOpen(true)
   }
 
   const handleMeetingUpdated = (updatedMeeting: Meeting) => {
-    // Update local state with the updated meeting
     setMeetings((prev) =>
       prev.map((meeting) => (meeting._id === updatedMeeting._id ? updatedMeeting : meeting))
     )
-    
-    toast({
-      title: t("pages:meeting.toasta.updatedTitle"),
-      description: t("pages:meeting.toasta.updatedDescription"),
-    })
+    toast({ title: "Meeting updated successfully" })
   }
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false)
-    setEditingMeeting(null)
-  }
-
-  const getStatusBadge = (status: string) => {
-    const statusKey = status.toLowerCase()
-    const variants = {
-      pending_approval: 'secondary',
-      approved: 'secondary',
-      active: 'secondary',
-      completed: 'secondary',
-      cancelled: 'secondary',
-      rejected: 'secondary'
-    } as const
-    
-    const colors = {
-      pending_approval: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      approved: 'bg-green-100 text-green-800 border-green-200',
-      active: 'bg-blue-100 text-blue-800 border-blue-200',
-      completed: 'bg-gray-100 text-gray-800 border-gray-200',
-      cancelled: 'bg-red-100 text-red-800 border-red-200',
-      rejected: 'bg-red-100 text-red-800 border-red-200'
-    }
-
-    return (
-      <Badge variant={variants[statusKey as keyof typeof variants] || 'secondary'} className={`text-xs ${colors[statusKey as keyof typeof colors]}`}>
-        {t(`pages:meeting.status.${statusKey}`)}
-      </Badge>
-    )
-  }
-
-  // Mobile card view for each meeting
-  const MeetingCard = memo(({ meeting }: { meeting: Meeting }) => (
-    <Card className="mb-4 p-4">
-      <div className="space-y-3">
-        {/* Header with Client/Lawyer and Status */}
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-2">
-            <Users className="h-4 w-4 text-gray-500" />
-            <div>
-              <div className="font-medium text-sm">{getClientName(meeting)}</div>
-              <div className="text-xs text-gray-500">Client</div>
-            </div>
-          </div>
-          {getStatusBadge(meeting.status || "scheduled")}
-        </div>
-
-        {/* Lawyer Info */}
-        <div className="flex items-center space-x-2">
-          <User className="h-4 w-4 text-gray-500" />
-          <div>
-            <div className="font-medium text-sm">{getLawyerName(meeting)}</div>
-            <div className="text-xs text-gray-500">Lawyer</div>
-          </div>
-        </div>
-
-        {/* Rate Type */}
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-500">Rate Type</span>
-          <div className="flex items-center space-x-1">
-            {meeting.consultation_type === 'free' ? (
-             <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-  {t('pages:meeting.labels.free')}
-</span>
-            ) : (
-              <>
-                <DollarSign className="h-3 w-3 text-green-600" />
-                <span className="text-sm font-medium text-green-600">
-                  ${meeting.custom_fee && meeting.hourly_rate ? meeting.hourly_rate : getLawyerCharges(meeting)}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Time Information */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">Start Time</span>
-            <div className="text-xs text-right">
-              <div className="flex items-center space-x-1">
-                <Clock className="h-3 w-3 text-gray-400" />
-                <span>{formatScheduledTime(meeting)}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500">End Time</span>
-            <div className="text-xs text-right">
-              <div className="flex items-center space-x-1">
-                <Clock className="h-3 w-3 text-gray-400" />
-                <span>{formatEndTime(meeting)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Meeting Link */}
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-gray-500">Meeting Link</span>
-          {meeting.meeting_link ? (
-            <div className="flex items-center space-x-1">
-              <ExternalLink className="h-3 w-3 text-blue-600" />
-              <span className="text-xs text-blue-600 truncate max-w-[120px]">
-                Available
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-gray-500">No link</span>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2 pt-2">
-          {/* Edit button for pending/approved meetings */}
-          {(meeting.status === 'pending_approval' || meeting.status === 'approved') && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 text-xs px-2 py-1 flex-1 min-w-[80px]"
-              onClick={() => handleEditMeeting(meeting)}
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              {t("pages:meeting.actions.edit")}
-            </Button>
-          )}
-          
-          {/* Show approve/reject buttons only for lawyers when meeting is pending_approval */}
-          {shouldShowApproveReject(meeting) && (
-            <>
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 flex-1 min-w-[80px]"
-                onClick={() => handleApproveMeeting(meeting._id)}
-                disabled={approvingMeeting === meeting._id}
-              >
-                {approvingMeeting === meeting._id ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <Check className="h-3 w-3 mr-1" />
-                )}
-                {t('pages:meeting.actions.approve')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 flex-1 min-w-[80px]"
-                onClick={() => handleRejectMeeting(meeting._id)}
-                disabled={rejectingMeeting === meeting._id}
-              >
-                {rejectingMeeting === meeting._id ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <X className="h-3 w-3 mr-1" />
-                )}
-                {t('pages:meeting.actions.reject')}
-              </Button>
-            </>
-          )}
-          
-          {/* Connect button for approved/active meetings */}
-          {(meeting.status === 'approved' || meeting.status === 'active') && meeting.meeting_link && (
-            <Button
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 flex-1 min-w-[80px]"
-              onClick={() => handleConnectToMeeting(meeting)}
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              {t('pages:meeting.actions.connect')}
-            </Button>
-          )}
-        </div>
-
-        {/* Meeting Title/Description */}
-        {(meeting.meeting_title || meeting.meeting_description) && (
-          <div className="border-t pt-2 mt-2">
-            {meeting.meeting_title && (
-              <div className="text-xs font-medium truncate">{meeting.meeting_title}</div>
-            )}
-            {meeting.meeting_description && (
-              <div className="text-xs text-gray-500 line-clamp-2">{meeting.meeting_description}</div>
-            )}
-          </div>
-        )}
-      </div>
-    </Card>
-  ))
-
-  MeetingCard.displayName = 'MeetingCard'
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Video className="h-5 w-5" />
-          {t('pages:meeting.header.title')}
-        </CardTitle>
-        <CardDescription>
-          {t('pages:meeting.header.description')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* Search and Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder={t('pages:meeting.search.placeholder')}
-              value={searchTerm}
+    <div className="space-y-6">
+      {/* Tabs & Actions Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-1">
+        <div className="flex items-center gap-8">
+          {(['Approved', 'Pending', 'History'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "relative pb-3 text-[15px] font-bold transition-all",
+                activeTab === tab
+                  ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {tab === 'Approved' ? t("pages:consultation.approved") : tab === 'Pending' ? t("pages:consultation.pending") : t("pages:consultation.history")}{tab === 'Pending' && counts.Pending > 0 ? ` (${counts.Pending})` : ''}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {activeTab === 'History' && (
+            <div className="w-[180px]">
+              <Select value={historyStatusFilter} onValueChange={setHistoryStatusFilter}>
+                <SelectTrigger className="h-10 bg-white border-slate-300 rounded-md text-sm font-bold text-[#0F172A] focus:ring-0 focus:border-slate-400">
+                  <SelectValue placeholder={t("pages:common.allStatuses")} />
+                </SelectTrigger>
+                <SelectContent className="border-slate-200 shadow-xl rounded-xl">
+                  <SelectItem value="all" className="font-bold text-[13px] py-2.5 pl-9 pr-4 cursor-pointer focus:bg-slate-50">{t("pages:common.allStatuses")}</SelectItem>
+                  <SelectItem value="completed" className="font-bold text-[13px] py-2.5 pl-9 pr-4 cursor-pointer focus:bg-slate-50">{t("pages:consultation.completed")}</SelectItem>
+                  <SelectItem value="cancelled" className="font-bold text-[13px] py-2.5 pl-9 pr-4 cursor-pointer focus:bg-slate-50">{t("pages:consultation.cancelled")}</SelectItem>
+                  <SelectItem value="declined" className="font-bold text-[13px] py-2.5 pl-9 pr-4 cursor-pointer focus:bg-slate-50">{t("pages:consultation.declined")}</SelectItem>
+                  <SelectItem value="expired" className="font-bold text-[13px] py-2.5 pl-9 pr-4 cursor-pointer focus:bg-slate-50">{t("pages:consultation.expired")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t("pages:common.search")}
+              value={currentSearchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-4 pr-10 py-2 w-[240px] h-10 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-slate-400 placeholder:text-slate-400 font-bold text-[#0F172A] bg-white transition-all"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder={t('pages:meeting.filter.placeholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('pages:meeting.filter.all')}</SelectItem>
-                <SelectItem value="pending_approval">{t('pages:meeting.filter.pending_approval')}</SelectItem>
-                <SelectItem value="approved">{t('pages:meeting.filter.approved')}</SelectItem>
-                <SelectItem value="active">{t('pages:meeting.filter.active')}</SelectItem>
-                <SelectItem value="completed">{t('pages:meeting.filter.completed')}</SelectItem>
-                <SelectItem value="cancelled">{t('pages:meeting.filter.cancelled')}</SelectItem>
-                <SelectItem value="rejected">{t('pages:meeting.filter.rejected')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Button
+            onClick={onNewConsultation}
+            className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-6 rounded-md text-[13px] transition-all"
+          >
+            {t("pages:consultation.newVideoConsultation")}
+          </Button>
         </div>
+      </div>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="min-w-[120px]">{t('pages:meeting.table.client')}</TableHead>
-                <TableHead className="min-w-[120px] text-left pl-1">{t('pages:meeting.table.lawyer')}</TableHead>
-                <TableHead className="min-w-[120px] text left pl-0">{t("pages:meeting.table.rateType")}</TableHead>
-                <TableHead className="min-w-[180px] pl-9">{t('pages:meeting.table.time')}</TableHead>
-                <TableHead className="min-w-[180px] pl-11">{t('pages:meeting.table.endTime')}</TableHead>
-                <TableHead className="min-w-[160px] pl-7">{t('pages:meeting.table.status')}</TableHead>
-                <TableHead className="min-w-[200px] pl-10">{t('pages:meeting.table.link')}</TableHead>
-                <TableHead className="min-w-[300px] pl-16">{t('pages:meeting.table.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      {/* Precise UI Table Container */}
+      <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm mt-4">
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="bg-[#F1F5F9] border-b border-slate-300 text-left text-[#0F172A] text-[13px] font-bold">
+                <th className="px-4 py-3 font-bold">{t("pages:consultation.clientName")}</th>
+                <th className="px-4 py-3 font-bold">{t("pages:consultation.clientContact")}</th>
+                <th className="px-4 py-3 font-bold">{t("pages:consultation.rateAndType")}</th>
+                <th className="px-4 py-3 font-bold">
+                  {activeTab === 'Pending' || activeTab === 'History' ? t("pages:consultation.bookingDate") : t("pages:consultation.date")}
+                </th>
+                <th className="px-4 py-3 font-bold">
+                  {activeTab === 'Pending' || activeTab === 'History' ? t("pages:consultation.bookingTime") : t("pages:consultation.time")}
+                </th>
+                {activeTab === 'Pending' ? (
+                  <>
+                    <th className="px-4 py-3 font-bold">{t("pages:consultation.invite")}</th>
+                    <th className="px-4 py-3 font-bold text-center">{t("pages:common.edit")}</th>
+                  </>
+                ) : activeTab === 'History' ? (
+                  <>
+                    <th className="px-4 py-3 font-bold">{t("pages:consultation.statusUpdated")}</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="px-4 py-3 font-bold">{t("pages:consultation.consultationLink")}</th>
+                    <th className="px-4 py-3 font-bold text-center">{t("pages:consultation.action")}</th>
+                  </>
+                )}
+              </tr>
+            </thead>
+            <tbody>
               {loading ? (
-                // Skeleton loading state
-                Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index} className={index % 2 === 0 ? "bg-gray-50" : ""}>
-                    <TableCell><Skeleton width={100} /></TableCell>
-                    <TableCell><Skeleton width={100} /></TableCell>
-                    <TableCell><Skeleton width={60} /></TableCell>
-                    <TableCell><Skeleton width={120} /></TableCell>
-                    <TableCell><Skeleton width={120} /></TableCell>
-                    <TableCell><Skeleton width={80} height={24} /></TableCell>
-                    <TableCell><Skeleton width={150} /></TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        <Skeleton width={80} height={32} />
-                        <Skeleton width={80} height={32} />
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse border-b border-slate-300 last:border-0">
+                    <td colSpan={8} className="px-4 py-6 bg-slate-50"></td>
+                  </tr>
                 ))
               ) : filteredMeetings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    <div className="flex flex-col items-center space-y-2">
-                      <Calendar className="h-8 w-8 text-gray-400" />
-                      <span>{t('pages:meeting.empty')}</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={8} className="text-center py-16 text-slate-500 bg-white">
+                    <Video className="h-10 w-10 mx-auto mb-3 opacity-20 text-[#0F172A]" />
+                    <p className="font-bold">{t("pages:consultation.noUsersFound")}</p>
+                  </td>
+                </tr>
               ) : (
-                filteredMeetings.map((meeting: Meeting, index: number) => (
-                  <TableRow key={meeting._id} className={index % 2 === 0 ? "bg-gray-50" : ""}>
-                    <TableCell className="min-w-[120px] font-medium">
+                filteredMeetings.map((meeting) => (
+                  <tr key={meeting._id} className="border-b border-slate-300 last:border-0 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#0F172A] text-[13px] whitespace-nowrap">
                       {getClientName(meeting)}
-                    </TableCell>
-                    <TableCell className="min-w-[120px] font-medium">
-                      {getLawyerName(meeting)}
-                    </TableCell>
-                    <TableCell className="min-w-[120px]">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1">
-                          {meeting.consultation_type === 'free' ? (
-                            <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full -ml-1">
-                               {t('pages:meeting.consultation.free')}
-                            </span>
-                          ) : (
-                            <>
-                              <DollarSign className="h-3 w-3 text-green-600" />
-                              <div className="flex flex-col">
-                                <span className="text-sm font-medium text-green-600">
-                                  ${meeting.custom_fee && meeting.hourly_rate ? meeting.hourly_rate : getLawyerCharges(meeting)}
-                                  {meeting.custom_fee && <span className="text-xs text-blue-600"></span>}
-                                </span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {meeting.consultation_type === "free"
-                            ? t("pages:meeting.consultation.free")
-                            : t("pages:meeting.consultation.paid")}
-                        </div>
+                    </td>
+                    <td className="px-4 py-3 text-[#0F172A] font-medium text-[13px] whitespace-nowrap">
+                      {getClientContact(meeting)}
+                    </td>
+                    <td className="px-4 py-3 text-[#0F172A] font-bold text-[13px] whitespace-nowrap">
+                      {getRateAndType(meeting)}
+                    </td>
+                    <td className="px-4 py-3 text-[#0F172A] font-bold text-[13px] whitespace-nowrap">
+                      {formatDate(meeting.requested_date || meeting.date)}
+                    </td>
+                    <td className="px-4 py-3 text-[#0F172A] font-bold text-[13px] whitespace-nowrap">
+                      {formatTimeRange(meeting)}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          "h-3 w-3 rounded-full shrink-0",
+                          meeting.status === 'completed' || meeting.status === 'approved' || meeting.status === 'scheduled' ? "bg-[#4ADE80]" :
+                            meeting.status === 'pending_approval' ? "bg-[#FFB600]" : "bg-slate-300"
+                        )} />
+                        <span className="text-[#0F172A] font-bold text-[13px]">
+                          {meeting.status === 'completed' ? t("pages:consultation.completed") :
+                            meeting.status === 'approved' || meeting.status === 'scheduled' ? t("pages:consultation.confirmed") :
+                              meeting.status === 'pending_approval' ? t("pages:consultation.pendingClient") :
+                                meeting.status === 'cancelled' ? t("pages:consultation.cancelledLawyer") :
+                                  meeting.status === 'declined' ? t("pages:consultation.declinedClient") :
+                                    meeting.status === 'expired' ? t("pages:consultation.expiredNoResponse") :
+                                      meeting.status === 'rejected' ? t("pages:consultation.declined") : meeting.status}
+                        </span>
                       </div>
-                    </TableCell>
-                    <TableCell className="min-w-[180px]">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-1 text-sm">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span>{formatScheduledTime(meeting)}</span>
-                        </div>
-                        {meeting.meeting_title && (
-                          <div className="text-xs text-gray-500 truncate max-w-[160px]">
-                            {meeting.meeting_title}
-                          </div>
-                        )}
-                        {meeting.meeting_description && (
-                          <div className="text-xs text-gray-400 truncate max-w-[160px]">
-                            {meeting.meeting_description}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                  <TableCell className="min-w-[210px]">
-  <div className="space-y-1">
-    <div className="flex items-center gap-1.5 text-sm text-gray-700">
-      <Clock className="h-3 w-3 text-gray-500 relative " />
-      <span>{formatEndTime(meeting)}</span>
-    </div>
-    {meeting.duration && (
-      <div className="text-xs text-gray-500 ml-5">
-        Duration: {meeting.duration} minutes
-      </div>
-    )}
-  </div>
-</TableCell>
-
-
-                    <TableCell className="min-w-[100px]">
-                      {getStatusBadge(meeting.status || "scheduled")}
-                    </TableCell>
-                    <TableCell className="min-w-[200px]">
-                      {meeting.meeting_link ? (
-                        <div className="flex items-center space-x-2">
-                          <ExternalLink className="h-3 w-3 text-blue-600" />
-                          <span className="text-xs text-blue-600 truncate max-w-[150px]">
-                            {meeting.meeting_link}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">{t('meeting.noLink')}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="min-w-[300px]">
-                      <div className="flex gap-1 flex-wrap">
-                        {/* Edit button for pending/approved meetings */}
-                        {(meeting.status === 'pending_approval' || meeting.status === 'approved') && (
+                    </td>
+                    {activeTab === 'Pending' ? (
+                      <>
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <Button
-                            size="sm"
                             variant="outline"
-                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 text-xs px-2 py-1"
-                            onClick={() => handleEditMeeting(meeting)}
+                            onClick={() => openCancelModal(meeting)}
+                            className="h-8 px-3 bg-[#FFF5F5] border-[#FF0000] text-[#FF0000] hover:bg-[#FFE5E5] hover:text-[#D10000] text-[12px] font-bold rounded flex items-center gap-1.5 transition-all"
                           >
-                            <Edit className="h-3 w-3 mr-1" />
-                            {t("pages:meeting.actions.edit")}
+                            <X className="h-3.5 w-3.5" strokeWidth={3} />
+                            {t("pages:consultation.cancelInvite")}
                           </Button>
-                        )}
-                        
-                        {/* Show approve/reject buttons only for lawyers when meeting is pending_approval */}
-                        {shouldShowApproveReject(meeting) && (
-                          <>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={() => {
+                                    setEditingMeeting(meeting)
+                                    setIsEditModalOpen(true)
+                                  }}
+                                  className="p-1.5 hover:bg-slate-100 rounded transition-colors text-[#0F172A] inline-flex items-center justify-center"
+                                >
+                                  <Edit className="h-5 w-5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-[#0F172A] text-white border-none text-[12px] font-medium p-2 rounded-md">
+                                <p>Edit details</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </td>
+                      </>
+                    ) : activeTab === 'History' ? (
+                      <>
+                        <td className="px-4 py-3 text-[#0F172A] font-bold text-[13px] whitespace-nowrap">
+                          {(() => {
+                            const d = new Date(meeting.updatedAt || meeting.createdAt || (meeting as any).updated_at || new Date());
+                            const month = d.toLocaleDateString('en-US', { month: 'short' });
+                            const day = d.getDate();
+                            const year = d.getFullYear();
+                            const hours = d.getHours().toString().padStart(2, '0');
+                            const minutes = d.getMinutes().toString().padStart(2, '0');
+                            const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+                            return `${month} ${day}, ${year} - ${hours}:${minutes} ${ampm}`;
+                          })()}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => handleCopyLink(meeting.meeting_link)}
+                                    className="p-1.5 bg-[#F1F5F9] hover:bg-slate-200 rounded border border-slate-300 transition-colors text-[#0F172A]"
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-[#0F172A] text-white border-none text-[11px] font-medium">
+                                  <p>{t("pages:dashboard.copyLink")}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                             <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
-                              onClick={() => handleApproveMeeting(meeting._id)}
-                              disabled={approvingMeeting === meeting._id}
+                              onClick={() => handleJoin(meeting.meeting_link)}
+                              className="bg-[#0F172A] hover:bg-[#1E293B] text-white h-8 px-3 text-[12px] font-bold rounded flex items-center gap-1.5"
                             >
-                              {approvingMeeting === meeting._id ? (
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                              ) : (
-                                <Check className="h-3 w-3 mr-1" />
-                              )}
-                              {t('pages:meeting.actions.approve')}
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              {t("pages:consultation.join")}
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1"
-                              onClick={() => handleRejectMeeting(meeting._id)}
-                              disabled={rejectingMeeting === meeting._id}
-                            >
-                              {rejectingMeeting === meeting._id ? (
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                              ) : (
-                                <X className="h-3 w-3 mr-1" />
-                              )}
-                              {t('pages:meeting.actions.reject')}
-                            </Button>
-                          </>
-                        )}
-                        
-                        {/* Connect button for approved/active meetings */}
-                        {(meeting.status === 'approved' || meeting.status === 'active') && meeting.meeting_link && (
-                          <Button
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
-                            onClick={() => handleConnectToMeeting(meeting)}
-                          >
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            {t('pages:meeting.actions.connect')}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1.5 hover:bg-slate-100 rounded transition-colors text-[#0F172A]">
+                                <MoreHorizontal className="h-5 w-5" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[190px] p-1 shadow-lg border-slate-300">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingMeeting(meeting)
+                                  setIsEditModalOpen(true)
+                                }}
+                                className="flex items-center gap-2 px-3 py-2 text-[13px] font-bold text-slate-700 cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4" />
+                                {t("pages:common.edit")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openCancelModal(meeting)}
+                                className="flex items-center gap-2 px-3 py-2 text-[13px] font-bold text-red-500 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                {t("pages:consultation.cancelAppointment")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </>
+                    )}
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* Mobile Card View */}
-        <div className="lg:hidden">
-          {loading ? (
-            // Mobile skeleton loading state
-            Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} className="mb-4 p-4">
-                <div className="space-y-3">
-                  <Skeleton width={120} height={20} />
-                  <Skeleton width={100} height={16} />
-                  <Skeleton width={80} height={16} />
-                  <Skeleton width={140} height={16} />
-                  <Skeleton width={100} height={32} />
+      {/* Custom Cancel Modal */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="sm:max-w-[480px] p-10 outline-none border-none shadow-2xl rounded-2xl">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <h3 className="text-[22px] font-bold text-[#0F172A] tracking-tight">
+              {activeTab === 'Pending' ? t("pages:consultation.cancelInviteTitle") : t("pages:consultation.cancelConsultationTitle")}
+            </h3>
+            <div className="space-y-4 w-full">
+              {activeTab === 'Pending' && meetingToCancel && (
+                <p className="text-[#0F172A] font-bold text-[15px]">
+                  Client: {getClientName(meetingToCancel)}
+                </p>
+              )}
+              {activeTab === 'Pending' && (
+                <div className="text-left space-y-2">
+                  <Label className="text-[13px] font-bold text-slate-600 ml-1">{t("pages:consultation.selectReasonOptional")}</Label>
+                  <Select>
+                    <SelectTrigger className="w-full h-11 bg-white border-slate-300 rounded-lg focus:ring-0 focus:border-[#0F172A] text-[14px] font-medium">
+                      <SelectValue placeholder={t("pages:consultation.selectReasonOptional")} />
+                    </SelectTrigger>
+                    <SelectContent className="border-slate-200 shadow-xl rounded-xl">
+                      <SelectItem value="schedule_conflict" className="font-bold text-[13px] py-3 cursor-pointer">{t("pages:consultation.scheduleConflict")}</SelectItem>
+                      <SelectItem value="duplicate_request" className="font-bold text-[13px] py-3 cursor-pointer">{t("pages:consultation.duplicateRequest")}</SelectItem>
+                      <SelectItem value="missing_info" className="font-bold text-[13px] py-3 cursor-pointer">{t("pages:consultation.missingInformation")}</SelectItem>
+                      <SelectItem value="other" className="font-bold text-[13px] py-3 cursor-pointer">{t("pages:caseTypes.other")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </Card>
-            ))
-          ) : filteredMeetings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="flex flex-col items-center space-y-2">
-                <Calendar className="h-8 w-8 text-gray-400" />
-                <span>{t('pages:meeting.empty')}</span>
-              </div>
+              )}
+              {activeTab !== 'Pending' && (
+                <p className="text-slate-500 font-medium text-[15px]">
+                  {t("pages:consultation.cannotBeUndone")}
+                </p>
+              )}
             </div>
-          ) : (
-            filteredMeetings.map((meeting: Meeting) => (
-              <MeetingCard key={meeting._id} meeting={meeting} />
-            ))
-          )}
-        </div>
-      </CardContent>
-      
-      {/* Edit Meeting Modal */}
+            <div className="flex items-center gap-4 w-full pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowCancelModal(false)}
+                className="flex-1 bg-[#E5E5E5] border-none text-[#0F172A] font-bold h-12 rounded-lg hover:bg-slate-300 transition-all"
+              >
+                {t("pages:consultation.back")}
+              </Button>
+              <Button
+                onClick={handleConfirmCancel}
+                disabled={cancellingStatus}
+                className="flex-1 bg-[#FF0000] hover:bg-[#CC0000] text-white font-bold h-12 rounded-lg transition-all shadow-lg shadow-red-100"
+              >
+                {cancellingStatus ? <Loader2 className="h-5 w-5 animate-spin" /> : activeTab === 'Pending' ? t("pages:consultation.cancelInvite") : t("pages:consultation.confirmCancel")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
       <EditMeetingModal
         isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        meeting={editingMeeting}
-        onMeetingUpdated={handleMeetingUpdated}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setEditingMeeting(null)
+        }}
+        meeting={editingMeeting as any}
+        onMeetingUpdated={handleMeetingUpdated as any}
       />
-    </Card>
+
+      {/* New Consultation Modal */}
+      <ConsultationTypeModal
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
+        onConsultationScheduled={() => {
+          setIsNewModalOpen(false)
+          fetchMeetings()
+          toast({ title: "Consultation requested successfully" })
+        }}
+      />
+    </div>
   )
 }

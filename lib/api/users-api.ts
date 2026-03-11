@@ -30,7 +30,7 @@ export async function getLawyers() {
     throw new Error(`Failed to fetch lawyers: ${res.statusText}`);
   }
 
-  
+
 
   const data = await res.json();
   return { success: true, users: data.data || [] };
@@ -66,7 +66,7 @@ export async function getClients() {
 export async function getRelatedUsers() {
   const stringUser = localStorage.getItem("user");
   const user = stringUser ? JSON.parse(stringUser) : null;
-  
+
   if (!user) {
     throw new Error("User not authenticated");
   }
@@ -77,6 +77,6 @@ export async function getRelatedUsers() {
   } else if (user.account_type === 'client') {
     return getLawyers();
   }
-  
+
   throw new Error("Invalid user role");
 }

@@ -1,5 +1,5 @@
 // Korean Legal Case Status Types based on court outcomes
-export type CaseStatus = 
+export type CaseStatus =
   // Judgment Outcomes (판결 종국)
   | "full_win"           // 전부 승소 - Full Win
   | "full_loss"          // 전부 패소 - Full Loss  
@@ -38,6 +38,8 @@ export interface Case {
     first_name: string
     last_name?: string
     id: string
+    email?: string
+    phone?: string
   } | string
   lawyer_id: {
     _id: string
@@ -47,6 +49,9 @@ export interface Case {
   } | string
   files: any[]
   important_dates?: { event: string; date: string }[]
+  priority?: string
+  notes?: string
+  est_duration?: string
   created_at: string
   updated_at: string
   createdAt: string

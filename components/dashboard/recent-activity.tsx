@@ -11,320 +11,119 @@ import { useTranslation } from "@/hooks/useTranslation"
 import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 
-interface ActivityItemProps {
-  icon: React.ReactNode
+interface ActivityLogItemProps {
   title: string
-  description: string
+  category: string
   time: string
-  iconColor?: string
-  bgColor?: string
-  onClick?: () => void
+  type: 'client' | 'document' | 'consultation' | 'system'
 }
 
-function ActivityItem({ icon, title, description, time, iconColor = "text-primary", bgColor = "from-primary/10 to-accent/20", onClick }: ActivityItemProps) {
+function ActivityLogItem({ title, category, time, type }: ActivityLogItemProps) {
+  const dotColors = {
+    client: 'bg-red-500',
+    document: 'bg-blue-500',
+    consultation: 'bg-green-500',
+    system: 'bg-gray-400'
+  }
+
   return (
-    <div 
-      className={cn(
-        "flex items-start gap-4 p-3 rounded-lg transition-all duration-300 group cursor-pointer",
-        "bg-gradient-to-r", bgColor,
-        onClick && "hover:shadow-md hover:-translate-y-0.5"
-      )}
-      onClick={onClick}
-    >
-      <div className={cn("p-2 rounded-xl bg-white/60 backdrop-blur-sm", iconColor, "group-hover:scale-110 transition-transform duration-300")}>
-        {icon}
-      </div>
-      <div className="flex-1 space-y-1 min-w-0">
-        <p className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate">
+    <div className="flex items-center justify-between px-6 py-5 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all group cursor-default">
+      <div className="flex-1 min-w-0 pr-8">
+        <span className="text-[14px] font-bold text-[#1E293B] group-hover:text-black transition-colors truncate block">
           {title}
-        </p>
-        <p className="text-sm text-muted-foreground truncate">
-          {description}
-        </p>
+        </span>
       </div>
-      <div className="text-xs text-muted-foreground whitespace-nowrap">
-        {time}
-      </div>
-      {onClick && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+
+      <div className="flex items-center shrink-0">
+        <div className="hidden lg:block text-right min-w-[200px] px-6">
+          <span className="text-[13px] font-bold text-[#1E293B] opacity-80 tracking-tight">{category}</span>
         </div>
-      )}
+
+        <div className="text-right min-w-[200px] px-6">
+          <span className="text-[12px] text-slate-400 font-bold tracking-tight">{time}</span>
+        </div>
+
+        <div className="flex-shrink-0 ml-6 pr-1">
+          <div className={cn("w-2.5 h-2.5 rounded-full shadow-sm", dotColors[type])}></div>
+        </div>
+      </div>
     </div>
   )
 }
 
-export default function RecentActivity() {
-  const [activities, setActivities] = useState<ActivityItemProps[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const profile = useSelector((state: RootState) => state.auth.user)
-  const { notifications, fetchNotifications } = useNotifications()
+interface RecentActivityProps {
+  activities?: {
+    type: 'client' | 'document' | 'consultation' | 'system'
+    title: string
+    user: string
+    time: string
+    category?: string
+  }[]
+}
+
+export default function RecentActivity({ activities = [] }: RecentActivityProps) {
   const { t, language } = useTranslation()
-  const router = useRouter()
 
-  // Helper function to get notification title based on current language
-  const getNotificationTitle = (notification: any) => {
-    if (language === 'ko' && notification.titleKo) {
-      return notification.titleKo
-    }
-    return notification.title
-  }
+  const getTranslatedTitle = (title: string) => {
+    if (!title) return title;
+    if (title === "New Q&A Question") return t('pages:recentActivity.events.newQA');
+    if (title === "New Case Assigned") return t('pages:recentActivity.events.newCase');
+    if (title === "Case Updated") return t('pages:recentActivity.events.updateCase');
+    return title;
+  };
 
-  // Helper function to get notification message based on current language
-  const getNotificationMessage = (notification: any) => {
-    if (language === 'ko' && notification.messageKo) {
-      return notification.messageKo
-    }
-    return notification.message
-  }
-
-  useEffect(() => {
-    fetchNotifications({ limit: 4 })
-  }, [])
-
-  useEffect(() => {
-    const fetchRecentActivity = async () => {
-      const userId = profile?._id
-      if (!userId) return
-      
-      try {
-        setLoading(true)
-        setError(null)
-        
-        const combinedActivities: ActivityItemProps[] = []
-        
-        const recentNotifications = notifications.slice(0, 4).map(notification => ({
-          icon: getNotificationIcon(notification.type),
-          title: getNotificationTitle(notification),
-          description: getNotificationMessage(notification),
-          time: formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }),
-          iconColor: getNotificationIconColor(notification.type).iconColor,
-          bgColor: getNotificationIconColor(notification.type).bgColor,
-          onClick: () => handleNotificationClick(notification.type),
-        }))
-        
-        combinedActivities.push(...recentNotifications)
-        
-        if (recentNotifications.length < 4) {
-          try {
-            const response = await activityApi.getActivities(userId)
-            if (response.success && response.data) {
-              const activityData = response.data.slice(0, 4 - recentNotifications.length).map((activity: Activity) => ({
-                icon: getActivityIcon(activity.activity_name),
-                title: activity.activity_name,
-                description: activity.description,
-                time: formatTimeAgo(activity.created_at),
-                iconColor: getActivityIconColor(activity.activity_name).iconColor,
-                bgColor: getActivityIconColor(activity.activity_name).bgColor,
-              }))
-              combinedActivities.push(...activityData)
-            }
-          } catch (activityError) {
-            console.log("Regular activities not available, showing notifications only")
-          }
-        }
-        
-        setActivities(combinedActivities)
-      } catch (error) {
-        console.error("Failed to fetch recent activity:", error)
-        setError(t('common.error'))
-        setActivities([
-          {
-            icon: <Clock size={16} />,
-            title: t('dashboard.recentActivity'),
-            description: t('dashboard.recentActivity'),
-            time: "--",
-            iconColor: "text-gray-600",
-            bgColor: "from-gray-100 to-gray-200",
-          }
-        ])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecentActivity()
-  }, [profile, notifications])
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'case_created':
-      case 'case_status_changed':
-        return <FileText size={16} />
-      case 'document_uploaded':
-        return <FileText size={16} />
-      case 'chat_started':
-        return <MessageSquare size={16} />
-      case 'video_consultation_started':
-        return <Video size={16} />
-      case 'qa_question_posted':
-      case 'qa_answer_posted':
-        return <User size={16} />
-      default:
-        return <Bell size={16} />
-    }
-  }
-
-  const getNotificationIconColor = (type: string) => {
-    // Use the specified color scheme
-    const colors = [
-      "from-primary/10 to-accent/20",
-      "from-blue-100 to-purple-100",
-      "from-green-100 to-emerald-100", 
-      "from-purple-100 to-pink-100"
-    ];
-    
-    const iconColors = [
-      "text-primary",
-      "text-blue-500",
-      "text-green-500",
-      "text-purple-500"
-    ];
-    
-    // Assign colors based on notification type
-    switch (type) {
-      case 'case_created':
-      case 'case_status_changed':
-        return { iconColor: iconColors[3], bgColor: colors[0] }
-      case 'document_uploaded':
-        return { iconColor: iconColors[2], bgColor: colors[1] }
-      case 'chat_started':
-        return { iconColor: iconColors[1], bgColor: colors[1] }
-      case 'video_consultation_started':
-        return { iconColor: iconColors[0], bgColor: colors[3] }
-      case 'qa_question_posted':
-      case 'qa_answer_posted':
-        return { iconColor: iconColors[2], bgColor: colors[2] }
-      default:
-        return { iconColor: "text-gray-600", bgColor: "from-gray-100 to-gray-200" }
-    }
-  }
-
-  const handleNotificationClick = (type: string) => {
-    switch (type) {
-      case 'chat_started':
-        router.push('/chat')
-        break
-      case 'case_created':
-      case 'case_status_changed':
-        router.push('/cases')
-        break
-      case 'video_consultation_started':
-        router.push('/video-consultations')
-        break
-      default:
-        router.push('/notifications')
-    }
-  }
-
-  const getActivityIcon = (activityName: string) => {
-    const name = activityName.toLowerCase()
-    if (name.includes('message') || name.includes('chat')) {
-      return <MessageSquare size={16} />
-    } else if (name.includes('video') || name.includes('call')) {
-      return <Video size={16} />
-    } else if (name.includes('document') || name.includes('file')) {
-      return <FileText size={16} />
-    } else if (name.includes('appointment') || name.includes('meeting')) {
-      return <Calendar size={16} />
-    } else if (name.includes('user') || name.includes('profile')) {
-      return <User size={16} />
-    } else {
-      return <Clock size={16} />
-    }
-  }
-
-  const getActivityIconColor = (activityName: string) => {
-    // Use the specified color scheme
-    const colors = [
-      "from-primary/10 to-accent/20",
-      "from-blue-100 to-purple-100",
-      "from-green-100 to-emerald-100", 
-      "from-purple-100 to-pink-100"
-    ];
-    
-    const iconColors = [
-      "text-primary",
-      "text-blue-500",
-      "text-green-500",
-      "text-purple-500"
-    ];
-    
-    const name = activityName.toLowerCase()
-    if (name.includes('message') || name.includes('chat')) {
-      return { iconColor: iconColors[1], bgColor: colors[1] }
-    } else if (name.includes('video') || name.includes('call')) {
-      return { iconColor: iconColors[0], bgColor: colors[0] }
-    } else if (name.includes('document') || name.includes('file')) {
-      return { iconColor: iconColors[2], bgColor: colors[2] }
-    } else if (name.includes('appointment') || name.includes('meeting')) {
-      return { iconColor: iconColors[3], bgColor: colors[3] }
-    } else if (name.includes('user') || name.includes('profile')) {
-      return { iconColor: iconColors[1], bgColor: colors[1] }
-    } else {
-      return { iconColor: "text-gray-600", bgColor: "from-gray-100 to-gray-200" }
-    }
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds}s ago`
-    } else if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m ago`
-    } else if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h ago`
-    } else {
-      return `${Math.floor(diffInSeconds / 86400)}d ago`
-    }
-  }
+  const getTranslatedCategory = (category: string) => {
+    if (category === "Activity") return t('pages:recentActivity.categories.activity');
+    return category;
+  };
 
   return (
-    <Card className="card-korean h-[420px]">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-accent/20">
-            <Bell className="w-5 h-5 text-primary" />
+    <div className="space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-10">
+        <h3 className="text-[#1E293B] font-bold text-2xl tracking-tight shrink-0">{t('pages:recentActivity.title')}</h3>
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.client')}</span>
           </div>
-          <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {t('dashboard.recentActivity')}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="space-y-2">
-        {loading ? (
-          <div className="flex items-center justify-center py-6">
-            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary"></div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.caseDocument')}</span>
           </div>
-        ) : error ? (
-          <div className="text-center py-6 text-red-500 bg-gradient-to-r from-red-100 to-red-200 p-3 rounded-lg">
-            <p>{error}</p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.appointmentsConsultations')}</span>
           </div>
-        ) : activities.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground bg-gradient-to-r from-gray-100 to-gray-200 p-4 rounded-lg">
-            <Clock className="mx-auto h-10 w-10 mb-3 opacity-50" />
-            <p className="text-sm">{t('dashboard.noRecentActivity')}</p>
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-gray-400"></div>
+            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.system')}</span>
           </div>
-        ) : (
-          activities.map((activity, index) => (
-            <ActivityItem
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {activities.length > 0 ? (
+          activities.slice(0, 4).map((activity, index) => (
+            <ActivityLogItem
               key={index}
-              icon={activity.icon}
-              title={activity.title}
-              description={activity.description}
-              time={activity.time}
-              iconColor={activity.iconColor}
-              bgColor={activity.bgColor}
-              onClick={activity.onClick}
+              title={`${getTranslatedTitle(activity.title || (activity as any).activity_name)} – ${activity.user}`}
+              category={getTranslatedCategory(activity.category || "Activity")}
+              time={new Date(activity.time || (activity as any).createdAt || (activity as any).created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              type={activity.type || 'system'}
             />
           ))
+        ) : (
+          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200 shadow-sm">
+            <p className="text-slate-400 text-sm font-bold tracking-tight">{t('pages:recentActivity.noActivities')}</p>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

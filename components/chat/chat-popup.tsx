@@ -18,6 +18,7 @@ import { ChatMessage } from "@/components/chat/chat-message"
 import { ChatSummary } from "@/components/chat/chat-summary"
 import { useChat } from "@/hooks/use-chat"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import type { ChatSummary as ChatSummaryType } from "@/types/chat"
 
 const messageFormSchema = z.object({
@@ -43,7 +44,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
   const typingTimeoutRef = useRef<NodeJS.Timeout>(null)
   const { toast } = useToast()
 
-  // Initialize chat hook with specific chatId
+  const { t } = useTranslation()
   const {
     messages,
     currentChat,
@@ -128,12 +129,12 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
       messageForm.reset()
       setIsTyping(false)
       stopTyping()
-      
+
       // Clear typing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
       }
-      
+
       // Focus back to input
       inputRef.current?.focus()
     } catch (error) {
@@ -144,7 +145,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
   // Handle getting chat summary
   const handleGetSummary = async () => {
     if (!chatId) return
-    
+
     setIsLoadingSummary(true)
     try {
       const summary = await getChatSummaryHandler(chatId)
@@ -159,7 +160,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
   // Handle deleting chat
   const handleDeleteChat = async () => {
     if (!chatId) return
-    
+
     try {
       await deleteChatHandler(chatId)
       onClose()
@@ -174,7 +175,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
   const tokenUsagePercentage = (totalTokens / maxTokens) * 100
 
   // Check if any user is typing in this chat
-  const otherUsersTyping = typingUsers.filter(user => 
+  const otherUsersTyping = typingUsers.filter(user =>
     user.chatId === chatId && user.isTyping
   )
 
@@ -210,21 +211,21 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                 {isConnected ? (
                   <div className="flex items-center space-x-1">
                     <Wifi className="h-3 w-3 text-green-500" />
-                    <span className="text-xs text-green-500">Connected</span>
+                    <span className="text-xs text-green-500">{t('pages:chat.online')}</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-1">
                     <WifiOff className="h-3 w-3 text-red-500" />
-                    <span className="text-xs text-red-500">Disconnected</span>
+                    <span className="text-xs text-red-500">{t('pages:chat.offline')}</span>
                   </div>
                 )}
               </div>
               <div className="flex items-center space-x-2">
                 <Badge variant={isParticipantOnline ? "default" : "secondary"}>
-                  {isParticipantOnline ? "Online" : "Offline"}
+                  {isParticipantOnline ? t('pages:chat.online') : t('pages:chat.offline')}
                 </Badge>
                 {otherUsersTyping.length > 0 && (
-                  <span className="text-xs text-blue-500 animate-pulse">Typing...</span>
+                  <span className="text-xs text-blue-500 animate-pulse">{t('pages:chat.typing')}</span>
                 )}
               </div>
             </div>
@@ -239,7 +240,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleDeleteChat}>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Chat
+                  {t('pages:chat.deleteChat')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -252,20 +253,18 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
         {/* Token Usage Progress */}
         <div className="px-4 py-2 border-b bg-gray-50">
           <div className="flex items-center justify-between text-sm">
-            <span>Token Usage</span>
-            <span className={`font-medium ${
-              tokenUsagePercentage > 80 ? 'text-red-600' : 
+            <span>{t('pages:chat.tokenUsage')}</span>
+            <span className={`font-medium ${tokenUsagePercentage > 80 ? 'text-red-600' :
               tokenUsagePercentage > 60 ? 'text-yellow-600' : 'text-green-600'
-            }`}>
+              }`}>
               {totalTokens} / {maxTokens}
             </span>
           </div>
-          <Progress 
-            value={tokenUsagePercentage} 
-            className={`mt-1 h-2 ${
-              tokenUsagePercentage > 80 ? '[&>div]:bg-red-500' : 
+          <Progress
+            value={tokenUsagePercentage}
+            className={`mt-1 h-2 ${tokenUsagePercentage > 80 ? '[&>div]:bg-red-500' :
               tokenUsagePercentage > 60 ? '[&>div]:bg-yellow-500' : '[&>div]:bg-green-500'
-            }`}
+              }`}
           />
         </div>
 
@@ -274,10 +273,10 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="chat">
               <Users className="h-4 w-4 mr-2" />
-              Chat
+              {t('pages:chat.title')}
             </TabsTrigger>
             <TabsTrigger value="summary">
-              Summary
+              {t('pages:chat.chatSummary')}
             </TabsTrigger>
           </TabsList>
 
@@ -291,7 +290,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex items-center justify-center h-32 text-gray-500">
-                    No messages yet. Start the conversation!
+                    {t('pages:chat.noChats')}
                   </div>
                 ) : (
                   messages.map((message) => (
@@ -313,7 +312,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                   Error: {error}
                 </div>
               )}
-              
+
               <Form {...messageForm}>
                 <form onSubmit={messageForm.handleSubmit(handleSendMessage)} className="flex space-x-2">
                   <FormField
@@ -324,7 +323,7 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                         <FormControl>
                           <Input
                             // ref={inputRef}
-                            placeholder="Type your message..."
+                            placeholder={t('pages:chat.typeMessage')}
                             {...field}
                             onChange={(e) => {
                               field.onChange(e)
@@ -337,9 +336,9 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                       </FormItem>
                     )}
                   />
-                  
-                  <Button 
-                    type="submit" 
+
+                  <Button
+                    type="submit"
                     size="sm"
                     disabled={!messageForm.watch("content")?.trim() || isSending || tokenUsagePercentage >= 100}
                   >
@@ -351,13 +350,13 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                   </Button>
                 </form>
               </Form>
-              
+
               {tokenUsagePercentage > 80 && tokenUsagePercentage < 100 && (
                 <div className="mt-2 text-sm text-yellow-600">
                   ⚠️ Approaching token limit. Consider ending the session soon.
                 </div>
               )}
-              
+
               {tokenUsagePercentage >= 100 && (
                 <div className="mt-2 text-sm text-red-600">
                   🚫 Token limit reached. Delete chat to continue.

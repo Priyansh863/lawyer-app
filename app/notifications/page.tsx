@@ -12,39 +12,40 @@ import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
 import { useTranslation } from '@/hooks/useTranslation'
+import { cn } from '@/lib/utils'
 
 export default function NotificationsPage() {
   const { t, language } = useTranslation()
-  const { 
-    notifications, 
-    unreadCount, 
-    loading, 
-    fetchNotifications, 
-    markAsRead, 
-    markAllAsRead, 
-    deleteNotification 
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification
   } = useNotifications()
-  
+
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
   const router = useRouter()
 
   useEffect(() => {
-    fetchNotifications({ 
-      page: 1, 
-      limit: 20, 
-      unreadOnly: filter === 'unread' 
+    fetchNotifications({
+      page: 1,
+      limit: 20,
+      unreadOnly: filter === 'unread'
     })
     setPage(1)
   }, [filter])
 
   const handleLoadMore = () => {
     const nextPage = page + 1
-    fetchNotifications({ 
-      page: nextPage, 
-      limit: 20, 
-      unreadOnly: filter === 'unread' 
+    fetchNotifications({
+      page: nextPage,
+      limit: 20,
+      unreadOnly: filter === 'unread'
     })
     setPage(nextPage)
   }
@@ -57,7 +58,7 @@ export default function NotificationsPage() {
     if (!notification.isRead) {
       await markAsRead(notification._id)
     }
-    
+
     if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
@@ -161,194 +162,252 @@ export default function NotificationsPage() {
     return notification.message
   }
 
-  const filteredNotifications = typeFilter === 'all' 
-    ? notifications 
-    : notifications.filter(n => n.type === typeFilter)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread')
+
+  useEffect(() => {
+    fetchNotifications({
+      page: 1,
+      limit: 50, // Fetch more to allow client-side filtering if needed or just use current API
+      unreadOnly: activeTab === 'unread'
+    })
+    setPage(1)
+    setSelectedIds([])
+  }, [activeTab])
+
+  const handleRefresh = () => {
+    fetchNotifications({
+      page: 1,
+      limit: 50,
+      unreadOnly: activeTab === 'unread'
+    })
+    setPage(1)
+    setSelectedIds([])
+    toast.success(t('pages:notificationsa.toasts.refreshed'))
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return
+
+    try {
+      await Promise.all(selectedIds.map(id => deleteNotification(id)))
+      setSelectedIds([])
+      toast.success(t('pages:notificationsa.toasts.deleted'))
+    } catch (error) {
+      toast.error(t('pages:notificationsa.toasts.deleteFailed'))
+    }
+  }
+
+  const handleMarkSelectedAsRead = async () => {
+    if (selectedIds.length === 0) return
+
+    try {
+      await Promise.all(selectedIds.map(id => markAsRead(id)))
+      setSelectedIds([])
+      toast.success(t('pages:notificationsa.toasts.markedRead'))
+    } catch (error) {
+      toast.error(t('pages:notificationsa.toasts.markReadFailed'))
+    }
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === notifications.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(notifications.map(n => n._id))
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const getEventLabel = (type: string) => {
+    switch (type) {
+      case 'video_consultation_started':
+        return t('pages:notificationsa.eventLabels.videoConsultation')
+      case 'case_created':
+        return t('pages:notificationsa.eventLabels.caseCreated')
+      case 'chat_message':
+      case 'chat_started':
+        return t('pages:notificationsa.eventLabels.messageReceived')
+      case 'document_uploaded':
+        return t('pages:notificationsa.eventLabels.documentUploaded')
+      case 'payment_completed':
+        return t('pages:notificationsa.eventLabels.paymentCompleted')
+      case 'appointment_changed':
+        return t('pages:notificationsa.eventLabels.appointmentChanged')
+      default:
+        return t('pages:notificationsa.eventLabels.notification')
+    }
+  }
+
+  const formatNotificationTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString(language === 'ko' ? 'ko-KR' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).replace(',', ' —')
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Back Button - Positioned above the header */}
-      <div className="mb-4">
-        <Button
-          onClick={handleBack}
-          className="bg-black text-white hover:bg-gray-800 flex items-center gap-2 px-4 py-2 rounded-md"
-        >
-          <ArrowLeft className="h-4 w-4 text-white" />
-          {t('pages:notificationsa.back')}
-        </Button>
+    <div className="flex flex-col space-y-6 max-w-[1400px]">
+      {/* Header Section */}
+      <div className="flex justify-between items-center bg-transparent py-2">
+        <h1 className="text-[28px] font-bold text-[#0F172A] font-serif">{t('pages:notificationsa.title')}</h1>
       </div>
 
-      {/* Notifications Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Bell className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">{t('pages:notificationsa.title')}</h1>
-          {unreadCount > 0 && (
-            <Badge variant="destructive" className="rounded-full">
-              {unreadCount} {t('pages:notificationsa.unread')}
-            </Badge>
-          )}
+      {/* Tabs and Actions Row */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200">
+        <div className="flex items-center gap-8">
+          <button
+            onClick={() => setActiveTab('unread')}
+            className={cn(
+              "relative pb-3 text-[15px] font-bold transition-all whitespace-nowrap",
+              activeTab === 'unread'
+                ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            {t('pages:notificationsa.unreadNotifications')}
+          </button>
+          <button
+            onClick={() => setActiveTab('read')}
+            className={cn(
+              "relative pb-3 text-[15px] font-bold transition-all whitespace-nowrap",
+              activeTab === 'read'
+                ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                : "text-slate-400 hover:text-slate-600"
+            )}
+          >
+            {t('pages:notificationsa.readNotifications')}
+          </button>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-3 pb-3">
           <Button
             variant="outline"
-            size="sm"
-            onClick={() => fetchNotifications({ page: 1, limit: 20, unreadOnly: filter === 'unread' })}
-            disabled={loading}
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.length === 0}
+            className="border-slate-800 text-[#0F172A] font-bold h-10 px-8 rounded-md text-[13px] hover:bg-slate-50"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {t('pages:notificationsa.refresh')}
+            {t('pages:notificationsa.deleteAction')}
           </Button>
-          
-          {unreadCount > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={markAllAsRead}
-            >
-              <CheckCheck className="h-4 w-4 mr-2" />
-              {t('pages:notificationsa.markAllRead')}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={handleMarkSelectedAsRead}
+            disabled={selectedIds.length === 0 || activeTab === 'read'}
+            className="border-slate-800 text-[#0F172A] font-bold h-10 px-6 rounded-md text-[13px] hover:bg-slate-50"
+          >
+            {t('pages:notificationsa.markAsReadAction')}
+          </Button>
+          <Button
+            onClick={handleRefresh}
+            disabled={loading}
+            className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-10 rounded-md text-[13px] transition-all"
+          >
+            {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : t('pages:notificationsa.refreshAction')}
+          </Button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <Tabs value={filter} onValueChange={(value: any) => setFilter(value)} className="flex-1">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">{t('pages:notificationsa.allNotifications')}</TabsTrigger>
-            <TabsTrigger value="unread">
-              {t('pages:notificationsa.unread')} {unreadCount > 0 && `(${unreadCount})`}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder={t('pages:notificationsa.filterByType')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('pages:notificationsa.allTypes')}</SelectItem>
-            <SelectItem value="case_created">{t('pages:notificationsa.types.caseCreated')}</SelectItem>
-            <SelectItem value="case_status_changed">{t('pages:notificationsa.types.caseStatus')}</SelectItem>
-            <SelectItem value="document_uploaded">{t('pages:notificationsa.types.document')}</SelectItem>
-            <SelectItem value="chat_started">{t('pages:notificationsa.types.chat')}</SelectItem>
-            <SelectItem value="video_consultation_started">{t('pages:notificationsa.types.videoCall')}</SelectItem>
-            <SelectItem value="qa_question_posted">{t('pages:notificationsa.types.qaQuestion')}</SelectItem>
-            <SelectItem value="qa_answer_posted">{t('pages:notificationsa.types.qaAnswer')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-3">
-        {loading && page === 1 ? (
-          <div className="text-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">{t('pages:notificationsa.loading')}</p>
-          </div>
-        ) : filteredNotifications.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                {filter === 'unread' ? t('pages:notificationsa.noUnread') : t('pages:notificationsa.empty')}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredNotifications.map((notification) => (
-            <Card
-              key={notification._id}
-              className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                !notification.isRead ? 'bg-blue-50 border-blue-200' : ''
-              }`}
-              onClick={() => handleNotificationClick(notification)}
-            >
-              <CardContent className="p-4">
-                <div className={`border-l-4 pl-4 ${getPriorityColor(notification.priority)}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">{getTypeIcon(notification.type)}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {getTypeLabel(notification.type)}
-                        </Badge>
-                        {notification.priority === 'high' && (
-                          <Badge variant="destructive" className="text-xs">
-                            {t('pages:notificationsa.highPriority')}
-                          </Badge>
-                        )}
-                        {!notification.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        )}
-                      </div>
-                      
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {getNotificationTitle(notification)}
-                      </h3>
-                      
-                      <p className="text-sm text-gray-600 mb-2">
-                        {getNotificationMessage(notification)}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-400">
-                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                          {notification.createdBy && (
-                            <span className="ml-2">
-                              {t('pages:notificationsa.by')} {notification.createdBy.first_name} {notification.createdBy.last_name}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 ml-4">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleMarkAsRead(notification._id, e)}
-                          title={t('pages:notificationsa.markAsRead')}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDeleteNotification(notification._id, e)}
-                        title={t('pages:notificationsa.delete')}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+      {/* Notifications Table */}
+      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-[#fcfdfe] border-b border-slate-200">
+              <th className="py-4 px-4 w-12">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={notifications.length > 0 && selectedIds.length === notifications.length}
+                    onChange={toggleSelectAll}
+                    style={{ accentColor: '#0F172A' }}
+                    className="h-4 w-4 rounded border-slate-300 cursor-pointer"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+              </th>
+              <th className="py-4 px-4 text-[#64748b] font-bold text-[11px] uppercase tracking-[0.1em]">{t('pages:notificationsa.tableEvent')}</th>
+              <th className="py-4 px-4 text-[#64748b] font-bold text-[11px] uppercase tracking-[0.1em]">{t('pages:notificationsa.tableDetails')}</th>
+              <th className="py-4 px-4 text-[#64748b] font-bold text-[11px] uppercase tracking-[0.1em] text-right">{t('pages:notificationsa.tableTime')}</th>
+              <th className="py-4 px-4 text-[#64748b] font-bold text-[11px] uppercase tracking-[0.1em] text-center w-24">{t('pages:notificationsa.tableAction')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {loading && notifications.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-12 text-center text-slate-500">
+                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  {t('pages:notificationsa.loadingNotifications')}
+                </td>
+              </tr>
+            ) : notifications.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-12 text-center text-slate-500">
+                  {t('pages:notificationsa.noNotificationsFound')}
+                </td>
+              </tr>
+            ) : (
+              notifications.map((notification) => (
+                <tr
+                  key={notification._id}
+                  className={cn(
+                    "hover:bg-slate-50 transition-colors cursor-pointer",
+                    selectedIds.includes(notification._id) ? "bg-slate-50" : ""
+                  )}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(notification._id)}
+                        onChange={() => toggleSelect(notification._id)}
+                        style={{ accentColor: '#0F172A' }}
+                        className="h-4 w-4 rounded border-slate-300 cursor-pointer"
+                      />
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 font-bold text-[14px] text-[#0F172A]">
+                    {getEventLabel(notification.type)}
+                  </td>
+                  <td className="py-4 px-4 text-[14px] text-slate-600">
+                    {getNotificationMessage(notification)}
+                  </td>
+                  <td className="py-4 px-4 text-[13px] text-slate-500 font-medium text-right">
+                    {formatNotificationTime(notification.createdAt)}
+                  </td>
+                  <td className="py-4 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => handleDeleteNotification(notification._id, e)}
+                      className="text-red-500 hover:text-red-600 transition-colors p-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {filteredNotifications.length > 0 && filteredNotifications.length % 20 === 0 && (
+      {notifications.length > 0 && notifications.length % 50 === 0 && (
         <div className="text-center mt-6">
           <Button
             variant="outline"
             onClick={handleLoadMore}
             disabled={loading}
+            className="border-slate-300 text-[#0F172A] font-bold h-10 px-8 rounded-md text-[13px]"
           >
-            {loading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                {t('pages:notificationsa.loading')}
-              </>
-            ) : (
-              t('pages:notificationsa.loadMore')
-            )}
+            {loading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : null}
+            {t('pages:notificationsa.loadMoreAction')}
           </Button>
         </div>
       )}

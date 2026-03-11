@@ -11,152 +11,153 @@
     "viewDetails": "View Details",
     "charges": "Charges ($)",
     "chargesPlaceholder": "Enter charges",
-    "success": "Success"
+    "success": "Success",
+    "continue": "Continue"
   },
   "actions": {
-      "saving": "Saving...",
-      "saveRates": "Save Rates"
-    },
-   
-    "shar": {
-      "error": "Error",
-      "success": "Success",
-      "lawyers": "lawyers",
-      "clients": "clients",
-      "failedToLoadUsers": "Failed to load {{userType}}",
-      "userNotAuthenticated": "User not authenticated",
-      "documentSharingUpdated": "Document sharing updated successfully",
-      "failedToUpdateSharing": "Failed to update document sharing",
-      "shareWithUserType": "Share with {{userType}}",
-      "shareDocumentDescription": "Share \"{{documentName}}\" with {{userType}} in your network.",
-      "privateDocumentSharingNote": "Note: Only private documents can be shared with {{userType}}.",
-      "privateDocumentRequired": "This document must be private to share with lawyers.",
-      "loadingUsers": "Loading {{userType}}...",
-      "noUsersAvailable": "No {{userType}} available",
-      "currentlyShared": "Currently Shared",
-      "updating": "Updating...",
-      "cancel": "Cancel",
-      "updateSharing": "Update Sharing"
-    },
+    "saving": "Saving...",
+    "saveRates": "Save Rates"
+  },
+  "shar": {
+    "error": "Error",
+    "success": "Success",
+    "lawyers": "lawyers",
+    "clients": "clients",
+    "failedToLoadUsers": "Failed to load {{userType}}",
+    "userNotAuthenticated": "User not authenticated",
+    "documentSharingUpdated": "Document sharing updated successfully",
+    "failedToUpdateSharing": "Failed to update document sharing",
+    "shareWithUserType": "Share with {{userType}}",
+    "shareDocumentDescription": "Share \"{{documentName}}\" with {{userType}} in your network.",
+    "privateDocumentSharingNote": "Note: Only private documents can be shared with {{userType}}.",
+    "privateDocumentRequired": "This document must be private to share with lawyers.",
+    "loadingUsers": "Loading {{userType}}...",
+    "noUsersAvailable": "No {{userType}} available",
+    "currentlyShared": "Currently Shared",
+    "updating": "Updating...",
+    "cancel": "Cancel",
+    "updateSharing": "Update Sharing"
+  },
   "client": {
-      "onboard": {
-        "button": "Onboard Client",
-        "title": "Onboard New Client",
-        "firstName": "First Name",
-        "firstNamePlaceholder": "Enter first name",
-        "lastName": "Last Name",
-        "lastNamePlaceholder": "Enter last name",
-        "email": "Email Address",
-        "emailPlaceholder": "Enter email address",
-        "phone": "Phone Number",
-        "phonePlaceholder": "Enter phone number",
-        "password": "Password",
-        "passwordPlaceholder": "Enter password (min 6 characters)",
-        "cancel": "Cancel",
-        "creating": "Creating...",
-        "submit": "Onboard Client",
-        "successTitle": "Success",
-        "successDescription": "Client has been successfully onboarded",
-        "errorTitle": "Error",
-        "errorDescription": "Failed to onboard client"
-      }
+    "onboard": {
+      "button": "Onboard Client",
+      "title": "Onboard New Client",
+      "firstName": "First Name",
+      "firstNamePlaceholder": "Enter first name",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Enter last name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter email address",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter phone number",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password (min 6 characters)",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "submit": "Onboard Client",
+      "successTitle": "Success",
+      "successDescription": "Client has been successfully onboarded",
+      "errorTitle": "Error",
+      "errorDescription": "Failed to onboard client"
     },
-  "document":{
-    "doc":"Document",
+    "lawyerManagement": "Lawyer Management",
+    "clientManagement": "Client Management"
+  },
+  "document": {
+    "doc": "Document",
     "vs": "Voice Summary"
   },
-  
   "dashboard": {
-      "error": "Error",
-      "failedToLoadPosts": "Failed to load posts",
-      "cancel": "Cancel",
-      "submit": "Submit Report",
-      "submitting": "Submitting...",
-      "bookmarked": "Bookmarked",
-      "bookmarkRemoved": "Bookmark removed",
-      "failedToUpdateBookmark": "Failed to update bookmark",
-      "linkCopied": "Link copied",
-      "postUrlCopied": "Post URL copied to clipboard",
-      "failedToCopyLink": "Failed to copy link",
-      "pleaseEnterReason": "Please enter a reason for reporting",
-      "success": "Success",
-      "reportSubmitted": "Report submitted successfully",
-      "reportFailed": "Failed to submit report",
-      "unknownAuthor": "Unknown Author",
-      "user": "User",
-      "legalPost": "Legal Post",
-      "bookmark": "Bookmark",
-      "copyLink": "Copy link",
-      "report": "Report",
-      "showLess": "Show less",
-      "readMore": "Read more",
-      "tags": "Tags",
-      "legalResources": "Legal Resources",
-      "visitResource": "Visit resource",
-      "shareLinks": "Share Links",
-      "customUrl": "Custom URL",
-      "shortUrl": "Short URL",
-      "copy": "Copy",
-      "created": "Created",
-      "updated": "Updated",
-      "welcomeBack": "Welcome back, {name}!",
-      "dashboard": "Dashboard",
-      "noPostsTitle": "No posts available",
-      "noPostsDescription": "There are no posts to display at the moment.",
-      "reportPost": "Report Post",
-      "reportDescription": "Please explain why you are reporting this post. Your report will be reviewed by our team.",
-      "reason": "Reason",
-      "reasonPlaceholder": "Please provide details about why you are reporting this post...",
-      "legalPosts": "Legal Posts",
-      "professionalContent": "Professional content from legal experts",
-      "posts": "posts",
-       "postStatus": {
-        "published": "Published",
-        "draft": "Draft",
-        "archived": "Archived",
-        "pending": "Pending"
-      },
-      "createPost": "Create Post"
+    "error": "Error",
+    "failedToLoadPosts": "Failed to load posts",
+    "cancel": "Cancel",
+    "submit": "Submit Report",
+    "submitting": "Submitting...",
+    "bookmarked": "Bookmarked",
+    "bookmarkRemoved": "Bookmark removed",
+    "failedToUpdateBookmark": "Failed to update bookmark",
+    "linkCopied": "Link copied",
+    "postUrlCopied": "Post URL copied to clipboard",
+    "failedToCopyLink": "Failed to copy link",
+    "pleaseEnterReason": "Please enter a reason for reporting",
+    "success": "Success",
+    "reportSubmitted": "Report submitted successfully",
+    "reportFailed": "Failed to submit report",
+    "unknownAuthor": "Unknown Author",
+    "user": "User",
+    "legalPost": "Legal Post",
+    "bookmark": "Bookmark",
+    "copyLink": "Copy link",
+    "report": "Report",
+    "showLess": "Show less",
+    "readMore": "Read more",
+    "tags": "Tags",
+    "legalResources": "Legal Resources",
+    "visitResource": "Visit resource",
+    "shareLinks": "Share Links",
+    "customUrl": "Custom URL",
+    "shortUrl": "Short URL",
+    "copy": "Copy",
+    "created": "Created",
+    "updated": "Updated",
+    "welcomeBack": "Welcome back, {name}!",
+    "dashboard": "Dashboard",
+    "noPostsTitle": "No posts available",
+    "noPostsDescription": "There are no posts to display at the moment.",
+    "reportPost": "Report Post",
+    "reportDescription": "Please explain why you are reporting this post. Your report will be reviewed by our team.",
+    "reason": "Reason",
+    "reasonPlaceholder": "Please provide details about why you are reporting this post...",
+    "legalPosts": "Legal Posts",
+    "professionalContent": "Professional content from legal experts",
+    "posts": "posts",
+    "postStatus": {
+      "published": "Published",
+      "draft": "Draft",
+      "archived": "Archived",
+      "pending": "Pending"
     },
-    
-  
-    "consuledit": {
-      "meetingDetails": "Meeting Details",
-"duration": "Duration",
-"invalidDuration": "Invalid duration",
-"estimatedCost": "Estimated Cost",
-"endMeetingDate": "End Meeting Date",
-"endMeetingTime": "End Meeting Time",
-      "validationError": "Validation Error",
-      "dateTimeRequired": "Please provide both date and time for the meeting",
-      "validRateRequired": "Please provide a valid hourly rate for custom pricing",
-      "meetingUpdated": "Meeting Updated",
-      "meetingUpdatedDesc": "Meeting details have been updated successfully",
-      "updateFailed": "Failed to update meeting",
-      "editMeetingDetails": "Edit Meeting Details",
-      "meetingInformation": "Meeting Information",
-      "client": "Client",
-      "unknownClient": "Unknown Client",
-      "lawyer": "Lawyer",
-      "unknownLawyer": "Unknown Lawyer",
-      "status": "Status",
-      "defaultRate": "Default Rate",
-      "meetingTitle": "Meeting Title",
-      "enterMeetingTitle": "Enter meeting title",
-      "description": "Description",
-      "enterMeetingDescription": "Enter meeting description",
-      "meetingDate": "Meeting Date",
-      "meetingTime": "Meeting Time",
-      "consultationPricing": "Consultation Pricing",
-      "consultationType": "Consultation Type",
-      "freeConsultation": "Free Consultation",
-      "paidConsultation": "Paid Consultation",
-      "useCustomRate": "Use custom rate (override default ${{rate}})",
-      "customHourlyRate": "Custom minute Rate ($)",
-      "enterCustomRate": "Enter custom rate",
-      "meetingLink": "Meeting Link",
-      "enterMeetingLink": "Enter or paste meeting link"
-    },
+    "createPost": "Create Post"
+  },
+  "consuledit": {
+    "meetingDetails": "Meeting Details",
+    "duration": "Duration",
+    "invalidDuration": "Invalid duration",
+    "estimatedCost": "Estimated Cost",
+    "endMeetingDate": "End Meeting Date",
+    "endMeetingTime": "End Meeting Time",
+    "validationError": "Validation Error",
+    "dateTimeRequired": "Please provide both date and time for the meeting",
+    "validRateRequired": "Please provide a valid hourly rate for custom pricing",
+    "meetingUpdated": "Meeting Updated",
+    "meetingUpdatedDesc": "Meeting details have been updated successfully",
+    "updateFailed": "Failed to update meeting",
+    "editMeetingDetails": "Edit Meeting Details",
+    "meetingInformation": "Meeting Information",
+    "client": "Client",
+    "unknownClient": "Unknown Client",
+    "lawyer": "Lawyer",
+    "unknownLawyer": "Unknown Lawyer",
+    "status": "Status",
+    "defaultRate": "Default Rate",
+    "meetingTitle": "Meeting Title",
+    "enterMeetingTitle": "Enter meeting title",
+    "description": "Description",
+    "enterMeetingDescription": "Enter meeting description",
+    "meetingDate": "Meeting Date",
+    "meetingTime": "Meeting Time",
+    "consultationPricing": "Consultation Pricing",
+    "consultationType": "Consultation Type",
+    "freeConsultation": "Free Consultation",
+    "paidConsultation": "Paid Consultation",
+    "useCustomRate": "Use custom rate (override default ${{rate}})",
+    "customHourlyRate": "Custom minute Rate ($)",
+    "enterCustomRate": "Enter custom rate",
+    "meetingLink": "Meeting Link",
+    "enterMeetingLink": "Enter or paste meeting link",
+    "endTimeAfterStart": "End time must be after start time",
+    "endDateTimeRequired": "Please provide both end date and end time if you want to set an end time"
+  },
   "commonp": {
     "error": "Error",
     "cancel": "Cancel",
@@ -165,12 +166,9 @@
     "client": "client",
     "success": "Success",
     "lawyer": "lawyer",
-    
     "optional": "Optional",
-    
     "updating": "Updating",
     "saveChanges": "Save Changes"
-
   },
   "consultation": {
     "estimatedTotal": "Estimated total",
@@ -188,8 +186,15 @@
     "paidChat": "Paid Consultation",
     "paidChatDesc": "Select this option to start a paid consultation with a lawyer.",
     "startPaidChat": "Start Paid Chat",
-     "paidChatConsultation": "Paid Chat Consultation",
-     "selectPaidChatConsultation": "Select Paid Chat Consultation",
+    "freeChatConsultation": "Free Chat Consultation",
+    "paidChatConsultation": "Paid Chat Consultation",
+    "searchClient": "Search Client",
+    "useBaseRate": "Use Base Rate",
+    "useCustomRate": "Use Custom Rate",
+    "tokensPerMinuteShort": "tokens/min",
+    "searchingClients": "Searching clients...",
+    "noClientsFound": "No clients found",
+    "selectPaidChatConsultation": "Select Paid Chat Consultation",
     "selectPaidConsultation": "Select Paid Consultation",
     "searchUsers": "Search users...",
     "loading": "Loading users...",
@@ -206,12 +211,10 @@
     "chatStarted": "Chat started successfully",
     "failedToFetchUsers": "Failed to fetch users",
     "failedToStartChat": "Failed to start chat",
-    
-     
-      "reservationEnd": "Reservation end time",
-      "endDate": "End date",
-      "endTime": "End time",
-     "tokens": "tokens",
+    "reservationEnd": "Reservation end time",
+    "endDate": "End date",
+    "endTime": "End time",
+    "tokens": "tokens",
     "tokensPerMinute": "tokens/minute",
     "enterPerMinuteRate": "Enter per-minute rate",
     "missingInformation": "Missing information",
@@ -278,135 +281,185 @@
     "toBeScheduled": "To be scheduled by lawyer",
     "hasSentYouVideoConsultation": "has sent you a video consultation link",
     "customRate": "Custom Rate",
-    "sendLink": "Send Link"
+    "sendLink": "Send Link",
+    "freeVideoConsultation": "Free Video Consultation",
+    "billedPerMinute": "Billed per minute",
+    "next": "Next",
+    "freeConsultationSettings": "Free Consultation Settings",
+    "paidConsultationSettings": "Paid Consultation Settings",
+    "bookingDate": "Booking Date",
+    "bookingTime": "Booking Time",
+    "approved": "Approved",
+    "pending": "Pending",
+    "action": "Action",
+    "ifNotSpecifiedNote": "If not specified, the consultation will be scheduled for the current date and time.",
+    "selected": "Selected",
+    "sendFreeConsultationLink": "Send Free Consultation Link",
+    "sendPaidConsultationLink": "Send Paid Consultation Link",
+    "clientName": "Client Name",
+    "clientEmail": "Client Email",
+    "consultationFee": "Consultation Fee",
+    "notSet": "Not set",
+    "history": "History",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "declined": "Declined",
+    "expired": "Expired",
+    "newVideoConsultation": "New Video Consultation",
+    "clientContact": "Client Contact",
+    "rateAndType": "Rate & Type",
+    "invite": "Invite",
+    "statusUpdated": "Status updated",
+    "join": "Join",
+    "cancelInvite": "Cancel invite",
+    "confirmed": "Confirmed",
+    "pendingClient": "Pending (Client)",
+    "cancelledLawyer": "Cancelled (Lawyer)",
+    "declinedClient": "Declined (Client)",
+    "expiredNoResponse": "Expired (No response)",
+    "cancelAppointment": "Cancel appointment",
+    "confirmCancel": "Confirm cancel",
+    "cancelConsultationTitle": "Cancel this consultation?",
+    "cancelInviteTitle": "Cancel invite?",
+    "selectReasonOptional": "Select a reason (optional)",
+    "scheduleConflict": "Schedule conflict",
+    "duplicateRequest": "Duplicate request",
+    "cannotBeUndone": "This action cannot be undone."
   },
-   "pcId": {
-    "title": "PC Unique ID",
-"description": "Link your PC by entering a unique identifier",
-"form": {
   "pcId": {
-    "label": "PC Unique ID",
-    "placeholder": "Enter PC Unique ID"
-  },
-  "validation": {
-    "pcIdRequired": "Please enter a PC Unique ID"
-  }
-},
-"buttons": {
-  "save": "Save",
-  "saving": "Saving...",
-  "resetLicense": "Reset PC License",
-  "resetting": "Resetting..."
-},
-"resetNote": "Note: Resetting will unlink your current PC. You'll need to register again.",
-"toast": {
-  "error": {
-    "title": "Error"
-  },
-  "authError": {
-    "title": "Authentication Error",
-    "description": "You are not logged in. Please log in and try again."
-  },
-  "saveSuccess": {
-    "title": "Success",
-    "description": "PC linked successfully"
-  },
-  "saveError": {
-    "default": "Failed to save PC ID",
-    "invalidPcId": "Invalid PC ID. Please check and try again.",
-    "pcIdExists": "PC ID already registered. Please use a different PC ID."
-  },
-  "resetSuccess": {
-    "title": "Success",
-    "description": "PC license reset successfully. Please register your PC again."
-  },
-  "resetError": {
-    "default": "Failed to reset PC license",
-    "noPermission": "You do not have permission to reset PC license."
-  }
-}
-
-  },
-    "scheduleM": {
-      "error": "Error",
-      "failedToFetchUsers": "Failed to fetch users",
-      "missingInformation": "Missing Information",
-      "pleaseProvideMeetingLink": "Please provide a meeting link",
-      "meetingWith": "Meeting with {{name}}",
-      "scheduledMeeting": "Scheduled meeting",
-      "meetingRequestSent": "Meeting Request Sent",
-      "meetingRequestSentTo": "Meeting request sent to {{name}}",
-      "failedToScheduleMeeting": "Failed to schedule meeting",
-      "pleaseFillAllFields": "Please fill in all required fields",
-      "meetingScheduled": "Meeting Scheduled",
-      "scheduleMeeting": "Schedule Meeting",
-      "selectClient": "Select Client",
-      "selectLawyer": "Select Lawyer",
-      "scheduleMeetingWith": "Schedule a meeting with {{name}}",
-      "searchPlaceholder": "Search {{type}}...",
-      "clients": "Clients",
-      "lawyers": "Lawyers",
-      "noClientsFound": "No clients found",
-      "noLawyersFound": "No lawyers found",
-      "noActiveClients": "You currently have no active clients.",
-      "noLawyersAvailable": "No lawyers are currently available.",
-      "lawyer": "lawyer",
-      "client": "client",
-      "tokensPerHour": "tokens/minute",
-      "select": "Select",
-      "consultationRate": "Consultation Rate",
-      "meetingLink": "Meeting Link",
-      "pasteMeetingLink": "Paste your meeting link here",
-      "cancel": "Cancel",
-      "scheduling": "Scheduling"
-    },
-    "sendMessage": {
-        "failedToLoadUsers": "Failed to load users",
-        "error": "Error",
-        "success": "Success",
-        "messageSentSuccessfully": "Message sent successfully!",
-        "failedToSendMessage": "Failed to send message. Please try again.",
-        "client": "Client",
-        "lawyer": "Lawyer",
-        "regardingUser": "Regarding {{userType}} {{firstName}} {{lastName}}",
-        "selectUser": "Select a {{userType}}",
-        "newMessage": "New Message",
-        "searchPlaceholder": "Search {{userType}} by name or email...",
-        "clients": "clients",
-        "lawyers": "lawyers",
-        "loadingUsers": "Loading {{userType}}...",
-        "chatRate": "Chat: {{rate}} tokens/minute",
-        "noUsersFound": "No {{userType}} found",
-        "to": "To:",
-        "subject": "Subject:",
-        "subjectPlaceholder": "Subject",
-        "message": "Message:",
-        "messagePlaceholder": "Type your message to {{firstName}}...",
-        "back": "Back",
-        "sending": "Sending...",
-        "sendMessage": "Send Message"
+    "title": "PC Unique ID",
+    "description": "Link your PC by entering a unique identifier",
+    "form": {
+      "pcId": {
+        "label": "PC Unique ID",
+        "placeholder": "Enter PC Unique ID"
       },
-    "quickActions": {
-      "title": "Quick Actions",
-      "messageSentSuccess": "Message sent successfully!",
-      "newPost": "New Post",
-      "shareMoment": "Share your moment",
-      "sendMessage": "Send Message",
-      "startChat": "Start a new chat",
-      "scheduleMeeting": "Schedule Meeting",
-      "bookWithClients": "Book with clients/lawyers",
-      "askQuestion": "Ask a Question",
-      "startQA": "Start a new Q&A"
+      "validation": {
+        "pcIdRequired": "Please enter a PC Unique ID"
+      }
     },
+    "buttons": {
+      "save": "Save",
+      "saving": "Saving...",
+      "resetLicense": "Reset PC License",
+      "resetting": "Resetting..."
+    },
+    "resetNote": "Note: Resetting will unlink your current PC. You'll need to register again.",
+    "toast": {
+      "error": {
+        "title": "Error"
+      },
+      "authError": {
+        "title": "Authentication Error",
+        "description": "You are not logged in. Please log in and try again."
+      },
+      "saveSuccess": {
+        "title": "Success",
+        "description": "PC linked successfully"
+      },
+      "saveError": {
+        "default": "Failed to save PC ID",
+        "invalidPcId": "Invalid PC ID. Please check and try again.",
+        "pcIdExists": "PC ID already registered. Please use a different PC ID.",
+        "nonJsonResponse": "Server returned an invalid response format. Please try again.",
+        "parseError": "Failed to parse server response. Please try again."
+      },
+      "resetSuccess": {
+        "title": "Success",
+        "description": "PC license reset successfully. Please register your PC again."
+      },
+      "resetError": {
+        "default": "Failed to reset PC license",
+        "noPermission": "You do not have permission to reset PC license.",
+        "nonJsonResponse": "Server returned an invalid response format. Please try again.",
+        "parseError": "Failed to parse server response. Please try again."
+      }
+    }
+  },
+  "scheduleM": {
+    "error": "Error",
+    "failedToFetchUsers": "Failed to fetch users",
+    "missingInformation": "Missing Information",
+    "pleaseProvideMeetingLink": "Please provide a meeting link",
+    "meetingWith": "Meeting with {{name}}",
+    "scheduledMeeting": "Scheduled meeting",
+    "meetingRequestSent": "Meeting Request Sent",
+    "meetingRequestSentTo": "Meeting request sent to {{name}}",
+    "failedToScheduleMeeting": "Failed to schedule meeting",
+    "pleaseFillAllFields": "Please fill in all required fields",
+    "meetingScheduled": "Meeting Scheduled",
+    "scheduleMeeting": "Schedule Meeting",
+    "selectClient": "Select Client",
+    "selectLawyer": "Select Lawyer",
+    "scheduleMeetingWith": "Schedule a meeting with {{name}}",
+    "searchPlaceholder": "Search {{type}}...",
+    "clients": "Clients",
+    "lawyers": "Lawyers",
+    "noClientsFound": "No clients found",
+    "noLawyersFound": "No lawyers found",
+    "noActiveClients": "You currently have no active clients.",
+    "noLawyersAvailable": "No lawyers are currently available.",
+    "lawyer": "lawyer",
+    "client": "client",
+    "tokensPerHour": "tokens/minute",
+    "select": "Select",
+    "consultationRate": "Consultation Rate",
+    "meetingLink": "Meeting Link",
+    "pasteMeetingLink": "Paste your meeting link here",
+    "cancel": "Cancel",
+    "scheduling": "Scheduling"
+  },
+  "sendMessage": {
+    "failedToLoadUsers": "Failed to load users",
+    "error": "Error",
+    "success": "Success",
+    "messageSentSuccessfully": "Message sent successfully!",
+    "failedToSendMessage": "Failed to send message. Please try again.",
+    "client": "Client",
+    "lawyer": "Lawyer",
+    "regardingUser": "Regarding {{userType}} {{firstName}} {{lastName}}",
+    "selectUser": "Select a {{userType}}",
+    "newMessage": "New Message",
+    "searchPlaceholder": "Search {{userType}} by name or email...",
+    "clients": "clients",
+    "lawyers": "lawyers",
+    "loadingUsers": "Loading {{userType}}...",
+    "chatRate": "Chat: {{rate}} tokens/minute",
+    "noUsersFound": "No {{userType}} found",
+    "to": "To:",
+    "subject": "Subject:",
+    "subjectPlaceholder": "Subject",
+    "message": "Message:",
+    "messagePlaceholder": "Type your message to {{firstName}}...",
+    "back": "Back",
+    "sending": "Sending...",
+    "sendMessage": "Send Message"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "messageSentSuccess": "Message sent successfully!",
+    "newPost": "New Post",
+    "shareMoment": "Share your moment",
+    "sendMessage": "Send Message",
+    "startChat": "Start a new chat",
+    "scheduleMeeting": "Schedule Meeting",
+    "bookWithClients": "Book with clients/lawyers",
+    "askQuestion": "Ask a Question",
+    "startQA": "Start a new Q&A",
+    "registerCase": "Register Case",
+    "registerClient": "Register Client",
+    "uploadDocument": "Upload Document",
+    "posts": "Posts"
+  },
   "cases": {
     "title": "Case Management",
-     "description": "Manage and track your legal cases",
+    "description": "Manage and track your legal cases",
     "error": {
       "fetchingCases": "Failed to fetch case list. Please try again."
     },
     "noCasesFound": "No registered cases found",
     "updateStatus": "Update Status",
-     "newCase": "New Case",
+    "newCase": "New Case",
     "status": {
       "fullWin": "Full Win",
       "fullLoss": "Full Loss",
@@ -471,9 +524,7 @@
       "Appeal (Supreme)": "Appeal (Supreme)",
       "Family": "Family"
     }
- 
   },
-  
   "commona": {
     "error": "Error",
     "success": "Success",
@@ -487,7 +538,7 @@
     }
   },
   "casesD": {
-    "createNewCase": "Create New Case",
+    "createNewCase": "Register New Case",
     "caseInformation": "Case Information",
     "clientInformation": "Client Information",
     "caseDetails": "Case Details",
@@ -539,18 +590,17 @@
       "durationPlaceholder": "e.g., 3-6 months",
       "notes": "Additional Notes",
       "notesPlaceholder": "Any additional information or special considerations",
-      "caseCode" : "Case Code",
-      "caseNumber" : "Case Number",
+      "caseCode": "Case Code",
+      "caseNumber": "Case Number",
       "caseNumberPlaceholder": "Enter case number",
-     
-       "caseIdentifier": "Case Identifier",
-       "caseStatus": "Case Status",
-       "selectCaseStatus": "Select case status",
-        "selectCourt": "Select Court",
+      "caseIdentifier": "Case Identifier",
+      "caseStatus": "Case Status",
+      "selectCaseStatus": "Select case status",
+      "selectCourt": "Select Court",
       "selectCourtFirst": "Please select a court first",
-     "selectCaseType": "Select Case Type",
-    "selectCaseTypeFirst": "Please select a case type first",
-     "selectCaseCode": "Select Case Code"
+      "selectCaseType": "Select Case Type",
+      "selectCaseTypeFirst": "Please select a case type first",
+      "selectCaseCode": "Select Case Code"
     },
     "caseTypes": {
       "civil": "Civil",
@@ -565,7 +615,6 @@
       "tax": "Tax",
       "bankruptcy": "Bankruptcy",
       "other": "Other"
-      
     },
     "courtTypes": {
       "district_court": "District Court",
@@ -584,47 +633,47 @@
     }
   },
   "commonf": {
-  "cancel": "Cancel",
-  "error": "Error"
-},
-"casese": {
-  "updateStatus": {
-    "title": "Update Case Status",
-    "description": "Update the status of the case"
+    "cancel": "Cancel",
+    "error": "Error"
   },
-  "statusUpdated": {
-    "title": "Status Updated",
-    "description": "The case status has been updated"
+  "casese": {
+    "updateStatus": {
+      "title": "Update Case Status",
+      "description": "Update the status of the case"
+    },
+    "statusUpdated": {
+      "title": "Status Updated",
+      "description": "The case status has been updated"
+    },
+    "statusLabel": "Case Status",
+    "selectStatusPlaceholder": "Select Case Status",
+    "updateStatusButton": "Update Status",
+    "error": {
+      "updateFailed": "Failed to update case status",
+      "tryAgain": "Failed to update case status. Please try again."
+    },
+    "statusGroup": {
+      "active": "Active Cases",
+      "judgment": "Judgment Results",
+      "nonJudgment": "Non-Judgment Results"
+    },
+    "status": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "fullWin": "Full Win",
+      "fullLoss": "Full Loss",
+      "partialWin": "Partial Win",
+      "partialLoss": "Partial Loss",
+      "dismissal": "Dismissal",
+      "rejection": "Rejection",
+      "withdrawal": "Withdrawal",
+      "mediation": "Mediation",
+      "settlement": "Settlement",
+      "trialCancellation": "Trial Cancellation",
+      "suspension": "Suspension",
+      "closure": "Closure"
+    }
   },
-  "statusLabel": "Case Status",
-  "selectStatusPlaceholder": "Select Case Status",
-  "updateStatusButton": "Update Status",
-  "error": {
-    "updateFailed": "Failed to update case status",
-    "tryAgain": "Failed to update case status. Please try again."
-  },
-  "statusGroup": {
-    "active": "Active Cases",
-    "judgment": "Judgment Results",
-    "nonJudgment": "Non-Judgment Results"
-  },
-  "status": {
-    "pending": "Pending",
-    "inProgress": "In Progress",
-    "fullWin": "Full Win",
-    "fullLoss": "Full Loss",
-    "partialWin": "Partial Win",
-    "partialLoss": "Partial Loss",
-    "dismissal": "Dismissal",
-    "rejection": "Rejection",
-    "withdrawal": "Withdrawal",
-    "mediation": "Mediation",
-    "settlement": "Settlement",
-    "trialCancellation": "Trial Cancellation",
-    "suspension": "Suspension",
-    "closure": "Closure"
-  }
-},
   "commons": {
     "cancel": "Cancel"
   },
@@ -673,109 +722,118 @@
       "fetchingCases": "Failed to fetch case list"
     }
   },
-"clientDetails": {
-  "title": "Case Details",
-  "backToCases": "Back to Cases",
-  "caseNumber": "Case Number",
-  "statusa": "Status",
-  "courtType": "Court Type",
-  "caseType": "Case Type",
-  "basicInfo": "Basic Information",
-  "caseTitle": "Case Title",
-  "client": "Client",
-  "lawyer": "Lawyer",
-  "created": "Created At",
-  "lastUpdated": "Last Updated",
-  "createdByLabel": "Created By",
-  "createdAtLabel": "Created At",
-  "caseDetailsAndStatus": "Case Details and Status",
-  "caseStatus": "Case Status",
-  "description": "Description",
-  "summary": "Summary",
-  "keyPointsAndDetails": "Key Points and Details",
-  "keyPoints": "Key Points",
-  "caseClassification": "Case Classification",
-  "statusLabel": "Status:",
-  "statusUpdated": "Status Updated",
-  "caseHasBeen": "The case status has been changed to {status}",
-  "failedToUpdate": "Failed to update case status",
-
-  "backToClient": "Back to Clients",
-  "createChat": "Create Chat",
-  "chat": "Chat",
-  "scheduleMeeting": "Schedule Meeting",
-  "scheduleMeetingWith": "Schedule a meeting with {{name}}",
-  "meetingLink": "Meeting Link",
-  "meetingLinkPlaceholder": "Enter meeting link",
-  "cancel": "Cancel",
-  "scheduling": "Scheduling...",
-
-  "email": "Email",
-  "phone": "Phone Number",
-  "address": "Address",
-  "clientSince": "Client Since",
-  "lastContact": "Last Contact",
-  "activeCases": "Active Cases",
-  "cases": "Cases",
-  "documents": "Documents",
-  "notes": "Notes",
-  "error": "Error",
-  "pleaseEnterMeetingLink": "Please enter meeting link",
-  "pleaseLogin": "Please login to continue",
-  "success": "Success",
-  "meetingScheduled": "Meeting scheduled successfully",
-  "failedToScheduleMeeting": "Failed to schedule meeting",
-
-  "clientStatusUpdated": "Client status has been changed to {{status}}",
-  "failedToUpdateStatus": "Failed to update client status",
-  "notesUpdated": "Notes updated",
-  "clientNotesUpdated": "Client notes updated successfully",
-  "failedToUpdateNotes": "Failed to update client notes",
-  "QA": "Ask Question",
-  "backToLawyer": "Back to Lawyer",
-
-  "status": {
-    "approved": "Approved",
-    "rejected": "Rejected",
-    "full_win": "Full Win",
-    "full_loss": "Full Loss",
-    "partial_win": "Partial Win",
-    "partial_loss": "Partial Loss",
-    "dismissal": "Dismissal",
-    "rejection": "Rejection",
-    "withdrawal": "Withdrawal",
-    "mediation": "Mediation",
-    "settlement": "Settlement",
-    "trial_cancellation": "Trial Cancellation",
-    "suspension": "Suspension",
-    "closure": "Closure",
-    "in_progress": "In Progress",
-    "pending": "Pending",
-    "active": "Active"
+  "clientDetails": {
+    "title": "Case Details",
+    "backToCases": "Back to Cases",
+    "clientInformation": "Client Information",
+    "lastUpdatedColon": "Last updated:",
+    "bookMeeting": "Book Meeting",
+    "clientProfile": "Client Profile",
+    "caseNumber": "Case Number",
+    "statusa": "Status",
+    "courtType": "Court Type",
+    "caseType": "Case Type",
+    "basicInfo": "Basic Information",
+    "caseTitle": "Case Title",
+    "client": "Client",
+    "lawyer": "Lawyer",
+    "created": "Created At",
+    "lastUpdated": "Last Updated",
+    "createdByLabel": "Created By",
+    "createdAtLabel": "Created At",
+    "caseDetailsAndStatus": "Case Details and Status",
+    "caseStatus": "Case Status",
+    "description": "Description",
+    "summary": "Summary",
+    "keyPointsAndDetails": "Key Points and Details",
+    "keyPoints": "Key Points",
+    "caseClassification": "Case Classification",
+    "statusLabel": "Status:",
+    "statusUpdated": "Status Updated",
+    "caseHasBeen": "The case status has been changed to {status}",
+    "failedToUpdate": "Failed to update case status",
+    "backToClient": "Back to Clients",
+    "createChat": "Create Chat",
+    "chat": "Chat",
+    "scheduleMeeting": "Schedule Meeting",
+    "scheduleMeetingWith": "Schedule a meeting with {{name}}",
+    "meetingLink": "Meeting Link",
+    "meetingLinkPlaceholder": "Enter meeting link",
+    "cancel": "Cancel",
+    "scheduling": "Scheduling...",
+    "email": "Email",
+    "phone": "Phone Number",
+    "address": "Address",
+    "registrationDate": "Registration Date",
+    "lastContactDate": "Last Contact Date",
+    "clientSince": "Client Since",
+    "lastContact": "Last Contact",
+    "activeCases": "Active Cases",
+    "cases": "Cases",
+    "documents": "Documents",
+    "notes": "Notes",
+    "clientCases": "Client Cases",
+    "addCase": "Add Case",
+    "caseName": "Case Name",
+    "assignedLawyer": "Assigned Lawyer",
+    "court": "Court",
+    "statusText": "Status",
+    "actions": "Actions",
+    "loadingCases": "Loading cases...",
+    "noCasesFound": "No cases found for this client.",
+    "viewDetails": "View Details",
+    "error": "Error",
+    "pleaseEnterMeetingLink": "Please enter meeting link",
+    "pleaseLogin": "Please login to continue",
+    "success": "Success",
+    "meetingScheduled": "Meeting scheduled successfully",
+    "failedToScheduleMeeting": "Failed to schedule meeting",
+    "clientStatusUpdated": "Client status has been changed to {{status}}",
+    "failedToUpdateStatus": "Failed to update client status",
+    "notesUpdated": "Notes updated",
+    "clientNotesUpdated": "Client notes updated successfully",
+    "failedToUpdateNotes": "Failed to update client notes",
+    "QA": "Ask Question",
+    "backToLawyer": "Back to Lawyer",
+    "status": {
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "full_win": "Full Win",
+      "full_loss": "Full Loss",
+      "partial_win": "Partial Win",
+      "partial_loss": "Partial Loss",
+      "dismissal": "Dismissal",
+      "rejection": "Rejection",
+      "withdrawal": "Withdrawal",
+      "mediation": "Mediation",
+      "settlement": "Settlement",
+      "trial_cancellation": "Trial Cancellation",
+      "suspension": "Suspension",
+      "closure": "Closure",
+      "in_progress": "In Progress",
+      "pending": "Pending",
+      "active": "Active"
+    },
+    "clientDetails": "Client Details",
+    "statusDescriptions": {
+      "full_win": "Completely won in court proceedings",
+      "full_loss": "Completely lost in court proceedings",
+      "partial_win": "Partial win with some claims accepted",
+      "partial_loss": "Partial loss with some claims dismissed",
+      "dismissal": "Case dismissed by the court",
+      "rejection": "Case rejected without substantive review",
+      "withdrawal": "Case withdrawn by the plaintiff",
+      "mediation": "Resolved through court mediation",
+      "settlement": "Settled out of court",
+      "trial_cancellation": "Trial canceled by the court",
+      "suspension": "Case proceedings suspended",
+      "closure": "Case officially closed",
+      "in_progress": "Case is currently in progress",
+      "pending": "Case is pending start",
+      "open": "Case has been opened",
+      "notAvailable": "Status information not available"
+    }
   },
-
-  "clientDetails": "Client Details",
-
-  "statusDescriptions": {
-    "full_win": "Completely won in court proceedings",
-    "full_loss": "Completely lost in court proceedings",
-    "partial_win": "Partial win with some claims accepted",
-    "partial_loss": "Partial loss with some claims dismissed",
-    "dismissal": "Case dismissed by the court",
-    "rejection": "Case rejected without substantive review",
-    "withdrawal": "Case withdrawn by the plaintiff",
-    "mediation": "Resolved through court mediation",
-    "settlement": "Settled out of court",
-    "trial_cancellation": "Trial canceled by the court",
-    "suspension": "Case proceedings suspended",
-    "closure": "Case officially closed",
-    "in_progress": "Case is currently in progress",
-    "pending": "Case is pending start",
-    "open": "Case has been opened",
-    "notAvailable": "Status information not available"
-  }
-},
-
   "commonb": {
     "error": "Error"
   },
@@ -795,12 +853,10 @@
       "videoRate": "Enter your video consultation rate"
     },
     "descriptions": {
-       "generalRate": "Your standard per minute rate for in-person consultations",
-  "chatRate": "Your rate per minute for text-based chat consultations",
-  "videoRate": "Your rate per minute for video call consultations"
+      "generalRate": "Your standard per minute rate for in-person consultations",
+      "chatRate": "Your rate per minute for text-based chat consultations",
+      "videoRate": "Your rate per minute for video call consultations"
     },
-    
-
     "saveButton": "Save Changes",
     "saving": "Saving...",
     "unsavedChanges": "You have unsaved changes",
@@ -814,110 +870,173 @@
         "title": "Success",
         "description": "Consultation charges updated successfully"
       },
-      
       "failedToUpdate": "Failed to update your rates"
     }
   },
-"caseDetails": {
-  "Ctitle": "Case Details",
-  "backToCases": "Back to Case List",
-  "caseNumberWithId": "Case #{{id}}",
-  "approve": "Approve",
-  "reject": "Reject",
-  "status": {
-    "pending": "Pending",
-    "approved": "Approved",
-    "rejected": "Rejected"
+  "caseDetails": {
+    "Ctitle": "Case Details",
+    "backToCases": "Back to Case List",
+    "caseNumberWithId": "Case #{{id}}",
+    "approve": "Approve",
+    "reject": "Reject",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "inProgress": "In Progress"
+    },
+    "caseNumber": "Case Number",
+    "caseTitle": "Case Title",
+    "client": "Client",
+    "lawyer": "Lawyer",
+    "created": "Created",
+    "lastUpdated": "Last Updated",
+    "description": "Description",
+    "noDescription": "No description provided.",
+    "caseInfo": "Case Information",
+    "caseType": "Case Type",
+    "court": "Court",
+    "caseStatus": "Case Status",
+    "priority": "Priority",
+    "estDuration": "Estimated Duration",
+    "notes": "Notes",
+    "basicInfo": "Basic Information",
+    "email": "Email",
+    "contact": "Contact",
+    "createdAt": "Created At",
+    "documents": "Case Documents",
+    "docTable": {
+      "title": "Document Title",
+      "storedOn": "Stored On",
+      "openFolder": "Open Folder",
+      "view": "View",
+      "aiVoiceSummary": "AI Voice Summary",
+      "visibility": "Visibility",
+      "lastModified": "Last Modified",
+      "actions": "Actions",
+      "download": "Download",
+      "summary": "Summary",
+      "removeCloud": "Remove from Cloud",
+      "disconnectPC": "Disconnect from PC",
+      "delete": "Delete"
+    },
+    "loadingDocs": "Loading documents...",
+    "noDocs": "No documents uploaded for this case.",
+    "visibility": {
+      "public": "Public",
+      "shared": "Shared",
+      "private": "Private"
+    },
+    "voiceSummary": {
+      "title": "AI Voice Summary",
+      "noSummary": "No summary available for this document. The AI summary may still be processing.",
+      "language": "Language",
+      "playing": "Playing...",
+      "paused": "Paused",
+      "resume": "Resume",
+      "stop": "Stop",
+      "playSummary": "Play Summary"
+    },
+    "deleteConfirm": {
+      "areYouSure": "Are you sure you want to delete this case?",
+      "yesDelete": "Yes, Delete",
+      "no": "No"
+    },
+    "buttons": {
+      "edit": "Edit Case",
+      "delete": "Delete Case",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "upload": "Upload Document",
+      "uploading": "Uploading...",
+      "caseUpdatedSuccess": "Case updated successfully",
+      "caseUpdateFailed": "Failed to update case",
+      "caseDeletedSuccess": "Case deleted successfully",
+      "caseDeleteFailed": "Failed to delete case",
+      "docUploadSuccess": "Document(s) uploaded successfully",
+      "docUploadFailed": "Failed to upload document"
+    },
+    "summary": "Summary",
+    "keyPoints": "Key Points",
+    "na": "N/A",
+    "statusUpdated": "Status has been updated",
+    "caseHasBeen": "Case has been {{status}}",
+    "error": "Error",
+    "failedToUpdate": "Failed to update case status",
+    "statusLabel": "Status",
+    "createdByLabel": "Created By",
+    "createdAtLabel": "Created At"
   },
-  "caseNumber": "Case Number",
-  "caseTitle": "Case Title",
-  "client": "Client",
-  "lawyer": "Lawyer",
-  "created": "Created",
-  "lastUpdated": "Last Updated",
-  "description": "Description",
-  "summary": "Summary",
-  "keyPoints": "Key Points",
-  "na": "N/A",
-  "statusUpdated": "Status has been updated",
-  "caseHasBeen": "Case has been {{status}}",
-  "error": "Error",
-  "failedToUpdate": "Failed to update case status",
-  "statusLabel": "Status",
-  "createdByLabel": "Created By",
-  "createdAtLabel": "Created At"
-},
-"caseDetailsq": {
-  "title": "Case Details",
-  "backToCases": "Back to Case List",
-  "caseNumber": "Case Number",
-  "statuse": "Status",
-  "courtType": "Court Type",
-  "caseType": "Case Type",
-  "basicInfo": "Basic Information",
-  "caseTitle": "Case Title",
-  "client": "Client",
-  "lawyer": "Lawyer",
-  "created": "Created",
-  "lastUpdated": "Last Updated",
-  "createdByLabel": "Created By",
-  "createdAtLabel": "Created At",
-  "caseDetailsAndStatus": "Case Details and Status",
-  "caseStatus": "Case Status",
-  "description": "Description",
-  "summary": "Summary",
-  "keyPointsAndDetails": "Key Points and Details",
-  "keyPoints": "Key Points",
-  "caseClassification": "Case Classification",
-  "statusLabel": "Status:",
-  "statusUpdated": "Status Updated",
-  "caseHasBeen": "Case status has been changed to {status}",
-  "error": "Error occurred",
-  "failedToUpdate": "Failed to update case status",
-  "status": {
-    "approved": "Approved",
-    "pending": "Pending",
-    "rejected": "Rejected",
-    "full_win": "Full Win",
-    "full_loss": "Full Loss",
-    "partial_win": "Partial Win",
-    "partial_loss": "Partial Loss",
-    "dismissal": "Dismissal",
-    "rejection": "Rejection",
-    "withdrawal": "Withdrawal",
-    "mediation": "Mediation",
-    "settlement": "Settlement",
-    "trial_cancellation": "Trial Cancellation",
-    "suspension": "Suspension",
-    "closure": "Closure",
-    "in_progress": "In Progress",
-    "open": "Open"
+  "caseDetailsq": {
+    "title": "Case Details",
+    "backToCases": "Back to Case List",
+    "caseNumber": "Case Number",
+    "statuse": "Status",
+    "courtType": "Court Type",
+    "caseType": "Case Type",
+    "basicInfo": "Basic Information",
+    "caseTitle": "Case Title",
+    "client": "Client",
+    "lawyer": "Lawyer",
+    "created": "Created",
+    "lastUpdated": "Last Updated",
+    "createdByLabel": "Created By",
+    "createdAtLabel": "Created At",
+    "caseDetailsAndStatus": "Case Details and Status",
+    "caseStatus": "Case Status",
+    "description": "Description",
+    "summary": "Summary",
+    "keyPointsAndDetails": "Key Points and Details",
+    "keyPoints": "Key Points",
+    "caseClassification": "Case Classification",
+    "statusLabel": "Status:",
+    "statusUpdated": "Status Updated",
+    "caseHasBeen": "Case status has been changed to {status}",
+    "error": "Error occurred",
+    "failedToUpdate": "Failed to update case status",
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "full_win": "Full Win",
+      "full_loss": "Full Loss",
+      "partial_win": "Partial Win",
+      "partial_loss": "Partial Loss",
+      "dismissal": "Dismissal",
+      "rejection": "Rejection",
+      "withdrawal": "Withdrawal",
+      "mediation": "Mediation",
+      "settlement": "Settlement",
+      "trial_cancellation": "Trial Cancellation",
+      "suspension": "Suspension",
+      "closure": "Closure",
+      "in_progress": "In Progress",
+      "open": "Open"
+    },
+    "statusDescriptions": {
+      "approved": "Case has been approved and can proceed",
+      "pending": "Case is waiting to start",
+      "rejected": "Case has been rejected and cannot proceed",
+      "full_win": "Completely won in court proceedings",
+      "full_loss": "Completely lost in court proceedings",
+      "partial_win": "Partial win with some claims granted",
+      "partial_loss": "Partial loss with some claims dismissed",
+      "dismissal": "Case dismissed by the court",
+      "rejection": "Case rejected without substantive review",
+      "withdrawal": "Case withdrawn by the plaintiff",
+      "mediation": "Resolved through court mediation",
+      "settlement": "Settled outside court",
+      "trial_cancellation": "Trial cancelled by the court",
+      "suspension": "Case proceedings suspended",
+      "closure": "Case officially closed",
+      "in_progress": "Case is currently in progress",
+      "open": "Case has been opened",
+      "notAvailable": "Status information not available"
+    }
   },
-  "statusDescriptions": {
-    "approved": "Case has been approved and can proceed",
-    "pending": "Case is waiting to start",
-    "rejected": "Case has been rejected and cannot proceed",
-    "full_win": "Completely won in court proceedings",
-    "full_loss": "Completely lost in court proceedings",
-    "partial_win": "Partial win with some claims granted",
-    "partial_loss": "Partial loss with some claims dismissed",
-    "dismissal": "Case dismissed by the court",
-    "rejection": "Case rejected without substantive review",
-    "withdrawal": "Case withdrawn by the plaintiff",
-    "mediation": "Resolved through court mediation",
-    "settlement": "Settled outside court",
-    "trial_cancellation": "Trial cancelled by the court",
-    "suspension": "Case proceedings suspended",
-    "closure": "Case officially closed",
-    "in_progress": "Case is currently in progress",
-    "open": "Case has been opened",
-    "notAvailable": "Status information not available"
-  }
-},
-"commonl": {
-  "na": "Not Available"
-},
-
+  "commonl": {
+    "na": "Not Available"
+  },
   "pagesa": {
     "clientDetailsa": {
       "documents": "Documents",
@@ -934,206 +1053,202 @@
   "commone": {
     "share": "Share"
   },
-  "prdoc":{
-  "documents": "Documents",
-  "loadingFiles": "Loading files...",
-  "noFilesUploaded": "No files uploaded for this client",
-  "error": "Error",
-  "failedToLoadClientFiles": "Failed to load client files",
-  "sharedWith": "Shared with {{count}} lawyer",
-  "sharedWith_plural": "Shared with {{count}} lawyers",
-  "private": "Private",
-  "download": "Download",
-  "viewDocument": "View Document",
-  "shareDocument": "Share Document"
-},
- "documentT": {
-      "documents": {
-        "loadFailed": "Failed to load documents",
-        "loadError": "An error occurred while loading documents",
-        "loading": "Loading documents...",
-         "documentDownloadSuccess": "The document has been downloaded successfully.",
-  "documentDownloadError": "An error occurred while downloading the document.",
-
-        "noDocuments": "No documents available",
-        "noMatches": "No matching documents found",
-        "uploadPrompt": "Please upload a new document",
-        "adjustFilters": "Adjust filters or try a different search term",
-        "deleteConfirm": "Are you sure you want to delete this document? This action cannot be undone.",
-        "deleteSuccess": "Document deleted successfully",
-        "deleteFailed": "Failed to delete document",
-        "deleteError": "An error occurred while deleting the document",
-        "shareSuccess": "Document sharing updated successfully",
-        "searchPlaceholder": "Search documents...",
-        "summaryDownloadSuccess": "Document summary downloaded successfully",
-        "summaryDownloadError": "Failed to download document summary",
-        "downloadingSummary": "Downloading summary...",
-        "downloadDocument":"Download Document"
-      },
-      "status": {
-        "pending": "Pending",
-        "completed": "Completed",
-        "failed": "Failed",
-        "rejected": "Rejected",
-        "approved": "Approved",
-        "processing": "Processing",
-        "cancelled": "Cancelled"
-      },
-      "general": {
-        "unknown": "Unknown",
-        "none": "None"
-      },
-      "table": {
-        "headers": {
-          "document": "Document",
-          "type": "Type",
-          "status": "Status",
-          "privacy": "Privacy",
-          "uploaded": "Uploaded",
-          "actions": "Actions",
-          "downloadDocument": "Download Document"
-        },
-        "filters": {
-          "allStatuses": "All statuses",
-          "allTypes": "All types",
-          "allPrivacy": "All privacy"
-        },
-        "privacy": {
-          "public": "Public",
-          "private": "Private",
-          "sharedPrivate": "Shared Private",
-          "fullyPrivate": "Fully Private"
-        },
-        "actions": {
-          "downloadSummary": "Download Summary",
-          "shareDocument": "Share Document",
-          "view": "View",
-          "delete": "Delete",
-          "downloadDocument": "Download Document"
-        }
-      }
+  "prdoc": {
+    "documents": "Documents",
+    "loadingFiles": "Loading files...",
+    "noFilesUploaded": "No files uploaded for this client",
+    "error": "Error",
+    "failedToLoadClientFiles": "Failed to load client files",
+    "sharedWith": "Shared with {{count}} lawyer",
+    "sharedWith_plural": "Shared with {{count}} lawyers",
+    "private": "Private",
+    "download": "Download",
+    "viewDocument": "View Document",
+    "shareDocument": "Share Document"
+  },
+  "documentT": {
+    "documents": {
+      "loadFailed": "Failed to load documents",
+      "loadError": "An error occurred while loading documents",
+      "loading": "Loading documents...",
+      "documentDownloadSuccess": "The document has been downloaded successfully.",
+      "documentDownloadError": "An error occurred while downloading the document.",
+      "noDocuments": "No documents available",
+      "noMatches": "No matching documents found",
+      "uploadPrompt": "Please upload a new document",
+      "adjustFilters": "Adjust filters or try a different search term",
+      "deleteConfirm": "Are you sure you want to delete this document? This action cannot be undone.",
+      "deleteSuccess": "Document deleted successfully",
+      "deleteFailed": "Failed to delete document",
+      "deleteError": "An error occurred while deleting the document",
+      "shareSuccess": "Document sharing updated successfully",
+      "searchPlaceholder": "Search documents...",
+      "summaryDownloadSuccess": "Document summary downloaded successfully",
+      "summaryDownloadError": "Failed to download document summary",
+      "downloadingSummary": "Downloading summary...",
+      "downloadDocument": "Download Document"
     },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "failed": "Failed",
+      "rejected": "Rejected",
+      "approved": "Approved",
+      "processing": "Processing",
+      "cancelled": "Cancelled"
+    },
+    "general": {
+      "unknown": "Unknown",
+      "none": "None"
+    },
+    "table": {
+      "headers": {
+        "document": "Document",
+        "type": "Type",
+        "status": "Status",
+        "privacy": "Privacy",
+        "uploaded": "Uploaded",
+        "actions": "Actions",
+        "downloadDocument": "Download Document"
+      },
+      "filters": {
+        "allStatuses": "All statuses",
+        "allTypes": "All types",
+        "allPrivacy": "All privacy"
+      },
+      "privacy": {
+        "public": "Public",
+        "private": "Private",
+        "sharedPrivate": "Shared Private",
+        "fullyPrivate": "Fully Private"
+      },
+      "actions": {
+        "downloadSummary": "Download Summary",
+        "shareDocument": "Share Document",
+        "view": "View",
+        "delete": "Delete",
+        "downloadDocument": "Download Document"
+      }
+    }
+  },
   "secureLink": {
-  "title": "Secure Document Upload Links",
-  "description": "Generate password-protected links for clients to upload documents securely. Links expire after successful upload or when the time limit is reached.",
-  "generateNewLink": "Generate New Link",
-  "viewExistingLinks": "View Existing Links",
-  "myLinks": "My Secure Links",
-  "form": {
-    "clientLabel": "Select Client",
-    "clientPlaceholder": "Choose a client",
-    "passwordLabel": "Password",
-    "passwordPlaceholder": "Enter secure password (min 6 characters)",
-    "expiryLabel": "Expires In"
-  },
-  "expiry": {
-    "1h": "1 Hour",
-    "6h": "6 Hours",
-    "12h": "12 Hours",
-    "24h": "24 Hours",
-    "48h": "48 Hours",
-    "72h": "72 Hours",
-    "1w": "1 Week"
-  },
-  "buttons": {
-    "generateLink": "Generate Secure Link",
-    "generating": "Generating...",
-    "viewMyLinks": "View My Links",
-    "copy": "Copy"
-  },
-  "success": {
-    "generatedTitle": "Secure Link Generated",
-    "generatedDesc": "Link created for {{name}}",
-    "copiedTitle": "Link Copied",
-    "copiedDesc": "Secure link copied to clipboard"
-  },
-  "errors": {
-    "missingInfoTitle": "Missing Information",
-    "missingInfoDesc": "Please select a client and enter a password",
-    "shortPasswordTitle": "Password Too Short",
-    "shortPasswordDesc": "Password must be at least 6 characters long",
-    "errorTitle": "Error",
-    "errorDefault": "Failed to generate secure link"
-  },
-  "status": {
+    "title": "Secure Document Upload Links",
+    "description": "Generate password-protected links for clients to upload documents securely. Links expire after successful upload or when the time limit is reached.",
+    "generateNewLink": "Generate New Link",
+    "viewExistingLinks": "View Existing Links",
+    "myLinks": "My Secure Links",
+    "form": {
+      "clientLabel": "Select Client",
+      "clientPlaceholder": "Choose a client",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter secure password (min 6 characters)",
+      "expiryLabel": "Expires In"
+    },
+    "expiry": {
+      "1h": "1 Hour",
+      "6h": "6 Hours",
+      "12h": "12 Hours",
+      "24h": "24 Hours",
+      "48h": "48 Hours",
+      "72h": "72 Hours",
+      "1w": "1 Week"
+    },
+    "buttons": {
+      "generateLink": "Generate Secure Link",
+      "generating": "Generating...",
+      "viewMyLinks": "View My Links",
+      "copy": "Copy"
+    },
+    "success": {
+      "generatedTitle": "Secure Link Generated",
+      "generatedDesc": "Link created for {{name}}",
+      "copiedTitle": "Link Copied",
+      "copiedDesc": "Secure link copied to clipboard"
+    },
+    "errors": {
+      "missingInfoTitle": "Missing Information",
+      "missingInfoDesc": "Please select a client and enter a password",
+      "shortPasswordTitle": "Password Too Short",
+      "shortPasswordDesc": "Password must be at least 6 characters long",
+      "errorTitle": "Error",
+      "errorDefault": "Failed to generate secure link"
+    },
+    "status": {
+      "used": "Used",
+      "expired": "Expired",
+      "active": "Active"
+    },
+    "generatedFor": "Generated Link for {{name}}",
+    "shareInfo": "Share this link and password with your client. The link will expire after successful upload.",
+    "noLinks": "No secure links generated yet",
+    "clickToView": "Click the eye icon to view your secure links",
+    "created": "Created",
+    "expires": "Expires",
     "used": "Used",
-    "expired": "Expired",
-    "active": "Active"
-  },
-  "generatedFor": "Generated Link for {{name}}",
-  "shareInfo": "Share this link and password with your client. The link will expire after successful upload.",
-  "noLinks": "No secure links generated yet",
-  "clickToView": "Click the eye icon to view your secure links",
-  "created": "Created",
-  "expires": "Expires",
-  "used": "Used",
-  "documentUploaded": "Document Uploaded:"
-
-
+    "documentUploaded": "Document Uploaded:"
   },
   "newcases": {
-  "pageTitle": "Create New Case",
-  "pageSubtitle": "Fill in the details below to create a new case for your client.",
-  "cardTitle": "Case Information",
-  "cardDescription": "Provide the basic information for the new case.",
-  "backButton": "Back",
-  "clientOnboarding": {
-        "addNewClient": "Add New Client",
-        "dialogTitle": "Onboard New Client",
-        "firstName": "First Name",
-        "firstNamePlaceholder": "Enter first name",
-        "lastName": "Last Name",
-        "lastNamePlaceholder": "Enter last name",
-        "email": "Email Address",
-        "emailPlaceholder": "Enter email address",
-        "phone": "Phone Number",
-        "phonePlaceholder": "Enter phone number",
-        "createClient": "Create Client",
-        "creating": "Creating...",
-        "cancel": "Cancel",
-        "clientCreatedTitle": "Client Created Successfully",
-        "otpSent": "OTP sent to {{email}}: {{otp}}",
-        "clientOnboardedTitle": "Client Onboarded",
-        "clientOnboardedDescription": "New client has been created and selected for this case.",
-        "creationFailed": "Failed to create client",
-        "errorTitle": "Error Creating Client",
-        "errorDescription": "Please try again later."
-      },
-  "form": {
-    "title": "Case Title",
-    "titlePlaceholder": "Enter case title",
-    "client": "Client",
-    "selectClient": "Select client",
-    "assignedTo": "Assigned To",
-    "selectLawyer": "Select lawyer",
-    "status": "Status",
-    "selectStatus": "Select status",
-    "description": "Description",
-    "descriptionPlaceholder": "Enter case description"
+    "pageTitle": "Create New Case",
+    "pageSubtitle": "Fill in the details below to create a new case for your client.",
+    "cardTitle": "Case Information",
+    "cardDescription": "Provide the basic information for the new case.",
+    "backButton": "Back",
+    "clientOnboarding": {
+      "addNewClient": "Add New Client",
+      "dialogTitle": "Onboard New Client",
+      "firstName": "First Name",
+      "firstNamePlaceholder": "Enter first name",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Enter last name",
+      "email": "Email Address",
+      "emailPlaceholder": "Enter email address",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter phone number",
+      "createClient": "Create Client",
+      "creating": "Creating...",
+      "cancel": "Cancel",
+      "clientCreatedTitle": "Client Created Successfully",
+      "otpSent": "OTP sent to {{email}}: {{otp}}",
+      "clientOnboardedTitle": "Client Onboarded",
+      "clientOnboardedDescription": "New client has been created and selected for this case.",
+      "creationFailed": "Failed to create client",
+      "errorTitle": "Error Creating Client",
+      "errorDescription": "Please try again later."
+    },
+    "form": {
+      "title": "Case Title",
+      "titlePlaceholder": "Enter case title",
+      "client": "Client",
+      "selectClient": "Select client",
+      "assignedTo": "Assigned To",
+      "selectLawyer": "Select lawyer",
+      "status": "Status",
+      "selectStatus": "Select status",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter case description"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "buttons": {
+      "create": "Create Case",
+      "cancel": "Cancel"
+    },
+    "successTitle": "Case Created ✅",
+    "successDescription": "Case \"{{caseTitle}}\" has been created successfully.",
+    "errorTitle": "Error ❌",
+    "errorDescription": "Something went wrong while creating the case.",
+    "errorLoadingTitle": "Error loading users",
+    "errorLoadingDescription": "Unable to load client and lawyer information. Please try again.",
+    "summaryAuto": "Case created for {{title}}",
+    "statusLabel": "Status",
+    "createdBy": "Created by",
+    "createdAt": "Created at",
+    "you": "You",
+    "user": "User"
   },
-  "status": {
-    "pending": "Pending",
-    "approved": "Approved",
-    "rejected": "Rejected"
-  },
-  "buttons": {
-    "create": "Create Case",
-    "cancel": "Cancel"
-  },
-  "successTitle": "Case Created ✅",
-  "successDescription": "Case \"{{caseTitle}}\" has been created successfully.",
-  "errorTitle": "Error ❌",
-  "errorDescription": "Something went wrong while creating the case.",
-  "errorLoadingTitle": "Error loading users",
-  "errorLoadingDescription": "Unable to load client and lawyer information. Please try again.",
-  "summaryAuto": "Case created for {{title}}",
-  "statusLabel": "Status",
-  "createdBy": "Created by",
-  "createdAt": "Created at",
-  "you": "You",
-  "user": "User"
-},
-
   "fileProcessor": {
     "tabs": {
       "upload": "Upload & Process",
@@ -1197,294 +1312,292 @@
     }
   },
   "profileD": {
-  "profile": {
-    "title": "Profile Settings",
-    "subtitle": "Update your profile information and settings.",
-    "logout": {
-      "button": "Logout",
-      "success": {
-        "title": "Logged out",
-        "description": "You have been logged out successfully."
-      }
-    },
-    "avatar": {
-      "alt": "Profile picture",
-      "changeButton": "Change profile picture",
-      "success": {
-        "title": "Profile updated successfully",
-        "description": "Your profile picture has been updated."
-      },
-      "error": {
-        "title": "Error",
-        "description": "An error occurred while updating your profile picture."
-      }
-    },
-    "form": {
-      "firstName": {
-        "label": "First Name",
-        "placeholder": "Enter your first name"
-      },
-      "lastName": {
-        "label": "Last Name",
-        "placeholder": "Enter your last name"
-      },
-      "email": {
-        "label": "Email",
-        "placeholder": "Enter your email"
-      },
-      "phone": {
-        "label": "Phone",
-        "placeholder": "Enter your phone number"
-      },
-      "about": {
-        "label": "About",
-        "placeholder": "Tell us about yourself"
-      },
-      "practiceArea": {
-        "label": "Practice Area",
-        "placeholder": "Select practice area",
-        "options": {
-          "corporate": "Corporate",
-          "family": "Family",
-          "criminal": "Criminal",
-          "immigration": "Immigration",
-          "intellectual": "Intellectual",
-          "realEstate": "Real Estate"
+    "profile": {
+      "title": "Profile Settings",
+      "subtitle": "Update your profile information and settings.",
+      "logout": {
+        "button": "Logout",
+        "success": {
+          "title": "Logged out",
+          "description": "You have been logged out successfully."
         }
       },
-      "experience": {
-        "label": "Experience",
-        "placeholder": "Select years",
-        "options": {
-          "1": "1 Year",
-          "3": "3 Years",
-          "6": "6 Years",
-          "10": "10 Years"
+      "avatar": {
+        "alt": "Profile picture",
+        "changeButton": "Change profile picture",
+        "success": {
+          "title": "Profile updated successfully",
+          "description": "Your profile picture has been updated."
+        },
+        "error": {
+          "title": "Error",
+          "description": "An error occurred while updating your profile picture."
         }
-      }
-    },
-    "buttons": {
-      "cancel": "Cancel",
-      "save": "Save",
-      "saving": "Saving..."
-    },
-    "toast": {
-      "success": {
-        "title": "Profile updated successfully",
-        "description": "Your profile information has been updated."
       },
-      "error": {
-        "title": "Update failed",
-        "description": "An error occurred while updating your profile."
-      }
-    },
-    "errors": {
-      "firstNameMin": "First name must be at least 2 characters.",
-      "lastNameMin": "Last name must be at least 2 characters.",
-      "invalidEmail": "Invalid email address.",
-      "phoneMin": "Phone number must be at least 10 digits.",
-      "aboutMax": "About section cannot exceed 500 characters."
-    }
-  }
-},
-"caseDocuments": {
-      "title": "Case Documents",
-      "loading": "Loading documents...",
-      "noDocuments": {
-        "title": "No documents found",
-        "description": "No documents have been uploaded for this case yet."
+      "form": {
+        "firstName": {
+          "label": "First Name",
+          "placeholder": "Enter your first name"
+        },
+        "lastName": {
+          "label": "Last Name",
+          "placeholder": "Enter your last name"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "Enter your email"
+        },
+        "phone": {
+          "label": "Phone",
+          "placeholder": "Enter your phone number"
+        },
+        "about": {
+          "label": "About",
+          "placeholder": "Tell us about yourself"
+        },
+        "practiceArea": {
+          "label": "Practice Area",
+          "placeholder": "Select practice area",
+          "options": {
+            "corporate": "Corporate",
+            "family": "Family",
+            "criminal": "Criminal",
+            "immigration": "Immigration",
+            "intellectual": "Intellectual",
+            "realEstate": "Real Estate"
+          }
+        },
+        "experience": {
+          "label": "Experience",
+          "placeholder": "Select years",
+          "options": {
+            "1": "1 Year",
+            "3": "3 Years",
+            "6": "6 Years",
+            "10": "10 Years"
+          }
+        }
       },
-      "tableHeaders": {
-        "document": "Document",
-        "uploadedBy": "Uploaded By",
-        "status": "Status",
-        "privacy": "Privacy",
-        "size": "Size",
-        "actions": "Actions"
+      "buttons": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving..."
       },
-      "status": {
-        "completed": "Completed",
-        "pending": "Pending",
-        "failed": "Failed"
+      "toast": {
+        "success": {
+          "title": "Profile updated successfully",
+          "description": "Your profile information has been updated."
+        },
+        "error": {
+          "title": "Update failed",
+          "description": "An error occurred while updating your profile."
+        }
       },
-      "privacy": {
-        "public": "Public",
-        "private": "Private",
-        "fully_private": "Fully Private"
-      },
-      "accountTypes": {
-        "lawyer": "Lawyer",
-        "client": "Client",
-        "admin": "Admin",
-        "staff": "Staff"
-      },
-      "noSummary": "No Summary",
-      "noSummaryDescription": "This document doesn't have a summary yet",
-      "summaryDownloaded": "Document summary downloaded successfully",
-      "documentDeleted": "Document deleted successfully",
-      "confirmDelete": "Are you sure you want to delete \"{documentName}\"?",
-      "document": "document",
-      "documents": "documents",
       "errors": {
-        "fetchFailed": "Failed to fetch case documents:",
-        "fetchError": "Error fetching case documents:",
-        "loadFailed": "Failed to load case documents",
-        "noDocumentLink": "Document link not available",
-        "summaryDownloadError": "Error downloading summary:",
-        "summaryDownloadFailed": "Failed to download document summary",
-        "deleteError": "Error deleting document:",
-        "deleteFailed": "Failed to delete document"
+        "firstNameMin": "First name must be at least 2 characters.",
+        "lastNameMin": "Last name must be at least 2 characters.",
+        "invalidEmail": "Invalid email address.",
+        "phoneMin": "Phone number must be at least 10 digits.",
+        "aboutMax": "About section cannot exceed 500 characters."
       }
+    }
+  },
+  "caseDocuments": {
+    "title": "Case Documents",
+    "loading": "Loading documents...",
+    "noDocuments": {
+      "title": "No documents found",
+      "description": "No documents have been uploaded for this case yet."
     },
+    "tableHeaders": {
+      "document": "Document",
+      "uploadedBy": "Uploaded By",
+      "status": "Status",
+      "privacy": "Privacy",
+      "size": "Size",
+      "actions": "Actions"
+    },
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    },
+    "privacy": {
+      "public": "Public",
+      "private": "Private",
+      "fully_private": "Fully Private"
+    },
+    "accountTypes": {
+      "lawyer": "Lawyer",
+      "client": "Client",
+      "admin": "Admin",
+      "staff": "Staff"
+    },
+    "noSummary": "No Summary",
+    "noSummaryDescription": "This document doesn't have a summary yet",
+    "summaryDownloaded": "Document summary downloaded successfully",
+    "documentDeleted": "Document deleted successfully",
+    "confirmDelete": "Are you sure you want to delete \"{documentName}\"?",
+    "document": "document",
+    "documents": "documents",
+    "errors": {
+      "fetchFailed": "Failed to fetch case documents:",
+      "fetchError": "Error fetching case documents:",
+      "loadFailed": "Failed to load case documents",
+      "noDocumentLink": "Document link not available",
+      "summaryDownloadError": "Error downloading summary:",
+      "summaryDownloadFailed": "Failed to download document summary",
+      "deleteError": "Error deleting document:",
+      "deleteFailed": "Failed to delete document"
+    }
+  },
   "commonr": {
     "error": "Error",
     "success": "Success"
   },
-"headDo":{
-  "documents": {
-    "header": {
-      "title": "Document Management",
-      "description": "Upload, manage, and share your legal documents securely with enhanced privacy controls"
-    },
-    "upload": {
-      "button": "Upload Document"
-    },
-    "stats": {
-      "total": "Total Documents",
-      "totalDescription": "All uploaded documents",
-      "public": "Public Documents",
-      "publicDescription": "Visible to all users",
-      "private": "Private Documents",
-      "privateDescription": "Restricted access",
-      "processed": "Processed",
-      "processedDescription": "Successfully processed"
-    }
-  }
-},
-"qrCode": {
-  "button": "QR Code",
-  "dialogTitle": "QR Code",
-  "altText": "Post QR Code",
-  "scanInstructions": "Scan this QR code to open the post",
-  "generatePrompt": "Generate a QR code for this post",
-  "generateButton": "Generate QR Code",
-  "generating": "Generating...",
-  "downloading": "Downloading...",
-  "downloadButton": "Download",
-  "copyButton": "Copy URL",
-  "shareButton": "Share Post",
-  "usage": {
-    "title": "How to use:",
-    "point1": "Generate a QR code for easy sharing",
-    "point2": "Download the QR code as a PNG image",
-    "point3": "Anyone can scan it to open the post",
-    "point4": "Perfect for business cards, flyers, or presentations"
-  },
-  "generated": {
-    "title": "QR Code Generated",
-    "description": "The QR code has been successfully generated!"
-  },
-  "download": {
-    "started": "Download Started",
-    "description": "The QR code is being downloaded"
-  },
-  "copied": {
-    "title": "URL Copied",
-    "description": "The post URL has been copied to clipboard"
-  },
-  "errors": {
-    "generation": "QR Code generation error:",
-    "generationTitle": "Generation Error",
-    "generationDescription": "An error occurred while generating the QR code",
-    "download": "QR Code download error:",
-    "downloadTitle": "Download Failed",
-    "downloadDescription": "Failed to download the QR code",
-    "copy": "URL copy error:",
-    "copyTitle": "Copy Failed",
-    "copyDescription": "Could not copy the URL to clipboard",
-    "share": "Share error:"
-  }
-},
-"signu": {
-  "signup": {
-    "title": "Create Account",
-    "have_account": "Already have an account?",
-    "sign_in": "Sign In",
-    "first_name": "First Name",
-    "first_name_placeholder": "Enter your first name",
-    "last_name": "Last Name",
-    "last_name_placeholder": "Enter your last name",
-    "email": "Email",
-    "email_placeholder": "Enter your email",
-    "password": "Password",
-    "password_placeholder": "Enter your password",
-    "account_type": "Account Type",
-    "account_type_placeholder": "Select account type",
-    "client": "Client",
-    "lawyer": "Lawyer",
-    "terms_agreement": "I agree to the Terms of Service, Privacy Policy, and User Agreement.",
-    "create_account": "Create Account",
-    "creating_account": "Creating Account...",
-    "recaptcha_notice": "This site is protected by reCAPTCHA and",
-    "google_policy_prefix": "Google",
-    "privacy_policy": "Privacy Policy",
-    "terms_of_service": "Terms of Service",
-    "and": "and",
-    "apply": "apply",
-    "error": "Failed to create account. Please try again.",
-    "unexpected_error": "An unexpected error occurred. Please try again later."
-  },
-  "error": "Error",
-  "first_name_error": "First name must be at least 2 characters",
-  "last_name_error": "Last name must be at least 2 characters",
-  "email_error": "Please enter a valid email address",
-  "password_error": "Password must be at least 8 characters",
-  "account_type_error": "Please select an account type",
-  "terms_error": "You must agree to the terms"
-},
-
-"chatbox" :{
-  "search": {
-    "placeholder": "Search conversations..."
-  },
-  "loading": "Loading chats...",
-  "noMessages": "No messages yet",
-  "empty": {
-    "default": "No conversations yet",
-    "defaultHint": "Start a conversation with a client from their profile page",
-    "search": "No chats found",
-    "searchHint": "Try adjusting your search terms"
-  },
-  "delete": {
-    "button": "Delete chat",
-    "cancel": "Cancel",
-    "cancelled": {
-      "title": "Deletion cancelled",
-      "description": "The chat was not deleted."
-    },
-    "confirm": {
-      "title": "Are you sure?",
-      "description": "This action will permanently delete the chat. You cannot undo this action.",
-      "button": "Yes, delete it"
-    },
-    "success": {
-      "title": "Chat deleted",
-      "description": "The chat has been successfully removed."
+  "headDo": {
+    "documents": {
+      "header": {
+        "title": "Document Management",
+        "description": "Upload, manage, and share your legal documents securely with enhanced privacy controls"
+      },
+      "upload": {
+        "button": "Upload Document"
+      },
+      "stats": {
+        "total": "Total Documents",
+        "totalDescription": "All uploaded documents",
+        "public": "Public Documents",
+        "publicDescription": "Visible to all users",
+        "private": "Private Documents",
+        "privateDescription": "Restricted access",
+        "processed": "Processed",
+        "processedDescription": "Successfully processed"
+      }
     }
   },
-  "errors": {
-    "load": {
-      "title": "Error",
-      "description": "Failed to load chats"
+  "qrCode": {
+    "button": "QR Code",
+    "dialogTitle": "QR Code",
+    "altText": "Post QR Code",
+    "scanInstructions": "Scan this QR code to open the post",
+    "generatePrompt": "Generate a QR code for this post",
+    "generateButton": "Generate QR Code",
+    "generating": "Generating...",
+    "downloading": "Downloading...",
+    "downloadButton": "Download",
+    "copyButton": "Copy URL",
+    "shareButton": "Share Post",
+    "usage": {
+      "title": "How to use:",
+      "point1": "Generate a QR code for easy sharing",
+      "point2": "Download the QR code as a PNG image",
+      "point3": "Anyone can scan it to open the post",
+      "point4": "Perfect for business cards, flyers, or presentations"
+    },
+    "generated": {
+      "title": "QR Code Generated",
+      "description": "The QR code has been successfully generated!"
+    },
+    "download": {
+      "started": "Download Started",
+      "description": "The QR code is being downloaded"
+    },
+    "copied": {
+      "title": "URL Copied",
+      "description": "The post URL has been copied to clipboard"
+    },
+    "errors": {
+      "generation": "QR Code generation error:",
+      "generationTitle": "Generation Error",
+      "generationDescription": "An error occurred while generating the QR code",
+      "download": "QR Code download error:",
+      "downloadTitle": "Download Failed",
+      "downloadDescription": "Failed to download the QR code",
+      "copy": "URL copy error:",
+      "copyTitle": "Copy Failed",
+      "copyDescription": "Could not copy the URL to clipboard",
+      "share": "Share error:"
+    }
+  },
+  "signu": {
+    "signup": {
+      "title": "Create Account",
+      "have_account": "Already have an account?",
+      "sign_in": "Sign In",
+      "first_name": "First Name",
+      "first_name_placeholder": "Enter your first name",
+      "last_name": "Last Name",
+      "last_name_placeholder": "Enter your last name",
+      "email": "Email",
+      "email_placeholder": "Enter your email",
+      "password": "Password",
+      "password_placeholder": "Enter your password",
+      "account_type": "Account Type",
+      "account_type_placeholder": "Select account type",
+      "client": "Client",
+      "lawyer": "Lawyer",
+      "terms_agreement": "I agree to the Terms of Service, Privacy Policy, and User Agreement.",
+      "create_account": "Create Account",
+      "creating_account": "Creating Account...",
+      "recaptcha_notice": "This site is protected by reCAPTCHA and",
+      "google_policy_prefix": "Google",
+      "privacy_policy": "Privacy Policy",
+      "terms_of_service": "Terms of Service",
+      "and": "and",
+      "apply": "apply",
+      "error": "Failed to create account. Please try again.",
+      "unexpected_error": "An unexpected error occurred. Please try again later."
+    },
+    "error": "Error",
+    "first_name_error": "First name must be at least 2 characters",
+    "last_name_error": "Last name must be at least 2 characters",
+    "email_error": "Please enter a valid email address",
+    "password_error": "Password must be at least 8 characters",
+    "account_type_error": "Please select an account type",
+    "terms_error": "You must agree to the terms"
+  },
+  "chatbox": {
+    "search": {
+      "placeholder": "Search conversations..."
+    },
+    "loading": "Loading chats...",
+    "noMessages": "No messages yet",
+    "empty": {
+      "default": "No conversations yet",
+      "defaultHint": "Start a conversation with a client from their profile page",
+      "search": "No chats found",
+      "searchHint": "Try adjusting your search terms"
     },
     "delete": {
-      "title": "Delete failed",
-      "description": "An error occurred while deleting the chat. Please try again."
+      "button": "Delete chat",
+      "cancel": "Cancel",
+      "cancelled": {
+        "title": "Deletion cancelled",
+        "description": "The chat was not deleted."
+      },
+      "confirm": {
+        "title": "Are you sure?",
+        "description": "This action will permanently delete the chat. You cannot undo this action.",
+        "button": "Yes, delete it"
+      },
+      "success": {
+        "title": "Chat deleted",
+        "description": "The chat has been successfully removed."
+      }
+    },
+    "errors": {
+      "load": {
+        "title": "Error",
+        "description": "Failed to load chats"
+      },
+      "delete": {
+        "title": "Delete failed",
+        "description": "An error occurred while deleting the chat. Please try again."
+      }
     }
-  }
-},
- "conv" :{
-
+  },
+  "conv": {
     "lawyer": "Lawyer",
     "user": "User",
     "error": "Error",
@@ -1501,135 +1614,131 @@
     "delete": "Delete",
     "client": "Client",
     "noMessagesYet": "No messages yet. Start the conversation!",
-    "typeYourMessage": "Type your message..."
-},
- "authf": {
-      "forgotPassword": {
-        "title": "Forgot Password?",
-        "checkEmail": "Check Your Email",
-        "instructions": "Enter your email address and we'll send you an OTP to reset your password.",
-        "otpSentMessage": "We've sent a password reset OTP to your email address.",
-        "otpSuccess": "OTP sent successfully! Check the notification above for your OTP code.",
-        "emailLabel": "Email Address",
-        "emailPlaceholder": "Enter your email address",
-        "sendOtpButton": "Send Reset OTP",
-        "sendingOtp": "Sending OTP...",
-        "continueButton": "Continue to Reset Password",
-        "sendAnotherOtp": "Send Another OTP",
-        "rememberPassword": "Remember your password? Sign in",
-        "backToLogin": "Back to Login",
-        "otpSent": {
-          "title": "Password Reset OTP",
-          "description": "Please check your email for the password reset OTP.",
-          "descriptionWithCode": "Your password reset OTP is: {otp}. This OTP will expire in 10 minutes."
-        },
-        "errors": {
-          "sendFailed": "Failed to Send OTP",
-          "tryAgain": "Please try again later.",
-          "networkTitle": "Network Error",
-          "networkError": "Forgot password error:",
-          "checkConnection": "Please check your connection and try again."
-        }
-      }
+    "typeYourMessage": "Type your message...",
+    "insufficientTokenBalance": "Insufficient token balance to start chat consultation"
+  },
+  "authf": {
+    "forgotPassword": {
+      "title": "Forgot Password?",
+      "checkEmail": "Check Your Email",
+      "instructions": "Enter your email address and we'll send you an OTP to reset your password.",
+      "otpSentMessage": "We've sent a password reset OTP to your email address.",
+      "otpSuccess": "OTP sent successfully! Check the notification above for your OTP code.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email address",
+      "sendOtpButton": "Send Reset OTP",
+      "sendingOtp": "Sending OTP...",
+      "continueButton": "Continue to Reset Password",
+      "sendAnotherOtp": "Send Another OTP",
+      "rememberPassword": "Remember your password? Sign in",
+      "backToLogin": "Back to Login",
+      "otpSent": {
+        "title": "Password Reset OTP",
+        "description": "Please check your email for the password reset OTP.",
+        "descriptionWithCode": "Your password reset OTP is: {otp}. This OTP will expire in 10 minutes."
       },
-"stst":{
-  "dashboard": {
-    "activecases": "Active Cases",
-    "inactivecases": "Inactive Cases",
-    "today'schats": "Today's Chats",
-    "availabletokens": "Available Tokens",
-    "totalpurchased": "Total Purchased",
-    "monthlyusage": "Monthly Usage"
+      "errors": {
+        "sendFailed": "Failed to Send OTP",
+        "tryAgain": "Please try again later.",
+        "networkTitle": "Network Error",
+        "networkError": "Forgot password error:",
+        "checkConnection": "Please check your connection and try again."
+      }
+    }
   },
-  "common": {
-    "error": "Failed to load statistics"
-  }
-},
-"quick": {
-  "quickActions": "Quick Actions",
-  "scheduleCall": "Schedule Call",
-  "newCase": "New Case"
-},
-"qa": {
-  "title": "Questions & Answers",
-  "description": "Check out common questions and answers about the service.",
-  "loading": "Loading questions...",
-  "empty": "No questions have been posted",
-  "byAuthorOnDate": "By {{author}} • {{date}}",
-  "unanswered": "This question has not been answered yet",
-  "anonymous": "Anonymous",
-  "addQuestion": "Add Question",
-  "byUser": "{{firstName}} {{lastName}} • {{date}}",
-  "status": {
-    "answered": "Answered",
-    "pending": "Pending"
+  "stst": {
+    "dashboard": {
+      "activecases": "Active Cases",
+      "inactivecases": "Inactive Cases",
+      "today'schats": "Today's Chats",
+      "availabletokens": "Available Tokens",
+      "totalpurchased": "Total Purchased",
+      "monthlyusage": "Monthly Usage"
+    },
+    "common": {
+      "error": "Failed to load statistics"
+    }
   },
-  "menu": {
-    "open": "Open Menu",
-    "answer": "Write Answer",
-    "edit": "Edit Answer",
-    "delete": "Delete",
-    "deleting": "Deleting...",
-        "alreadyAnswered": "Question already answered - cannot edit or delete"
-      
+  "quick": {
+    "quickActions": "Quick Actions",
+    "scheduleCall": "Schedule Call",
+    "newCase": "New Case"
   },
-  "error": {
-    "loadFailed": "Failed to load questions. Please try again later.",
-    "cannotDeleteAnswered": "Answered questions cannot be deleted",
-    "deleteFailedTryAgain": "Failed to delete the question. Please try again.",
-
-    "fetchFailed": "Failed to fetch question list. Please try again later.",
-    "deleteFailed": "Failed to delete question. Please try again."
+  "qa": {
+    "title": "Questions & Answers",
+    "description": "Check out common questions and answers about the service.",
+    "loading": "Loading questions...",
+    "empty": "No questions have been posted",
+    "byAuthorOnDate": "By {{author}} • {{date}}",
+    "unanswered": "This question has not been answered yet",
+    "anonymous": "Anonymous",
+    "addQuestion": "Add Question",
+    "byUser": "{{firstName}} {{lastName}} • {{date}}",
+    "status": {
+      "answered": "Answered",
+      "pending": "Pending"
+    },
+    "menu": {
+      "open": "Open Menu",
+      "answer": "Write Answer",
+      "edit": "Edit Answer",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "alreadyAnswered": "Question already answered - cannot edit or delete"
+    },
+    "error": {
+      "loadFailed": "Failed to load questions. Please try again later.",
+      "cannotDeleteAnswered": "Answered questions cannot be deleted",
+      "deleteFailedTryAgain": "Failed to delete the question. Please try again.",
+      "fetchFailed": "Failed to fetch question list. Please try again later.",
+      "deleteFailed": "Failed to delete question. Please try again."
+    },
+    "search": {
+      "placeholder": "Search questions and answers...",
+      "noResults": "No questions match your search",
+      "resultsCount": "Found {{count}} question",
+      "resultsCount_plural": "Found {{count}} questions",
+      "noResultsDetailed": "No questions match your search or filters. Try adjusting your keywords or filters."
+    },
+    "filter": {
+      "placeholder": "Filter by status",
+      "all": "All Questions",
+      "answered": "Answered",
+      "pending": "Pending"
+    },
+    "results": {
+      "noResults": "No questions found for the given search. Try adjusting your keywords or filters.",
+      "found": "Found {count} question",
+      "foundPlural": "Found {count} questions",
+      "noMatch": "No questions match your search"
+    }
   },
-  "search": {
-    "placeholder": "Search questions and answers...",
-    "noResults": "No questions match your search",
-    "resultsCount": "Found {{count}} question",
-    "resultsCount_plural": "Found {{count}} questions",
-    "noResultsDetailed": "No questions match your search or filters. Try adjusting your keywords or filters."
+  "qas": {
+    "loading": "Loading question...",
+    "questionNotFound": "Question not found",
+    "form": {
+      "yourAnswer": "Write your answer",
+      "answerPlaceholder": "Please write your answer..."
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "saveChanges": "Save changes",
+      "saving": "Saving...",
+      "submitAnswer": "Submit answer",
+      "submitting": "Submitting...",
+      "submit": "Submit"
+    },
+    "errors": {
+      "tokenError": "Token retrieval error:",
+      "authenticationRequired": "Authentication is required",
+      "fetchError": "Error: {status}",
+      "loadFailed": "Failed to load question data",
+      "loadQuestionError": "Failed to load question:",
+      "submitError": "Error: {status}",
+      "saveAnswerError": "Failed to save answer:",
+      "saveFailed": "Failed to save your answer. Please try again."
+    }
   },
-  "filter": {
-    "placeholder": "Filter by status",
-    "all": "All Questions",
-    "answered": "Answered",
-    "pending": "Pending"
-  },
-  "results": {
-    "noResults": "No questions found for the given search. Try adjusting your keywords or filters.",
-    "found": "Found {count} question",
-    "foundPlural": "Found {count} questions",
-    "noMatch": "No questions match your search"
-  }
-},
-
-"qas": {
-  "loading": "Loading question...",
-  "questionNotFound": "Question not found",
-  "form": {
-    "yourAnswer": "Write your answer",
-    "answerPlaceholder": "Please write your answer..."
-  },
-  "buttons": {
-    "cancel": "Cancel",
-    "saveChanges": "Save changes",
-    "saving": "Saving...",
-    "submitAnswer": "Submit answer",
-    "submitting": "Submitting...",
-    "submit": "Submit"
-  },
-  "errors": {
-    "tokenError": "Token retrieval error:",
-    "authenticationRequired": "Authentication is required",
-    "fetchError": "Error: {status}",
-    "loadFailed": "Failed to load question data",
-    "loadQuestionError": "Failed to load question:",
-    "submitError": "Error: {status}",
-    "saveAnswerError": "Failed to save answer:",
-    "saveFailed": "Failed to save your answer. Please try again."
-  }
-}
-,
-
   "resetPassword": {
     "invalidRequest": {
       "title": "Invalid Request",
@@ -1665,58 +1774,57 @@
   "commonra": {
     "loading": "Loading..."
   },
-"posts" :{
-  "postsContentTitle": "Posts & Content",
-  "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
-  "myPosts": "My Posts",
-  "buttonLabel": "QR Code",
-  "createNew": "Create New",
-  "loadingPosts": "Loading posts...",
-  "readmore": "Read more",
-   "showless": "Show less",
-  "noPostsFound": "No posts found",
-  "noPostsCreatedYet": "You haven't created any posts yet",
-  "createFirstPost": "Create Your First Post",
-  "aiGenerated": "AI Generated",
-  "location": "Location",
-  "citation": "citation | citations",
-  "usefulResources": "Useful Resources",
-  "moreResources": "more resources",
-  "customUrl": "Custom URL",
-  "custom": "Custom",
-  "previous": "Previous",
-  "next": "Next",
-  "customu": "Custom URL",
-  "copyUrl": "Copy URL",
-  "openUrl": "Open Post",
-  "pageInfo": "Page {current} of {total}",
-  "fetchPostsError": "Failed to fetch posts",
-  "somethingWentWrong": "Something went wrong",
-  "postCreated": "Post created",
-  "postAddedToList": "Your post has been added to the list",
-  "urlCopied": "URL copied",
-  "urlCopiedToClipboard": "{{type}} URL copied to clipboard"
-},
-"graph":{
-  "analytics": {
-    "activityOverview": "Activity Overview",
-    "cases": "Cases",
-    "meetings": "Meetings",
-    "documents": "Documents",
-    "errors": {
-      "fetchError": "Error fetching analytics data"
-    },
-    "months": {
-      "jan": "Jan",
-      "feb": "Feb",
-      "mar": "Mar",
-      "apr": "Apr",
-      "may": "May",
-      "jun": "Jun"
+  "posts": {
+    "postsContentTitle": "Posts & Content",
+    "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
+    "myPosts": "My Posts",
+    "buttonLabel": "QR Code",
+    "createNew": "Create New",
+    "loadingPosts": "Loading posts...",
+    "readmore": "Read more",
+    "showless": "Show less",
+    "noPostsFound": "No posts found",
+    "noPostsCreatedYet": "You haven't created any posts yet",
+    "createFirstPost": "Create Your First Post",
+    "aiGenerated": "AI Generated",
+    "location": "Location",
+    "citation": "citation | citations",
+    "usefulResources": "Useful Resources",
+    "moreResources": "more resources",
+    "customUrl": "Custom URL",
+    "custom": "Custom",
+    "previous": "Previous",
+    "next": "Next",
+    "customu": "Custom URL",
+    "copyUrl": "Copy URL",
+    "openUrl": "Open Post",
+    "pageInfo": "Page {current} of {total}",
+    "fetchPostsError": "Failed to fetch posts",
+    "somethingWentWrong": "Something went wrong",
+    "postCreated": "Post created",
+    "postAddedToList": "Your post has been added to the list",
+    "urlCopied": "URL copied",
+    "urlCopiedToClipboard": "{{type}} URL copied to clipboard"
+  },
+  "graph": {
+    "analytics": {
+      "activityOverview": "Activity Overview",
+      "cases": "Cases",
+      "meetings": "Meetings",
+      "documents": "Documents",
+      "errors": {
+        "fetchError": "Error fetching analytics data"
+      },
+      "months": {
+        "jan": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Jun"
+      }
     }
-  }
-},
-
+  },
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all read",
@@ -1724,10 +1832,11 @@
     "empty": "No notifications yet",
     "viewAll": "View all notifications"
   },
-  
   "notificationsa": {
     "title": "Notifications",
     "unread": "unread",
+    "unreadNotifications": "Unread Notifications",
+    "readNotifications": "Read Notifications",
     "refresh": "Refresh",
     "back": "Back",
     "markAllRead": "Mark all read",
@@ -1751,82 +1860,107 @@
       "qaQuestion": "Q&A Question",
       "qaAnswer": "Q&A Answer",
       "general": "General"
+    },
+    "tableEvent": "Event",
+    "tableDetails": "Details",
+    "tableTime": "Time",
+    "tableAction": "Action",
+    "refreshAction": "Refresh",
+    "deleteAction": "Delete",
+    "markAsReadAction": "Mark as Read",
+    "loadingNotifications": "Loading notifications...",
+    "noNotificationsFound": "No notifications found.",
+    "loadMoreAction": "Load More",
+    "eventLabels": {
+      "videoConsultation": "Video Consultation",
+      "caseCreated": "Case Created",
+      "messageReceived": "Message Received",
+      "documentUploaded": "Document Uploaded",
+      "paymentCompleted": "Payment Completed",
+      "appointmentChanged": "Appointment Changed",
+      "notification": "Notification"
+    },
+    "toasts": {
+      "refreshed": "Notifications refreshed",
+      "deleted": "Selected notifications deleted",
+      "deleteFailed": "Failed to delete some notifications",
+      "markedRead": "Selected notifications marked as read",
+      "markReadFailed": "Failed to mark some notifications as read"
     }
   },
-"questionform" :{
-  "error": "Error",
-  "failed_to_load_lawyers": "Failed to load lawyers list.",
-  "authentication_required": "Authentication Required",
-  "please_log_in_to_submit_question": "Please log in to submit a question.",
-  "question_submitted": "Question Submitted!",
-  "question_posted_publicly": "Your question has been posted publicly and lawyers can now respond.",
-  "submission_failed": "Submission Failed",
-  "failed_to_submit_question_try_again": "Failed to submit question. Please try again.",
-  "general_legal": "General Legal",
-  "criminal_law": "Criminal Law",
-  "civil_law": "Civil Law",
-  "family_law": "Family Law",
-  "business_law": "Business Law",
-  "property_law": "Property Law",
-  "employment_law": "Employment Law",
-  "immigration_law": "Immigration Law",
-  "tax_law": "Tax Law",
-  "intellectual_property": "Intellectual Property",
-  "ask_legal_question": "Ask a Legal Question",
-  "submit_legal_question_publicly": "Submit your legal question publicly and get answers from qualified lawyers",
-  "public_qa": "Public Q&A",
-  "all_lawyers_can_respond": "All Lawyers Can Respond",
-  "free_to_ask": "Free to Ask",
-  "your_question": "Your Question",
-  "legal_question": "Legal Question",
-  "describe_legal_question_placeholder": "Describe your legal question in detail. Include relevant facts and circumstances...",
-  "legal_category": "Legal Category",
-  "select_legal_category": "Select a legal category",
-  "tags_optional": "Tags (Optional)",
-  "tags_placeholder": "e.g., contract, dispute, consultation (comma-separated)",
-  "preferred_lawyer_optional": "Preferred Lawyer (Optional)",
-  "select_specific_lawyer": "Select a specific lawyer (optional)",
-  "any_available_lawyer": "Any Available Lawyer",
-  "submitting_question": "Submitting Question...",
-  "submit_public_question": "Submit Public Question",
-  "selected_lawyer": "Selected Lawyer",
-  "years_experience": "years experience",
-  "chat_fee": "Chat Fee",
-  "how_public_qa_works": "How Public Q&A Works",
-  "submit_your_question": "Submit Your Question",
-  "question_posted_publicly_description": "Your question will be posted publicly for all lawyers to see",
-  "lawyers_respond": "Lawyers Respond",
-  "lawyers_provide_free_answers": "Qualified lawyers will provide free public answers",
-  "get_detailed_help": "Get Detailed Help",
-  "private_consultation_description": "For private consultation, start a paid chat session",
-  "available_lawyers": "Available Lawyers",
-  "no_lawyers_available": "No lawyers available at the moment",
-  "more_lawyers_available": "more lawyers available"
-},
+  "questionform": {
+    "error": "Error",
+    "failed_to_load_lawyers": "Failed to load lawyers list.",
+    "authentication_required": "Authentication Required",
+    "please_log_in_to_submit_question": "Please log in to submit a question.",
+    "question_submitted": "Question Submitted!",
+    "question_posted_publicly": "Your question has been posted publicly and lawyers can now respond.",
+    "submission_failed": "Submission Failed",
+    "failed_to_submit_question_try_again": "Failed to submit question. Please try again.",
+    "general_legal": "General Legal",
+    "criminal_law": "Criminal Law",
+    "civil_law": "Civil Law",
+    "family_law": "Family Law",
+    "business_law": "Business Law",
+    "property_law": "Property Law",
+    "employment_law": "Employment Law",
+    "immigration_law": "Immigration Law",
+    "tax_law": "Tax Law",
+    "intellectual_property": "Intellectual Property",
+    "ask_legal_question": "Ask a Legal Question",
+    "submit_legal_question_publicly": "Submit your legal question publicly and get answers from qualified lawyers",
+    "public_qa": "Public Q&A",
+    "all_lawyers_can_respond": "All Lawyers Can Respond",
+    "free_to_ask": "Free to Ask",
+    "your_question": "Your Question",
+    "legal_question": "Legal Question",
+    "describe_legal_question_placeholder": "Describe your legal question in detail. Include relevant facts and circumstances...",
+    "legal_category": "Legal Category",
+    "select_legal_category": "Select a legal category",
+    "tags_optional": "Tags (Optional)",
+    "tags_placeholder": "e.g., contract, dispute, consultation (comma-separated)",
+    "preferred_lawyer_optional": "Preferred Lawyer (Optional)",
+    "select_specific_lawyer": "Select a specific lawyer (optional)",
+    "any_available_lawyer": "Any Available Lawyer",
+    "submitting_question": "Submitting Question...",
+    "submit_public_question": "Submit Public Question",
+    "selected_lawyer": "Selected Lawyer",
+    "years_experience": "years experience",
+    "chat_fee": "Chat Fee",
+    "how_public_qa_works": "How Public Q&A Works",
+    "submit_your_question": "Submit Your Question",
+    "question_posted_publicly_description": "Your question will be posted publicly for all lawyers to see",
+    "lawyers_respond": "Lawyers Respond",
+    "lawyers_provide_free_answers": "Qualified lawyers will provide free public answers",
+    "get_detailed_help": "Get Detailed Help",
+    "private_consultation_description": "For private consultation, start a paid chat session",
+    "available_lawyers": "Available Lawyers",
+    "no_lawyers_available": "No lawyers available at the moment",
+    "more_lawyers_available": "more lawyers available"
+  },
   "pdfUpload": {
-      "title": "Upload PDF Document",
-      "invalidFile": "Please upload a valid PDF file.",
-      "selectFileOrLogin": "Please select a file and ensure you are logged in.",
-      "lawyersPublicOnly": "Lawyers can only upload public documents.",
-      "uploadFailStorage": "Failed to upload file to storage.",
-      "uploadFailed": "Upload failed. Please try again.",
-      "uploadFailedTitle": "Upload Error",
-      "successTitle": "Upload Successful!",
-      "dragDropText": "Drag & drop your PDF file here or select a file",
-      "pdfRules": "Only PDF files under 10MB are allowed.",
-      "selectFile": "Select PDF File",
-      "docVisibility": "Document Visibility",
-      "public": "Public",
-      "private": "Private",
-      "lawyerNote": "As a lawyer, you can only upload public documents.",
-      "privateHelp": "Only you and authorized users can see private documents.",
-      "publicHelp": "Public documents are visible to everyone with access.",
-      "processWithAI": "Process document with AI",
-      "uploading": "Uploading...",
-      "cancel": "Cancel",
-      "uploadPDF": "Upload PDF"
-},
-
+    "title": "Upload PDF Document",
+    "invalidFile": "Please upload a valid PDF file.",
+    "selectFileOrLogin": "Please select a file and ensure you are logged in.",
+    "lawyersPublicOnly": "Lawyers can only upload public documents.",
+    "uploadFailStorage": "Failed to upload file to storage.",
+    "uploadFailed": "Upload failed. Please try again.",
+    "uploadFailedTitle": "Upload Error",
+    "successTitle": "Upload Successful!",
+    "dragDropText": "Drag & drop your PDF file here or select a file",
+    "pdfRules": "Only PDF files under 10MB are allowed.",
+    "selectFile": "Select PDF File",
+    "docVisibility": "Document Visibility",
+    "public": "Public",
+    "private": "Private",
+    "lawyerNote": "As a lawyer, you can only upload public documents.",
+    "privateHelp": "Only you and authorized users can see private documents.",
+    "publicHelp": "Public documents are visible to everyone with access.",
+    "processWithAI": "Process document with AI",
+    "uploading": "Uploading...",
+    "cancel": "Cancel",
+    "uploadPDF": "Upload PDF"
+  },
   "clients": {
     "title": "Clients",
     "newClient": "New Client",
@@ -1845,28 +1979,26 @@
     "caseHistory": "Case History",
     "startChat": "Start Chat"
   },
-
-  
   "creator": {
-   "buttons": {
-    "historyTitle": "Download History",
-    "clear": "Clear History",
-    "copyImage": "Copy Image",
-    "copyUrl": "Copy URL",
-    "download": "Download",
-    "copied": "Image copied to clipboard",
-    "copiedDesc": "The AI generated image has been copied to your clipboard",
-    "copyFailed": "Failed to copy image",
-    "copyFailedDesc": "Could not copy the image to clipboard",
-    "success": "Image Downloaded",
-    "successDesc": "Image has been downloaded and saved to your local storage",
-    "partialSuccess": "Image Downloaded",
-    "partialSuccessDesc": "Image downloaded but could not be saved to local storage",
-    "cleared": "Download History Cleared",
-    "clearedDesc": "All downloaded images have been removed from local storage",
-    "clearFailed": "Clear Failed",
-    "clearFailedDesc": "Could not clear download history"
-  },
+    "buttons": {
+      "historyTitle": "Download History",
+      "clear": "Clear History",
+      "copyImage": "Copy Image",
+      "copyUrl": "Copy URL",
+      "download": "Download",
+      "copied": "Image copied to clipboard",
+      "copiedDesc": "The AI generated image has been copied to your clipboard",
+      "copyFailed": "Failed to copy image",
+      "copyFailedDesc": "Could not copy the image to clipboard",
+      "success": "Image Downloaded",
+      "successDesc": "Image has been downloaded and saved to your local storage",
+      "partialSuccess": "Image Downloaded",
+      "partialSuccessDesc": "Image downloaded but could not be saved to local storage",
+      "cleared": "Download History Cleared",
+      "clearedDesc": "All downloaded images have been removed from local storage",
+      "clearFailed": "Clear Failed",
+      "clearFailedDesc": "Could not clear download history"
+    },
     "post": {
       "title": "Create New Post",
       "tabs": {
@@ -1889,23 +2021,23 @@
           "language": "Language"
         },
         "image": {
-        "cardTitle": "AI Image Generation",
-        "promptLabel": "AI Image Prompt",
-        "promptPlaceholder": "Describe the image you want to generate...",
-        "buttons": {
-          "generate": "Generate Image",
-          "generating": "Generating Image..."
+          "cardTitle": "AI Image Generation",
+          "promptLabel": "AI Image Prompt",
+          "promptPlaceholder": "Describe the image you want to generate...",
+          "buttons": {
+            "generate": "Generate Image",
+            "generating": "Generating Image..."
+          },
+          "generatedLabel": "Generated Image",
+          "toast": {
+            "missingInput": "Input Required",
+            "missingInputDesc": "Please enter an image prompt",
+            "generated": "AI Image Generated Successfully",
+            "generatedDesc": "Image has been generated successfully",
+            "failed": "Failed to Generate AI Image",
+            "failedDesc": "An error occurred while generating the image"
+          }
         },
-        "generatedLabel": "Generated Image",
-        "toast": {
-          "missingInput": "Input Required",
-          "missingInputDesc": "Please enter an image prompt",
-          "generated": "AI Image Generated Successfully",
-          "generatedDesc": "Image has been generated successfully",
-          "failed": "Failed to Generate AI Image",
-          "failedDesc": "An error occurred while generating the image"
-        }
-      },
         "placeholders": {
           "prompt": "Describe what the AI should write...",
           "topic": "Basics of Contract Law"
@@ -1968,10 +2100,10 @@
           "failed": "Upload Failed",
           "failedDesc": "Failed to upload image. Please try again."
         },
-          "buttons": {
-            "copyImage": "Copy Image",
-            "copyUrl": "Copy URL"
-          }
+        "buttons": {
+          "copyImage": "Copy Image",
+          "copyUrl": "Copy URL"
+        }
       },
       "characters": "characters",
       "citations": {
@@ -2018,70 +2150,70 @@
     }
   },
   "clientCases": {
-      "title": "Client Case List",
-      "newCase": "New Case",
-      "loading": "Loading cases...",
-      "noCases": "No cases found for this client",
-      "error": "Error",
-      "failedToLoad": "Failed to load client cases",
-      "caseNumber": "Case Number",
-      "titleColumn": "Title",
-      "statusf": "Status",
-      "description": "Description",
-      "created": "Created",
-      "updated": "Updated",
-      "action": "Action",
-      "noDescription": "No description",
-      "status": {
-    "pending": "Pending",
-    "approved": "Approved",
-    "rejected": "Rejected",
-    "full_win": "Full Win",
-    "full_loss": "Full Loss",
-    "partial_win": "Partial Win",
-    "partial_loss": "Partial Loss",
-    "dismissal": "Dismissal",
-    "rejection": "Rejection",
-    "withdrawal": "Withdrawal",
-    "mediation": "Mediation",
-    "settlement": "Settlement",
-    "trial_cancellation": "Trial Cancelled",
-    "suspension": "Suspended",
-    "closure": "Closed",
-    "in_progress": "In Progress",
-    "open": "Panding"
-  },
-      "viewCase": "View Case"
+    "title": "Client Case List",
+    "newCase": "New Case",
+    "loading": "Loading cases...",
+    "noCases": "No cases found for this client",
+    "error": "Error",
+    "failedToLoad": "Failed to load client cases",
+    "caseNumber": "Case Number",
+    "titleColumn": "Title",
+    "statusf": "Status",
+    "description": "Description",
+    "created": "Created",
+    "updated": "Updated",
+    "action": "Action",
+    "noDescription": "No description",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "full_win": "Full Win",
+      "full_loss": "Full Loss",
+      "partial_win": "Partial Win",
+      "partial_loss": "Partial Loss",
+      "dismissal": "Dismissal",
+      "rejection": "Rejection",
+      "withdrawal": "Withdrawal",
+      "mediation": "Mediation",
+      "settlement": "Settlement",
+      "trial_cancellation": "Trial Cancelled",
+      "suspension": "Suspended",
+      "closure": "Closed",
+      "in_progress": "In Progress",
+      "open": "Panding"
     },
-"clientDocuments": {
-  "title": "Client Documents",
-  "upload": "Upload Document",
-  "loading": "Loading documents...",
-  "notFound": "No documents found for this client",
-  "error": "Error",
-  "failedToLoad": "Failed to load client documents",
-  "success": "Success",
-  "docDeleted": "Document deleted successfully",
-  "docDeleteFailed": "Failed to delete document",
-  "docStatusUpdated": "Document status updated successfully",
-  "docStatusUpdateFailed": "Failed to update document status",
-  "docName": "Document Name",
-  "statuss": "Status",
-  "uploaded": "Upload Date",
-  "actions": "Actions",
-  "details": "Document Details",
-  "summary": "Summary",
-  "updateStatus": "Update Status",
-  "view": "View Document",
-  "download": "Download",
-  "delete": "Delete",
-  "status": {
-    "pending": "Pending",
-    "approved": "Approved",
-    "rejected": "Rejected"
-  }
-},
-"clientNotes": {
+    "viewCase": "View Case"
+  },
+  "clientDocuments": {
+    "title": "Client Documents",
+    "upload": "Upload Document",
+    "loading": "Loading documents...",
+    "notFound": "No documents found for this client",
+    "error": "Error",
+    "failedToLoad": "Failed to load client documents",
+    "success": "Success",
+    "docDeleted": "Document deleted successfully",
+    "docDeleteFailed": "Failed to delete document",
+    "docStatusUpdated": "Document status updated successfully",
+    "docStatusUpdateFailed": "Failed to update document status",
+    "docName": "Document Name",
+    "statuss": "Status",
+    "uploaded": "Upload Date",
+    "actions": "Actions",
+    "details": "Document Details",
+    "summary": "Summary",
+    "updateStatus": "Update Status",
+    "view": "View Document",
+    "download": "Download",
+    "delete": "Delete",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "clientNotes": {
     "title": "Client Notes",
     "edit": "Edit Notes",
     "cancel": "Cancel",
@@ -2124,6 +2256,8 @@
     "title": "Chat",
     "description": "Manage your conversations with clients",
     "newChat": "New Chat",
+    "unread": "unread",
+    "lastMessage": "Last Message",
     "searchChats": "Search chats...",
     "typeMessage": "Type your message...",
     "sendMessage": "Send Message",
@@ -2143,65 +2277,62 @@
     "tokenUsage": "Token Usage"
   },
   "blog": {
-  "title": "Blog",
-  "description": "Manage your legal blog content",
-  "searchPlaceholder": "Search blog posts...",
-  "allCategories": "All Categories",
-  "allStatus": "All Status",
-  "status": "Status",
-  "newPost": "New Post",
-  "postTitle": "Post Title",
-  "postContent": "Post Content",
-  "category": "Category",
-  "tags": "Tags",
-  "publishDate": "Publish Date",
-  "author": "Author",
-  "draft": "Draft",
-  "published": "Published",
-  "legalAdvice": "Legal Advice",
-  "caseStudies": "Case Studies",
-  "news": "News",
-  "insights": "Insights",
-  "readMore": "Read More",
-  "editPost": "Edit Post",
-  "deletePost": "Delete Post",
-  "publishPost": "Publish Post",
-  "saveDraft": "Save Draft",
-  "postPublished": "Post published successfully",
-  "postSaved": "Post saved as draft",
-  "postDeleted": "Post deleted successfully",
-  "publish": "Publish",
-  "lawUpdates": "Law Updates",
-  "firmNews": "Firm News",
-
-
-  "validation": {
-    "titleRequired": "Please enter a title.",
-    "contentRequired": "Please enter content.",
-    "contentTooShort": "Content must be at least 25 characters.",
-    "excerptRequired": "Please enter an excerpt.",
-    "excerptTooLong": "Excerpt must be 160 characters or less.",
-    "errorTitle": "Validation Error",
-    "errorPublish": "Please fill all required fields before publishing.",
-    "errorDraft": "Please fill all required fields before saving as draft."
+    "title": "Blog",
+    "description": "Manage your legal blog content",
+    "searchPlaceholder": "Search blog posts...",
+    "allCategories": "All Categories",
+    "allStatus": "All Status",
+    "status": "Status",
+    "newPost": "New Post",
+    "postTitle": "Post Title",
+    "postContent": "Post Content",
+    "category": "Category",
+    "tags": "Tags",
+    "publishDate": "Publish Date",
+    "author": "Author",
+    "draft": "Draft",
+    "published": "Published",
+    "legalAdvice": "Legal Advice",
+    "caseStudies": "Case Studies",
+    "news": "News",
+    "insights": "Insights",
+    "readMore": "Read More",
+    "editPost": "Edit Post",
+    "deletePost": "Delete Post",
+    "publishPost": "Publish Post",
+    "saveDraft": "Save Draft",
+    "postPublished": "Post published successfully",
+    "postSaved": "Post saved as draft",
+    "postDeleted": "Post deleted successfully",
+    "publish": "Publish",
+    "lawUpdates": "Law Updates",
+    "firmNews": "Firm News",
+    "validation": {
+      "titleRequired": "Please enter a title.",
+      "contentRequired": "Please enter content.",
+      "contentTooShort": "Content must be at least 25 characters.",
+      "excerptRequired": "Please enter an excerpt.",
+      "excerptTooLong": "Excerpt must be 160 characters or less.",
+      "errorTitle": "Validation Error",
+      "errorPublish": "Please fill all required fields before publishing.",
+      "errorDraft": "Please fill all required fields before saving as draft."
+    },
+    "confirmDelete": "Are you sure you want to delete this post?",
+    "imageUploaded": "Image uploaded",
+    "imageUploadSuccess": "Image uploaded successfully.",
+    "imageUploadError": "Image upload error",
+    "imageUploadFailed": "Failed to upload image.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter post title",
+    "contentPlaceholder": "Enter post content",
+    "excerptLabel": "Excerpt",
+    "excerptPlaceholder": "Enter a short summary",
+    "featuredImage": "Featured Image",
+    "featuredImageAlt": "Featured image preview",
+    "uploading": "Uploading...",
+    "uploadImage": "Upload Image",
+    "selectCategory": "Select Category"
   },
-  "confirmDelete": "Are you sure you want to delete this post?",
-  "imageUploaded": "Image uploaded",
-  "imageUploadSuccess": "Image uploaded successfully.",
-  "imageUploadError": "Image upload error",
-  "imageUploadFailed": "Failed to upload image.",
-  "titleLabel": "Title",
-  "titlePlaceholder": "Enter post title",
-  "contentPlaceholder": "Enter post content",
-  "excerptLabel": "Excerpt",
-  "excerptPlaceholder": "Enter a short summary",
-  "featuredImage": "Featured Image",
-  "featuredImageAlt": "Featured image preview",
-  "uploading": "Uploading...",
-  "uploadImage": "Upload Image",
-  "selectCategory": "Select Category"
-},
-
   "aiAssistants": {
     "title": "AI Assistants",
     "fileProcessor": "File Processor",
@@ -2251,54 +2382,53 @@
     "addLocationTitle": "Add Location to Your Content",
     "addLocationDescription": "First generate content in the AI Generator tab, then return here to add location information and create custom URLs.",
     "goToAIGenerator": "Go to AI Generator",
-     "addLocationSubtitle": "Add spatial metadata to your content to create custom location URLs for sharing.",
-     "postHistoryTitle": "Post History",
+    "addLocationSubtitle": "Add spatial metadata to your content to create custom location URLs for sharing.",
+    "postHistoryTitle": "Post History",
     "noPostsMessage": "No posts published yet. Create your first post above!"
-
   },
   "title": "AI Marketing",
-"location": {
-  "cardTitle": "Location URL Generator",
-  "tabs": {
-    "address": "Address",
-    "place": "Place",
-    "map": "Map",
-    "gps": "Satellite Location"
+  "location": {
+    "cardTitle": "Location URL Generator",
+    "tabs": {
+      "address": "Address",
+      "place": "Place",
+      "map": "Map",
+      "gps": "Satellite Location"
+    },
+    "addressLabel": "Search Address",
+    "addressPlaceholder": "Enter address",
+    "placeLabel": "Search Place",
+    "placePlaceholder": "Enter place name",
+    "mapClick": "Select Location on Map",
+    "mapHelper": "Click on the map to choose coordinates",
+    "gpsGetting": "Fetching current location...",
+    "gpsButton": "Get Current Location",
+    "gpsHelper": "Browser location permission is required.",
+    "latLabel": "Latitude",
+    "latPlaceholder": "e.g. 37.5665",
+    "latHelper": "Up to 6 decimal places allowed",
+    "lngLabel": "Longitude",
+    "lngPlaceholder": "e.g. 126.9780",
+    "lngHelper": "Up to 6 decimal places allowed",
+    "altLabel": "Altitude (meters)",
+    "altHelper": "Enter altitude relative to sea level.",
+    "altPlaceholder": "e.g. 35.5",
+    "altRange": "Enter a value between -500 and 9000",
+    "altCurrent": "Current altitude: {value}m",
+    "altCurrentHelper": "Estimated from device sensors.",
+    "floorLabel": "Floor",
+    "floorPlaceholder": "e.g. 12",
+    "floorHelper": "Building floor number",
+    "timeLabel": "Time",
+    "timeHelper": "If selected, will be included as an ISO timestamp",
+    "planetLabel": "Planet",
+    "planetPlaceholder": "e.g. Earth",
+    "planetHelper": "Default is Earth",
+    "generatedUrls": "Generated URLs",
+    "fullUrlLabel": "Full URL",
+    "shortUrlLabel": "Short URL",
+    "qrButton": "Generate QR Code"
   },
-  "addressLabel": "Search Address",
-  "addressPlaceholder": "Enter address",
-  "placeLabel": "Search Place",
-  "placePlaceholder": "Enter place name",
-  "mapClick": "Select Location on Map",
-  "mapHelper": "Click on the map to choose coordinates",
-  "gpsGetting": "Fetching current location...",
-  "gpsButton": "Get Current Location",
-  "gpsHelper": "Browser location permission is required.",
-  "latLabel": "Latitude",
-  "latPlaceholder": "e.g. 37.5665",
-  "latHelper": "Up to 6 decimal places allowed",
-  "lngLabel": "Longitude",
-  "lngPlaceholder": "e.g. 126.9780",
-  "lngHelper": "Up to 6 decimal places allowed",
-  "altLabel": "Altitude (meters)",
-  "altHelper": "Enter altitude relative to sea level.",
-  "altPlaceholder": "e.g. 35.5",
-  "altRange": "Enter a value between -500 and 9000",
-  "altCurrent": "Current altitude: {value}m",
-  "altCurrentHelper": "Estimated from device sensors.",
-  "floorLabel": "Floor",
-  "floorPlaceholder": "e.g. 12",
-  "floorHelper": "Building floor number",
-  "timeLabel": "Time",
-  "timeHelper": "If selected, will be included as an ISO timestamp",
-  "planetLabel": "Planet",
-  "planetPlaceholder": "e.g. Earth",
-  "planetHelper": "Default is Earth",
-  "generatedUrls": "Generated URLs",
-  "fullUrlLabel": "Full URL",
-  "shortUrlLabel": "Short URL",
-  "qrButton": "Generate QR Code"
-},
   "videoConsultations": {
     "title": "Video Consultations",
     "scheduleConsultation": "Schedule Consultation",
@@ -2318,111 +2448,110 @@
     "noPastMeetings": "No past consultations"
   },
   "voiceSummary": {
-  "title": "Voice Summary",
-  "description": "Check the document summary and listen to it in voice.",
-  "searchPlaceholder": "Search documents or summaries...",
-  "languageLabel": "Language",
-  "playingTitle": "Playing",
-  "playingDescription": "Playback started",
-  "playingLanguage": "Playing in {{lang}}",
-  "errorTitle": "Error Occurred",
-  "noDocumentSummariesFound": "No document summaries found",
-  "errorDescription": "There was a problem loading the document summaries.",
-  "speechNotSupported": "This browser does not support speech synthesis.",
-  "play": "Play",
-  "pause": "Pause",
-  "resume": "Resume",
-  "stop": "Stop",
-  "loading": "Loading...",
-  "loadingSummaries": "Loading document summaries...",
-  "noResults": "No search results.",
-  "noSummaries": "No document summaries.",
-  "caseLabel": "Case Name",
-  "uploadedLabel": "Upload Date",
-  "words": "Words",
-  "rejectedTooltip": "Rejected documents cannot be played.",
-  "playTooltip": "Play summary audio",
-  "rejectedMessage": "This document has been rejected.",
-  "statusLabel": "Status",
-  "summaryAvailable": "Summary is ready.",
-  "statusCompleted": "Completed",
-  "statusFailed": "Failed",
-  "statusProcessing": "Processing"
-},
-"locla" :{
-  "location": {
-    "title": "Location Information",
-    "inputMethod": "Input Method",
-    "methods": {
-      "manual": "Manual Coordinates",
-      "address": "Address Search",
-      "place": "Place Search",
-      "auto": "Auto-detect"
-    },
-    "latitude": "Latitude",
-    "longitude": "Longitude",
-    "altitude": "Altitude (meters)",
-    "floor": "Floor Level",
-    "specificTime": "Specific Time",
-    "addressSearch": "Search by Address",
-    "placeSearch": "Search by Place Name",
-    "getCurrentLocation": "Get Current Location",
-    "currentAltitude": "Current altitude: {altitude} meters",
-    "searchResults": "Search Results",
-    "generatedUrls": "Generated URLs",
-    "fullUrl": "Full URL",
-    "shortUrl": "Short URL",
-    "applyLocation": "Apply Location",
-    "placeholders": {
-      "latitude": "e.g. 40.7128",
-      "longitude": "e.g. -74.0060",
-      "altitude": "e.g. 100",
-      "floor": "e.g. 5",
-      "address": "Enter an address...",
-      "place": "Enter a place name..."
-    },
-    "tooltips": {
-      "altitude": "Height above sea level in meters",
-      "floor": "Building floor level (optional)"
-    },
-    "defaultPlaces": {
-      "timesSquare": "Times Square, New York, NY",
-      "centralPark": "Central Park, New York, NY"
-    },
-    "toast": {
-      "geolocationNotSupported": "Geolocation not supported",
-      "browserNotSupported": "Your browser doesn't support geolocation",
-      "locationObtained": "Location obtained",
-      "coordinates": "Coordinates",
-      "locationError": "Location error",
-      "searchFailed": "Search failed",
-      "searchFailedDesc": "Could not fetch location results",
-      "locationSelected": "Location selected",
-      "dataSaved": "Location saved",
-      "dataSavedDesc": "Location information has been saved",
-      "invalidLatitude": "Invalid latitude",
-      "invalidLatitudeDesc": "Latitude must be between -90 and 90",
-      "invalidLongitude": "Invalid longitude",
-      "invalidLongitudeDesc": "Longitude must be between -180 and 180",
-      "urlCopied": "URL copied",
-      "urlCopiedDesc": "has been copied to clipboard"
+    "title": "Voice Summary",
+    "description": "Check the document summary and listen to it in voice.",
+    "searchPlaceholder": "Search documents or summaries...",
+    "languageLabel": "Language",
+    "playingTitle": "Playing",
+    "playingDescription": "Playback started",
+    "playingLanguage": "Playing in {{lang}}",
+    "errorTitle": "Error Occurred",
+    "noDocumentSummariesFound": "No document summaries found",
+    "errorDescription": "There was a problem loading the document summaries.",
+    "speechNotSupported": "This browser does not support speech synthesis.",
+    "play": "Play",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "loading": "Loading...",
+    "loadingSummaries": "Loading document summaries...",
+    "noResults": "No search results.",
+    "noSummaries": "No document summaries.",
+    "caseLabel": "Case Name",
+    "uploadedLabel": "Upload Date",
+    "words": "Words",
+    "rejectedTooltip": "Rejected documents cannot be played.",
+    "playTooltip": "Play summary audio",
+    "rejectedMessage": "This document has been rejected.",
+    "statusLabel": "Status",
+    "summaryAvailable": "Summary is ready.",
+    "statusCompleted": "Completed",
+    "statusFailed": "Failed",
+    "statusProcessing": "Processing"
+  },
+  "locla": {
+    "location": {
+      "title": "Location Information",
+      "inputMethod": "Input Method",
+      "methods": {
+        "manual": "Manual Coordinates",
+        "address": "Address Search",
+        "place": "Place Search",
+        "auto": "Auto-detect"
+      },
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "altitude": "Altitude (meters)",
+      "floor": "Floor Level",
+      "specificTime": "Specific Time",
+      "addressSearch": "Search by Address",
+      "placeSearch": "Search by Place Name",
+      "getCurrentLocation": "Get Current Location",
+      "currentAltitude": "Current altitude: {altitude} meters",
+      "searchResults": "Search Results",
+      "generatedUrls": "Generated URLs",
+      "fullUrl": "Full URL",
+      "shortUrl": "Short URL",
+      "applyLocation": "Apply Location",
+      "placeholders": {
+        "latitude": "e.g. 40.7128",
+        "longitude": "e.g. -74.0060",
+        "altitude": "e.g. 100",
+        "floor": "e.g. 5",
+        "address": "Enter an address...",
+        "place": "Enter a place name..."
+      },
+      "tooltips": {
+        "altitude": "Height above sea level in meters",
+        "floor": "Building floor level (optional)"
+      },
+      "defaultPlaces": {
+        "timesSquare": "Times Square, New York, NY",
+        "centralPark": "Central Park, New York, NY"
+      },
+      "toast": {
+        "geolocationNotSupported": "Geolocation not supported",
+        "browserNotSupported": "Your browser doesn't support geolocation",
+        "locationObtained": "Location obtained",
+        "coordinates": "Coordinates",
+        "locationError": "Location error",
+        "searchFailed": "Search failed",
+        "searchFailedDesc": "Could not fetch location results",
+        "locationSelected": "Location selected",
+        "dataSaved": "Location saved",
+        "dataSavedDesc": "Location information has been saved",
+        "invalidLatitude": "Invalid latitude",
+        "invalidLatitudeDesc": "Latitude must be between -90 and 90",
+        "invalidLongitude": "Invalid longitude",
+        "invalidLongitudeDesc": "Longitude must be between -180 and 180",
+        "urlCopied": "URL copied",
+        "urlCopiedDesc": "has been copied to clipboard"
+      }
     }
-  }
-},
-
+  },
   "meeting": {
-     "header": {
+    "header": {
       "title": "Meeting Management",
       "description": "Manage your scheduled meetings, connect to video calls, and track meeting status."
     },
-     "toasta": {
-    "updatedTitle": "Meeting Updated",
-    "updatedDescription": "Meeting has been updated successfully"
-  },
-     "consultation": {
-    "free": "Free Consultation",
-    "paid": "Paid Consultation"
-  },
+    "toasta": {
+      "updatedTitle": "Meeting Updated",
+      "updatedDescription": "Meeting has been updated successfully"
+    },
+    "consultation": {
+      "free": "Free Consultation",
+      "paid": "Paid Consultation"
+    },
     "filter": {
       "placeholder": "Filter by status",
       "all": "All Status",
@@ -2462,8 +2591,7 @@
       "reject": "Reject",
       "connect": "Connect",
       "close": "Close",
-       "edit": "Edit"
-
+      "edit": "Edit"
     },
     "time": {
       "scheduled": "{date} at {time}",
@@ -2509,155 +2637,308 @@
       "generic": "An error occurred"
     }
   },
-
-"tok": {
-  "token": {
-    "title": "Token Management",
-    "subtitle": "Manage AI tokens and purchase history",
-    "refresh": "Refresh",
-    "loading": "Loading token data...",
-    "tokens": "Tokens",
-    "viewh":"View History",
-    "cards": {
-      "balance": {
-        "title": "Current Balance",
-        "description": "Available tokens"
-      },
-      "purchased": {
-        "title": "Total Purchased",
-        "description": "Cumulative purchases"
-      },
-      "usage": {
-        "title": "Monthly Usage",
-        "description": "This month"
-      }
-    },
-    "purchase": {
-      "title": "Purchase Tokens",
-      "popular": "Popular Packages",
-      "button": {
-        "loading": "Redirecting to Stripe...",
-        "default": "Purchase tokens"
-      },
-      "packages": {
-        "starter": {
-          "name": "Starter Pack",
-          "description": "1,000 AI tokens for basic use",
-          "price": "$9.99",
-          "bonus": ""
+  "tok": {
+    "token": {
+      "title": "Token Management",
+      "subtitle": "Manage AI tokens and purchase history",
+      "refresh": "Refresh",
+      "loading": "Loading token data...",
+      "tokens": "Tokens",
+      "viewh": "View History",
+      "cards": {
+        "balance": {
+          "title": "Current Balance",
+          "description": "Available tokens"
         },
-        "professional": {
-          "name": "Professional Pack",
-          "description": "5,000 AI tokens (includes 20% bonus, total 6,000 tokens)",
-          "price": "$39.99",
-          "bonus": "20% Bonus"
+        "purchased": {
+          "title": "Total Purchased",
+          "description": "Cumulative purchases"
         },
-        "enterprise": {
-          "name": "Enterprise Pack",
-          "description": "15,000 AI tokens (includes 50% bonus, total 22,500 tokens)",
-          "price": "$99.99",
-          "bonus": "50% Bonus"
+        "usage": {
+          "title": "Monthly Usage",
+          "description": "This month"
         }
-      }
-    },
-    "transactions": {
-      "title": "Transaction History",
-      "export": "Export CSV",
-      "loading": "Loading transaction history...",
-      "empty": {
-        "title": "No transactions found",
-        "description": "Purchase tokens to see your transaction history"
       },
-      "pagination": {
-        "previous": "Previous",
-        "next": "Next",
-        "page": "{current} / {total} pages"
-      },
-      "types": {
-        "purchase": "Purchase",
-        "usage": "Usage",
-        "refund": "Refund",
-        "bonus": "Bonus"
-      }
-    },
-    "payment": {
-      "success": "Payment successful! {tokens} tokens have been added to your account.",
-      "cancelled": "Payment was cancelled or failed. Please try again.",
-      "verificationFailed": "Payment verification failed. If tokens were not added, please contact support.",
-      "genericError": "Payment verification failed. Please contact support.",
-      "noCheckoutUrl": "Did not receive checkout URL"
-    },
-    "transactionStatus": {
-      "completed": "Completed",
-      "pending": "Pending",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
-    },
-    "toast": {
-      "error": {
-        "title": "Error",
-        "description": "Failed to load token data. Please refresh the page."
-      },
-      "auth": {
-        "title": "Authentication Required",
-        "description": "Please log in to purchase tokens."
-      },
-      "checkoutError": {
-        "title": "Checkout Error",
-        "description": "Failed to create checkout session. Please try again."
-      },
-      "export": {
-        "success": {
-          "title": "Export Successful",
-          "description": "Transaction history has been downloaded."
+      "purchase": {
+        "title": "Purchase Tokens",
+        "popular": "Popular Packages",
+        "button": {
+          "loading": "Redirecting to Stripe...",
+          "default": "Purchase tokens"
         },
-        "failed": {
-          "title": "Export Failed",
-          "description": "Failed to export transaction history."
+        "packages": {
+          "starter": {
+            "name": "Starter Pack",
+            "description": "1,000 AI tokens for basic use",
+            "price": "$9.99",
+            "bonus": ""
+          },
+          "professional": {
+            "name": "Professional Pack",
+            "description": "5,000 AI tokens (includes 20% bonus, total 6,000 tokens)",
+            "price": "$39.99",
+            "bonus": "20% Bonus"
+          },
+          "enterprise": {
+            "name": "Enterprise Pack",
+            "description": "15,000 AI tokens (includes 50% bonus, total 22,500 tokens)",
+            "price": "$99.99",
+            "bonus": "50% Bonus"
+          }
+        }
+      },
+      "transactions": {
+        "title": "Transaction History",
+        "export": "Export CSV",
+        "loading": "Loading transaction history...",
+        "empty": {
+          "title": "No transactions found",
+          "description": "Purchase tokens to see your transaction history"
+        },
+        "pagination": {
+          "previous": "Previous",
+          "next": "Next",
+          "page": "{current} / {total} pages"
+        },
+        "types": {
+          "purchase": "Purchase",
+          "usage": "Usage",
+          "refund": "Refund",
+          "bonus": "Bonus"
         }
       },
       "payment": {
-        "success": {
-          "title": "Payment Successful! 🎉",
-          "description": "{tokens} tokens have been added to your account."
-        },
-        "cancelled": {
-          "title": "Payment Cancelled",
-          "description": "Payment has been cancelled. No charges were made."
-        },
-        "verificationFailed": {
-          "title": "Payment Verification Failed",
-          "description": "You have been charged but tokens were not added. Please contact support."
-        },
+        "success": "Payment successful! {tokens} tokens have been added to your account.",
+        "cancelled": "Payment was cancelled or failed. Please try again.",
+        "verificationFailed": "Payment verification failed. If tokens were not added, please contact support.",
+        "genericError": "Payment verification failed. Please contact support.",
+        "noCheckoutUrl": "Did not receive checkout URL"
+      },
+      "transactionStatus": {
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "toast": {
         "error": {
-          "title": "Verification Error",
-          "description": "Payment verification failed. Please contact support."
+          "title": "Error",
+          "description": "Failed to load token data. Please refresh the page."
+        },
+        "auth": {
+          "title": "Authentication Required",
+          "description": "Please log in to purchase tokens."
+        },
+        "checkoutError": {
+          "title": "Checkout Error",
+          "description": "Failed to create checkout session. Please try again."
+        },
+        "export": {
+          "success": {
+            "title": "Export Successful",
+            "description": "Transaction history has been downloaded."
+          },
+          "failed": {
+            "title": "Export Failed",
+            "description": "Failed to export transaction history."
+          }
+        },
+        "payment": {
+          "success": {
+            "title": "Payment Successful! 🎉",
+            "description": "{tokens} tokens have been added to your account."
+          },
+          "cancelled": {
+            "title": "Payment Cancelled",
+            "description": "Payment has been cancelled. No charges were made."
+          },
+          "verificationFailed": {
+            "title": "Payment Verification Failed",
+            "description": "You have been charged but tokens were not added. Please contact support."
+          },
+          "error": {
+            "title": "Verification Error",
+            "description": "Payment verification failed. Please contact support."
+          }
         }
+      },
+      "actions": {
+        "buy": "Buy",
+        "viewDetails": "View Details",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+      },
+      "labels": {
+        "tokenBalance": "Token Balance",
+        "totalSpent": "Total Spent",
+        "lastPurchase": "Last Purchase Date",
+        "expiryDate": "Expiry Date"
+      },
+      "tooltips": {
+        "refresh": "Refresh data",
+        "buyTokens": "Purchase tokens",
+        "viewAll": "View all"
       }
-    },
-    "actions": {
-      "buy": "Buy",
-      "viewDetails": "View Details",
-      "confirm": "Confirm",
-      "cancel": "Cancel"
-    },
-    "labels": {
-      "tokenBalance": "Token Balance",
-      "totalSpent": "Total Spent",
-      "lastPurchase": "Last Purchase Date",
-      "expiryDate": "Expiry Date"
-    },
-    "tooltips": {
-      "refresh": "Refresh data",
-      "buyTokens": "Purchase tokens",
-      "viewAll": "View all"
     }
-  }
-},
-  
-
+  },
   "commonz": {
     "error": "Error"
+  },
+  "tok": {
+    "token": {
+      "loading": "Loading token data...",
+      "management": "Token Management",
+      "overview": "Overview",
+      "buyTokens": "Buy Tokens",
+      "exportCSV": "Export CSV",
+      "refresh": "Refresh",
+      "currentBalance": "Current Balance",
+      "tokensUsed": "Tokens Used",
+      "totalPurchased": "Total Purchased",
+      "tokens": "tokens",
+      "paymentDetails": "Payment Details",
+      "status": "Status",
+      "date": "Date",
+      "noTransactions": "No transactions to display",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{current}} of {{total}}",
+      "bonus": "{{bonus}}% bonus",
+      "includesBonus": "Includes {{tokens}} bonus tokens",
+      "packages": {
+        "starter": {
+          "name": "Starter Pack",
+          "description": "For basic tasks"
+        },
+        "professional": {
+          "name": "Professional Pack",
+          "description": "For regular use · 20% bonus"
+        },
+        "enterprise": {
+          "name": "Enterprise Pack",
+          "description": "For heavy use · 50% bonus"
+        }
+      },
+      "payment": {
+        "success": "Payment successful! {tokens} tokens have been added to your account.",
+        "cancelled": "Payment was cancelled or failed. Please try again.",
+        "genericError": "Failed to verify payment. Please contact support."
+      },
+      "toast": {
+        "payment": {
+          "success": {
+            "title": "Payment Successful 🎉",
+            "description": "{tokens} tokens have been added to your account."
+          },
+          "cancelled": {
+            "title": "Payment Cancelled",
+            "description": "Your payment was cancelled. No charges were made."
+          }
+        }
+      }
+    }
+  },
+  "qa": {
+    "title": "Questions & Answers",
+    "description": "Browse and answer legal questions from users.",
+    "loading": "Loading questions...",
+    "empty": "No questions have been posted yet",
+    "byAuthorOnDate": "{{author}} • {{date}}",
+    "unanswered": "This question has not been answered yet",
+    "anonymous": "Anonymous",
+    "addQuestion": "Ask a Question",
+    "byUser": "{{firstName}} {{lastName}} • {{date}}",
+    "status": {
+      "answered": "Answered",
+      "pending": "Pending"
+    },
+    "menu": {
+      "open": "Open menu",
+      "answer": "Write Answer",
+      "edit": "Edit Answer",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "alreadyAnswered": "This question already has an answer and cannot be edited or deleted."
+    },
+    "error": {
+      "loadFailed": "Failed to load questions. Please try again later.",
+      "cannotDeleteAnswered": "You cannot delete a question that has already been answered",
+      "deleteFailedTryAgain": "Failed to delete question. Please try again.",
+      "fetchFailed": "Failed to fetch question list. Please try again later.",
+      "deleteFailed": "Failed to delete question. Please try again."
+    },
+    "search": {
+      "placeholder": "Search questions and answers...",
+      "noResults": "No questions match your search",
+      "resultsCount": "Found {{count}} question",
+      "resultsCount_plural": "Found {{count}} questions",
+      "noResultsDetailed": "No questions match your filters. Try changing your search or filters."
+    },
+    "filter": {
+      "placeholder": "Filter by status",
+      "all": "All questions",
+      "answered": "Answered",
+      "pending": "Pending"
+    },
+    "results": {
+      "noResults": "No questions match your filters. Try changing your search or filters.",
+      "found": "Found {count} question",
+      "foundPlural": "Found {count} questions",
+      "noMatch": "No questions match your search"
+    },
+    "failedToLoadQuestion": "Failed to load the question.",
+    "geoNotSupported": "Geolocation is not supported by your browser.",
+    "currentLocation": "Current location",
+    "locationDetected": "Location detected successfully.",
+    "failedToGetLocation": "Failed to get your location.",
+    "answerMinLength": "Answer must be at least 10 characters.",
+    "failedToSubmitAnswer": "Failed to submit answer. Please try again.",
+    "loadingQuestion": "Loading question...",
+    "answerPlaceholder": "Write a helpful, professional legal answer...",
+    "addImages": "Add images",
+    "location": "Location",
+    "submitAnswer": "Submit Answer",
+    "postedSuccessfully": "Your answer has been posted successfully.",
+    "discardDraftTitle": "Discard draft?",
+    "discardDraftDesc": "If you leave now, your written answer and attachments will be lost.",
+    "discardDraft": "Discard",
+    "keepWriting": "Keep writing",
+    "removedFromBookmarks": "Removed from bookmarks",
+    "bookmarkedSuccessfully": "Added to bookmarks",
+    "failedToUpdateBookmark": "Failed to update bookmark. Please try again.",
+    "copyLink": "Copy link",
+    "qrCode": "QR code",
+    "notInterested": "Not interested",
+    "report": "Report",
+    "checkAnswer": "View Answer",
+    "writeAnswer": "Write Answer",
+    "failedToLoadQuestions": "Failed to load questions. Please try again.",
+    "waitingForAnswers": "Waiting for Answers",
+    "myAnswers": "My Answers",
+    "bookmarks": "Bookmarks",
+    "selectCategory": "Select category",
+    "allCategories": "All categories",
+    "refresh": "Refresh",
+    "noQuestionsFound": "No questions found",
+    "categories": {
+      "civilDisputes": "Civil / Disputes",
+      "criminal": "Criminal",
+      "familyDivorce": "Family / Divorce",
+      "inheritance": "Inheritance",
+      "realEstateLease": "Real Estate / Lease",
+      "laborEmployment": "Labor / Employment",
+      "consumerRefunds": "Consumer / Refunds",
+      "defamationCybercrime": "Defamation / Harassment / Cybercrime",
+      "stalkingRestraining": "Stalking / Restraining Orders",
+      "intellectualProperty": "Intellectual Property",
+      "businessStartups": "Business / Startups",
+      "administrative": "Administrative",
+      "tax": "Tax",
+      "privacyData": "Privacy / Data",
+      "debtBankruptcy": "Debt / Rehabilitation / Bankruptcy",
+      "immigrationVisa": "Immigration / Visa",
+      "other": "Other"
+    }
   },
   "tokenHistory": {
     "title": "Token Transaction History",
@@ -2724,7 +3005,7 @@
     }
   },
   "tokens": {
-    "title": "Token Management",
+    "title": "Tokens",
     "description": "Manage your AI tokens and purchase additional credits",
     "fetchError": "Failed to fetch current token balance",
     "purchaseSuccess": "{{tokens}} tokens have been added to your account",
@@ -2749,7 +3030,9 @@
     "insufficientTokens": "Insufficient tokens",
     "tokenUsage": "Token Usage",
     "refund": "Refund",
-    "bonus": "Bonus"
+    "bonus": "Bonus",
+    "token": "token",
+    "addToken": "Add Token"
   },
   "aiPost": {
     "title": "AI Post Generator",
@@ -2809,5 +3092,161 @@
     "previous": "Previous",
     "next": "Next",
     "pageInfo": "Page {{current}} of {{total}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "profileSettings": "Profile Settings",
+    "consultationRates": "Consultation Rates",
+    "pcLicense": "PC License",
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "editProfile": "Edit Profile",
+    "saveRates": "Save Rates",
+    "memberSince": "Member Since:",
+    "languageSettings": "Language Settings",
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "korean": "Korean",
+    "displaySettings": "Display Settings",
+    "selectTheme": "Select Theme",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "logout": "Logout",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "contactNumber": "Contact Number",
+    "specialization": "Specialization",
+    "experienceYears": "Experience (Years)",
+    "address1": "Address 1",
+    "address2": "Address 2",
+    "city": "City",
+    "stateProvince": "State / Province",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "profileUpdated": "Profile Updated",
+    "profileUpdatedDesc": "Your changes have been saved successfully.",
+    "updateFailed": "Update Failed",
+    "unexpectedError": "An unexpected error occurred.",
+    "languageUpdated": "Language updated successfully"
+  },
+  "documentManager": {
+    "title": "Documents Management",
+    "selected": "Selected",
+    "search": "Search",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "aZ": "A-Z",
+    "zA": "Z-A",
+    "generateLink": "Generate Secure Link",
+    "addFolder": "Add Folder",
+    "enterFolderName": "Enter folder name",
+    "folderName": "Folder Name",
+    "folderCreated": "Folder created successfully",
+    "folderCreateError": "Failed to create folder",
+    "create": "Create",
+    "save": "Save",
+    "renameFolder": "Rename folder",
+    "removeFolder": "Remove Folder",
+    "addDocuments": "Add Documents",
+    "name": "Name",
+    "fileSize": "File Size",
+    "lastModified": "Last Modified",
+    "status": "Status",
+    "location": "Location",
+    "action": "Action",
+    "noDocumentsFound": "No documents found matching your search",
+    "loading": "Loading documents...",
+    "justNow": "Just now",
+    "hoursAgo": "about {{hours}} hours ago",
+    "daysAgo": "{{days}} days ago",
+    "monthsAgo": "{{months}} months ago",
+    "toastInfoView": "Document not available for viewing",
+    "toastSuccessUploadCloud": "Document uploaded to Cloud",
+    "toastErrorUploadCloud": "Failed to upload to cloud",
+    "toastRemovedCloud": "Removed from Cloud",
+    "toastRemoveCloudFailed": "Failed to remove from cloud",
+    "toastRemovedApp": "Removed from App",
+    "toastRemoveAppFailed": "Failed to remove from app",
+    "viewDocument": "View Document",
+    "aiAudioSummary": "AI Audio Summary",
+    "uploadToCloud": "Upload to Cloud",
+    "removeFromCloud": "Remove from Cloud",
+    "removeFromApp": "Remove from App",
+    "badgeApp": "App",
+    "badgeCloud": "Cloud",
+    "removeCloudTitle": "Remove Cloud Document?",
+    "removeCloudDescription": "You can restore it later by uploading again.",
+    "removeAppTitle": "Remove from App?",
+    "removeAppDescription": "You can link it again from this PC.",
+    "listenToAiSummary": "Listen to an AI-generated summary of this document.",
+    "noSummaryAvailable": "No summary available for this document. The AI summary may still be processing.",
+    "language": "Language",
+    "playSummary": "Play Summary",
+    "resume": "Resume",
+    "pause": "Pause",
+    "stop": "Stop",
+    "playing": "Playing...",
+    "paused": "Paused",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "addDocumentsDialog": {
+      "title": "Add Documents",
+      "subtitle": "Scan local folders, then choose Link to App or Link + Upload to Cloud.",
+      "selectFolderToScan": "Select Folder to Scan",
+      "selectFolderInstructions": "Select a folder to scan, or drag & drop files here.",
+      "selectedCount": "Selected {{count}}",
+      "duplicates": "Duplicates {{count}}",
+      "removeSelected": "Remove Selected",
+      "linkUploadCloud": "Link + Upload to Cloud",
+      "linkToApp": "Link to App",
+      "confirmLinkAppTitle": "Confirm Link to App",
+      "confirmLinkAppDescription1": "Selected files will be linked to this app on this PC (read-only).",
+      "confirmLinkAppDescription2": "Files stay on your PC and won't be uploaded or shared.",
+      "confirmLinkAppDescription3": "You can upload to Cloud later from Documents if needed.",
+      "back": "Back",
+      "uploadSuccessCloud": "Documents uploaded to Cloud successfully",
+      "uploadSuccessApp": "Documents linked to App successfully",
+      "uploadFailed": "Failed to upload documents",
+      "userSessionNotFound": "User session not found",
+      "name": "Name",
+      "size": "Size",
+      "date": "Date"
+    }
+  },
+  "statsCards": {
+    "ongoingCases": "Ongoing Cases",
+    "todayConsultations": "Today's Consultations",
+    "unreadNotifications": "Unread Notifications",
+    "unreviewedDocuments": "Unreviewed Documents"
+  },
+  "clientsTable": {
+    "pending": "Pending",
+    "active": "Active",
+    "inactive": "Inactive",
+    "name": "Name",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "lastContacted": "Last Contacted",
+    "status": "Status",
+    "action": "Action",
+    "noClientsFound": "No clients found",
+    "allStatus": "All Status"
+  },
+  "recentActivity": {
+    "title": "Recent Activity Log",
+    "client": "Client",
+    "caseDocument": "Case / Document",
+    "appointmentsConsultations": "Appointments & Consultations",
+    "system": "System",
+    "noActivities": "No recent activities found.",
+    "categories": {
+      "activity": "Activity"
+    },
+    "events": {
+      "newQA": "New Q&A Question",
+      "newCase": "New Case Assigned",
+      "updateCase": "Case Updated"
+    }
   }
 }

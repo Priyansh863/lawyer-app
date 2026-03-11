@@ -5,16 +5,18 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 // Get auth headers with improved token handling
 const getAuthHeaders = () => {
   if (typeof window !== 'undefined') {
+
+
     // Try to get token from Redux state first, then localStorage
     try {
-        const token =getToken()
-        return {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      } catch (error) {
-        console.error('Error parsing auth user:', error)
+      const token = getToken()
+      return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    } catch (error) {
+      console.error('Error parsing auth user:', error)
+    }
   }
   return {
     'Content-Type': 'application/json'
@@ -63,6 +65,8 @@ export interface Document {
   privacy?: 'public' | 'private'
   file_size?: number
   file_type?: string
+  storage_type?: 'app' | 'cloud' | 'app_cloud'
+  storage_location?: string
   shared_with?: {
     _id: string
     first_name: string
@@ -90,23 +94,23 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
   try {
     console.log('🔍 Fetching documents...') // Debug log
     console.log('🌐 API Base URL:', API_BASE_URL) // Debug log
-    
+
     const headers = getAuthHeaders()
     console.log('🔑 Auth headers:', headers) // Debug log
-    
+
     let response
-    
+
     // Try multiple endpoints to ensure compatibility
     const endpoints = [
       '/document/list',
     ]
-    
+
     let lastError = null
-    
+
     for (const endpoint of endpoints) {
       try {
         console.log(`🚀 Trying endpoint: ${API_BASE_URL}${endpoint}`)
-        
+
         // Use POST for /document/accessible, GET for others
         if (endpoint === '/document/accessible') {
           const userId = getUserId()
@@ -117,7 +121,7 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
         } else {
           response = await axios.get(`${API_BASE_URL}${endpoint}`, { headers })
         }
-        
+
         console.log(`✅ Success with endpoint: ${endpoint}`, response.data)
         break
       } catch (error: any) {
@@ -126,11 +130,11 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
         continue
       }
     }
-    
+
     if (!response) {
       throw lastError || new Error('All document endpoints failed')
     }
-    
+
     // Ensure consistent response format
     const data = response.data
     if (data.success !== undefined) {
@@ -147,7 +151,7 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
         documents: []
       }
     }
-    
+
   } catch (error: any) {
     console.error('❌ Get documents error:', error)
     console.error('❌ Error response:', error.response?.data)
@@ -155,6 +159,31 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
       success: false,
       message: error.response?.data?.message || error.message || 'Failed to get documents',
       documents: []
+    }
+  }
+}
+
+// Create a new folder
+export const createFolder = async (folderName: string, userId: string): Promise<DocumentResponse> => {
+  try {
+    console.log('📁 Creating folder:', folderName)
+    const payload = {
+      document_name: folderName,
+      user_id: userId,
+      file_size: 0,
+      file_type: 'folder',
+      storage_type: 'cloud'
+    }
+    const response = await axios.post(`${API_BASE_URL}/document/create-folder`, payload, {
+      headers: getAuthHeaders()
+    })
+    console.log('✅ Create folder response:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Create folder error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to create folder'
     }
   }
 }
@@ -186,10 +215,12 @@ export const uploadDocumentEnhanced = async (data: {
   associatedUserId?: string
   caseId?: string
   documentType?: 'case_related' | 'general'
+  storageType?: 'app' | 'cloud' | 'app_cloud'
+  file_base64?: string
 }) => {
   try {
     console.log('📤 Uploading document (enhanced):', data)
-    
+
     const uploadPayload = {
       user_id: data.userId,
       document_name: data.fileName,
@@ -200,13 +231,15 @@ export const uploadDocumentEnhanced = async (data: {
       file_type: data.fileType,
       document_type: data.documentType || 'general',
       case_id: data.caseId,
-      associated_user_id: data.associatedUserId
+      associated_user_id: data.associatedUserId,
+      storage_type: data.storageType || 'cloud',
+      file_base64: data.file_base64
     }
-    
+
     const response = await axios.post(`${API_BASE_URL}/document/upload-enhanced`, uploadPayload, {
       headers: getAuthHeaders()
     })
-    
+
     console.log('✅ Enhanced upload response:', response.data)
     return response.data
   } catch (error: any) {
@@ -260,13 +293,13 @@ export const downloadDocument = async (documentId: string, documentName: string,
     link.setAttribute('download', documentName);
     document.body.appendChild(link);
     link.click();
-    
+
     // Clean up
     setTimeout(() => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(documentUrl);
     }, 100);
-    
+
     return { success: true };
   } catch (error: any) {
     console.error('Error downloading document:', error);
@@ -279,7 +312,7 @@ export const downloadDocumentSummary = async (documentId: string, summary: strin
   try {
     console.log('📥 Downloading document summary:', documentId)
 
-    
+
     // Create and download text file
     const blob = new Blob([summary], { type: 'text/plain' })
     const url = window.URL.createObjectURL(blob)
@@ -290,7 +323,7 @@ export const downloadDocumentSummary = async (documentId: string, summary: strin
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
-    
+
     console.log('✅ Document summary downloaded successfully')
     return { success: true, message: 'Summary downloaded successfully' }
   } catch (error: any) {
@@ -303,21 +336,22 @@ export const downloadDocumentSummary = async (documentId: string, summary: strin
 export const getCaseDocuments = async (caseId: string): Promise<DocumentResponse> => {
   try {
     console.log('📥 Fetching case documents for case:', caseId)
-    
+
     const headers = getAuthHeaders()
     const response = await axios.get(`${API_BASE_URL}/document/case/${caseId}`, { headers })
-    
+
     console.log('✅ Success fetching case documents:', response.data)
 
     if (response.data.success) {
       const documents = response.data.documents || []
       console.log(`📄 Found ${documents.length} documents for case ${caseId}`)
-      
+
       return {
         success: true,
         documents: documents.map((doc: any) => ({
           _id: doc._id,
           document_name: doc.document_name,
+          name: doc.document_name,
           status: doc.status,
           uploaded_by: doc.uploaded_by,
           link: doc.link,
@@ -326,8 +360,11 @@ export const getCaseDocuments = async (caseId: string): Promise<DocumentResponse
           privacy: doc.privacy,
           file_size: doc.file_size,
           summary: doc.summary,
-          created_at: doc.created_at,
-          updated_at: doc.updated_at,
+          storage_type: doc.storage_type || 'cloud',
+          created_at: doc.created_at || doc.createdAt,
+          updated_at: doc.updated_at || doc.updatedAt,
+          updatedAt: doc.updatedAt || doc.updated_at,
+          createdAt: doc.createdAt || doc.created_at,
           shared_with: doc.shared_with || [],
           case_id: doc.case_id
         }))
@@ -341,6 +378,45 @@ export const getCaseDocuments = async (caseId: string): Promise<DocumentResponse
       success: false,
       message: error.response?.data?.message || 'Failed to fetch case documents',
       documents: []
+    }
+  }
+}
+
+// Update document storage type (e.g. upload to cloud from app, or remove from cloud)
+export const updateDocumentStorageType = async (documentId: string, storageType: 'app' | 'cloud' | 'app_cloud', fileUrl?: string): Promise<DocumentResponse> => {
+  try {
+    console.log('🔄 Updating document storage type:', documentId, storageType)
+    const payload: any = { storage_type: storageType }
+    if (fileUrl) payload.link = fileUrl
+
+    const response = await axios.patch(`${API_BASE_URL}/document/${documentId}/storage-type`, payload, {
+      headers: getAuthHeaders()
+    })
+    console.log('✅ Storage type update response:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Update storage type error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to update storage type'
+    }
+  }
+}
+
+// Remove document from cloud (keeps app reference)
+export const removeFromCloud = async (documentId: string): Promise<DocumentResponse> => {
+  try {
+    console.log('☁️ Removing document from cloud:', documentId)
+    const response = await axios.patch(`${API_BASE_URL}/document/${documentId}/remove-cloud`, {}, {
+      headers: getAuthHeaders()
+    })
+    console.log('✅ Remove from cloud response:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Remove from cloud error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to remove from cloud'
     }
   }
 }

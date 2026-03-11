@@ -10,91 +10,47 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export default function QuickActions() {
-  const [isScheduleMeetingOpen, setIsScheduleMeetingOpen] = useState(false);
-  const [isSendMessageOpen, setIsSendMessageOpen] = useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
-  const { t } = useTranslation();
+interface ActionCardProps {
+  icon: React.ReactNode
+  title: string
+  onClick: () => void
+}
 
-  const handleMessageSent = () => {
-    toast({
-      title: t("pages:common.success"),
-      description: t("pages:quickActions.messageSentSuccess"),
-    });
-  };
+function ActionCard({ title, onClick }: ActionCardProps) {
+  return (
+    <Card
+      className="bg-white border border-gray-200 shadow-sm rounded-xl h-31 flex flex-col justify-between p-6 hover:shadow-md transition-all cursor-pointer group w-full sm:w-[220px] flex-shrink-0"
+      onClick={onClick}
+    >
+      <div className="flex-shrink-0">
+        <Plus className="w-6 h-6 text-[#1E293B] group-hover:text-black transition-colors" />
+      </div>
+      <div className="flex justify-end">
+        <span className="text-[#1E293B] font-bold text-[13px] tracking-tight">{title}</span>
+      </div>
+    </Card>
+  )
+}
+
+export default function QuickActions() {
+  const router = useRouter()
+  const { t } = useTranslation()
 
   const actions = [
-    {
-      icon: <MessageSquare className="w-5 h-5" />,
-      title: t("pages:quickActions.sendMessage"),
-      description: t("pages:quickActions.startChat"),
-      color: "from-blue-100 to-purple-100",
-      iconColor: "text-blue-500",
-      onClick: () => router.push("/chat?openModal=true")
-    },
-    {
-      icon: <Calendar className="w-5 h-5" />,
-      title: t("pages:quickActions.scheduleMeeting"),
-      description: t("pages:quickActions.bookWithClients"),
-      color: "from-green-100 to-emerald-100", 
-      iconColor: "text-green-500",
-      onClick: () => router.push("/video-consultations?openModal=true")
-    },
-  ];
+    { title: t('pages:quickActions.registerCase'), onClick: () => router.push("/cases?openModal=true") },
+    { title: t('pages:quickActions.registerClient'), onClick: () => router.push("/client?openModal=true") },
+    { title: t('pages:quickActions.uploadDocument'), onClick: () => router.push("/documents?openModal=true") },
+    { title: t('pages:quickActions.posts'), onClick: () => router.push("/posts") },
+  ]
 
   return (
-    <>
-      <Card className="card-korean h-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-accent/20">
-              <Zap className="w-5 h-5 text-primary" />
-            </div>
-            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              {t("pages:quickActions.title")}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent className="space-y-3">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className={`quick-action-btn w-full h-auto p-4 justify-start gap-4 group border-0 bg-gradient-to-r ${action.color}`}
-              onClick={action.onClick}
-            >
-              <div className={`p-2 rounded-xl bg-white/60 backdrop-blur-sm ${action.iconColor} group-hover:scale-110 transition-transform duration-300`}>
-                {action.icon}
-              </div>
-              <div className="flex-1 text-left">
-                <div className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
-                  {action.title}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {action.description}
-                </div>
-              </div>
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-              </div>
-            </Button>
-          ))}
-        </CardContent>
-      </Card>
-
-      <ScheduleMeetingModal
-        isOpen={isScheduleMeetingOpen}
-        onClose={() => setIsScheduleMeetingOpen(false)}
-        onSelectUser={handleMessageSent}
-      />
-
-      <SendMessageModal
-        isOpen={isSendMessageOpen}
-        onClose={() => setIsSendMessageOpen(false)}
-        onMessageSent={handleMessageSent}
-      />
-    </>
-  );
+    <div className="space-y-6">
+      <h3 className="text-[#1E293B] font-bold text-2xl tracking-tight">{t('pages:quickActions.title')}</h3>
+      <div className="flex flex-wrap gap-4">
+        {actions.map((action, index) => (
+          <ActionCard key={index} title={action.title} onClick={action.onClick} icon={<Plus />} />
+        ))}
+      </div>
+    </div>
+  )
 }

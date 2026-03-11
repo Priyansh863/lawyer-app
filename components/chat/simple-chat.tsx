@@ -63,7 +63,12 @@ export function SimpleChat({
   const { toast } = useToast()
 
   // 🔹 Drag state
-  const [position, setPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 520 })
+  const [position, setPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return { x: window.innerWidth - 380, y: window.innerHeight - 520 }
+    }
+    return { x: 0, y: 0 }
+  })
   const dragOffset = useRef({ x: 0, y: 0 })
   const isDragging = useRef(false)
 
@@ -100,12 +105,12 @@ export function SimpleChat({
           }
         } else if (clientId) {
           chatData = await createOrGetChat(clientId)
-          if(!(chatData && chatData?._id)){
+          if (!(chatData && chatData?._id)) {
             // Use setTimeout to ensure toast is called after component is fully mounted
             setTimeout(() => {
               toast({
                 title: t("pages:conv.error"),
-                description: "Insufficient token balance to start chat consultation",
+                description: t("pages:conv.insufficientTokenBalance"),
                 variant: "destructive",
                 duration: 6000,
               })
@@ -113,17 +118,40 @@ export function SimpleChat({
             onClose() // Close the chat component
             return
           }
-          console.log(chatData,"chatDatachatDatachatDatachatData")
         } else {
           return
         }
+
+        if (!chatData?._id) {
+          toast({
+            title: t("pages:conv.error"),
+            description: t("pages:conv.failedToLoadChat"),
+            variant: "destructive",
+          })
+          return
+        }
+
         setChat(chatData)
         const chatMessages = await getChatMessages(chatData._id)
         setMessages(chatMessages)
       } catch (error) {
+        // Log error details for debugging
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        const errorDetails = error instanceof Error && error.stack ? error.stack : String(error)
+
+        // Log to console in development for debugging
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error initializing chat:', {
+            error: errorMessage,
+            details: errorDetails,
+            clientId,
+            initialChatId,
+          })
+        }
+
         toast({
-            title: t("pages:conv.error"),
-          description: t("pages:conv.failedToLoadChat"),
+          title: t("pages:conv.error"),
+          description: errorMessage || t("pages:conv.failedToLoadChat"),
           variant: "destructive",
         })
       } finally {
@@ -279,25 +307,25 @@ export function SimpleChat({
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" onClick={handleDeleteChat}>
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteChat(); }}>
                 <Trash2 className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onClose(); }}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          
+
           {/* Chat Rate Display for Clients */}
-          {profile?.account_type === 'client' && chatRate ? 
-          (
-            <div className="px-4 pb-3">
-              <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-md">
-                <MessageCircle className="w-3 h-3" />
-                <span className="font-medium">Chat Rate: {chatRate} tokens/hour</span>
+          {profile?.account_type === 'client' && chatRate ?
+            (
+              <div className="px-4 pb-3">
+                <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                  <MessageCircle className="w-3 h-3" />
+                  <span className="font-medium">{t('pages:chat.chatRate')}: {chatRate} {t('pages:consultation.tokensPerMinute')}</span>
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
         </div>
 
         {/* Messages */}
@@ -319,11 +347,10 @@ export function SimpleChat({
                   className={`flex ${message.senderId._id === currentUserId ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                      message.senderId._id === currentUserId
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 text-gray-900"
-                    }`}
+                    className={`max-w-[80%] rounded-lg px-3 py-2 ${message.senderId._id === currentUserId
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-900"
+                      }`}
                   >
                     <p className="text-sm break-words">{message.content}</p>
                     <span className="text-xs opacity-70">

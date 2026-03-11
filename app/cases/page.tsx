@@ -17,7 +17,7 @@ export default function CasesPage() {
 
   return (
     <CasesLayout>
-      <div className="flex flex-col gap-6 mt-8">
+      <div className="flex flex-col gap-4 mt-2">
         <CasesHeader onCaseCreated={handleCaseCreated} />
         <Suspense fallback={<div>{t('common.loading')}</div>}>
           <CasesTable key={refreshKey} initialCases={[]} />

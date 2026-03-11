@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Sidebar from "@/components/sidebar/sidebar"
+import Header from "@/components/header/header"
 import { Toaster } from "react-hot-toast"
 
 interface DashboardLayoutProps {
@@ -36,10 +37,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [])
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#f8f9fa] overflow-hidden">
       <Sidebar />
-      <div className="flex-1 min-w-0">
-        <main className={`p-4 md:p-6 ${isMobile && isSidebarOpen ? "hidden md:block" : "block"}`}>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Header />
+        <main className={`flex-1 overflow-y-auto bg-transparent p-4 md:pt-4 md:px-8 md:pb-8 ${isMobile && isSidebarOpen ? "hidden md:block" : "block"}`}>
           <div className="max-w-7xl mx-auto w-full">
             {children}
             <Toaster />
