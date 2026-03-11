@@ -21,22 +21,33 @@ export default function ProfessionalDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
-      if (!profile?._id) return;
+      // If no profile or ID yet, we shouldn't be loading infinitely
+      if (!profile?._id) {
+        if (isMounted) setIsLoading(false);
+        return;
+      }
 
       try {
-        setIsLoading(true);
+        if (isMounted) setIsLoading(true);
         console.log("Fetching dashboard stats for user:", profile._id);
         const response = await dashboardApi.getStats(profile._id);
         console.log("Dashboard Stats Response:", response);
-        setData(response);
+        if (isMounted) setData(response);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
+    
     fetchData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [profile?._id]);
 
   // Determine the correct data object (handle potential 'data' wrapper from API)

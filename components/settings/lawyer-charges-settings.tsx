@@ -171,7 +171,7 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
         <div className="xl:col-span-8 bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
           <div className="mb-10">
             <h3 className="text-[#0F172A] text-[15px] font-bold leading-relaxed">
-              Set your per-minute rates for chat and video consultations. Clients will be charged based on the rates you set.
+              {t('pages:chargesSettings.description')}
             </h3>
           </div>
 
@@ -179,7 +179,7 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
             {/* In-Person Rate */}
             <div className="space-y-3">
               <Label htmlFor="charges" className="text-slate-400 text-[13px] font-bold uppercase tracking-wider">
-                In-Person Rate (per minute)
+                {t('pages:chargesSettings.inPersonRate')}
               </Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0F172A] font-bold text-[15px] z-10">
@@ -198,7 +198,7 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
             {/* Video Call Rate */}
             <div className="space-y-3">
               <Label htmlFor="videoRate" className="text-slate-400 text-[13px] font-bold uppercase tracking-wider">
-                Video Call Rate (per minute)
+                {t('pages:chargesSettings.videoCallRate')}
               </Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0F172A] font-bold text-[15px] z-10">
@@ -217,7 +217,7 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
             {/* Chat Rate */}
             <div className="space-y-3">
               <Label htmlFor="chatRate" className="text-slate-400 text-[13px] font-bold uppercase tracking-wider">
-                Chat Rate (per minute)
+                {t('pages:chargesSettings.chatRate')}
               </Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0F172A] font-bold text-[15px] z-10">
@@ -240,10 +240,10 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
           <div className="xl:col-span-4 self-center pt-8 xl:pt-0 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm text-center">
               <h4 className="text-[#0F172A] text-[18px] font-bold mb-3">
-                Leave without saving?
+                {t('pages:chargesSettings.leaveWithoutSaving')}
               </h4>
               <p className="text-slate-500 text-[14px] font-medium mb-8">
-                You have unsaved changes. They will be lost if you leave this page.
+                {t('pages:chargesSettings.unsavedChanges')}
               </p>
 
               <div className="flex gap-4">
@@ -256,14 +256,14 @@ const LawyerChargesSettings = forwardRef<LawyerChargesSettingsHandle, LawyerChar
                   }}
                   className="flex-1 h-11 border-slate-200 text-slate-600 font-bold rounded-md hover:bg-slate-50 transition-all font-sans"
                 >
-                  Discard
+                  {t('pages:chargesSettings.discard')}
                 </Button>
                 <Button
                   onClick={handleSaveCharges}
                   disabled={saving}
                   className="flex-1 h-11 bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold rounded-md transition-all font-sans"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save & leave"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:chargesSettings.saveAndLeave')}
                 </Button>
               </div>
             </div>

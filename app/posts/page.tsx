@@ -121,12 +121,12 @@ export default function PostsPage() {
       {/* Header - Aligned title and search same row */}
       <div className="max-w-7xl mx-auto w-full mb-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <h1 className="text-2xl font-bold text-[#0F172A]">Post Creation & Management</h1>
+          <h1 className="text-2xl font-bold text-[#0F172A]">{t("pages:posts.title")}</h1>
           <div className="flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Search"
+                placeholder={t("pages:posts.searchPlaceholder")}
                 className="pl-10 bg-white border-slate-200 w-full md:w-[320px] h-10 rounded-lg focus-visible:ring-1 focus-visible:ring-slate-900 focus-visible:ring-offset-0 text-[#0F172A] font-medium placeholder:text-slate-400 shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -136,7 +136,7 @@ export default function PostsPage() {
               onClick={() => setIsDialogOpen(true)}
               className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-8 rounded-lg shadow-lg active:scale-95 transition-all"
             >
-              Create Content
+              {t("pages:posts.createContent")}
             </Button>
           </div>
         </div>
@@ -168,8 +168,8 @@ export default function PostsPage() {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Search className="h-10 w-10 text-slate-300" />
             </div>
-            <h3 className="text-xl font-bold text-[#0F172A] mb-2">No results found</h3>
-            <p className="text-slate-500 font-medium px-6">We couldn't find any posts matching your search. Try broadening your criteria or create a new post.</p>
+            <h3 className="text-xl font-bold text-[#0F172A] mb-2">{t("pages:posts.noResults.title")}</h3>
+            <p className="text-slate-500 font-medium px-6">{t("pages:posts.noResults.description")}</p>
           </div>
         ) : (
           <div className="columns-1 md:columns-2 gap-8 space-y-8">
@@ -199,20 +199,20 @@ export default function PostsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-200 shadow-2xl animate-in fade-in zoom-in duration-200">
                           <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
-                            <Link2 className="mr-3 h-4 w-4" /> Copy Link
+                            <Link2 className="mr-3 h-4 w-4" /> {t("pages:posts.actions.copyLink")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
-                            <QrCode className="mr-3 h-4 w-4" /> QR Code
+                            <QrCode className="mr-3 h-4 w-4" /> {t("pages:posts.actions.qrCode")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
-                            <EyeOff className="mr-3 h-4 w-4" /> Not Interested
+                            <EyeOff className="mr-3 h-4 w-4" /> {t("pages:posts.actions.notInterested")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
-                            <Slash className="mr-3 h-4 w-4" /> Block
+                            <Slash className="mr-3 h-4 w-4" /> {t("pages:posts.actions.block")}
                           </DropdownMenuItem>
                           <div className="h-px bg-slate-100 my-1 mx-2"></div>
                           <DropdownMenuItem className="text-sm font-bold text-red-500 py-3 px-4 cursor-pointer focus:bg-red-50 focus:text-red-600 rounded-xl transition-colors">
-                            <AlertTriangle className="mr-3 h-4 w-4" /> Report
+                            <AlertTriangle className="mr-3 h-4 w-4" /> {t("pages:posts.actions.report")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -228,7 +228,7 @@ export default function PostsPage() {
                             onClick={() => toggleExpand(post._id)}
                             className="mt-2 text-sm font-bold text-slate-400 hover:text-[#0F172A] transition-colors"
                           >
-                            {isExpanded ? "Show Less" : "View More"}
+                            {isExpanded ? t("pages:posts.showLess") : t("pages:posts.viewMore")}
                           </button>
                         )}
                       </div>
@@ -267,10 +267,10 @@ export default function PostsPage() {
               onClick={() => fetchPosts(currentPage - 1)}
               className="border-slate-200 text-slate-600 font-bold h-11 px-8 rounded-xl hover:bg-white hover:border-[#0F172A] shadow-sm transition-all"
             >
-              Previous
+              {t("pages:posts.pagination.previous")}
             </Button>
             <div className="flex items-center px-6 text-sm font-bold text-[#0F172A] bg-white border border-slate-200 rounded-xl shadow-sm">
-              Page {currentPage} of {totalPages}
+              {t("pages:posts.pagination.pageOf", { current: currentPage, total: totalPages })}
             </div>
             <Button
               variant="outline"
@@ -278,7 +278,7 @@ export default function PostsPage() {
               onClick={() => fetchPosts(currentPage + 1)}
               className="border-slate-200 text-slate-600 font-bold h-11 px-8 rounded-xl hover:bg-white hover:border-[#0F172A] shadow-sm transition-all"
             >
-              Next
+              {t("pages:posts.pagination.next")}
             </Button>
           </div>
         )}

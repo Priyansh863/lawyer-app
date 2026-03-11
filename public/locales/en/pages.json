@@ -14,6 +14,29 @@
     "success": "Success",
     "continue": "Continue"
   },
+  "chargesSettings": {
+    "title": "Consultation Rates",
+    "description": "Set your per-minute rates for chat and video consultations. Clients will be charged based on the rates you set.",
+    "inPersonRate": "In-Person Rate (per minute)",
+    "videoCallRate": "Video Call Rate (per minute)",
+    "chatRate": "Chat Rate (per minute)",
+    "leaveWithoutSaving": "Leave without saving?",
+    "unsavedChanges": "You have unsaved changes. They will be lost if you leave this page.",
+    "discard": "Discard",
+    "saveAndLeave": "Save & leave",
+    "toast": {
+      "failedToLoad": "Failed to load current rates",
+      "failedToUpdate": "Failed to update rates",
+      "invalidInput": {
+        "title": "Invalid Input",
+        "description": "Please enter valid numbers for all rates"
+      },
+      "success": {
+        "title": "Success",
+        "description": "Rates updated successfully"
+      }
+    }
+  },
   "actions": {
     "saving": "Saving...",
     "saveRates": "Save Rates"
@@ -110,7 +133,7 @@
     "reasonPlaceholder": "Please provide details about why you are reporting this post...",
     "legalPosts": "Legal Posts",
     "professionalContent": "Professional content from legal experts",
-    "posts": "posts",
+    "posts": "Posts",
     "postStatus": {
       "published": "Published",
       "draft": "Draft",
@@ -169,6 +192,33 @@
     "optional": "Optional",
     "updating": "Updating",
     "saveChanges": "Save Changes"
+  },
+  "posts": {
+    "title": "Posts & Content",
+    "searchPlaceholder": "Search posts, hashtags, or content...",
+    "createContent": "Create Content",
+    "fetchPostsError": "Failed to load posts",
+    "somethingWentWrong": "Something went wrong while loading posts. Please try again.",
+    "postCreated": "Post created",
+    "postAddedToList": "Your post has been added to the list.",
+    "noResults": {
+      "title": "No posts found",
+      "description": "Try adjusting your keywords or create a new post to share with your clients."
+    },
+    "showLess": "Show less",
+    "viewMore": "View more",
+    "actions": {
+      "copyLink": "Copy link",
+      "qrCode": "QR Code",
+      "notInterested": "Not interested",
+      "block": "Block this author",
+      "report": "Report post"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{current}} of {{total}}"
+    }
   },
   "consultation": {
     "estimatedTotal": "Estimated total",
@@ -459,6 +509,13 @@
     },
     "noCasesFound": "No registered cases found",
     "updateStatus": "Update Status",
+    "updateStatusButton": "Update Status",
+    "updateStatusPopup": {
+      "title": "Update Case Status",
+      "description": "Update the status of the case: {{caseTitle}}"
+    },
+    "statusLabel": "Case Status",
+    "selectStatusPlaceholder": "Select case status",
     "newCase": "New Case",
     "status": {
       "fullWin": "Full Win",
@@ -836,42 +893,6 @@
   },
   "commonb": {
     "error": "Error"
-  },
-  "chargesSettings": {
-    "title": "Consultation Charges",
-    "description": "Set your consultation rate for chat and video consultations. Clients will be charged tokens based on this rate.",
-    "currentRate": "Your current rate is {{charges}} tokens per consultation. This applies to both chat and video consultations.",
-    "rateLabel": "Consultation Rate (Tokens)",
-    "ratePlaceholder": "Enter your consultation rate in tokens",
-    "rateDescription": "This rate will be charged for each consultation session (chat or video meeting)",
-    "generalRate": "General Consultation Rate",
-    "chatRate": "Chat Consultation Rate",
-    "videoRate": "Video Consultation Rate",
-    "placeholders": {
-      "generalRate": "Enter your general consultation rate",
-      "chatRate": "Enter your chat consultation rate",
-      "videoRate": "Enter your video consultation rate"
-    },
-    "descriptions": {
-      "generalRate": "Your standard per minute rate for in-person consultations",
-      "chatRate": "Your rate per minute for text-based chat consultations",
-      "videoRate": "Your rate per minute for video call consultations"
-    },
-    "saveButton": "Save Changes",
-    "saving": "Saving...",
-    "unsavedChanges": "You have unsaved changes",
-    "toast": {
-      "failedToLoad": "Failed to load current charges",
-      "invalidInput": {
-        "title": "Invalid Input",
-        "description": "Please enter a valid positive number for charges"
-      },
-      "success": {
-        "title": "Success",
-        "description": "Consultation charges updated successfully"
-      },
-      "failedToUpdate": "Failed to update your rates"
-    }
   },
   "caseDetails": {
     "Ctitle": "Case Details",
@@ -1664,55 +1685,6 @@
     "scheduleCall": "Schedule Call",
     "newCase": "New Case"
   },
-  "qa": {
-    "title": "Questions & Answers",
-    "description": "Check out common questions and answers about the service.",
-    "loading": "Loading questions...",
-    "empty": "No questions have been posted",
-    "byAuthorOnDate": "By {{author}} • {{date}}",
-    "unanswered": "This question has not been answered yet",
-    "anonymous": "Anonymous",
-    "addQuestion": "Add Question",
-    "byUser": "{{firstName}} {{lastName}} • {{date}}",
-    "status": {
-      "answered": "Answered",
-      "pending": "Pending"
-    },
-    "menu": {
-      "open": "Open Menu",
-      "answer": "Write Answer",
-      "edit": "Edit Answer",
-      "delete": "Delete",
-      "deleting": "Deleting...",
-      "alreadyAnswered": "Question already answered - cannot edit or delete"
-    },
-    "error": {
-      "loadFailed": "Failed to load questions. Please try again later.",
-      "cannotDeleteAnswered": "Answered questions cannot be deleted",
-      "deleteFailedTryAgain": "Failed to delete the question. Please try again.",
-      "fetchFailed": "Failed to fetch question list. Please try again later.",
-      "deleteFailed": "Failed to delete question. Please try again."
-    },
-    "search": {
-      "placeholder": "Search questions and answers...",
-      "noResults": "No questions match your search",
-      "resultsCount": "Found {{count}} question",
-      "resultsCount_plural": "Found {{count}} questions",
-      "noResultsDetailed": "No questions match your search or filters. Try adjusting your keywords or filters."
-    },
-    "filter": {
-      "placeholder": "Filter by status",
-      "all": "All Questions",
-      "answered": "Answered",
-      "pending": "Pending"
-    },
-    "results": {
-      "noResults": "No questions found for the given search. Try adjusting your keywords or filters.",
-      "found": "Found {count} question",
-      "foundPlural": "Found {count} questions",
-      "noMatch": "No questions match your search"
-    }
-  },
   "qas": {
     "loading": "Loading question...",
     "questionNotFound": "Question not found",
@@ -1775,6 +1747,24 @@
     "loading": "Loading..."
   },
   "posts": {
+    "searchPlaceholder": "Search",
+    "createContent": "Create Content",
+    "noResults": {
+      "title": "No results found",
+      "description": "We couldn't find any posts matching your search. Try broadening your criteria or create a new post."
+    },
+    "actions": {
+      "copyLink": "Copy Link",
+      "qrCode": "QR Code",
+      "notInterested": "Not Interested",
+      "block": "Block",
+      "report": "Report"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{current}} of {{total}}"
+    },
     "postsContentTitle": "Posts & Content",
     "postsContentDescription": "Create, manage, and share your legal content with AI assistance and spatial metadata",
     "myPosts": "My Posts",
@@ -2643,8 +2633,38 @@
       "subtitle": "Manage AI tokens and purchase history",
       "refresh": "Refresh",
       "loading": "Loading token data...",
+      "management": "Token Management",
+      "overview": "Overview",
+      "buyTokens": "Buy Tokens",
+      "exportCSV": "Export CSV",
+      "currentBalance": "Current Balance",
+      "tokensUsed": "Tokens Used",
+      "totalPurchased": "Total Purchased",
+      "paymentDetails": "Payment Details",
+      "status": "Status",
+      "date": "Date",
       "tokens": "Tokens",
       "viewh": "View History",
+      "noTransactions": "No transactions to display",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{current}} of {{total}}",
+      "bonus": "{{bonus}}% Bonus",
+      "includesBonus": "Includes {{tokens}} bonus tokens",
+      "packages": {
+        "starter": {
+          "name": "Starter Pack",
+          "description": "For basic tasks"
+        },
+        "professional": {
+          "name": "Professional Pack",
+          "description": "For regular use · 20% Bonus"
+        },
+        "enterprise": {
+          "name": "Enterprise Pack",
+          "description": "For heavy use · 50% Bonus"
+        }
+      },
       "cards": {
         "balance": {
           "title": "Current Balance",
@@ -2783,60 +2803,6 @@
   },
   "commonz": {
     "error": "Error"
-  },
-  "tok": {
-    "token": {
-      "loading": "Loading token data...",
-      "management": "Token Management",
-      "overview": "Overview",
-      "buyTokens": "Buy Tokens",
-      "exportCSV": "Export CSV",
-      "refresh": "Refresh",
-      "currentBalance": "Current Balance",
-      "tokensUsed": "Tokens Used",
-      "totalPurchased": "Total Purchased",
-      "tokens": "tokens",
-      "paymentDetails": "Payment Details",
-      "status": "Status",
-      "date": "Date",
-      "noTransactions": "No transactions to display",
-      "previous": "Previous",
-      "next": "Next",
-      "pageOf": "Page {{current}} of {{total}}",
-      "bonus": "{{bonus}}% bonus",
-      "includesBonus": "Includes {{tokens}} bonus tokens",
-      "packages": {
-        "starter": {
-          "name": "Starter Pack",
-          "description": "For basic tasks"
-        },
-        "professional": {
-          "name": "Professional Pack",
-          "description": "For regular use · 20% bonus"
-        },
-        "enterprise": {
-          "name": "Enterprise Pack",
-          "description": "For heavy use · 50% bonus"
-        }
-      },
-      "payment": {
-        "success": "Payment successful! {tokens} tokens have been added to your account.",
-        "cancelled": "Payment was cancelled or failed. Please try again.",
-        "genericError": "Failed to verify payment. Please contact support."
-      },
-      "toast": {
-        "payment": {
-          "success": {
-            "title": "Payment Successful 🎉",
-            "description": "{tokens} tokens have been added to your account."
-          },
-          "cancelled": {
-            "title": "Payment Cancelled",
-            "description": "Your payment was cancelled. No charges were made."
-          }
-        }
-      }
-    }
   },
   "qa": {
     "title": "Questions & Answers",

@@ -82,7 +82,7 @@ export default function CaseStatusUpdateDialog({
       })
 
       if (!response.ok) {
-        throw new Error(t("pages:casese.error.updateFailed"))
+        throw new Error(t("pages:cases.error.updateFailed"))
       }
 
       const result = await response.json()
@@ -90,21 +90,21 @@ export default function CaseStatusUpdateDialog({
       if (result.success) {
         toast({
           title: t("cases.statusUpdated.title"),
-          description: t("pages:casese.statusUpdated.description", {
-            status: t(`pages:casese.status.${data.status}`)
+          description: t("pages:cases.statusUpdated.description", {
+            status: t(`pages:cases.status.${data.status}`)
           }),
         })
 
         onStatusUpdated(selectedCase._id || selectedCase.id, data.status)
         onOpenChange(false)
       } else {
-        throw new Error(result.message || t("pages:casese.error.updateFailed"))
+        throw new Error(result.message || t("pages:cases.error.updateFailed"))
       }
     } catch (error: any) {
       console.error('Error updating case status:', error)
       toast({
         title: t("common.error"),
-        description: error.message || t("pages:casese.error.tryAgain"),
+        description: error.message || t("pages:cases.error.tryAgain"),
         variant: "destructive"
       })
     } finally {
@@ -115,24 +115,24 @@ export default function CaseStatusUpdateDialog({
   // Status options with translations
   const STATUS_OPTIONS = [
     // Active case statuses
-    { value: "pending", label: t("pages:casese.status.pending"), category: t("pages:casese.statusGroup.active") },
-    { value: "in_progress", label: t("pages:casese.status.inProgress"), category: t("pages:casese.statusGroup.active") },
+    { value: "pending", label: t("pages:cases.status.pending"), category: t("pages:cases.statusGroup.active") },
+    { value: "in_progress", label: t("pages:cases.status.inProgress"), category: t("pages:cases.statusGroup.active") },
     
     // Judgment Outcomes
-    { value: "full_win", label: t("pages:casese.status.fullWin"), category: t("pages:casese.statusGroup.judgment") },
-    { value: "full_loss", label: t("pages:casese.status.fullLoss"), category: t("pages:casese.statusGroup.judgment") },
-    { value: "partial_win", label: t("pages:casese.status.partialWin"), category: t("pages:casese.statusGroup.judgment") },
-    { value: "partial_loss", label: t("pages:casese.status.partialLoss"), category: t("pages:casese.statusGroup.judgment") },
-    { value: "dismissal", label: t("pages:casese.status.dismissal"), category: t("pages:casese.statusGroup.judgment") },
-    { value: "rejection", label: t("pages:casese.status.rejection"), category: t("pages:casese.statusGroup.judgment") },
+    { value: "full_win", label: t("pages:cases.status.fullWin"), category: t("pages:cases.statusGroup.judgment") },
+    { value: "full_loss", label: t("pages:cases.status.fullLoss"), category: t("pages:cases.statusGroup.judgment") },
+    { value: "partial_win", label: t("pages:cases.status.partialWin"), category: t("pages:cases.statusGroup.judgment") },
+    { value: "partial_loss", label: t("pages:cases.status.partialLoss"), category: t("pages:cases.statusGroup.judgment") },
+    { value: "dismissal", label: t("pages:cases.status.dismissal"), category: t("pages:cases.statusGroup.judgment") },
+    { value: "rejection", label: t("pages:cases.status.rejection"), category: t("pages:cases.statusGroup.judgment") },
     
     // Non-Judgment Outcomes
-    { value: "withdrawal", label: t("pages:casese.status.withdrawal"), category: t("pages:casese.statusGroup.nonJudgment") },
-    { value: "mediation", label: t("pages:casese.status.mediation"), category: t("pages:casese.statusGroup.nonJudgment") },
-    { value: "settlement", label: t("pages:casese.status.settlement"), category: t("pages:casese.statusGroup.nonJudgment") },
-    { value: "trial_cancellation", label: t("pages:casese.status.trialCancellation"), category: t("pages:casese.statusGroup.nonJudgment") },
-    { value: "suspension", label: t("pages:casese.status.suspension"), category: t("pages:casese.statusGroup.nonJudgment") },
-    { value: "closure", label: t("pages:casese.status.closure"), category: t("pages:casese.statusGroup.nonJudgment") },
+    { value: "withdrawal", label: t("pages:cases.status.withdrawal"), category: t("pages:cases.statusGroup.nonJudgment") },
+    { value: "mediation", label: t("pages:cases.status.mediation"), category: t("pages:cases.statusGroup.nonJudgment") },
+    { value: "settlement", label: t("pages:cases.status.settlement"), category: t("pages:cases.statusGroup.nonJudgment") },
+    { value: "trial_cancellation", label: t("pages:cases.status.trialCancellation"), category: t("pages:cases.statusGroup.nonJudgment") },
+    { value: "suspension", label: t("pages:cases.status.suspension"), category: t("pages:cases.statusGroup.nonJudgment") },
+    { value: "closure", label: t("pages:cases.status.closure"), category: t("pages:cases.statusGroup.nonJudgment") },
   ]
 
   // Group status options by category
@@ -148,9 +148,9 @@ export default function CaseStatusUpdateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{t("pages:casese.updateStatus.title")}</DialogTitle>
+          <DialogTitle>{t("pages:cases.updateStatusPopup.title")}</DialogTitle>
           <DialogDescription>
-            {t("pages:casese.updateStatus.description", { caseTitle: selectedCase?.title })}
+            {t("pages:cases.updateStatusPopup.description", { caseTitle: selectedCase?.title })}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,11 +161,11 @@ export default function CaseStatusUpdateDialog({
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("pages:casese.statusLabel")}</FormLabel>
+                  <FormLabel>{t("pages:cases.statusLabel")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={t("pages:casese.selectStatusPlaceholder")} />
+                        <SelectValue placeholder={t("pages:cases.selectStatusPlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="max-h-[300px]">
@@ -199,7 +199,7 @@ export default function CaseStatusUpdateDialog({
               </Button>
               <Button type="submit" disabled={isUpdating}>
                 {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("pages:casese.updateStatusButton")}
+                {t("pages:cases.updateStatusButton")}
               </Button>
             </DialogFooter>
           </form>
