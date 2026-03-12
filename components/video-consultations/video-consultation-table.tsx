@@ -453,7 +453,7 @@ export default function VideoConsultationTableNew({ searchQueryProp, onNewConsul
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent className="bg-[#0F172A] text-white border-none text-[12px] font-medium p-2 rounded-md">
-                                <p>Edit details</p>
+                                <p>{t("pages:common.editDetails")}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

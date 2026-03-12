@@ -12,7 +12,10 @@
     "charges": "Charges ($)",
     "chargesPlaceholder": "Enter charges",
     "success": "Success",
-    "continue": "Continue"
+    "continue": "Continue",
+    "edit": "Edit",
+    "editDetails": "Edit details",
+    "cancel": "Cancel"
   },
   "chargesSettings": {
     "title": "Consultation Rates",
@@ -1747,6 +1750,7 @@
     "loading": "Loading..."
   },
   "posts": {
+    "title": "Posts & Content",
     "searchPlaceholder": "Search",
     "createContent": "Create Content",
     "noResults": {
@@ -1773,6 +1777,8 @@
     "loadingPosts": "Loading posts...",
     "readmore": "Read more",
     "showless": "Show less",
+    "showLess": "Show less",
+    "viewMore": "View more",
     "noPostsFound": "No posts found",
     "noPostsCreatedYet": "You haven't created any posts yet",
     "createFirstPost": "Create Your First Post",
@@ -2070,7 +2076,13 @@
       },
       "buttons": {
         "create": "Create Post",
-        "creating": "Creating Post..."
+        "creating": "Creating Post...",
+        "next": "Next",
+        "post": "Post"
+      },
+      "location": {
+        "title": "Location Information",
+        "description": "You may optionally add location and time details, then click Post."
       },
       "toast": {
         "requiredFields": "Missing Required Fields",

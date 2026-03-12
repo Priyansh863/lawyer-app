@@ -20,6 +20,13 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/lib/store";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   createPost,
   generateAiPost,
   generateQrCode,
@@ -66,6 +73,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const [isCreating, setIsCreating] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [createdPost, setCreatedPost] = useState<Post | null>(null);
+  const [showLocationModal, setShowLocationModal] = useState(false);
 
   // Image upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -317,6 +325,41 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   };
 
   // Create manual post
+  const handleNext = async () => {
+    // Check if content exists (either manual or AI generated)
+    if (activeTab === 'manual') {
+      if (!postData.title.trim() || !postData.content.trim()) {
+        toast({
+          title: t('pages:creator.post.toast.requiredFields'),
+          description: t('pages:creator.post.toast.requiredFieldsDesc'),
+          variant: "destructive",
+        });
+        return;
+      }
+      // Open location modal for manual content
+      setShowLocationModal(true);
+    } else {
+      // AI tab
+      if (!aiData.prompt?.trim() && !aiData.topic?.trim()) {
+        toast({
+          title: t('pages:creator.post.ai.toast.missingInput'),
+          description: t('pages:creator.post.ai.toast.missingInputDesc'),
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // If content not generated yet, generate it first
+      if (!createdPost) {
+        await handleGenerateAiPost();
+        // handleGenerateAiPost will open the modal after generation
+      } else {
+        // Content already generated, just open modal
+        setShowLocationModal(true);
+      }
+    }
+  };
+
   const handleCreatePost = async () => {
     if (!postData.title.trim() || !postData.content.trim()) {
       toast({
@@ -352,6 +395,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       });
 
       setSelectedFile(null);
+      setShowLocationModal(false);
 
     } catch (error: any) {
       toast({
@@ -384,29 +428,30 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       };
 
       const response = await generateAiPost(aiDataWithImage);
-      const post = response.data;
+      const generatedPost = response.data;
 
-      setCreatedPost(post);
-      onPostCreated?.(post);
+      // Update postData with AI generated content (but don't create post yet)
+      setPostData(prev => ({
+        ...prev,
+        title: generatedPost.title || prev.title,
+        content: generatedPost.content || prev.content,
+        hashtag: generatedPost.hashtag || prev.hashtag,
+        spatialInfo: generatedPost.spatialInfo || prev.spatialInfo,
+        citations: generatedPost.citations || prev.citations,
+        image: generatedPost.image || prev.image
+      }));
+
+      // Store generated post for reference (but don't call onPostCreated yet)
+      setCreatedPost(generatedPost);
 
       toast({
         title: t('pages:creator.post.ai.toast.generated'),
-        description: t('pages:creator.post.ai.toast.generatedDesc', { title: post.title }),
+        description: t('pages:creator.post.ai.toast.generatedDesc', { title: generatedPost.title }),
         variant: "default",
       });
 
-      setAiData({
-        prompt: '',
-        topic: '',
-        tone: 'professional',
-        length: 'long',
-        includeHashtags: true,
-        spatialInfo: undefined,
-        citations: []
-      });
-
-      setPostData(prev => ({ ...prev, image: undefined }));
-      setSelectedFile(null);
+      // Open location modal after AI generation
+      setShowLocationModal(true);
 
     } catch (error: any) {
       toast({
@@ -939,21 +984,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               </div>
 
               <Button
-                onClick={handleCreatePost}
-                disabled={isCreating || !postData.title.trim() || !postData.content.trim()}
+                onClick={handleNext}
+                disabled={!postData.title.trim() || !postData.content.trim()}
                 className="w-full bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#64748b] font-bold h-11 rounded-md text-[14px] shadow-none"
               >
-                {isCreating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t('pages:creator.post.buttons.creating')}
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    {t('pages:creator.post.buttons.create')}
-                  </>
-                )}
+                {t('pages:creator.post.buttons.next')}
               </Button>
             </TabsContent>
 
@@ -1306,7 +1341,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
               </Card>
 
               <Button
-                onClick={handleGenerateAiPost}
+                onClick={handleNext}
                 disabled={isGeneratingAi || (!aiData.prompt?.trim() && !aiData.topic?.trim())}
                 className="w-full bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#64748b] font-bold h-11 rounded-md text-[14px] shadow-none"
               >
@@ -1317,8 +1352,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   </>
                 ) : (
                   <>
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    {t('pages:.post.ai.buttons.generate')}
+                    {t('pages:creator.post.buttons.next')}
                   </>
                 )}
               </Button>
@@ -1327,13 +1361,57 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         </CardContent>
       </Card>
 
-      {/* Location & Spatial Information */}
-      <LocationUrlGenerator
-        onLocationSelect={handleLocationSelect}
-        initialData={activeTab === 'manual' ? postData.spatialInfo : aiData.spatialInfo}
-        postTitle={activeTab === 'manual' ? postData.title : aiData.topic}
-        postImage={activeTab === 'manual' ? postData.image : aiData.image}
-      />
+      {/* Location Information Modal */}
+      <Dialog open={showLocationModal} onOpenChange={setShowLocationModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto p-0 gap-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200">
+            <DialogTitle className="text-[20px] font-bold text-[#0F172A] tracking-tight">
+              {t('pages:creator.post.location.title')}
+            </DialogTitle>
+            <p className="text-sm text-slate-500 mt-1">
+              {t('pages:creator.post.location.description')}
+            </p>
+          </DialogHeader>
+          
+          <div className="px-6 py-4">
+            <LocationUrlGenerator
+              onLocationSelect={handleLocationSelect}
+              initialData={activeTab === 'manual' ? postData.spatialInfo : aiData.spatialInfo}
+              postTitle={activeTab === 'manual' ? postData.title : aiData.topic}
+              postImage={activeTab === 'manual' ? postData.image : aiData.image}
+            />
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t border-slate-200 bg-slate-50/50">
+            <div className="flex items-center justify-end gap-3 w-full">
+              <Button
+                variant="outline"
+                onClick={() => setShowLocationModal(false)}
+                className="font-bold h-10 px-6 border-slate-300 text-slate-700 hover:bg-white hover:border-slate-400"
+              >
+                {t('pages:common.cancel')}
+              </Button>
+              <Button
+                onClick={handleCreatePost}
+                disabled={isCreating || !postData.title.trim() || !postData.content.trim()}
+                className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-6"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('pages:creator.post.buttons.creating')}
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    {t('pages:creator.post.buttons.post')}
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

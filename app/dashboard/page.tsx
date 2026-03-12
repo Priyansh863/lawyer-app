@@ -22,18 +22,57 @@ export default function ProfessionalDashboardPage() {
 
   useEffect(() => {
     let isMounted = true;
+    let retryTimeout: NodeJS.Timeout;
     
     const fetchData = async () => {
-      // If no profile or ID yet, we shouldn't be loading infinitely
-      if (!profile?._id) {
-        if (isMounted) setIsLoading(false);
+      // Check localStorage directly as fallback if Redux hasn't hydrated yet
+      let userId = profile?._id;
+      
+      if (!userId && typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          try {
+            const localUser = JSON.parse(userStr);
+            userId = localUser?._id;
+          } catch (error) {
+            console.error('Error parsing user from localStorage:', error);
+          }
+        }
+      }
+
+      // If still no user ID, check again after a short delay (for Redux hydration)
+      if (!userId) {
+        if (typeof window !== 'undefined' && localStorage.getItem('user')) {
+          // User exists in localStorage, wait for Redux to hydrate
+          retryTimeout = setTimeout(() => {
+            if (isMounted) {
+              const userStr = localStorage.getItem('user');
+              if (userStr) {
+                try {
+                  const localUser = JSON.parse(userStr);
+                  if (localUser?._id) {
+                    // Retry fetch with localStorage user ID
+                    fetchData();
+                    return;
+                  }
+                } catch (error) {
+                  console.error('Error parsing user from localStorage:', error);
+                }
+              }
+              setIsLoading(false);
+            }
+          }, 300);
+        } else {
+          // No user found anywhere, stop loading
+          if (isMounted) setIsLoading(false);
+        }
         return;
       }
 
       try {
         if (isMounted) setIsLoading(true);
-        console.log("Fetching dashboard stats for user:", profile._id);
-        const response = await dashboardApi.getStats(profile._id);
+        console.log("Fetching dashboard stats for user:", userId);
+        const response = await dashboardApi.getStats(userId);
         console.log("Dashboard Stats Response:", response);
         if (isMounted) setData(response);
       } catch (error) {
@@ -47,6 +86,7 @@ export default function ProfessionalDashboardPage() {
     
     return () => {
       isMounted = false;
+      if (retryTimeout) clearTimeout(retryTimeout);
     };
   }, [profile?._id]);
 
