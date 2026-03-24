@@ -1,6 +1,6 @@
 import type React from "react"
 import Sidebar from "@/components/sidebar/sidebar"
-// import DashboardHeader from "@/components/dashboard/dashboard-header"
+import Header from "@/components/header/header"
 
 interface BlogLayoutProps {
   children: React.ReactNode
@@ -8,12 +8,14 @@ interface BlogLayoutProps {
 
 export default function BlogLayout({ children }: BlogLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-6 overflow-y-auto">
-        {/* <DashboardHeader /> */}
-        <div className="max-w-7xl mx-auto">{children}</div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Header />
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">{children}</div>
+        </main>
+      </div>
     </div>
   )
 }
