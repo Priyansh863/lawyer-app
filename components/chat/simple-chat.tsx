@@ -60,6 +60,7 @@ export function SimpleChat({
   const currentUserId = profile?._id
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   // 🔹 Drag state
@@ -78,6 +79,13 @@ export function SimpleChat({
       content: "",
     },
   })
+
+  // Auto-focus input on mount
+  useEffect(() => {
+    if (!isInitializing) {
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
+  }, [isInitializing])
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -275,6 +283,7 @@ export function SimpleChat({
         left: position.x,
         width: 360,
         height: 500,
+        pointerEvents: "auto",
       }}
     >
       <div
@@ -365,7 +374,7 @@ export function SimpleChat({
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="border-t p-4 bg-white">
+        <div className="border-t p-4 bg-white" onMouseDown={(e) => e.stopPropagation()}>
           <Form {...messageForm}>
             <form onSubmit={messageForm.handleSubmit(handleSendMessage)} className="flex space-x-2">
               <FormField
@@ -374,7 +383,20 @@ export function SimpleChat({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormControl>
-                      <Input placeholder={t("pages:conv.typeYourMessage")} {...field} disabled={isSending} />
+                      <Input 
+                        placeholder={t("pages:conv.typeYourMessage")} 
+                        {...field} 
+                        ref={(e) => {
+                          field.ref(e);
+                          (inputRef as any).current = e;
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isSending} 
+                        autoFocus
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

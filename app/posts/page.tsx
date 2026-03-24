@@ -19,6 +19,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import PostCreator from "@/components/posts/post-creator";
 import {
   getPosts,
+  reportPost,
+  generateQrCode,
   type Post
 } from "@/lib/api/posts-api";
 import {
@@ -47,6 +49,16 @@ export default function PostsPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // QR and Report dialog states
+  const [selectedPostForQr, setSelectedPostForQr] = useState<Post | null>(null);
+  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false);
+  
+  const [selectedPostForReport, setSelectedPostForReport] = useState<Post | null>(null);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
 
   // Fetch posts
   const fetchPosts = async (page = 1) => {
@@ -92,7 +104,8 @@ export default function PostsPage() {
   // Handle post creation
   const handlePostCreated = (post: Post) => {
     setPosts(prev => [post, ...prev]);
-    setIsDialogOpen(false);
+    // We don't close the dialog immediately anymore so the user can see the success card
+    // setIsDialogOpen(false); 
     toast({
       title: t("pages:posts.postCreated"),
       description: t("pages:posts.postAddedToList"),
@@ -102,6 +115,7 @@ export default function PostsPage() {
 
   // Mask user name like fag2***
   const maskName = (firstName: string) => {
+    if (!firstName) return "User***";
     if (firstName.length <= 4) return firstName + "***";
     return firstName.substring(0, 4) + "***";
   };
@@ -114,6 +128,83 @@ export default function PostsPage() {
       else newSet.add(id);
       return newSet;
     });
+  };
+
+  // Action Handlers
+  const handleCopyLink = (post: Post) => {
+    const url = post.customUrl || post.shortUrl || `${window.location.origin}/posts#${post.slug}`;
+    navigator.clipboard.writeText(url);
+    toast({
+      title: t("pages:posts.actions.linkCopied"),
+      description: t("pages:posts.actions.linkCopiedDesc"),
+    });
+  };
+
+  const handleShowQrCode = async (post: Post) => {
+    if (post.qrCodeUrl) {
+      setSelectedPostForQr(post);
+      setIsQrDialogOpen(true);
+      return;
+    }
+
+    try {
+      setIsGeneratingQr(true);
+      const response = await generateQrCode(post.slug);
+      const updatedPost = { ...post, qrCodeUrl: response.data.qrCodeDataUrl };
+      setPosts(prev => prev.map(p => p._id === post._id ? updatedPost : p));
+      setFilteredPosts(prev => prev.map(p => p._id === post._id ? updatedPost : p));
+      setSelectedPostForQr(updatedPost);
+      setIsQrDialogOpen(true);
+    } catch (error: any) {
+      toast({
+        title: t("pages:posts.actions.qrError"),
+        description: error.message || t("pages:posts.somethingWentWrong"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQr(false);
+    }
+  };
+
+  const handleNotInterested = (postId: string) => {
+    setPosts(prev => prev.filter(p => p._id !== postId));
+    setFilteredPosts(prev => prev.filter(p => p._id !== postId));
+    toast({
+      title: t("pages:posts.actions.notInterestedTitle"),
+      description: t("pages:posts.actions.notInterestedDesc"),
+    });
+  };
+
+  const handleBlockUser = (authorId: string) => {
+    setPosts(prev => prev.filter(p => p.author._id !== authorId));
+    setFilteredPosts(prev => prev.filter(p => p.author._id !== authorId));
+    toast({
+      title: t("pages:posts.actions.blockedTitle"),
+      description: t("pages:posts.actions.blockedDesc"),
+    });
+  };
+
+  const handleReportSubmit = async () => {
+    if (!selectedPostForReport || reportReason.trim().length < 10) return;
+
+    try {
+      setIsReporting(true);
+      await reportPost(selectedPostForReport._id, reportReason);
+      toast({
+        title: t("pages:posts.actions.reportSuccess"),
+        description: t("pages:posts.actions.reportSuccessDesc"),
+      });
+      setIsReportDialogOpen(false);
+      setReportReason("");
+    } catch (error: any) {
+      toast({
+        title: t("pages:posts.actions.reportError"),
+        description: error.message || t("pages:posts.somethingWentWrong"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   return (
@@ -198,20 +289,38 @@ export default function PostsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-200 shadow-2xl animate-in fade-in zoom-in duration-200">
-                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                          <DropdownMenuItem 
+                            onClick={() => handleCopyLink(post)}
+                            className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
+                          >
                             <Link2 className="mr-3 h-4 w-4" /> {t("pages:posts.actions.copyLink")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                          <DropdownMenuItem 
+                            onClick={() => handleShowQrCode(post)}
+                            className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
+                          >
                             <QrCode className="mr-3 h-4 w-4" /> {t("pages:posts.actions.qrCode")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                          <DropdownMenuItem 
+                            onClick={() => handleNotInterested(post._id)}
+                            className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
+                          >
                             <EyeOff className="mr-3 h-4 w-4" /> {t("pages:posts.actions.notInterested")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors">
+                          <DropdownMenuItem 
+                            onClick={() => handleBlockUser(post.author._id)}
+                            className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
+                          >
                             <Slash className="mr-3 h-4 w-4" /> {t("pages:posts.actions.block")}
                           </DropdownMenuItem>
                           <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                          <DropdownMenuItem className="text-sm font-bold text-red-500 py-3 px-4 cursor-pointer focus:bg-red-50 focus:text-red-600 rounded-xl transition-colors">
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedPostForReport(post);
+                              setIsReportDialogOpen(true);
+                            }}
+                            className="text-sm font-bold text-red-500 py-3 px-4 cursor-pointer focus:bg-red-50 focus:text-red-600 rounded-xl transition-colors"
+                          >
                             <AlertTriangle className="mr-3 h-4 w-4" /> {t("pages:posts.actions.report")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -239,15 +348,27 @@ export default function PostsPage() {
                         </p>
                       )}
 
-                      {post.image && (
+                      {(post.images && post.images.length > 0) || post.image ? (
                         <div className="grid grid-cols-3 gap-3">
-                          <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
-                            <img src={post.image} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
-                          <div className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
+                          {post.images && post.images.length > 0 ? (
+                            post.images.slice(0, 3).map((img, idx) => (
+                              <div key={idx} className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ))
+                          ) : (
+                            post.image && (
+                              <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
+                                <img src={post.image} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            )
+                          )}
+                          {/* Fill empty slots to maintain 3-column layout if fewer than 3 images */}
+                          {Array.from({ length: Math.max(0, 3 - (post.images?.length || (post.image ? 1 : 0))) }).map((_, i) => (
+                            <div key={`empty-${i}`} className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
+                          ))}
                         </div>
-                      )}
+                      ) : null}
 
 
                     </div>
@@ -289,6 +410,99 @@ export default function PostsPage() {
         <DialogContent className="sm:max-w-[700px] p-6 overflow-hidden rounded-md border border-slate-200 shadow-lg bg-white">
           <div className="max-h-[85vh] overflow-y-auto scrollbar-hide">
             <PostCreator onPostCreated={handlePostCreated} />
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* QR Code Dialog */}
+      <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#0F172A] text-center mb-6">
+              {t("pages:posts.qrCodeTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            {selectedPostForQr?.qrCodeUrl ? (
+              <img 
+                src={selectedPostForQr.qrCodeUrl} 
+                alt="QR Code" 
+                className="w-64 h-64 shadow-2xl rounded-xl border-4 border-white"
+              />
+            ) : (
+              <div className="w-64 h-64 flex items-center justify-center">
+                <Skeleton width={200} height={200} />
+              </div>
+            )}
+            <p className="mt-8 text-sm font-bold text-slate-500 text-center leading-relaxed">
+              {t("pages:posts.qrCodeInstructions")}
+            </p>
+          </div>
+          <div className="mt-8 flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 py-6 rounded-xl font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
+              onClick={() => setIsQrDialogOpen(false)}
+            >
+              {t("common:actions.close")}
+            </Button>
+            <Button 
+              className="flex-1 py-6 rounded-xl font-bold bg-[#0F172A] hover:bg-slate-800 transition-all text-white"
+              onClick={() => {
+                if (selectedPostForQr) handleCopyLink(selectedPostForQr);
+              }}
+            >
+              <Link2 className="mr-2 h-4 w-4" /> {t("pages:posts.actions.copyLink")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#0F172A] mb-2">
+              {t("pages:posts.reportTitle")}
+            </DialogTitle>
+            <p className="text-slate-500 text-sm font-medium">
+              {t("pages:posts.reportSubtitle")}
+            </p>
+          </DialogHeader>
+          <div className="space-y-6 mt-6">
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-slate-700 ml-1">
+                {t("pages:posts.reportReasonLabel")}
+              </label>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder={t("pages:posts.reportReasonPlaceholder")}
+                className="w-full h-40 p-5 rounded-2xl border-slate-200 focus:border-[#0F172A] focus:ring-4 focus:ring-slate-100 transition-all font-medium text-slate-700 resize-none outline-none border"
+              />
+              <p className="text-[11px] font-bold text-slate-400 ml-1">
+                {t("pages:posts.reportReasonHint")}
+              </p>
+            </div>
+          </div>
+          <div className="mt-8 flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 py-6 rounded-xl font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
+              onClick={() => {
+                setIsReportDialogOpen(false);
+                setReportReason("");
+              }}
+              disabled={isReporting}
+            >
+              {t("common:actions.cancel")}
+            </Button>
+            <Button 
+              className="flex-1 py-6 rounded-xl font-bold bg-red-500 hover:bg-red-600 transition-all text-white disabled:opacity-50"
+              onClick={handleReportSubmit}
+              disabled={isReporting || reportReason.trim().length < 10}
+            >
+              {isReporting ? t("common:actions.submitting") : t("pages:posts.actions.reportPost")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

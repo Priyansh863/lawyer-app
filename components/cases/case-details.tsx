@@ -93,7 +93,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     const statusKey = status.toLowerCase()
     // Treat "open" status as "pending" for display purposes
     const displayStatus = statusKey === "open" ? "pending" : statusKey
-    
+
     const statusLabels: Record<string, string> = {
       // Basic statuses
       approved: t("pages:caseDetailsq.status.approved"),
@@ -124,7 +124,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     const statusKey = status.toLowerCase()
     // Treat "open" status as "pending" for display purposes
     const displayStatus = statusKey === "open" ? "pending" : statusKey
-    
+
     const descriptions: Record<string, string> = {
       // Basic statuses
       approved: t("pages:caseDetailsq.statusDescriptions.approved"),

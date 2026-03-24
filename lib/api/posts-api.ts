@@ -80,6 +80,7 @@ export interface Post {
   isAiGenerated?: boolean;
   aiPrompt?: string;
   image?: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +93,7 @@ export interface CreatePostData {
   hashtag?: string;
   status?: 'draft' | 'published';
   image?: string;
+  images?: string[];
 }
 
 export interface GenerateAiPostData {
@@ -237,6 +239,22 @@ export const generateAiImage = async ({ prompt }: { prompt: string }) => {
     return response.data;
   } catch (error: any) {
     console.error('Error generating AI image:', error);
+    throw error.response?.data || error;
+  }
+};
+/**
+ * Report a post
+ */
+export const reportPost = async (postId: string, reason: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/report/create`,
+      { postId, reason },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error reporting post:', error);
     throw error.response?.data || error;
   }
 };

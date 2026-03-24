@@ -26,9 +26,9 @@ export interface CreateMeetingData {
   meetingLink: string
   meeting_title?: string
   meeting_description?: string
-  requested_date?: string
-  requested_time?: string
-  consultation_type?: 'free' | 'paid'
+  requested_date: string
+  requested_time: string
+  consultation_type?: 'free' | 'paid' | 'video' | 'audio'
   hourly_rate?: number
   custom_fee?: boolean
 }
@@ -40,6 +40,8 @@ export interface User {
   email: string
   account_type: string
   charges?: number
+  chat_rate?: number
+  video_rate?: number
 }
 
 export interface Meeting {
@@ -56,15 +58,18 @@ export interface Meeting {
   requested_time?: string
   time?: string // Alias for requested_time
   meeting_link?: string
-  consultation_type?: 'free' | 'paid'
+  consultation_type?: 'free' | 'paid' | 'video' | 'audio'
   hourly_rate?: number
   custom_fee?: boolean
-  status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled'
+  status: 'pending_approval' | 'approved' | 'rejected' | 'scheduled' | 'active' | 'completed' | 'cancelled' | 'pending' | 'declined' | 'expired'
   approval_date?: string
   rejection_reason?: string
   notes?: string
   createdAt: string
   updatedAt: string
+  end_date?: string
+  end_time?: string
+  duration?: number
 }
 
 export interface MeetingResponse {

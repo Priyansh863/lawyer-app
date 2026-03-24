@@ -118,7 +118,9 @@ export default function QANewFormEnhanced() {
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
         selectedLawyer: data.selectedLawyer || undefined,
         clientId: user._id as string,
-        isPublic: true,
+        // If user selects a specific lawyer, make the question private to that lawyer.
+        // Otherwise it is public for all lawyers to respond.
+        isPublic: !data.selectedLawyer,
         isAnonymous: false
       }
 
@@ -127,7 +129,9 @@ export default function QANewFormEnhanced() {
       if (response.success) {
         toast({
           title: t("pages:questionform.question_submitted"),
-          description: t("pages:questionform.question_posted_publicly")
+          description: data.selectedLawyer
+            ? t("pages:questionform.question_posted_to_selected_lawyer")
+            : t("pages:questionform.question_posted_publicly")
         })
         
         // Reset form
@@ -305,7 +309,7 @@ export default function QANewFormEnhanced() {
           {selectedLawyer && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">{t("selected_lawyer")}</CardTitle>
+                <CardTitle className="text-lg">{t("pages:questionform.selected_lawyer")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -420,8 +424,30 @@ export default function QANewFormEnhanced() {
                 </p>
               ) : (
                 <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLawyer(null)
+                      form.setValue("selectedLawyer", "")
+                    }}
+                    className={`
+                      w-full text-left flex items-center gap-2 p-2 rounded border transition-colors
+                      ${!selectedLawyer ? "bg-blue-50 border-blue-200" : "bg-white hover:bg-slate-50"}
+                    `}
+                  >
+                    <span className="text-sm font-bold">{t("pages:questionform.any_available_lawyer")}</span>
+                  </button>
+
                   {lawyers.slice(0, 5).map((lawyer) => (
-                    <div key={lawyer._id} className="flex items-center gap-2 p-2 rounded border">
+                    <button
+                      key={lawyer._id}
+                      type="button"
+                      onClick={() => handleLawyerSelect(lawyer._id)}
+                      className={`
+                        w-full flex items-center gap-2 p-2 rounded border text-left transition-colors
+                        ${selectedLawyer?._id === lawyer._id ? "bg-blue-50 border-blue-200" : "bg-white hover:bg-slate-50"}
+                      `}
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={lawyer.profile_image} />
                         <AvatarFallback className="text-xs">
@@ -441,7 +467,7 @@ export default function QANewFormEnhanced() {
                       {lawyer.is_available && (
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                       )}
-                    </div>
+                    </button>
                   ))}
                   {lawyers.length > 5 && (
                     <p className="text-xs text-muted-foreground text-center">

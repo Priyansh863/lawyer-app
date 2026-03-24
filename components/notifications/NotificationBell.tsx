@@ -36,7 +36,13 @@ export default function NotificationBell() {
       await markAsRead(notification._id)
     }
     
-    if (notification.type) {
+    if (notification.type === "qa_answer_posted" || notification.type === "qa_question_posted") {
+      // Always go to the Q&A list page.
+      // (redirectUrl from backend can be missing/invalid and cause 404.)
+      router.push("/qa")
+    } else if (notification.redirectUrl) {
+      router.push(notification.redirectUrl)
+    } else if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
     setIsOpen(false)
@@ -53,6 +59,8 @@ export default function NotificationBell() {
       case 'video_consultation_started':
         return '/video-consultations'
       case 'qa_question_posted':
+        return '/qa'
+      case 'qa_answer_posted':
         return '/qa'
       case 'document_uploaded':
         return '/documents'

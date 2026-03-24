@@ -322,14 +322,18 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
-                            // ref={inputRef}
                             placeholder={t('pages:chat.typeMessage')}
                             {...field}
+                            ref={(e) => {
+                              field.ref(e);
+                              (inputRef as any).current = e;
+                            }}
                             onChange={(e) => {
                               field.onChange(e)
                               handleInputChange(e.target.value)
                             }}
                             disabled={isSending || tokenUsagePercentage >= 100}
+                            autoFocus
                           />
                         </FormControl>
                         <FormMessage />

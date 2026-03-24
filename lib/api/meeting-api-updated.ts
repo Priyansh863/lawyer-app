@@ -29,8 +29,8 @@ export interface CreateMeetingData {
   meetingLink: string
   meeting_title?: string
   meeting_description?: string
-  requested_date?: string
-  requested_time?: string
+  requested_date: string
+  requested_time: string
   consultation_type?: 'free' | 'paid'
   hourly_rate?: number
   custom_fee?: boolean

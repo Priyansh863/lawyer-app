@@ -59,7 +59,7 @@ interface ConsultationTypeModalProps {
 }
 
 type ModalStep = 'consultationType' | 'userSelection' | 'sendLink';
-type ConsultationType = 'free' | 'paid';
+type ConsultationType = 'free' | 'video';
 
 export default function ConsultationTypeModal({
   isOpen,
@@ -245,28 +245,28 @@ export default function ConsultationTypeModal({
       const lawyerProfile = currentProfile?.account_type === 'lawyer' ? profileWithFreshRates : (selectedUser as any);
       const defaultRate = lawyerProfile?.video_rate || lawyerProfile?.charges || 0;
 
-      // Use per-minute rate if available, otherwise fall back to hourly rate
-      let finalRate = consultationType === 'paid'
-        ? (useCustomFee && perMinuteRate ? parseFloat(perMinuteRate) : defaultRate)
+      // Use per-minute rate if custom rate is selected (!useBaseRate), otherwise use defaultRate
+      const finalRate = consultationType === 'video'
+        ? (!useBaseRate && perMinuteRate ? parseFloat(perMinuteRate) : defaultRate)
         : 0;
 
-      // If using per-minute rate, convert to hourly rate for display
-      const displayRate = perMinuteRate && consultationType === 'paid'
+      // For display purposes (though displayRate isn't strictly necessary for the meetingData it is for notifications)
+      const displayRate = !useBaseRate && perMinuteRate
         ? parseFloat(perMinuteRate)
         : finalRate;
 
       const meetingData = {
         lawyerId: currentProfile?.account_type === 'lawyer' ? currentProfile._id : selectedUser._id,
         clientId: currentProfile?.account_type === 'client' ? currentProfile._id : selectedUser._id,
-        meeting_title: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultation")}`,
-        meeting_description: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.atRate", { rate: displayRate })}` : ''}${useCustomFee ? ` (${t("pages:consultation.customRate")})` : ''}`,
+        meeting_title: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.video")} ${t("pages:consultation.videoConsultation")}`,
+        meeting_description: `${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.video")} ${t("pages:consultation.videoConsultation")}${consultationType === 'video' ? ` ${t("pages:consultation.atRate", { rate: displayRate })}` : ''}${!useBaseRate ? ` (${t("pages:consultation.customRate")})` : ''}`,
         requested_date: consultationDate || new Date().toISOString().split('T')[0],
         requested_time: consultationTime || new Date().toTimeString().split(' ')[0].substring(0, 5),
         meetingLink: consultationLink,
         consultation_type: consultationType,
         hourly_rate: finalRate,
-        custom_fee: useCustomFee,
-        per_minute_rate: perMinuteRate ? parseFloat(perMinuteRate) : null,
+        custom_fee: !useBaseRate,
+        per_minute_rate: !useBaseRate && perMinuteRate ? parseFloat(perMinuteRate) : (consultationType === 'video' ? defaultRate : null),
         reservation_end_date: reservationEndDate,
         reservation_end_time: reservationEndTime,
         calculated_total: calculatedTotal,
@@ -279,8 +279,8 @@ export default function ConsultationTypeModal({
         try {
           await notificationsApi.createNotification({
             userId: selectedUser._id,
-            title: `${t("pages:consultation.new")} ${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.paid")} ${t("pages:consultation.videoConsultationRequest")}`,
-            message: `${currentProfile?.first_name} ${currentProfile?.last_name} ${t("pages:consultation.hasSentYouVideoConsultation")}${consultationType === 'paid' ? ` ${t("pages:consultation.withHourlyRate", { rate: displayRate })}` : ''}.`,
+            title: `${t("pages:consultation.new")} ${consultationType === 'free' ? t("pages:consultation.free") : t("pages:consultation.video")} ${t("pages:consultation.videoConsultationRequest")}`,
+            message: `${currentProfile?.first_name} ${currentProfile?.last_name} ${t("pages:consultation.hasSentYouVideoConsultation")}${consultationType === 'video' ? ` ${t("pages:consultation.withHourlyRate", { rate: displayRate })}` : ''}.`,
             type: 'video_consultation_started',
             relatedId: response.data?._id,
             relatedType: 'meeting',
@@ -289,8 +289,8 @@ export default function ConsultationTypeModal({
             metadata: {
               consultation_type: consultationType,
               hourly_rate: finalRate,
-              custom_fee: useCustomFee,
-              per_minute_rate: perMinuteRate ? parseFloat(perMinuteRate) : null,
+              custom_fee: !useBaseRate,
+              per_minute_rate: !useBaseRate && perMinuteRate ? parseFloat(perMinuteRate) : (consultationType === 'video' ? defaultRate : null),
               meeting_link: consultationLink,
               consultation_date: consultationDate,
               consultation_time: consultationTime,
@@ -427,11 +427,11 @@ export default function ConsultationTypeModal({
                 <div
                   className={cn(
                     "p-8 rounded-[12px] cursor-pointer transition-all duration-300 flex flex-col items-center text-center justify-between min-h-[220px] border-2",
-                    consultationType === 'paid' || (currentProfile?.account_type === 'client' && !consultationType)
+                    consultationType === 'video' || (currentProfile?.account_type === 'client' && !consultationType)
                       ? "bg-[#0F172A] border-[#0F172A] text-white shadow-xl shadow-slate-200"
                       : "bg-[#F1F5F9] border-[#E2E8F0] text-[#0F172A] hover:border-slate-300"
                   )}
-                  onClick={() => setConsultationType('paid')}
+                  onClick={() => setConsultationType('video')}
                 >
                   <div className="space-y-1">
                     <h4 className="font-bold text-[18px]">
@@ -439,14 +439,14 @@ export default function ConsultationTypeModal({
                     </h4>
                     <p className={cn(
                       "text-[13px] font-medium leading-relaxed",
-                      consultationType === 'paid' ? "text-slate-300" : "text-[#1E293B]"
+                      consultationType === 'video' ? "text-slate-300" : "text-[#1E293B]"
                     )}>
                       {t("pages:consultation.billedPerMinute")}
                     </p>
                   </div>
 
                   <div className="mt-8">
-                    {consultationType === 'paid' ? (
+                    {consultationType === 'video' ? (
                       <div className="h-8 w-8 bg-[#22C55E] rounded-full flex items-center justify-center">
                         <Check className="h-5 w-5 text-white stroke-[4]" />
                       </div>
@@ -459,7 +459,7 @@ export default function ConsultationTypeModal({
 
               <div className="flex justify-end pt-4 mt-auto flex-none">
                 <Button
-                  onClick={() => handleConsultationTypeSelect(consultationType || 'paid')}
+                  onClick={() => handleConsultationTypeSelect(consultationType || 'video')}
                   className="bg-[#0F172A] hover:bg-slate-800 text-white rounded-[8px] px-12 h-11 font-bold transition-all shadow-lg"
                 >
                   {t("pages:consultation.next")}
@@ -481,7 +481,7 @@ export default function ConsultationTypeModal({
                 <div className="space-y-7 pb-2">
                   <div className="space-y-6">
                     {/* Rate Selection for Paid Consultation */}
-                    {consultationType === 'paid' && (
+                    {consultationType === 'video' && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3 flex-1">
@@ -495,7 +495,9 @@ export default function ConsultationTypeModal({
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="bg-[#F1F5F9] px-4 py-2 rounded font-bold text-[#0F172A] min-w-[100px] text-center">
-                              ${profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0}
+                              ${currentProfile?.account_type === 'lawyer' 
+                                ? (profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0)
+                                : (selectedUser ? ((selectedUser as any).video_rate || (selectedUser as any).charges || 0) : 0)}
                             </div>
                             <span className="text-[13px] text-[#0F172A] font-bold">{t("pages:consultation.tokensPerMinuteShort")}</span>
                           </div>
@@ -572,7 +574,7 @@ export default function ConsultationTypeModal({
                     {/* Search Client */}
                     <div className="relative -mt-1">
                       <Input
-                        placeholder={t("pages:consultation.searchClient")}
+                        placeholder={currentProfile?.account_type === 'lawyer' ? t("pages:consultation.searchClient") : t("pages:consultation.searchLawyer")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] placeholder:text-slate-400 font-medium pl-10 text-[14px]"

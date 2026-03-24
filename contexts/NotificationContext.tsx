@@ -151,6 +151,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 return '/video-consultations'
               case 'qa_question_posted':
                 return '/qa'
+              case 'qa_answer_posted':
+                return '/qa'
               case 'document_uploaded':
                 return '/documents'
               default:
@@ -164,6 +166,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             action: {
               label: 'View',
               onClick: () => {
+                if (latestUnreadNotification.type === "qa_answer_posted") {
+                  // Client request: go to the Q&A list page (no popup route).
+                  router.push("/qa")
+                  return
+                }
                 router.push(getNavigationUrl(latestUnreadNotification.type))
               }
             }

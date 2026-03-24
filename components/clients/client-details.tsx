@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MessageSquare,HelpCircle, Calendar, Loader2, Video, MessageCircle, Coins } from "lucide-react"
+import { MessageSquare, HelpCircle, Calendar, Loader2, Video, MessageCircle, Coins } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { updateClientStatus, updateClientNotes } from "@/lib/api/clients-api"
 import { createMeeting } from "@/lib/api/meeting-api"
@@ -39,7 +39,7 @@ interface ClientDetailsProps {
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
   const { t } = useTranslation()
-  console.log("initialClientinitialClientinitialClient",initialClient)
+  console.log("initialClientinitialClientinitialClient", initialClient)
   const [client, setClient] = useState<Client & { video_rate?: number; chat_rate?: number }>(initialClient)
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
@@ -47,7 +47,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   const router = useRouter()
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
-  const user=useSelector((state: any) => state.auth.user)
+  const user = useSelector((state: any) => state.auth.user)
   const isLawyer = user?.account_type === "lawyer";
   //  const lawyerData = !isLawyer ? initialClient?.account_type=== : null;
   // Handle meeting scheduling
@@ -68,20 +68,22 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       })
       return
     }
-    let lawyer_id=profile.account_type==="lawyer" ? profile._id : client._id
-    let client_id=profile.account_type==="client" ? profile._id : client._id
+    let lawyer_id = profile.account_type === "lawyer" ? profile._id : client._id
+    let client_id = profile.account_type === "client" ? profile._id : client._id
 
-    console.log("lawyer_id",lawyer_id,profile.account_type)
-    console.log("client_id",client_id,client.account_type)
+    console.log("lawyer_id", lawyer_id, profile.account_type)
+    console.log("client_id", client_id, client.account_type)
     try {
       setIsSchedulingMeeting(true)
       const meetingData = {
         lawyerId: lawyer_id,
         clientId: client_id,
         meetingLink: meetingLink.trim(),
+        requested_date: new Date().toISOString().split('T')[0],
+        requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
       }
       const response = await createMeeting(meetingData)
-      console.log(response,"responseresponseresponseresponseresponseresponseresponse")
+      console.log(response, "responseresponseresponseresponseresponseresponseresponse")
       if (response.success) {
         toast({
           title: "Meeting Request Sent",
@@ -116,7 +118,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   // Handle create chat
   const [showChat, setShowChat] = useState(false)
   const handleCreateChat = () => {
-    console.log("handleCreateChat",profile)
+    console.log("handleCreateChat", profile)
     setShowChat(true)
   }
 
@@ -186,20 +188,20 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
 
   return (
     <div className="space-y-8 mt-8">
-      
+
       {/* Header */}
-     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
- <h1 className="text-2xl font-bold">
-  {isLawyer ? "" : t("pages:lawyers.details")}
-</h1>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold">
+          {isLawyer ? "" : t("pages:lawyers.details")}
+        </h1>
 
 
-  <Button variant="outline" onClick={() => router.back()}>
-    {isLawyer
-      ? t("pages:clientDetails.backToClient")
-      : t("pages:clientDetails.backToLawyer")}
-  </Button>
-</div>
+        <Button variant="outline" onClick={() => router.back()}>
+          {isLawyer
+            ? t("pages:clientDetails.backToClient")
+            : t("pages:clientDetails.backToLawyer")}
+        </Button>
+      </div>
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -217,15 +219,15 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-2">
             {user?.account_type !== "lawyer" && (
-  <Button
-    variant="outline"
-    onClick={() => router.push("/qa")}
-    title={t("pages:clientDetails.QA")}
-  >
-     <HelpCircle className="mr-2" size={16} />
-    {t("pages:clientDetails.QA")}
-  </Button>
-)}
+              <Button
+                variant="outline"
+                onClick={() => router.push("/qa")}
+                title={t("pages:clientDetails.QA")}
+              >
+                <HelpCircle className="mr-2" size={16} />
+                {t("pages:clientDetails.QA")}
+              </Button>
+            )}
 
             {/* Chat Button - Rate will be shown in chat header */}
             <div className="flex flex-col items-center gap-1">
@@ -251,18 +253,18 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                       {t("pages:clientDetails.scheduleMeetingWith", { name: client.first_name })}
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   {/* Show video consultation rate in dialog */}
                   {user?.account_type === 'client' && client?.video_rate && (
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md mb-4">
                       <Video className="w-4 h-4 text-blue-600" />
-                     <span className="text-sm font-medium text-blue-700">
-  {t("pages:clientDetails.videoConsultationRate", { rate: client?.video_rate })}
-</span>
+                      <span className="text-sm font-medium text-blue-700">
+                        {t("pages:clientDetails.videoConsultationRate", { rate: client?.video_rate })}
+                      </span>
 
                     </div>
                   )}
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
@@ -300,7 +302,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                   </div>
                 </DialogContent>
               </Dialog>
-              
+
               {/* Show video rate for clients viewing lawyers */}
               {client.account_type === 'lawyer' && user?.account_type === 'client' && client.video_rate && (
                 <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
@@ -338,7 +340,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
               <p className="text-base">{client.activeCases}</p>
             </div>
           </div>
-          
+
           {/* Consultation Rates Summary for Clients */}
           {client.account_type === 'lawyer' && user?.account_type === 'client' && (client.chat_rate || client.video_rate) && (
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -363,7 +365,7 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
               </div>
             </div>
           )}
-          
+
           <Tabs defaultValue="cases" className="mt-6">
             <TabsList>
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>

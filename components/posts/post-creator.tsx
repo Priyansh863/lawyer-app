@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   createPost,
+  updatePost,
   generateAiPost,
   generateQrCode,
   generateAiImage,
@@ -70,6 +71,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
   // Form state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual');
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [createdPost, setCreatedPost] = useState<Post | null>(null);
@@ -88,6 +90,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     citations: [],
     hashtag: '',
     status: 'published',
+    images: [],
     ...initialData
   });
 
@@ -302,7 +305,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       setUploadProgress(100);
 
       if (imageUrl) {
-        setPostData(prev => ({ ...prev, image: imageUrl }));
+        setPostData(prev => ({ 
+          ...prev, 
+          image: prev.images?.length === 0 ? imageUrl : prev.image, // Fallback for single image
+          images: [...(prev.images || []), imageUrl].slice(0, 3) 
+        }));
         toast({
           title: t('pages:creator.post.image.toast.success'),
           description: t('pages:creator.post.image.toast.successDesc'),
@@ -361,6 +368,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   };
 
   const handleCreatePost = async () => {
+    if (isCreating) return;
+
     if (!postData.title.trim() || !postData.content.trim()) {
       toast({
         title: t('pages:creator.post.toast.requiredFields'),
@@ -372,10 +381,26 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
     try {
       setIsCreating(true);
-      const response = await createPost(postData);
+      
+      // Ensure we send at least the first image to the 'image' field for compatibility
+      const finalPostData = {
+        ...postData,
+        image: postData.images && postData.images.length > 0 ? postData.images[0] : postData.image
+      };
+
+      let response;
+      // If we already have a post ID (e.g. from AI generation), update it instead of creating new
+      if (createdPost && createdPost._id) {
+        response = await updatePost(createdPost._id, finalPostData);
+      } else {
+        response = await createPost(finalPostData);
+      }
+      
       const post = response.data;
 
       setCreatedPost(post);
+      setIsSuccess(true);
+      
       onPostCreated?.(post);
 
       toast({
@@ -384,14 +409,15 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: "default",
       });
 
-      // Reset form
+      // Reset form but keep createdPost for the success view
       setPostData({
         title: '',
         content: '',
         spatialInfo: undefined,
         citations: [],
         hashtag: '',
-        status: 'published'
+        status: 'published',
+        images: []
       });
 
       setSelectedFile(null);
@@ -430,7 +456,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       const response = await generateAiPost(aiDataWithImage);
       const generatedPost = response.data;
 
-      // Update postData with AI generated content (but don't create post yet)
+      // Update postData with AI generated content (this allows editing in manual tab)
       setPostData(prev => ({
         ...prev,
         title: generatedPost.title || prev.title,
@@ -438,11 +464,13 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         hashtag: generatedPost.hashtag || prev.hashtag,
         spatialInfo: generatedPost.spatialInfo || prev.spatialInfo,
         citations: generatedPost.citations || prev.citations,
-        image: generatedPost.image || prev.image
+        image: generatedPost.image || prev.image,
+        images: generatedPost.images || (generatedPost.image ? [generatedPost.image] : [])
       }));
 
-      // Store generated post for reference (but don't call onPostCreated yet)
+      // Store generated post for reference but don't show success screen yet
       setCreatedPost(generatedPost);
+      setIsSuccess(false);
 
       toast({
         title: t('pages:creator.post.ai.toast.generated'),
@@ -450,8 +478,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: "default",
       });
 
-      // Open location modal after AI generation
-      setShowLocationModal(true);
+      // Switch to manual tab to allow preview and editing
+      setActiveTab('manual');
 
     } catch (error: any) {
       toast({
@@ -548,7 +576,11 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: 'default',
       });
       // Optionally add image to postData or aiData
-      setPostData(prev => ({ ...prev, image: response.data.imageUrl }));
+      setPostData(prev => ({ 
+        ...prev, 
+        image: prev.images?.length === 0 ? response.data.imageUrl : prev.image,
+        images: [...(prev.images || []), response.data.imageUrl].slice(0, 3) 
+      }));
     } catch (error: any) {
       toast({
         title: t('pages:creator.post.ai.image.toast.failed'),
@@ -565,8 +597,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
   return (
     <div className="space-y-6 max-h-[90vh] overflow-y-auto">
-      {/* Created Post Display - Now at the top */}
-      {createdPost && (
+      {/* Created Post Display - Only show after FINAL success */}
+      {isSuccess && createdPost && (
         <Card className="border-green-200 bg-green-50 rounded-md shadow-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
@@ -844,25 +876,28 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         </Card>
       )}
 
-      {/* Post Creation Form */}
-      <Card className="rounded-md shadow-none border-slate-200">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-[15px] font-bold text-[#1a2332]">
-            <FileText className="h-5 w-5" />
-            {t('pages:creator.post.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
+      {/* Post Creation Form - Only show if not successful */}
+      {!isSuccess && (
+        <Card className="rounded-md shadow-none border-slate-200">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-[15px] font-bold text-[#1a2332]">
+              <FileText className="h-5 w-5" />
+              {t('pages:creator.post.title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
             <TabsList className="bg-transparent h-auto p-0 flex gap-6 w-auto border-b-0 mb-6">
               <TabsTrigger value="manual" className="px-0 py-1.5 border-b-2 border-transparent data-[state=active]:border-[#1a2332] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-[14px] font-bold text-[#94a3b8] data-[state=active]:text-[#1a2332] transition-all focus:ring-0 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 {t('pages:creator.post.tabs.manual')}
               </TabsTrigger>
-              <TabsTrigger value="ai" className="px-0 py-1.5 border-b-2 border-transparent data-[state=active]:border-[#1a2332] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-[14px] font-bold text-[#94a3b8] data-[state=active]:text-[#1a2332] transition-all focus:ring-0 flex items-center gap-2">
-                <Wand2 className="h-4 w-4" />
-                {t('pages:creator.post.tabs.ai')}
-              </TabsTrigger>
+              {user?.account_type === 'lawyer' && (
+                <TabsTrigger value="ai" className="px-0 py-1.5 border-b-2 border-transparent data-[state=active]:border-[#1a2332] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-[14px] font-bold text-[#94a3b8] data-[state=active]:text-[#1a2332] transition-all focus:ring-0 flex items-center gap-2">
+                  <Wand2 className="h-4 w-4" />
+                  {t('pages:creator.post.tabs.ai')}
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* Manual Post Creation */}
@@ -901,7 +936,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   id="image"
                   type="file"
                   accept="image/*"
-                  disabled={isUploadingImage}
+                  disabled={isUploadingImage || (postData.images && postData.images.length >= 3)}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -911,6 +946,9 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   }}
                   className="bg-[#f4f4f5] border-0 rounded-md h-11 px-4 text-[14px] file:mr-4 file:py-0 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#e2e8f0] file:text-[#1a2332] hover:file:bg-[#cbd5e1] disabled:opacity-50 focus-visible:ring-0"
                 />
+                {(postData.images && postData.images.length >= 3) && (
+                  <p className="text-xs text-amber-600 mt-1">{t('pages:creator.post.image.maxReached', 'Maximum 3 images reached')}</p>
+                )}
 
                 {isUploadingImage && (
                   <div className="space-y-2">
@@ -927,39 +965,35 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   </div>
                 )}
 
-                {postData.image && !isUploadingImage && (
-                  <div className="space-y-2">
+                {postData.images && postData.images.length > 0 && !isUploadingImage && (
+                  <div className="space-y-4">
                     <div className="text-xs text-green-600">
                       {t('pages:creator.post.image.success')}
                     </div>
-                    <div className="relative">
-                      <img
-                        src={postData.image}
-                        alt={t('pages:creator.post.image.alt')}
-                        className="w-full max-w-xs h-32 object-cover rounded-lg border"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-1 right-1 h-6 w-6 p-0"
-                        onClick={() => {
-                          setPostData(prev => ({ ...prev, image: undefined }));
-                          setSelectedFile(null);
-                        }}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadImage(postData.image!, `post-image-${Date.now()}.jpg`)}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        {t('pages:creator.post.download.buttons.download', 'Download Image')}
-                      </Button>
+                    <div className="grid grid-cols-3 gap-3">
+                      {postData.images.map((img, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={img}
+                            alt={`${t('pages:creator.post.image.alt')} ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-slate-200"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                            onClick={() => {
+                              setPostData(prev => ({ 
+                                ...prev, 
+                                images: prev.images?.filter((_, i) => i !== index) || [] 
+                              }));
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -1144,10 +1178,23 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => copyUrl(aiImageUrl, t('pages:creator.post.ai.image.generatedLabel', 'Generated Image'))}
+                            onClick={() => {
+                              setPostData(prev => ({ 
+                                ...prev, 
+                                image: prev.images?.length === 0 ? aiImageUrl : prev.image,
+                                images: [...(prev.images || []), aiImageUrl].slice(0, 3) 
+                              }));
+                              setAiImageUrl(null);
+                              toast({
+                                title: t('pages:creator.post.image.toast.success'),
+                                description: t('pages:creator.post.image.toast.successDesc'),
+                                variant: "default",
+                              });
+                            }}
+                            disabled={postData.images && postData.images.length >= 3}
                           >
-                            <Link className="h-3 w-3 mr-1" />
-                            {t('pages:creator.buttons.copyUrl')}
+                            <Plus className="h-3 w-3 mr-1" />
+                            {t('pages:creator.buttons.addToPost', 'Add to Post')}
                           </Button>
                           <Button
                             size="sm"
@@ -1360,6 +1407,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
           </Tabs>
         </CardContent>
       </Card>
+      )}
 
       {/* Location Information Modal */}
       <Dialog open={showLocationModal} onOpenChange={setShowLocationModal}>

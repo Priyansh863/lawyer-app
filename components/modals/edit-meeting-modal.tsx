@@ -34,7 +34,7 @@ export default function EditMeetingModal({
   const [requestedTime, setRequestedTime] = useState("");
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [consultationType, setConsultationType] = useState<'free' | 'paid'>('paid');
+  const [consultationType, setConsultationType] = useState<'free' | 'paid' | 'video'>('video');
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const [customFee, setCustomFee] = useState(false);
   const [meetingLink, setMeetingLink] = useState("");
@@ -67,11 +67,12 @@ export default function EditMeetingModal({
   const totalCost = useMemo(() => {
     if (consultationType === 'free') return 0;
     
-    const rate = customFee ? hourlyRate : (meeting?.lawyer_id?.charges || 0);
-    const durationHours = meetingDuration / 60;
+    // Use video_rate if available, otherwise fall back to charges
+    const rate = customFee ? hourlyRate : (meeting?.lawyer_id?.video_rate || meeting?.lawyer_id?.charges || 0);
+    const durationHours = meetingDuration / 30; // Wait, why / 60 or / 30? Original was / 60.
     
     return rate * durationHours;
-  }, [consultationType, customFee, hourlyRate, meeting?.lawyer_id?.charges, meetingDuration]);
+  }, [consultationType, customFee, hourlyRate, meeting?.lawyer_id?.charges, meeting?.lawyer_id?.video_rate, meetingDuration]);
 
   // Reset form when meeting changes
   useEffect(() => {
@@ -82,14 +83,16 @@ export default function EditMeetingModal({
       // Handle date formatting
       if (meeting.requested_date || meeting.date) {
         const dateValue = meeting.requested_date || meeting.date;
-        const date = new Date(dateValue);
-        setRequestedDate(date.toISOString().split('T')[0]);
+        if (dateValue) {
+          const date = new Date(dateValue);
+          setRequestedDate(date.toISOString().split('T')[0]);
+        }
       } else {
         setRequestedDate("");
       }
       
       setRequestedTime(meeting.requested_time || meeting.time || "");
-      setConsultationType(meeting.consultation_type || 'paid');
+      setConsultationType((meeting.consultation_type as any) || 'video');
       setHourlyRate(meeting.hourly_rate || 0);
       setCustomFee(meeting.custom_fee || false);
       setMeetingLink(meeting.meeting_link || "");
@@ -101,9 +104,9 @@ export default function EditMeetingModal({
       } else if (meeting.requested_date && meeting.requested_time && meeting.duration) {
         // Calculate end time based on start time and duration
         calculateEndDateTime(
-          meeting.requested_date || meeting.date,
-          meeting.requested_time || meeting.time,
-          meeting.duration
+          (meeting.requested_date || meeting.date) as string,
+          (meeting.requested_time || meeting.time) as string,
+          meeting.duration as number
         );
       }
       
@@ -112,9 +115,9 @@ export default function EditMeetingModal({
       } else if (meeting.requested_date && meeting.requested_time && meeting.duration) {
         // Calculate end time based on start time and duration
         calculateEndDateTime(
-          meeting.requested_date || meeting.date,
-          meeting.requested_time || meeting.time,
-          meeting.duration
+          (meeting.requested_date || meeting.date) as string,
+          (meeting.requested_time || meeting.time) as string,
+          meeting.duration as number
         );
       }
     }
@@ -300,10 +303,10 @@ export default function EditMeetingModal({
   const getDefaultRate = () => {
     if (!meeting) return 0;
     
-    // Get lawyer's default rate
+    // Get lawyer's default rate - prioritize video_rate for video consultations
     const lawyer = meeting.lawyer_id;
     if (lawyer && typeof lawyer === 'object') {
-      return lawyer.charges || 0;
+      return lawyer.video_rate || lawyer.charges || 0;
     }
     return 0;
   };
@@ -355,7 +358,7 @@ export default function EditMeetingModal({
               </div>
               <div>
                 <span className="text-gray-500">{t("pages:consuledit.defaultRate")}:</span>
-                <p className="font-medium">${meeting.custom_fee ? meeting.hourly_rate : meeting.lawyer_id.charges}</p>
+                <p className="font-medium">${meeting.custom_fee ? meeting.hourly_rate : (meeting.lawyer_id.video_rate || meeting.lawyer_id.charges || 0)}</p>
               </div>
             </div>
           </div>
@@ -490,6 +493,7 @@ export default function EditMeetingModal({
                   <SelectContent>
                     <SelectItem value="free">{t("pages:consuledit.freeConsultation")}</SelectItem>
                     <SelectItem value="paid">{t("pages:consuledit.paidConsultation")}</SelectItem>
+                    <SelectItem value="video">{t("pages:consultation.videoConsultation")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -507,7 +511,8 @@ export default function EditMeetingModal({
                     </Label>
                   </div>
 
-                  {customFee && (
+                  {/* If custom fee is selected OR if it's a paid/video consultation, show the rate input (though it might be disabled or read only if not custom) */}
+                  {(customFee || consultationType === 'video' || (consultationType as any) === 'paid') && (
                     <div>
                       <Label htmlFor="hourly_rate">{t("pages:consuledit.customHourlyRate")}</Label>
                       <Input

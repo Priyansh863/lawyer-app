@@ -105,6 +105,8 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                 lawyerId: lawyer_id!,
                 clientId: client_id!,
                 meetingLink: meetingLink.trim(),
+                requested_date: new Date().toISOString().split('T')[0],
+                requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
             }
             const response = await createMeeting(meetingData)
             if (response.success) {
@@ -135,7 +137,7 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
 
     return (
         <>
-            <Dialog open={open} onOpenChange={onOpenChange}>
+            <Dialog open={open} onOpenChange={onOpenChange} modal={!showChat}>
                 <DialogContent
                     className="max-w-[85vw] max-h-[96vh] overflow-y-auto p-0 border-none shadow-2xl left-[53%] translate-x-[-50%] bg-[#FFFFFF] z-[100] outline-none [&>button]:hidden"
                     onInteractOutside={(e) => {
@@ -143,6 +145,10 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                         e.preventDefault();
                     }}
                     onPointerDownOutside={(e) => {
+                        e.preventDefault();
+                    }}
+                    onFocusOutside={(e) => {
+                        // Prevent focus trap from pulling focus away from our separate Chat widget
                         e.preventDefault();
                     }}
                 >
@@ -247,25 +253,10 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                             <ClientCases clientId={clientData._id || clientData.id} />
                             <ClientDocuments clientId={clientData._id || clientData.id} />
                         </div>
+
                     </div>
                 </DialogContent>
             </Dialog>
-
-            {/* Chat Modal - Rendered OUTSIDE the main Dialog component to avoid focus trap/event interference */}
-            {showChat && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-auto">
-                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowChat(false)} />
-                    <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
-                        <SimpleChat
-                            onClose={() => setShowChat(false)}
-                            clientId={clientData._id || clientData.id}
-                            clientName={`${clientData?.first_name} ${clientData?.last_name}`}
-                            clientAvatar={clientData?.avatar}
-                            chatRate={clientData?.chat_rate}
-                        />
-                    </div>
-                </div>
-            )}
 
             {/* Schedule Meeting Dialog */}
             <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
@@ -313,6 +304,17 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Chat Modal - Rendered OUTSIDE Dialog to prevent layout stretching from fixed position */}
+            {showChat && (
+                <SimpleChat
+                    onClose={() => setShowChat(false)}
+                    clientId={clientData._id || clientData.id}
+                    clientName={`${clientData?.first_name} ${clientData?.last_name}`}
+                    clientAvatar={clientData?.avatar}
+                    chatRate={clientData?.chat_rate}
+                />
+            )}
         </>
     )
 }

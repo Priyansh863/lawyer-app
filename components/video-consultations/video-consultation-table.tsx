@@ -135,8 +135,14 @@ export default function VideoConsultationTableNew({ searchQueryProp, onNewConsul
   }
 
   const getRateAndType = (meeting: Meeting) => {
-    if (meeting.consultation_type === 'free') return 'Free';
-    const rate = meeting.hourly_rate || (meeting.lawyer_id as any).video_rate || 0;
+    if (meeting.consultation_type === 'free') return t("pages:consultation.free");
+    
+    // For paid/video consultations, prioritize hourly_rate, then video_rate, then general charges
+    const rate = meeting.hourly_rate || 
+                 (meeting.lawyer_id && typeof meeting.lawyer_id === 'object' ? 
+                   ((meeting.lawyer_id as any).video_rate || (meeting.lawyer_id as any).charges) : 0) || 
+                 0;
+    
     return `$${rate}`;
   }
 

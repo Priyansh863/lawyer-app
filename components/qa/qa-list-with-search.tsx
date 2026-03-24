@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
 import { getQAItems, toggleBookmark, type QAQuestion } from "@/lib/api/qa-api"
@@ -11,11 +11,11 @@ import { Search, RefreshCw, Bookmark, MessageSquare, MoreHorizontal, Loader2 } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import QAAnswerForm from "./qa-answer-form"
+import QAClientView from "./qa-client-view"
 import { cn } from "@/lib/utils"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
 import { toast } from "react-hot-toast"
-import { useRouter } from "next/navigation"
 
 const categories = [
   { value: "Civil / Disputes", labelKey: "pages:qa.categories.civilDisputes" },
@@ -37,9 +37,24 @@ const categories = [
   { value: "Other", labelKey: "pages:qa.categories.other" }
 ]
 
-function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { question: QAQuestion, currentUserId: string, onRefresh: () => void, onWriteAnswer: () => void }) {
+function QuestionCard({
+  question,
+  currentUserId,
+  onWriteAnswer,
+  onOpenClientView,
+  isLawyer,
+  isClient,
+  showAnswerPreview,
+}: {
+  question: QAQuestion
+  currentUserId?: string
+  onWriteAnswer: () => void
+  onOpenClientView: () => void
+  isLawyer: boolean
+  isClient: boolean
+  showAnswerPreview: boolean
+}) {
   const { t } = useTranslation()
-  const router = useRouter()
   const [isBookmarked, setIsBookmarked] = useState(question.isBookmarked || false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
 
@@ -48,14 +63,15 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
     setIsBookmarked(!!question.isBookmarked)
   }, [question.isBookmarked])
 
-  const myAnswer = question.answer?.find((a: any) =>
-    a.lawyer_id === currentUserId ||
-    a.answeredBy?._id === currentUserId
-  )
+  const myAnswer = isLawyer
+    ? question.answer?.find((a: any) => a.lawyer_id === currentUserId || a.answeredBy?._id === currentUserId)
+    : undefined
   const hasAnswered = !!myAnswer
-  const lawyerDisplayName = myAnswer?.answeredBy
-    ? `${myAnswer.answeredBy.first_name} ${myAnswer.answeredBy.last_name}`
-    : "dasom kim"
+  const firstAnswer = question.answer?.[0]
+  const firstAnswerText = firstAnswer?.answer
+  const firstAnsweredByName = firstAnswer?.answeredBy
+    ? `${firstAnswer.answeredBy.first_name} ${firstAnswer.answeredBy.last_name}`
+    : firstAnswer?.lawyer_name
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -95,8 +111,15 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
 
   return (
     <div
-      className="bg-white border border-gray-100 rounded-2xl shadow-sm p-8 flex flex-col h-full hover:shadow-md transition-all group cursor-pointer"
-      onClick={onWriteAnswer}
+      className={cn(
+        "bg-white border border-gray-100 rounded-2xl shadow-sm p-8 flex flex-col h-full transition-all group",
+        isLawyer
+          ? "hover:shadow-md cursor-pointer"
+          : isClient
+            ? "cursor-pointer"
+            : "cursor-default"
+      )}
+      onClick={isLawyer ? onWriteAnswer : isClient ? onOpenClientView : undefined}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -104,19 +127,21 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
           <div className="w-10 h-10 rounded-full bg-slate-200" />
           <span className="text-[#1E293B] font-bold text-[15px]">{maskUser(question.clientId?.first_name || 'user')}</span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600">
-              <MoreHorizontal size={24} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.copyLink')}</DropdownMenuItem>
-            <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.qrCode')}</DropdownMenuItem>
-            <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.notInterested')}</DropdownMenuItem>
-            <DropdownMenuItem className="text-sm font-medium text-red-500">{t('pages:qa.report')}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isLawyer && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600">
+                <MoreHorizontal size={24} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.copyLink')}</DropdownMenuItem>
+              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.qrCode')}</DropdownMenuItem>
+              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.notInterested')}</DropdownMenuItem>
+              <DropdownMenuItem className="text-sm font-medium text-red-500">{t('pages:qa.report')}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Content */}
@@ -125,8 +150,25 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
           {question.question}
         </p>
 
+        {isClient && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#1E293B] opacity-70">
+              {question.answer?.length ? t("pages:qa.status.answered") : t("pages:qa.status.pending")}
+            </span>
+            {showAnswerPreview && firstAnsweredByName && (
+              <span className="text-[11px] text-slate-400">• {firstAnsweredByName}</span>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col gap-2">
           <span className="text-[#1E293B] font-bold text-[14px] opacity-60"># {question.category}</span>
+
+          {isClient && showAnswerPreview && firstAnswerText && (
+            <div className="pt-1 text-slate-600 text-[13px] leading-relaxed line-clamp-4">
+              {firstAnswerText}
+            </div>
+          )}
 
           {/* Images only if they exist */}
           {question.images && question.images.length > 0 && (
@@ -147,29 +189,36 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
 
       {/* Footer controls only */}
       <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-50">
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn("text-slate-300 hover:text-blue-600 transition-colors", isBookmarked && "text-blue-600 fill-blue-600")}
-          onClick={(e) => {
-            e.stopPropagation()
-            handleBookmark(e)
-          }}
-          disabled={bookmarkLoading}
-        >
-          <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
-        </Button>
+        {isLawyer && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "text-slate-300 hover:text-blue-600 transition-colors",
+                isBookmarked && "text-blue-600 fill-blue-600"
+              )}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleBookmark(e)
+              }}
+              disabled={bookmarkLoading}
+            >
+              <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
+            </Button>
 
-        <Button
-          onClick={(e) => {
-            e.stopPropagation()
-            onWriteAnswer()
-          }}
-          className="bg-[#1E293B] hover:bg-[#0F172A] text-white gap-2 px-6 rounded-xl font-bold text-[13px] h-11 transition-all active:scale-95"
-        >
-          <MessageSquare size={16} />
-          {hasAnswered ? t('pages:qa.checkAnswer') : t('pages:qa.writeAnswer')}
-        </Button>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                onWriteAnswer()
+              }}
+              className="bg-[#1E293B] hover:bg-[#0F172A] text-white gap-2 px-6 rounded-xl font-bold text-[13px] h-11 transition-all active:scale-95"
+            >
+              <MessageSquare size={16} />
+              {hasAnswered ? t('pages:qa.checkAnswer') : t('pages:qa.writeAnswer')}
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -177,48 +226,82 @@ function QuestionCard({ question, currentUserId, onRefresh, onWriteAnswer }: { q
 
 export default function QAListWithSearch() {
   const user = useSelector((state: any) => state.auth.user)
+  const accountType = user?.account_type
+  const isClient = accountType === "client"
+  const isLawyer = accountType === "lawyer"
   const [questions, setQuestions] = useState<QAQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'waiting' | 'my' | 'bookmarks'>('waiting')
+  const [activeTab, setActiveTab] = useState<"waiting" | "my_answers" | "bookmarks" | "my_questions">(
+    isClient ? "my_questions" : "waiting"
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
+  const [selectedQuestion, setSelectedQuestion] = useState<QAQuestion | null>(null)
   const { t } = useTranslation()
 
-  const fetchQuestions = useCallback(async (isRefresh = false) => {
+  const refetchQuestions = async (options?: { setRefreshing?: boolean }) => {
     try {
-      if (isRefresh) setRefreshing(true)
+      if (options?.setRefreshing) setRefreshing(true)
       else setLoading(true)
 
-      console.log(`🔍 Fetching questions for tab: ${activeTab}`)
+      const filter =
+        isClient
+          ? activeTab === "my_questions"
+            ? "my_questions"
+            : "my_answers"
+          : activeTab === "waiting"
+            ? "waiting"
+            : activeTab === "my_answers"
+              ? "my_answers"
+              : activeTab === "bookmarks"
+                ? "bookmarks"
+                : undefined
+
       const questionsData = await getQAItems({
-        status: activeTab === 'waiting' ? 'pending' : undefined,
-        filter: activeTab === 'my' ? 'my_answers' : activeTab === 'bookmarks' ? 'bookmarks' : undefined,
+        filter,
         category: categoryFilter,
-        search: searchTerm
+        search: searchTerm,
       })
-      console.log(`✅ Loaded ${questionsData.length} questions for ${activeTab}:`, questionsData)
 
       setQuestions(questionsData)
     } catch (err) {
       console.error("Failed to fetch questions:", err)
-      toast.error(t('pages:qa.failedToLoadQuestions'))
+      toast.error(t("pages:qa.failedToLoadQuestions"))
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (options?.setRefreshing) setRefreshing(false)
+      else setLoading(false)
     }
-  }, [activeTab, categoryFilter, searchTerm])
+  }
 
   useEffect(() => {
-    fetchQuestions()
-  }, [fetchQuestions])
+    // Keep tabs consistent when role changes (login/logout), without causing fetch loops.
+    const desired = isClient ? "my_questions" : "waiting"
+    setActiveTab((prev) => (prev === desired ? prev : desired))
+  }, [isClient])
 
-  const tabs = [
-    { id: 'waiting', label: t('pages:qa.waitingForAnswers') },
-    { id: 'my', label: t('pages:qa.myAnswers') },
-    { id: 'bookmarks', label: t('pages:qa.bookmarks') }
-  ]
+  useEffect(() => {
+    refetchQuestions()
+  }, [activeTab, categoryFilter, searchTerm, isClient])
+
+  // Client safeguard: if a lawyer has answered, keep the question out of "My Questions"
+  // and only show it under "Answers" (when backend filters already do this, this is harmless).
+  const visibleQuestions =
+    isClient && activeTab === "my_questions"
+      ? questions.filter((q) => !(q.answer && q.answer.length > 0))
+      : questions
+
+  const tabs = isClient
+    ? [
+        { id: 'my_questions', label: t('pages:qa.myQuestions') },
+        { id: 'my_answers', label: t('pages:qa.answers') },
+      ]
+    : [
+        { id: 'waiting', label: t('pages:qa.waitingForAnswers') },
+        { id: 'my_answers', label: t('pages:qa.myAnswers') },
+        { id: 'bookmarks', label: t('pages:qa.bookmarks') },
+      ]
 
   return (
     <div className="space-y-8">
@@ -270,7 +353,7 @@ export default function QAListWithSearch() {
         <Button
           variant="outline"
           className="h-12 border-slate-200 px-6 gap-2 rounded-xl bg-white hover:bg-slate-50 text-[#1E293B] font-bold"
-          onClick={() => fetchQuestions(true)}
+          onClick={() => refetchQuestions({ setRefreshing: true })}
           disabled={refreshing}
         >
           <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
@@ -296,7 +379,7 @@ export default function QAListWithSearch() {
               </div>
             ))}
           </div>
-        ) : questions.length === 0 ? (
+        ) : visibleQuestions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white border border-dashed border-slate-200 rounded-2xl">
             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
               <Search className="text-slate-300 w-8 h-8" />
@@ -305,13 +388,22 @@ export default function QAListWithSearch() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {questions.map((q) => (
+            {visibleQuestions.map((q) => (
               <QuestionCard
                 key={q._id}
                 question={q}
                 currentUserId={user?._id}
-                onRefresh={fetchQuestions}
-                onWriteAnswer={() => setSelectedQuestionId(q._id)}
+                onWriteAnswer={() => {
+                  setSelectedQuestion(null)
+                  setSelectedQuestionId(q._id)
+                }}
+                onOpenClientView={() => {
+                  setSelectedQuestion(q)
+                  setSelectedQuestionId(q._id)
+                }}
+                isLawyer={isLawyer}
+                isClient={isClient}
+                showAnswerPreview={isClient && activeTab === "my_answers"}
               />
             ))}
           </div>
@@ -319,17 +411,42 @@ export default function QAListWithSearch() {
       </div>
 
       {/* Answer Modal Overlay */}
-      <Dialog open={!!selectedQuestionId} onOpenChange={(open) => !open && setSelectedQuestionId(null)}>
-        <DialogContent className="max-w-3xl p-0 bg-transparent border-none shadow-none ring-0 focus-visible:outline-none focus:outline-none [&>button]:hidden">
+      <Dialog
+        open={!!selectedQuestionId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedQuestionId(null)
+            setSelectedQuestion(null)
+            refetchQuestions()
+          }
+        }}
+      >
+        <DialogContent
+          hideClose
+          className="max-w-3xl p-0 bg-transparent border-none shadow-none ring-0 focus-visible:outline-none focus:outline-none"
+        >
           {selectedQuestionId && (
             <div className="animate-in zoom-in-95 duration-200">
-              <QAAnswerForm
-                questionId={selectedQuestionId}
-                onClose={() => {
-                  setSelectedQuestionId(null)
-                  fetchQuestions()
-                }}
-              />
+              {isLawyer ? (
+                <QAAnswerForm
+                  questionId={selectedQuestionId}
+                  onClose={() => {
+                    setSelectedQuestionId(null)
+                    setSelectedQuestion(null)
+                  }}
+                />
+              ) : (
+                selectedQuestion ? (
+                  <QAClientView
+                    question={selectedQuestion}
+                    onClose={() => {
+                      setSelectedQuestionId(null)
+                      setSelectedQuestion(null)
+                      refetchQuestions()
+                    }}
+                  />
+                ) : null
+              )}
             </div>
           )}
         </DialogContent>

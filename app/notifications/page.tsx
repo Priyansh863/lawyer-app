@@ -26,29 +26,8 @@ export default function NotificationsPage() {
     deleteNotification
   } = useNotifications()
 
-  const [filter, setFilter] = useState<'all' | 'unread'>('all')
-  const [typeFilter, setTypeFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
   const router = useRouter()
-
-  useEffect(() => {
-    fetchNotifications({
-      page: 1,
-      limit: 20,
-      unreadOnly: filter === 'unread'
-    })
-    setPage(1)
-  }, [filter])
-
-  const handleLoadMore = () => {
-    const nextPage = page + 1
-    fetchNotifications({
-      page: nextPage,
-      limit: 20,
-      unreadOnly: filter === 'unread'
-    })
-    setPage(nextPage)
-  }
 
   const handleBack = () => {
     router.back()
@@ -59,7 +38,12 @@ export default function NotificationsPage() {
       await markAsRead(notification._id)
     }
 
-    if (notification.type) {
+    if (notification.type === "qa_answer_posted" || notification.type === "qa_question_posted") {
+      // Client request: go to the Q&A list page (no popup route).
+      router.push("/qa")
+    } else if (notification.redirectUrl) {
+      router.push(notification.redirectUrl)
+    } else if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
   }
@@ -75,6 +59,8 @@ export default function NotificationsPage() {
       case 'video_consultation_started':
         return '/video-consultations'
       case 'qa_question_posted':
+        return '/qa'
+      case 'qa_answer_posted':
         return '/qa'
       case 'document_uploaded':
         return '/documents'
@@ -174,6 +160,16 @@ export default function NotificationsPage() {
     setPage(1)
     setSelectedIds([])
   }, [activeTab])
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1
+    fetchNotifications({
+      page: nextPage,
+      limit: 50,
+      unreadOnly: activeTab === 'unread'
+    })
+    setPage(nextPage)
+  }
 
   const handleRefresh = () => {
     fetchNotifications({
