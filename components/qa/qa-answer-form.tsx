@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
-import { getQAItem, answerQuestion, type QAQuestion } from "@/lib/api/qa-api"
+import { getQAItem, answerQuestion, updateAnswer, type QAQuestion } from "@/lib/api/qa-api"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Image as ImageIcon, MapPin, Loader2, X, CheckCircle2, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { getUploadFileUrl } from "@/lib/helpers/fileupload"
 
 export default function QAAnswerForm({
   questionId,
@@ -26,15 +27,16 @@ export default function QAAnswerForm({
   const [submitting, setSubmitting] = useState(false)
   const [answer, setAnswer] = useState("")
   const [showDiscardModal, setShowDiscardModal] = useState(false)
-  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [selectedImages, setSelectedImages] = useState<{data: string, format: string}[]>([])
   const [locationName, setLocationName] = useState<string | null>(null)
   const [isLocating, setIsLocating] = useState(false)
   const [isPosted, setIsPosted] = useState(false)
   const [hasAlreadyAnswered, setHasAlreadyAnswered] = useState(false)
+  const [existingImages, setExistingImages] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useTranslation()
 
-  const MAX_CHARS = 500
+  const MAX_CHARS = 5000
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -49,6 +51,8 @@ export default function QAAnswerForm({
           )
           if (myAnswer) {
             setAnswer(myAnswer.answer)
+            setLocationName(myAnswer.location || null)
+            setExistingImages(myAnswer.images || [])
             setHasAlreadyAnswered(true)
           }
         }
@@ -68,8 +72,9 @@ export default function QAAnswerForm({
     const files = Array.from(e.target.files || [])
     files.forEach(file => {
       const reader = new FileReader()
+      const format = file.type.split("/")[1]
       reader.onloadend = () => {
-        setSelectedImages(prev => [...prev, reader.result as string].slice(0, 5))
+        setSelectedImages(prev => [...prev, { data: reader.result as string, format }].slice(0, 5))
       }
       reader.readAsDataURL(file)
     })
@@ -118,8 +123,31 @@ export default function QAAnswerForm({
 
     try {
       setSubmitting(true)
-      await answerQuestion(questionId, answer, selectedImages, locationName || undefined)
+      
+      // Upload images to S3 first if any
+      const imageUrls: string[] = []
+      if (selectedImages.length > 0) {
+        toast.loading(t('pages:qa.uploadingImages') || "Uploading images...", { id: "uploading" })
+        for (const imgObj of selectedImages) {
+          try {
+            const url = await getUploadFileUrl(user?._id || "unknown", imgObj)
+            if (url) imageUrls.push(url)
+          } catch (uploadErr) {
+            console.error("Failed to upload image:", uploadErr)
+          }
+        }
+        toast.dismiss("uploading")
+      }
+
+      const lawyerName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || user?.first_name || "Lawyer"
+      
+      if (hasAlreadyAnswered) {
+        await updateAnswer(questionId, answer, imageUrls, locationName || undefined, lawyerName)
+      } else {
+        await answerQuestion(questionId, answer, imageUrls, locationName || undefined, lawyerName)
+      }
       setIsPosted(true)
+      toast.success(t('pages:qa.postedSuccessfully'))
       setTimeout(() => {
         if (onClose) onClose()
         else router.push("/qa")
@@ -241,31 +269,51 @@ export default function QAAnswerForm({
           </div>
 
           {/* Previews Area */}
-          {(selectedImages.length > 0 || locationName) && (
+          {(selectedImages.length > 0 || existingImages.length > 0 || locationName) && (
             <div className="flex flex-col gap-4 py-2">
               {locationName && (
                 <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full w-fit border border-slate-100 animate-in fade-in slide-in-from-left-2 duration-300">
                   <MapPin size={14} className="text-blue-500 fill-blue-500/10" />
                   <span className="text-[12px] text-[#1E293B] font-bold">{locationName}</span>
-                  <button onClick={() => setLocationName(null)} className="text-slate-400 hover:text-red-500">
-                    <X size={14} />
-                  </button>
+                  {!hasAlreadyAnswered && (
+                    <button onClick={() => setLocationName(null)} className="text-slate-400 hover:text-red-500">
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
               )}
 
+              {/* Existing Images */}
+              {existingImages.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('pages:qa.existingImages') || "Submitted Images"}</span>
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {existingImages.map((img, idx) => (
+                      <div key={idx} className="relative group shrink-0">
+                        <img src={img} alt="existing" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Newly Selected Images */}
               {selectedImages.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {selectedImages.map((img, idx) => (
-                    <div key={idx} className="relative group shrink-0 animate-in zoom-in-95 duration-200">
-                      <img src={img} alt="preview" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
-                      <button
-                        onClick={() => removeImage(idx)}
-                        className="absolute -top-2 -right-2 bg-white rounded-full shadow-md text-slate-400 hover:text-red-500 border border-slate-100"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex flex-col gap-2">
+                  {!hasAlreadyAnswered && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('pages:qa.newImages') || "New Images"}</span>}
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {selectedImages.map((img, idx) => (
+                      <div key={idx} className="relative group shrink-0 animate-in zoom-in-95 duration-200">
+                        <img src={img.data} alt="preview" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                        <button
+                          onClick={() => removeImage(idx)}
+                          className="absolute -top-2 -right-2 bg-white rounded-full shadow-md text-slate-400 hover:text-red-500 border border-slate-100"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

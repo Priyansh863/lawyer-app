@@ -48,7 +48,8 @@ import {
 } from "lucide-react"
 import type { Case, CaseStatus, CaseType, CourtType } from "@/types/case"
 import { caseTypeConfig, courtTypeConfig } from "@/types/case"
-import { updateCase, deleteCase } from "@/lib/api/cases-api"
+import { updateCase, deleteCase, casesApi } from "@/lib/api/cases-api"
+const { getCaseById } = casesApi
 import { uploadDocumentEnhanced, getCaseDocuments } from "@/lib/api/documents-api"
 import { cn } from "@/lib/utils"
 import { useSelector } from "react-redux"
@@ -93,9 +94,27 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const [caseType, setCaseType] = useState<string>('')
     const [courtType, setCourtType] = useState<string>('')
     const [status, setStatus] = useState<string>('')
-    const [priority, setPriority] = useState<string>('normal')
+    const [priority, setPriority] = useState<string>('medium')
     const [estDuration, setEstDuration] = useState<string>('')
     const [notes, setNotes] = useState<string>('')
+
+    // Load full case details from API
+    const loadCaseDetails = async (id: string) => {
+        try {
+            const result = await getCaseById(id)
+            if (result.success && result.case) {
+                const fullCase = result.case as any
+                setCaseType(fullCase.case_type || '')
+                setCourtType(fullCase.court_type || fullCase.court_name || '')
+                setStatus(fullCase.status || fullCase.case_status || '')
+                setPriority(fullCase.priority || fullCase.case_priority || 'medium')
+                setEstDuration(fullCase.est_duration || fullCase.expected_duration || '')
+                setNotes(fullCase.notes || '')
+            }
+        } catch (error) {
+            console.error('Error loading case details:', error)
+        }
+    }
 
     // Load case documents from API
     const loadCaseDocuments = async (id: string) => {
@@ -119,18 +138,22 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     // Initialize form when caseData changes or dialog opens
     useEffect(() => {
         if (caseData && open) {
-            setCaseType(caseData.case_type || '')
-            setCourtType(caseData.court_type || '')
-            setStatus(caseData.status || '')
-            setPriority((caseData as any).priority || 'normal')
-            setEstDuration((caseData as any).est_duration || '')
-            setNotes((caseData as any).notes || '')
+            // Extract values with various possible field names from backend
+            const rawCase = caseData as any
+            
+            setCaseType(rawCase.case_type || '')
+            setCourtType(rawCase.court_type || rawCase.court_name || '')
+            setStatus(rawCase.status || rawCase.case_status || '')
+            setPriority(rawCase.priority || rawCase.case_priority || 'medium')
+            setEstDuration(rawCase.est_duration || rawCase.expected_duration || '')
+            setNotes(rawCase.notes || '')
             setIsEditing(false)
             setShowDeleteConfirm(false)
 
-            // Fetch documents from API
+            // Fetch details and documents from API
             const id = caseData._id || caseData.id
             if (id) {
+                loadCaseDetails(id)
                 loadCaseDocuments(id)
             } else {
                 setCaseDocuments(caseData.files || [])
@@ -308,9 +331,16 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                     <div className="p-8 space-y-8">
                         {/* Case Title Section */}
                         <div className="space-y-3">
-                            <h3 className="text-lg font-bold text-[#0F172A]">
-                                {t('pages:caseDetails.caseTitle')} : <span className="font-medium text-slate-700">{caseData.title}</span>
-                            </h3>
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-[#0F172A]">
+                                    {t('pages:caseDetails.caseTitle')} : <span className="font-medium text-slate-700">{caseData.title}</span>
+                                </h3>
+                                {(caseData as any).case_identifier && (
+                                    <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-mono">
+                                        {(caseData as any).case_identifier}
+                                    </Badge>
+                                )}
+                            </div>
                             <p className="text-sm text-slate-600 leading-relaxed max-w-4xl">
                                 {caseData.description || t('pages:caseDetails.noDescription')}
                             </p>
@@ -322,7 +352,11 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="space-y-1.5">
                                     <label className="text-xs text-slate-500 font-medium">{t('pages:caseDetails.caseNumber')}</label>
-                                    <Input value={caseData.case_number} readOnly className="bg-[#f8f9fa] border-slate-200 h-10 text-sm font-medium" />
+                                    <Input 
+                                        value={(caseData as any).case_identifier || caseData.case_number} 
+                                        readOnly 
+                                        className="bg-[#f8f9fa] border-slate-200 h-10 text-sm font-medium" 
+                                    />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs text-slate-500 font-medium">{t('pages:caseDetails.caseType')}</label>

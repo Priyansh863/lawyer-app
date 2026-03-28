@@ -456,17 +456,22 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       const response = await generateAiPost(aiDataWithImage);
       const generatedPost = response.data;
 
-      // Update postData with AI generated content (this allows editing in manual tab)
-      setPostData(prev => ({
-        ...prev,
-        title: generatedPost.title || prev.title,
-        content: generatedPost.content || prev.content,
-        hashtag: generatedPost.hashtag || prev.hashtag,
-        spatialInfo: generatedPost.spatialInfo || prev.spatialInfo,
-        citations: generatedPost.citations || prev.citations,
-        image: generatedPost.image || prev.image,
-        images: generatedPost.images || (generatedPost.image ? [generatedPost.image] : [])
-      }));
+      // Update postData with AI generated content (preserve images if AI didn't return any)
+      setPostData(prev => {
+        const hasAiImages = generatedPost.images && generatedPost.images.length > 0;
+        const hasAiImage = !!generatedPost.image;
+        
+        return {
+          ...prev,
+          title: generatedPost.title || prev.title,
+          content: generatedPost.content || prev.content,
+          hashtag: generatedPost.hashtag || prev.hashtag,
+          spatialInfo: generatedPost.spatialInfo || prev.spatialInfo,
+          citations: generatedPost.citations || prev.citations,
+          image: hasAiImage ? generatedPost.image : prev.image,
+          images: hasAiImages ? generatedPost.images : (hasAiImage ? [generatedPost.image] : prev.images)
+        };
+      });
 
       // Store generated post for reference but don't show success screen yet
       setCreatedPost(generatedPost);
@@ -596,7 +601,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const downloadedImages = getDownloadedImages();
 
   return (
-    <div className="space-y-6 max-h-[90vh] overflow-y-auto">
+    <div className="space-y-6 p-6">
       {/* Created Post Display - Only show after FINAL success */}
       {isSuccess && createdPost && (
         <Card className="border-green-200 bg-green-50 rounded-md shadow-none">
@@ -755,25 +760,51 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 </div>
 
                 {/* Display image if available */}
-                {createdPost.image && (
-                  <div className="space-y-2 pt-4">
-                    <Label>Post Image</Label>
-                    <div className="border rounded-lg overflow-hidden">
-                      <img
-                        src={createdPost.image}
-                        alt="Post image"
-                        className="w-full h-auto max-h-64 object-cover"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadImage(createdPost.image!, `post-${createdPost.slug}-${Date.now()}.jpg`)}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        {t('pages:creator.post.download.buttons.download', 'Download Image')}
-                      </Button>
+                {((createdPost.images && createdPost.images.length > 0) || createdPost.image) && (
+                  <div className="space-y-3 pt-4">
+                    <Label className="text-sm font-bold text-slate-700">{t('pages:creator.post.success.images', 'Post Images')}</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {createdPost.images && createdPost.images.length > 0 ? (
+                        createdPost.images.map((img, idx) => (
+                          <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                            <img
+                              src={img}
+                              alt={`Post image ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-8 w-8 p-0 rounded-full"
+                                onClick={() => downloadImage(img, `post-img-${idx + 1}-${Date.now()}.jpg`)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        createdPost.image && (
+                          <div className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                            <img
+                              src={createdPost.image}
+                              alt="Post image"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-8 w-8 p-0 rounded-full"
+                                onClick={() => downloadImage(createdPost.image!, `post-img-${Date.now()}.jpg`)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                 )}

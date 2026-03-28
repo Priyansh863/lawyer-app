@@ -64,6 +64,7 @@ export default function DocumentManager() {
     const [isLoading, setIsLoading] = useState(true)
     const [clients, setClients] = useState<any[]>([])
     const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set())
+    const [openFolder, setOpenFolder] = useState<string | null>(null)
 
     // Confirmation dialogs
     const [removeCloudDialog, setRemoveCloudDialog] = useState<{ open: boolean; doc: Document | null }>({ open: false, doc: null })
@@ -154,9 +155,15 @@ export default function DocumentManager() {
         }
     }
 
-    const filteredDocs = documents.filter(doc =>
-        doc.document_name.toLowerCase().includes(searchTerm.toLowerCase())
-    ).sort((a, b) => {
+    const filteredDocs = documents
+        .filter(doc => doc.document_name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(doc => {
+            if (!openFolder) return true
+            const loc = (doc.storage_location || '').toString()
+            if (!loc) return false
+            return loc === openFolder || loc.startsWith(`${openFolder}/`) || loc.startsWith(`${openFolder}\\`)
+        })
+        .sort((a, b) => {
         if (sortBy === 'name') return a.document_name.localeCompare(b.document_name)
         if (sortBy === 'newest') return new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime()
         if (sortBy === 'oldest') return new Date(a.created_at || a.createdAt).getTime() - new Date(b.created_at || b.createdAt).getTime()
@@ -284,6 +291,7 @@ export default function DocumentManager() {
                 setIsAddFolderOpen(false)
                 setNewFolderName('')
                 loadDocuments()
+                setOpenFolder(null)
             } else {
                 toast.error(res.message || t('pages:documentManager.folderCreateError'))
             }
@@ -321,6 +329,21 @@ export default function DocumentManager() {
         <div className="flex flex-col w-full max-w-[1400px] mx-auto font-sans">
             {/* Page Title */}
             <h1 className="text-[22px] font-bold text-[#1e293b] mb-6">{t('pages:documentManager.title')}</h1>
+
+            {openFolder && (
+                <div className="flex items-center justify-between mb-4">
+                    <div className="text-[13px] font-semibold text-slate-600">
+                        {t('pages:documentManager.location')}: <span className="font-bold text-slate-800">{openFolder}</span>
+                    </div>
+                    <Button
+                        variant="outline"
+                        onClick={() => setOpenFolder(null)}
+                        className="bg-[#f1f5f9] hover:bg-[#e2e8f0] border-none text-[#1e293b] font-semibold h-[36px] px-4 rounded-md shadow-none text-[13px]"
+                    >
+                        Back to All
+                    </Button>
+                </div>
+            )}
 
             {/* Action Bar */}
             <div className="flex flex-row items-center justify-between mb-6">
@@ -411,8 +434,7 @@ export default function DocumentManager() {
                                 const st = doc.storage_type || 'app'
                                 const hasApp = st === 'app' || st === 'app_cloud'
                                 const hasCloud = st === 'cloud' || st === 'app_cloud'
-                                // Logic to detect folders (proxy)
-                                const isFolder = !doc.file_size || doc.file_size === 0 || doc.document_name.toLowerCase().includes('files');
+                                const isFolder = (doc.file_type || '').toLowerCase() === 'folder' || doc.file_type === 'folder'
 
                                 return (
                                     <div
@@ -420,18 +442,12 @@ export default function DocumentManager() {
                                         className="grid grid-cols-[60px_1.5fr_1fr_1.2fr_1.2fr_100px_80px] items-center px-6 py-2.5 bg-white border border-[#e2e8f0] rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:border-[#cbd5e1] transition-all"
                                     >
                                         <div className="flex items-center">
-                                            {isFolder ? (
-                                                <div className="h-4 w-4 rounded-[3px] border border-slate-200 bg-slate-100 flex items-center justify-center cursor-not-allowed">
-                                                    <div className="w-2 h-[2px] bg-slate-300 rounded-full" />
-                                                </div>
-                                            ) : (
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedDocs.has(doc._id)}
-                                                    onChange={() => toggleSelect(doc._id)}
-                                                    className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
-                                                />
-                                            )}
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedDocs.has(doc._id)}
+                                                onChange={() => toggleSelect(doc._id)}
+                                                className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
+                                            />
                                         </div>
 
                                         <div className="flex items-center gap-4 pr-4 overflow-hidden">
@@ -440,9 +456,20 @@ export default function DocumentManager() {
                                             ) : (
                                                 <FileText className="h-5 w-5 text-slate-400" />
                                             )}
-                                            <span className="text-[15px] font-bold text-slate-800 truncate">
-                                                {doc.document_name}
-                                            </span>
+                                            {isFolder ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOpenFolder(doc.storage_location || doc.document_name)}
+                                                    className="text-[15px] font-bold text-slate-800 truncate text-left hover:underline"
+                                                    title={doc.document_name}
+                                                >
+                                                    {doc.document_name}
+                                                </button>
+                                            ) : (
+                                                <span className="text-[15px] font-bold text-slate-800 truncate">
+                                                    {doc.document_name}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="text-right pr-8 text-[14px] font-bold text-slate-800">
@@ -624,6 +651,7 @@ export default function DocumentManager() {
                     setIsAddDocumentsOpen(false);
                     loadDocuments();
                 }}
+                targetFolder={openFolder}
             />
 
             {/* Add Folder Dialog */}

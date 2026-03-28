@@ -92,6 +92,7 @@ export default function VideoConsultationTableNew({ searchQueryProp, onNewConsul
   const { toast } = useToast()
   const { t } = useTranslation()
   const currentUser = useSelector((state: RootState) => state.auth.user)
+  const isLawyer = currentUser?.account_type === 'lawyer'
 
   useEffect(() => {
     fetchMeetings()
@@ -294,6 +295,87 @@ export default function VideoConsultationTableNew({ searchQueryProp, onNewConsul
     toast({ title: "Meeting updated successfully" })
   }
 
+  const canActOnMeeting = (meeting: Meeting) => {
+    const lawyerIdObj = (meeting.lawyer_id as any)?._id
+    const lawyerIdRaw = typeof (meeting.lawyer_id as any) === "string" ? (meeting.lawyer_id as any) : undefined
+    const lawyerId = lawyerIdObj || lawyerIdRaw
+    return isLawyer && !!currentUser?._id && !!lawyerId && currentUser._id === lawyerId
+  }
+
+  const handleApprove = async (meeting: Meeting) => {
+    if (!canActOnMeeting(meeting)) return
+
+    // Many backends require a meeting link before approval.
+    if (!meeting.meeting_link) {
+      toast({
+        title: t("common.error"),
+        description: t("pages:consultation.meetingLinkRequired", "Please add a meeting link before approving."),
+        variant: "destructive",
+      })
+      setEditingMeeting(meeting)
+      setIsEditModalOpen(true)
+      return
+    }
+
+    setApprovingMeeting(meeting._id)
+    try {
+      const res = await approveMeeting(meeting._id)
+      if (!res.success) throw new Error(res.message || 'Failed to approve meeting')
+
+      setMeetings(prev =>
+        prev.map(m => {
+          if (m._id !== meeting._id) return m
+          const updated = (res as any).meeting as Meeting | undefined
+          if (updated) return updated
+          return { ...m, status: 'approved' } as any
+        })
+      )
+      toast({
+        title: t("common.success"),
+        description: t("pages:consultation.approvedSuccess", "Consultation approved."),
+      })
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message || t("common.somethingWentWrong"),
+        variant: "destructive",
+      })
+    } finally {
+      setApprovingMeeting(null)
+    }
+  }
+
+  const handleDecline = async (meeting: Meeting) => {
+    if (!canActOnMeeting(meeting)) return
+
+    setRejectingMeeting(meeting._id)
+    try {
+      const res = await rejectMeeting(meeting._id, 'Declined by lawyer')
+      if (!res.success) throw new Error(res.message || 'Failed to decline meeting')
+
+      setMeetings(prev =>
+        prev.map(m => {
+          if (m._id !== meeting._id) return m
+          const updated = (res as any).meeting as Meeting | undefined
+          if (updated) return updated
+          return { ...m, status: 'rejected' } as any
+        })
+      )
+      toast({
+        title: t("common.success"),
+        description: t("pages:consultation.declinedSuccess", "Consultation declined."),
+      })
+    } catch (error: any) {
+      toast({
+        title: t("common.error"),
+        description: error.message || t("common.somethingWentWrong"),
+        variant: "destructive",
+      })
+    } finally {
+      setRejectingMeeting(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Tabs & Actions Header */}
@@ -435,14 +517,44 @@ export default function VideoConsultationTableNew({ searchQueryProp, onNewConsul
                     {activeTab === 'Pending' ? (
                       <>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <Button
-                            variant="outline"
-                            onClick={() => openCancelModal(meeting)}
-                            className="h-8 px-3 bg-[#FFF5F5] border-[#FF0000] text-[#FF0000] hover:bg-[#FFE5E5] hover:text-[#D10000] text-[12px] font-bold rounded flex items-center gap-1.5 transition-all"
-                          >
-                            <X className="h-3.5 w-3.5" strokeWidth={3} />
-                            {t("pages:consultation.cancelInvite")}
-                          </Button>
+                          {canActOnMeeting(meeting) ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => handleApprove(meeting)}
+                                disabled={approvingMeeting === meeting._id}
+                                className="bg-[#0F172A] hover:bg-[#1E293B] text-white h-8 px-3 text-[12px] font-bold rounded flex items-center gap-1.5"
+                              >
+                                {approvingMeeting === meeting._id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                                )}
+                                {t("common.approve", "Approve")}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => handleDecline(meeting)}
+                                disabled={rejectingMeeting === meeting._id}
+                                className="h-8 px-3 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 text-[12px] font-bold rounded flex items-center gap-1.5 transition-all"
+                              >
+                                {rejectingMeeting === meeting._id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <X className="h-3.5 w-3.5" strokeWidth={3} />
+                                )}
+                                {t("common.reject", "Decline")}
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              onClick={() => openCancelModal(meeting)}
+                              className="h-8 px-3 bg-[#FFF5F5] border-[#FF0000] text-[#FF0000] hover:bg-[#FFE5E5] hover:text-[#D10000] text-[12px] font-bold rounded flex items-center gap-1.5 transition-all"
+                            >
+                              <X className="h-3.5 w-3.5" strokeWidth={3} />
+                              {t("pages:consultation.cancelInvite")}
+                            </Button>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <TooltipProvider>

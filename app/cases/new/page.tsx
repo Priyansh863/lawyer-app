@@ -54,7 +54,7 @@ export default function NewCasePage() {
     setCurrentUser(user)
     setIsLawyer(user.account_type === "lawyer")
     setIsClient(user.account_type === "client")
-    
+
     const fetchData = async () => {
       try {
         const res = await getClientsAndLawyers()
@@ -70,15 +70,15 @@ export default function NewCasePage() {
         }))
 
         if (user.account_type === "client") {
-          setClients([{ 
-            id: user._id, 
-            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email 
+          setClients([{
+            id: user._id,
+            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
           }])
           setLawyers(formattedLawyers)
         } else if (user.account_type === "lawyer") {
-          setLawyers([{ 
-            id: user._id, 
-            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email 
+          setLawyers([{
+            id: user._id,
+            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
           }])
           setClients(formattedClients)
         } else {
@@ -114,7 +114,7 @@ export default function NewCasePage() {
     try {
       const clientId = isClient ? currentUser?._id : data.clientId
       const lawyerId = isLawyer ? currentUser?._id : data.assignedTo[0]
-      
+
       if (!clientId || (!lawyerId && !isLawyer)) {
         throw new Error("Missing required user information")
       }
@@ -159,7 +159,7 @@ export default function NewCasePage() {
   const handleCreateNewClient = async () => {
     try {
       setIsSubmitting(true)
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
         method: 'POST',
         headers: {
@@ -191,9 +191,9 @@ export default function NewCasePage() {
         if (otpResult.success && otpResult.data?.otp) {
           toast({
             title: t("pages:newcases.clientOnboarding.clientCreatedTitle"),
-            description: t("pages:newcases.clientOnboarding.otpSent", { 
-              email: newClientData.email, 
-              otp: otpResult.data.otp 
+            description: t("pages:newcases.clientOnboarding.otpSent", {
+              email: newClientData.email,
+              otp: otpResult.data.otp
             }),
             duration: 10000,
           })
@@ -204,12 +204,12 @@ export default function NewCasePage() {
           name: `${newClientData.firstName} ${newClientData.lastName}`,
         }
         setClients([...clients, newClient])
-        
+
         form.setValue('clientId', newClient.id)
-        
+
         setNewClientData({ firstName: '', lastName: '', email: '', phone: '' })
         setShowClientOnboarding(false)
-        
+
         toast({
           title: t("pages:newcases.clientOnboarding.clientOnboardedTitle"),
           description: t("pages:newcases.clientOnboarding.clientOnboardedDescription"),
@@ -288,8 +288,8 @@ export default function NewCasePage() {
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <Select 
-                                onValueChange={field.onChange} 
+                              <Select
+                                onValueChange={field.onChange}
                                 defaultValue={field.value}
                                 disabled={isLawyer && clients.length === 1}
                               >
@@ -306,7 +306,7 @@ export default function NewCasePage() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              
+
                               {/* Add New Client Button */}
                               {isLawyer && (
                                 <Dialog open={showClientOnboarding} onOpenChange={setShowClientOnboarding}>
@@ -329,7 +329,7 @@ export default function NewCasePage() {
                                           <Input
                                             id="firstName"
                                             value={newClientData.firstName}
-                                            onChange={(e) => setNewClientData({...newClientData, firstName: e.target.value})}
+                                            onChange={(e) => setNewClientData({ ...newClientData, firstName: e.target.value })}
                                             placeholder={t("pages:newcases.clientOnboarding.firstNamePlaceholder")}
                                           />
                                         </div>
@@ -340,7 +340,7 @@ export default function NewCasePage() {
                                           <Input
                                             id="lastName"
                                             value={newClientData.lastName}
-                                            onChange={(e) => setNewClientData({...newClientData, lastName: e.target.value})}
+                                            onChange={(e) => setNewClientData({ ...newClientData, lastName: e.target.value })}
                                             placeholder={t("pages:newcases.clientOnboarding.lastNamePlaceholder")}
                                           />
                                         </div>
@@ -353,7 +353,7 @@ export default function NewCasePage() {
                                           id="email"
                                           type="email"
                                           value={newClientData.email}
-                                          onChange={(e) => setNewClientData({...newClientData, email: e.target.value})}
+                                          onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
                                           placeholder={t("pages:newcases.clientOnboarding.emailPlaceholder")}
                                         />
                                       </div>
@@ -364,13 +364,13 @@ export default function NewCasePage() {
                                         <Input
                                           id="phone"
                                           value={newClientData.phone}
-                                          onChange={(e) => setNewClientData({...newClientData, phone: e.target.value})}
+                                          onChange={(e) => setNewClientData({ ...newClientData, phone: e.target.value })}
                                           placeholder={t("pages:newcases.clientOnboarding.phonePlaceholder")}
                                         />
                                       </div>
                                       <div className="flex gap-2">
-                                        <Button 
-                                          type="button" 
+                                        <Button
+                                          type="button"
                                           onClick={handleCreateNewClient}
                                           disabled={!newClientData.firstName || !newClientData.email || isSubmitting}
                                           className="flex-1"
@@ -387,9 +387,9 @@ export default function NewCasePage() {
                                             </>
                                           )}
                                         </Button>
-                                        <Button 
-                                          type="button" 
-                                          variant="outline" 
+                                        <Button
+                                          type="button"
+                                          variant="outline"
                                           onClick={() => setShowClientOnboarding(false)}
                                           disabled={isSubmitting}
                                         >
@@ -435,7 +435,7 @@ export default function NewCasePage() {
                               <SelectContent>
                                 {lawyers.map((lawyer) => (
                                   <SelectItem key={lawyer.id} value={lawyer.id}>
-                                    {lawyer.name} 
+                                    {lawyer.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -453,8 +453,8 @@ export default function NewCasePage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("pages:newcases.form.status")}</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
+                          <Select
+                            onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>

@@ -1,13 +1,15 @@
 "use client"
 
 import type { Case, CaseStatus } from "@/types/case"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate } from "@/lib/utils"
-import { updateCaseStatus } from "@/lib/api/cases-api"
+import { updateCaseStatus, casesApi } from "@/lib/api/cases-api"
+import { cn } from "@/lib/utils"
+const { getCaseById } = casesApi
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import CaseDocuments from "./case-documents"
@@ -21,6 +23,30 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { t } = useTranslation()
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Load full case details from API on mount
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      const id = caseState._id || caseState.id
+      if (!id) return
+      
+      setIsLoading(true)
+      try {
+        const result = await getCaseById(id)
+        if (result.success && result.case) {
+          setCaseState(result.case)
+        }
+      } catch (error) {
+        console.error('Error fetching full case details:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchFullDetails()
+    // only run once for initial case id
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /** Replace English summary/description labels & status with translations */
   const translateEmbeddedText = (text: string) => {
@@ -166,7 +192,7 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600">{t("pages:caseDetailsq.caseNumber")}</p>
-                <p className="text-lg font-bold text-blue-900 font-mono">{caseState.case_number}</p>
+                <p className="text-lg font-bold text-blue-900 font-mono">{(caseState as any).case_identifier || caseState.case_number}</p>
               </div>
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-bold">#</span>
@@ -254,6 +280,27 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                   : t("pages:commonl:na")}
               </p>
             </div>
+
+            {(caseState as any).priority && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetails.priority", "Priority")}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                   <div className={cn(
+                     "w-2 h-2 rounded-full",
+                     (caseState as any).priority === 'urgent' ? 'bg-red-500' : 
+                     (caseState as any).priority === 'high' ? 'bg-orange-500' : 'bg-slate-400'
+                   )} />
+                   <p className="text-base font-medium capitalize">{(caseState as any).priority}</p>
+                </div>
+              </div>
+            )}
+
+            {((caseState as any).est_duration || (caseState as any).expected_duration) && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetails.estDuration", "Expected Duration")}</h3>
+                <p className="text-base font-medium mt-1">{(caseState as any).est_duration || (caseState as any).expected_duration}</p>
+              </div>
+            )}
 
             <div>
               <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.created")}</h3>

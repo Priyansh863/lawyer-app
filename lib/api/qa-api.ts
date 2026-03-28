@@ -30,6 +30,7 @@ export interface QAAnswer {
   answer: string
   images?: string[]
   location?: string
+  createdAt?: string
   _id: string
 }
 
@@ -64,6 +65,7 @@ export interface CreateQAData {
   tags?: string[]
   selectedLawyer?: string
   clientId: string
+  images?: string[]
   isPublic?: boolean
   isAnonymous?: boolean
 }
@@ -170,11 +172,11 @@ export async function getQAItem(id: string): Promise<QAQuestion | null> {
   return null
 }
 
-export async function answerQuestion(id: string, answer: string, images?: string[], location?: string): Promise<QAQuestion> {
+export async function answerQuestion(id: string, answer: string, images?: string[], location?: string, lawyerName?: string): Promise<QAQuestion> {
   const response = await fetch(`${API_BASE_URL}/question/answer/${id}`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ answer, images, location })
+    body: JSON.stringify({ answer, images, location, lawyer_name: lawyerName })
   })
 
   if (!response.ok) {
@@ -190,11 +192,11 @@ export async function answerQuestion(id: string, answer: string, images?: string
   throw new Error(data.message || 'Failed to answer question')
 }
 
-export async function updateAnswer(id: string, answer: string, images?: string[], location?: string): Promise<QAQuestion> {
+export async function updateAnswer(id: string, answer: string, images?: string[], location?: string, lawyerName?: string): Promise<QAQuestion> {
   const response = await fetch(`${API_BASE_URL}/question/answer/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
-    body: JSON.stringify({ answer, images, location })
+    body: JSON.stringify({ answer, images, location, lawyer_name: lawyerName })
   })
 
   if (!response.ok) {

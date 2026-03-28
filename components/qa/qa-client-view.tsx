@@ -86,45 +86,64 @@ export default function QAClientView({
         </div>
 
         {/* Answer Section */}
-        <div className="p-8 pt-4 flex flex-col space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-slate-200" />
-            <span className="text-[#1E293B] font-bold text-[15px]">{answers.length ? lawyerName : ""}</span>
-          </div>
-
+        <div className="p-8 pt-4 flex flex-col space-y-8">
           {answers.length === 0 ? (
             <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
               <p className="text-slate-700 font-medium">{t("pages:qa.unanswered")}</p>
             </div>
           ) : (
-            <>
-              <Textarea
-                value={answers.map((a) => a.answer).join("\n\n")}
-                readOnly
-                className="min-h-[180px] border border-slate-300 focus-visible:ring-0 p-4 text-[16px] text-[#1E293B] leading-relaxed resize-none scrollbar-hide"
-              />
-
-              {(firstAnswer?.location || firstAnswer?.images?.length) && (
-                <div className="pt-2 border-t border-slate-50">
-                  {firstAnswer?.location && (
-                    <div className="flex items-start gap-2 text-slate-600 pt-3">
-                      <MapPin size={18} className="text-blue-500" />
-                      <span className="text-sm font-medium">{firstAnswer.location}</span>
+            answers.map((ans, idx) => (
+              <div key={ans._id || idx} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200" />
+                    <div className="flex flex-col">
+                      <span className="text-[#1E293B] font-bold text-[15px]">
+                        {ans.answeredBy
+                          ? `${ans.answeredBy.first_name} ${ans.answeredBy.last_name}`
+                          : ans.lawyer_name || "Lawyer"}
+                      </span>
+                      {ans.createdAt && (
+                        <span className="text-slate-400 text-[11px] font-medium">
+                          {formatDate(ans.createdAt)}
+                        </span>
+                      )}
                     </div>
-                  )}
-
-                  {firstAnswer?.images?.length ? (
-                    <div className="grid grid-cols-3 gap-3 mt-3">
-                      {firstAnswer.images.slice(0, 6).map((img, i) => (
-                        <div key={i} className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
-                          <img src={img} alt="attachment" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
+                  </div>
                 </div>
-              )}
-            </>
+
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-[16px] text-[#1E293B] leading-relaxed whitespace-pre-wrap">
+                    {ans.answer}
+                  </p>
+                </div>
+
+                {(ans.location || (ans.images && ans.images.length > 0)) && (
+                  <div className="space-y-3 px-1">
+                    {ans.location && (
+                      <div className="flex items-start gap-2 text-slate-600">
+                        <MapPin size={16} className="text-blue-500 mt-0.5" />
+                        <span className="text-[13px] font-medium">{ans.location}</span>
+                      </div>
+                    )}
+
+                    {ans.images && ans.images.length > 0 && (
+                      <div className="grid grid-cols-3 gap-3">
+                        {ans.images.slice(0, 6).map((img, i) => (
+                          <div key={i} className="aspect-square bg-white rounded-xl overflow-hidden border border-slate-100 shadow-sm">
+                            <img src={img} alt="attachment" className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {idx < answers.length - 1 && (
+                  <div className="border-b border-slate-50 pt-4" />
+                )}
+              </div>
+            ))
           )}
         </div>
       </div>

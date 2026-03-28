@@ -26,6 +26,9 @@ export interface Case {
   id: string
   _id?: string
   case_number: string
+  case_identifier?: string
+  case_code?: string
+  court_name?: string
   title: string
   description?: string
   summary?: string
@@ -52,6 +55,7 @@ export interface Case {
   priority?: string
   notes?: string
   est_duration?: string
+  expected_duration?: string
   created_at: string
   updated_at: string
   createdAt: string
@@ -148,6 +152,14 @@ export const caseApiMapping = {
     assignedTo: "assigned_to",
     case_type: "case_type",
     court_type: "court_type",
+    case_number: "case_number",
+    case_identifier: "case_identifier",
+    case_code: "case_code",
+    court_name: "court_name",
+    priority: "priority",
+    expected_duration: "est_duration",
+    est_duration: "est_duration",
+    notes: "notes",
   },
   update: {
     id: "case_id",
@@ -157,5 +169,9 @@ export const caseApiMapping = {
     assignedTo: "assigned_to",
     case_type: "case_type",
     court_type: "court_type",
+    priority: "priority",
+    expected_duration: "est_duration",
+    est_duration: "est_duration",
+    notes: "notes",
   },
 }

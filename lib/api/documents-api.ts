@@ -172,7 +172,9 @@ export const createFolder = async (folderName: string, userId: string): Promise<
       user_id: userId,
       file_size: 0,
       file_type: 'folder',
-      storage_type: 'cloud'
+      storage_type: 'cloud',
+      // used by the UI to group documents into folders
+      storage_location: folderName
     }
     const response = await axios.post(`${API_BASE_URL}/document/create-folder`, payload, {
       headers: getAuthHeaders()
@@ -216,6 +218,7 @@ export const uploadDocumentEnhanced = async (data: {
   caseId?: string
   documentType?: 'case_related' | 'general'
   storageType?: 'app' | 'cloud' | 'app_cloud'
+  storageLocation?: string
   file_base64?: string
 }) => {
   try {
@@ -233,6 +236,7 @@ export const uploadDocumentEnhanced = async (data: {
       case_id: data.caseId,
       associated_user_id: data.associatedUserId,
       storage_type: data.storageType || 'cloud',
+      storage_location: data.storageLocation,
       file_base64: data.file_base64
     }
 

@@ -169,17 +169,29 @@ const verifyPaymentSession = async (token: string, sessionId: string): Promise<P
 }
 
 const exportTokenTransactions = async (token: string): Promise<Blob> => {
-  const response = await axios.get(`${API_BASE_URL}/user/token-transactions/export`, {
-    headers: getAuthHeaders(token),
-    responseType: 'blob'
-  })
-  return response.data
+  // To avoid a 404, we manually fetch the transactions and generate the CSV client-side
+  const { transactions } = await getTokenTransactions(token, 1, 1000)
+  
+  const headers = ['Date', 'Description', 'Amount', 'Type', 'Status']
+  const rows = transactions.map(t => [
+    new Date(t.created_at).toLocaleString().replace(',', ''),
+    `"${t.description.replace(/"/g, '""')}"`,
+    t.amount,
+    t.type,
+    t.status
+  ])
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(r => r.join(','))
+  ].join('\n')
+
+  return new Blob([csvContent], { type: 'text/csv' })
 }
 
 export default function TokenPage() {
   const { t } = useTranslation()
-  const profile: any = useSelector((state: RootState) => state.auth.user)
-  const token = profile?.token
+  const { user: profile, token } = useSelector((state: RootState) => state.auth)
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -322,7 +334,15 @@ export default function TokenPage() {
   }
 
   const handleExportTransactions = async () => {
-    if (!token) return
+    if (!token) {
+      toast({
+        title: "Export Failed",
+        description: "You must be logged in to export transactions.",
+        variant: "destructive",
+      })
+      return
+    }
+    
     try {
       const blob = await exportTokenTransactions(token)
       const url = URL.createObjectURL(blob)
@@ -333,8 +353,18 @@ export default function TokenPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      
+      toast({
+        title: t('pages:common.success'),
+        description: "Transactions exported successfully.",
+      })
     } catch (error) {
       console.error('Export failed:', error)
+      toast({
+        title: "Export Error",
+        description: "Failed to generate CSV export. Please try again later.",
+        variant: "destructive",
+      })
     }
   }
 

@@ -116,7 +116,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       
       // Check if there are new notifications since last check
       if (!isInitialLoadRef.current && newCount > lastNotificationCount) {
-        const latestUnreadNotification = response.notifications.find(n => !n.isRead)
+        // Fetch the latest full page of notifications to update the global state
+        const fullResponse = await notificationsApi.getNotifications({ page: 1, limit: 50 });
+        setNotifications(fullResponse.notifications);
+        
+        const latestUnreadNotification = fullResponse.notifications.find(n => !n.isRead)
         
         // Show toast only for the latest notification
         if (latestUnreadNotification) {
@@ -128,8 +132,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
               case 'document_uploaded':
                 return '📄'
               case 'chat_started':
+              case 'chat_message':
                 return '💬'
               case 'video_consultation_started':
+              case 'video_consultation_scheduled':
+              case 'video_consultation':
                 return '🎥'
               case 'qa_question_posted':
               case 'qa_answer_posted':
@@ -148,6 +155,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
               case 'case_status_changed':
                 return '/cases'
               case 'video_consultation_started':
+              case 'video_consultation_scheduled':
+              case 'video_consultation':
+              case 'meeting_created':
+              case 'meeting_scheduled':
+              case 'meeting_started':
+              case 'meeting':
                 return '/video-consultations'
               case 'qa_question_posted':
                 return '/qa'
@@ -166,12 +179,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             action: {
               label: 'View',
               onClick: () => {
+                const navUrl = getNavigationUrl(latestUnreadNotification.type)
                 if (latestUnreadNotification.type === "qa_answer_posted") {
-                  // Client request: go to the Q&A list page (no popup route).
                   router.push("/qa")
                   return
                 }
-                router.push(getNavigationUrl(latestUnreadNotification.type))
+                router.push(navUrl)
               }
             }
           })
@@ -182,6 +195,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setLastNotificationCount(newCount)
       
       if (isInitialLoadRef.current) {
+        setNotifications(response.notifications) // Ensure we have the list even on first load
         isInitialLoadRef.current = false
         setLastNotificationCount(newCount)
       }
@@ -275,6 +289,21 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       checkForNewNotifications()
     }
   }, [])
+
+  // Background polling for new notifications every 15 seconds
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isUserLoggedIn()) {
+      interval = setInterval(() => {
+        checkForNewNotifications();
+      }, 5000); // 5 seconds
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [pathname]);
 
   // Clear notifications and counts when user logs out
   useEffect(() => {

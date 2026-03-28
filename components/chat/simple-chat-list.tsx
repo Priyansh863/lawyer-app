@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react"
+import { useSelector } from "react-redux"
 import { Search, MessageSquare, Trash2, Loader2, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ export interface SimpleChatListProps {
 
 const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ searchQueryProp = "", onNewChatClick }, ref) => {
   const { t } = useTranslation()
+  const user = useSelector((state: any) => state.auth.user)
   const [chats, setChats] = useState<Chat[]>([])
   const [filteredChats, setFilteredChats] = useState<Chat[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -62,10 +64,12 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
     if (!searchQueryProp.trim()) {
       setFilteredChats(chats)
     } else {
+      const currentUserId = user?._id || 'current_user'
       const filtered = chats.filter(chat => {
-        const currentUserId = 'current_user' // Should come from Redux/auth
-        const participant = chat.lawyer_id._id === currentUserId ? chat.client_id : chat.lawyer_id
-        const participantName = `${participant.first_name} ${participant.last_name}`.toLowerCase()
+        const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
+        if (!participant) return false;
+        
+        const participantName = `${participant.first_name || ''} ${participant.last_name || ''}`.toLowerCase()
         const lastMessage = chat.lastMessage?.content?.toLowerCase() || ''
 
         return participantName.includes(searchQueryProp.toLowerCase()) ||
@@ -73,7 +77,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
       })
       setFilteredChats(filtered)
     }
-  }, [chats, searchQueryProp])
+  }, [chats, searchQueryProp, user?._id])
 
   const loadChats = async () => {
     setIsLoading(true)
@@ -154,9 +158,9 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
       // Fetch all messages for this chat (pass a large limit to get history)
       const messages = await getChatMessages(chat._id, 1, 1000)
       
-      const currentUserId = 'current_user' // In real app, get from auth
-      const participant = chat.lawyer_id._id === currentUserId ? chat.client_id : chat.lawyer_id
-      const participantName = `${participant.first_name} ${participant.last_name}`.trim() || t("pages:conv.user")
+      const currentUserId = user?._id || 'current_user'
+      const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
+      const participantName = `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim() || t("pages:conv.user")
 
       // Build text content
       let textContent = `Chat History with ${participantName}\n`
@@ -256,9 +260,9 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
             </div>
           ) : (
             filteredChats.map((chat) => {
-              const currentUserId = 'current_user' // In real app, get from auth
-              const participant = chat.lawyer_id._id === currentUserId ? chat.client_id : chat.lawyer_id
-              const participantName = `${participant.first_name} ${participant.last_name}`.trim() || t("pages:conv.user")
+              const currentUserId = user?._id || 'current_user'
+              const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
+              const participantName = `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim() || t("pages:conv.user")
 
               return (
                 <div
@@ -321,14 +325,14 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
           }}
           chatId={selectedChat._id}
           clientName={
-            selectedChat.lawyer_id._id === 'current_user'
-              ? `${selectedChat.client_id.first_name} ${selectedChat.client_id.last_name}`.trim()
-              : `${selectedChat.lawyer_id.first_name} ${selectedChat.lawyer_id.last_name}`.trim()
+            selectedChat.lawyer_id?._id === (user?._id || 'current_user')
+              ? `${selectedChat.client_id?.first_name || ''} ${selectedChat.client_id?.last_name || ''}`.trim()
+              : `${selectedChat.lawyer_id?.first_name || ''} ${selectedChat.lawyer_id?.last_name || ''}`.trim()
           }
           clientAvatar={
-            selectedChat.lawyer_id._id === 'current_user'
-              ? selectedChat.client_id.avatar
-              : selectedChat.lawyer_id.avatar
+            selectedChat.lawyer_id?._id === (user?._id || 'current_user')
+              ? selectedChat.client_id?.avatar
+              : selectedChat.lawyer_id?.avatar
           }
         />
       )}

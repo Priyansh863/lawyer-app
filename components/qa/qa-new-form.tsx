@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { 
   MessageSquare, 
   User, 
@@ -23,14 +23,20 @@ import {
   Users, 
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Image as ImageIcon,
+  MapPin,
+  X,
+  ArrowLeft
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import { createQuestion, getLawyers, type CreateQAData } from "@/lib/api/qa-api"
+import { getUploadFileUrl } from "@/lib/helpers/fileupload"
+import { cn } from "@/lib/utils"
 
 const qaSchema = z.object({
-  question: z.string().min(10, "Question must be at least 10 characters"),
+  question: z.string().min(10, "Question must be at least 10 characters").max(5000, "Question must not exceed 5000 characters"),
   category: z.string().min(1, "Please select a category"),
   tags: z.string().optional(),
   selectedLawyer: z.string().optional(), // Optional lawyer selection
@@ -63,6 +69,10 @@ export default function QANewFormEnhanced() {
   const [lawyers, setLawyers] = useState<Lawyer[]>([])
   const [loadingLawyers, setLoadingLawyers] = useState(true)
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null)
+  const [selectedImages, setSelectedImages] = useState<{data: string, format: string}[]>([])
+  const [locationName, setLocationName] = useState<string | null>(null)
+  const [isLocating, setIsLocating] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<QAFormData>({
     resolver: zodResolver(qaSchema),
@@ -78,6 +88,53 @@ export default function QANewFormEnhanced() {
   useEffect(() => {
     loadLawyers()
   }, [])
+
+  const handleImageClick = () => fileInputRef.current?.click()
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    files.forEach(file => {
+      const reader = new FileReader()
+      const format = file.type.split("/")[1]
+      reader.onloadend = () => {
+        setSelectedImages(prev => [...prev, { data: reader.result as string, format }].slice(0, 5))
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleLocationClick = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: t('pages:qa.geoNotSupported') || "Geolocation not supported",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        setLocationName(`${t('pages:qa.currentLocation') || "Current Location"} (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`)
+        setIsLocating(false)
+        toast({
+          title: t('pages:qa.locationDetected') || "Location detected",
+        })
+      },
+      (error) => {
+        setIsLocating(false)
+        toast({
+          title: t('pages:qa.failedToGetLocation') || "Failed to get location",
+          variant: "destructive"
+        })
+      }
+    )
+  }
 
   const loadLawyers = async () => {
     try {
@@ -111,6 +168,19 @@ export default function QANewFormEnhanced() {
     try {
       setIsSubmitting(true)
       
+      // Upload images to S3 first if any
+      const imageUrls: string[] = []
+      if (selectedImages.length > 0) {
+        for (const imgObj of selectedImages) {
+          try {
+            const url = await getUploadFileUrl(user._id as string, imgObj)
+            if (url) imageUrls.push(url)
+          } catch (uploadErr) {
+            console.error("Failed to upload image:", uploadErr)
+          }
+        }
+      }
+      
       const questionData: CreateQAData = {
         title: data.question.substring(0, 100), // Use first 100 chars as title
         question: data.question,
@@ -118,6 +188,7 @@ export default function QANewFormEnhanced() {
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
         selectedLawyer: data.selectedLawyer || undefined,
         clientId: user._id as string,
+        images: imageUrls.length > 0 ? imageUrls : undefined,
         // If user selects a specific lawyer, make the question private to that lawyer.
         // Otherwise it is public for all lawyers to respond.
         isPublic: !data.selectedLawyer,
@@ -137,6 +208,8 @@ export default function QANewFormEnhanced() {
         // Reset form
         form.reset()
         setSelectedLawyer(null)
+        setSelectedImages([])
+        setLocationName(null)
         
         // Redirect to Q&A list
         router.push('/qa')
@@ -176,6 +249,18 @@ export default function QANewFormEnhanced() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex justify-start">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          className="border-slate-200 text-slate-700 font-semibold"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("common:actions.back", "Back")}
+        </Button>
+      </div>
+
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
@@ -226,12 +311,81 @@ export default function QANewFormEnhanced() {
                             placeholder={t("pages:questionform.describe_legal_question_placeholder")}
                             className="min-h-32"
                             {...field}
+                            onChange={(e) => field.onChange(e.target.value.slice(0, 5000))}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <div className="flex justify-between mt-1 px-1">
+                          <FormMessage />
+                          <span className="text-[12px] text-slate-400 font-medium">
+                            {field.value.length}/5000
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
+
+                  {/* Attachment Previews */}
+                  {(selectedImages.length > 0 || locationName) && (
+                    <div className="space-y-4">
+                      {locationName && (
+                        <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full w-fit border border-slate-100">
+                          <MapPin size={14} className="text-blue-500 fill-blue-500/10" />
+                          <span className="text-[12px] text-[#1E293B] font-bold">{locationName}</span>
+                          <button onClick={() => setLocationName(null)} className="text-slate-400 hover:text-red-500">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      )}
+
+                      {selectedImages.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                          {selectedImages.map((img, idx) => (
+                            <div key={idx} className="relative group shrink-0">
+                              <img src={img.data} alt="preview" className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm" />
+                              <button
+                                onClick={() => removeImage(idx)}
+                                className="absolute -top-2 -right-2 bg-white rounded-full shadow-md text-slate-400 hover:text-red-500 border border-slate-100 p-0.5"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden"
+                      multiple
+                      accept="image/*"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleImageClick}
+                      className="gap-2 h-9 rounded-lg font-bold text-slate-600"
+                    >
+                      <ImageIcon size={18} />
+                      {t('pages:qa.addImages') || "Add Images"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleLocationClick}
+                      disabled={isLocating}
+                      className="gap-2 h-9 rounded-lg font-bold text-slate-600"
+                    >
+                      {isLocating ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={18} />}
+                      {t('pages:qa.location') || "Location"}
+                    </Button>
+                  </div>
 
                   {/* Category */}
                   <FormField

@@ -3,6 +3,24 @@ import type { Case, CaseStatus } from "@/types/case"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
+function normalizeCaseWritePayload(input: any) {
+  if (!input || typeof input !== "object") return input
+
+  const payload: any = { ...input }
+
+  // Backend historically uses `est_duration`; some UIs send `expected_duration`.
+  if (payload.expected_duration != null && payload.est_duration == null) {
+    payload.est_duration = payload.expected_duration
+  }
+
+  // Some UIs might send the inverse; keep both for compatibility.
+  if (payload.est_duration != null && payload.expected_duration == null) {
+    payload.expected_duration = payload.est_duration
+  }
+
+  return payload
+}
+
 // Helper function to get auth headers
 const getToken = () => {
   if (typeof window !== "undefined") {
@@ -82,7 +100,7 @@ export const casesApi = {
    */
   getCaseById: async (caseId: string): Promise<{ success: boolean; case: Case }> => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/cases/${caseId}`, {
+      const response = await axios.get(`${API_BASE_URL}/user/cases/${caseId}`, {
         headers: getAuthHeaders()
       })
       return response.data
@@ -97,7 +115,7 @@ export const casesApi = {
    */
   createCase: async (caseData: any): Promise<{ success: boolean; case: Case }> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/user/CreateCases`, caseData, {
+      const response = await axios.post(`${API_BASE_URL}/user/CreateCases`, normalizeCaseWritePayload(caseData), {
         headers: getAuthHeaders()
       })
       return response.data
@@ -138,7 +156,7 @@ export const casesApi = {
   }): Promise<{ success: boolean; case: Case }> => {
     try {
       const response = await axios.put(`${API_BASE_URL}/user/cases/${caseId}`,
-        updateData,
+        normalizeCaseWritePayload(updateData),
         { headers: getAuthHeaders() }
       )
       return response.data

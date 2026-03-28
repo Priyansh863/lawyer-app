@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,10 +36,14 @@ import {
   AlertTriangle,
   User
 } from "lucide-react";
+import type { RootState } from "@/lib/store";
 
 export default function PostsPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  const user = useSelector((state: RootState) => state.auth.user);
+  const canCreateContent = user?.account_type === "lawyer";
 
   // State
   const [posts, setPosts] = useState<Post[]>([]);
@@ -223,12 +229,14 @@ export default function PostsPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-8 rounded-lg shadow-lg active:scale-95 transition-all"
-            >
-              {t("pages:posts.createContent")}
-            </Button>
+            {canCreateContent && (
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                className="bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-10 px-8 rounded-lg shadow-lg active:scale-95 transition-all"
+              >
+                {t("pages:posts.createContent")}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -352,21 +360,17 @@ export default function PostsPage() {
                         <div className="grid grid-cols-3 gap-3">
                           {post.images && post.images.length > 0 ? (
                             post.images.slice(0, 3).map((img, idx) => (
-                              <div key={idx} className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
-                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              <div key={idx} className="aspect-square rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
+                                <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               </div>
                             ))
                           ) : (
                             post.image && (
-                              <div className="aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-colors">
-                                <img src={post.image} alt="" className="w-full h-full object-cover" />
+                              <div className="aspect-square rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
+                                <img src={post.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                               </div>
                             )
                           )}
-                          {/* Fill empty slots to maintain 3-column layout if fewer than 3 images */}
-                          {Array.from({ length: Math.max(0, 3 - (post.images?.length || (post.image ? 1 : 0))) }).map((_, i) => (
-                            <div key={`empty-${i}`} className="aspect-square rounded-xl bg-slate-50 border border-slate-100"></div>
-                          ))}
                         </div>
                       ) : null}
 
@@ -406,13 +410,14 @@ export default function PostsPage() {
       </div>
 
       {/* Create Post Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] p-6 overflow-hidden rounded-md border border-slate-200 shadow-lg bg-white">
-          <div className="max-h-[85vh] overflow-y-auto scrollbar-hide">
+      {canCreateContent && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          {/* Single scroll container to avoid double scrollbars */}
+          <DialogContent className="sm:max-w-[700px] p-0 max-h-[90vh] overflow-y-auto rounded-md border border-slate-200 shadow-lg bg-white">
             <PostCreator onPostCreated={handlePostCreated} />
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
       {/* QR Code Dialog */}
       <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
         <DialogContent className="sm:max-w-md rounded-3xl p-8">

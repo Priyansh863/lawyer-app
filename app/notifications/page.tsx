@@ -38,11 +38,18 @@ export default function NotificationsPage() {
       await markAsRead(notification._id)
     }
 
+    // Prioritize known types and our internal mapping
+    const navUrl = notification.type ? getNavigationUrl(notification.type) : null
+    
     if (notification.type === "qa_answer_posted" || notification.type === "qa_question_posted") {
-      // Client request: go to the Q&A list page (no popup route).
       router.push("/qa")
+    } else if (navUrl && navUrl !== "/notifications") {
+      // If we have a specific mapping and it's not the fallback, use it
+      router.push(navUrl)
     } else if (notification.redirectUrl) {
-      router.push(notification.redirectUrl)
+      // Sanitize redirect URL – common mistake is underscores vs hyphens
+      const sanitizedUrl = notification.redirectUrl.replace(/_/g, '-')
+      router.push(sanitizedUrl)
     } else if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
@@ -57,9 +64,14 @@ export default function NotificationsPage() {
       case 'case_status_changed':
         return '/cases'
       case 'video_consultation_started':
+      case 'video_consultation_scheduled':
+      case 'video_consultation':
+      case 'meeting_created':
+      case 'meeting_scheduled':
+      case 'meeting_started':
+      case 'meeting':
         return '/video-consultations'
       case 'qa_question_posted':
-        return '/qa'
       case 'qa_answer_posted':
         return '/qa'
       case 'document_uploaded':
@@ -102,6 +114,8 @@ export default function NotificationsPage() {
       case 'chat_started':
         return '💬'
       case 'video_consultation_started':
+      case 'video_consultation_scheduled':
+      case 'video_consultation':
         return '🎥'
       case 'qa_question_posted':
       case 'qa_answer_posted':
@@ -122,6 +136,8 @@ export default function NotificationsPage() {
       case 'chat_started':
         return t('pages:notificationsa.types.chat')
       case 'video_consultation_started':
+      case 'video_consultation_scheduled':
+      case 'video_consultation':
         return t('pages:notificationsa.types.videoCall')
       case 'qa_question_posted':
         return t('pages:notificationsa.types.qaQuestion')
@@ -223,6 +239,11 @@ export default function NotificationsPage() {
   const getEventLabel = (type: string) => {
     switch (type) {
       case 'video_consultation_started':
+      case 'video_consultation_scheduled':
+      case 'video_consultation':
+      case 'meeting_created':
+      case 'meeting_scheduled':
+      case 'meeting_started':
         return t('pages:notificationsa.eventLabels.videoConsultation')
       case 'case_created':
         return t('pages:notificationsa.eventLabels.caseCreated')

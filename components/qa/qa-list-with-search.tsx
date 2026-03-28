@@ -7,7 +7,7 @@ import { getQAItems, toggleBookmark, type QAQuestion } from "@/lib/api/qa-api"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, RefreshCw, Bookmark, MessageSquare, MoreHorizontal, Loader2 } from "lucide-react"
+import { Search, RefreshCw, Bookmark, MessageSquare, MoreHorizontal, Loader2, MapPin } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import QAAnswerForm from "./qa-answer-form"
@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
 import { toast } from "react-hot-toast"
+import QRCode from "qrcode"
 
 const categories = [
   { value: "Civil / Disputes", labelKey: "pages:qa.categories.civilDisputes" },
@@ -45,6 +46,7 @@ function QuestionCard({
   isLawyer,
   isClient,
   showAnswerPreview,
+  onNotInterested,
 }: {
   question: QAQuestion
   currentUserId?: string
@@ -53,10 +55,13 @@ function QuestionCard({
   isLawyer: boolean
   isClient: boolean
   showAnswerPreview: boolean
+  onNotInterested?: (id: string) => void
 }) {
   const { t } = useTranslation()
   const [isBookmarked, setIsBookmarked] = useState(question.isBookmarked || false)
   const [bookmarkLoading, setBookmarkLoading] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
+  const [qrCodeUrl, setQrCodeUrl] = useState("")
 
   // Sync state with prop updates
   useEffect(() => {
@@ -87,6 +92,46 @@ function QuestionCard({
     }
   }
 
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const url = `${window.location.origin}/qa/${question._id}`
+    navigator.clipboard.writeText(url)
+    toast.success(t('pages:qa.linkCopied') || "Link copied to clipboard")
+  }
+
+  const handleQRCode = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const url = `${window.location.origin}/qa/${question._id}`
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: "#1E293B",
+          light: "#FFFFFF"
+        }
+      })
+      setQrCodeUrl(qrDataUrl)
+      setShowQRModal(true)
+    } catch (err) {
+      console.error("Failed to generate QR code:", err)
+      toast.error(t('pages:qa.failedToGenerateQR') || "Failed to generate QR code")
+    }
+  }
+
+  const handleNotInterested = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onNotInterested) {
+      onNotInterested(question._id)
+      toast.success(t('pages:qa.markedNotInterested') || "Marked as not interested")
+    }
+  }
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toast.success(t('pages:qa.reportedSuccessfully') || "Reported successfully")
+  }
+
   const maskUser = (name: string) => {
     if (!name) return "user***"
     if (name.length <= 3) return name + "***"
@@ -110,115 +155,169 @@ function QuestionCard({
   }
 
   return (
-    <div
-      className={cn(
-        "bg-white border border-gray-100 rounded-2xl shadow-sm p-8 flex flex-col h-full transition-all group",
-        isLawyer
-          ? "hover:shadow-md cursor-pointer"
-          : isClient
-            ? "cursor-pointer"
-            : "cursor-default"
-      )}
-      onClick={isLawyer ? onWriteAnswer : isClient ? onOpenClientView : undefined}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200" />
-          <span className="text-[#1E293B] font-bold text-[15px]">{maskUser(question.clientId?.first_name || 'user')}</span>
-        </div>
-        {isLawyer && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600">
-                <MoreHorizontal size={24} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.copyLink')}</DropdownMenuItem>
-              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.qrCode')}</DropdownMenuItem>
-              <DropdownMenuItem className="text-sm font-medium">{t('pages:qa.notInterested')}</DropdownMenuItem>
-              <DropdownMenuItem className="text-sm font-medium text-red-500">{t('pages:qa.report')}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col space-y-4">
-        <p className="text-[#1E293B] text-[16px] leading-relaxed font-medium line-clamp-3">
-          {question.question}
-        </p>
-
-        {isClient && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#1E293B] opacity-70">
-              {question.answer?.length ? t("pages:qa.status.answered") : t("pages:qa.status.pending")}
-            </span>
-            {showAnswerPreview && firstAnsweredByName && (
-              <span className="text-[11px] text-slate-400">• {firstAnsweredByName}</span>
-            )}
+    <div className="relative">
+      {/* QR Code Modal - Outside main card clickable area */}
+      <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
+        <DialogContent 
+          className="max-w-sm rounded-2xl p-8 flex flex-col items-center" 
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-bold text-[#1E293B] mb-6">{t('pages:qa.qrCode') || "QR Code"}</h3>
+          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6 w-full flex justify-center">
+            {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />}
           </div>
+          <p className="text-center text-slate-500 text-sm font-medium mb-6">
+            {t('pages:qa.qrCodeDesc') || "Scan this QR code to view the question on your mobile device."}
+          </p>
+          <Button 
+            className="w-full h-12 rounded-xl bg-[#0F172A] text-white font-bold"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowQRModal(false)
+            }}
+          >
+            {t('common:close') || "Close"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <div
+        className={cn(
+          "bg-white border border-gray-100 rounded-2xl shadow-sm p-8 flex flex-col h-full transition-all group",
+          isLawyer
+            ? "hover:shadow-md cursor-pointer"
+            : isClient
+              ? "cursor-pointer"
+              : "cursor-default"
         )}
-
-        <div className="flex flex-col gap-2">
-          <span className="text-[#1E293B] font-bold text-[14px] opacity-60"># {question.category}</span>
-
-          {isClient && showAnswerPreview && firstAnswerText && (
-            <div className="pt-1 text-slate-600 text-[13px] leading-relaxed line-clamp-4">
-              {firstAnswerText}
-            </div>
+        onClick={isLawyer ? onWriteAnswer : isClient ? onOpenClientView : undefined}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-200" />
+            <span className="text-[#1E293B] font-bold text-[15px]">{maskUser(question.clientId?.first_name || 'user')}</span>
+          </div>
+          {isLawyer && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-300 hover:text-slate-600">
+                  <MoreHorizontal size={24} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem className="text-sm font-medium" onClick={handleCopyLink}>{t('pages:qa.copyLink')}</DropdownMenuItem>
+                <DropdownMenuItem className="text-sm font-medium" onClick={handleQRCode}>{t('pages:qa.qrCode')}</DropdownMenuItem>
+                <DropdownMenuItem className="text-sm font-medium" onClick={handleNotInterested}>{t('pages:qa.notInterested')}</DropdownMenuItem>
+                <DropdownMenuItem className="text-sm font-medium text-red-500" onClick={handleReport}>{t('pages:qa.report')}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-
-          {/* Images only if they exist */}
-          {question.images && question.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 my-2">
-              {question.images.map((img, i) => (
-                <div key={i} className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
-                  <img src={img} alt="attachment" className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
-
-          <span className="text-slate-400 text-[12px] font-medium tracking-tight">
-            {question.category} / {formatDate(question.createdAt)}
-          </span>
         </div>
-      </div>
 
-      {/* Footer controls only */}
-      <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-50">
-        {isLawyer && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "text-slate-300 hover:text-blue-600 transition-colors",
-                isBookmarked && "text-blue-600 fill-blue-600"
+        {/* Content */}
+        <div className="flex-1 flex flex-col space-y-4">
+          <p className="text-[#1E293B] text-[16px] leading-relaxed font-medium line-clamp-3">
+            {question.question}
+          </p>
+
+          {isClient && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-[#1E293B] opacity-70">
+                {question.answer?.length ? t("pages:qa.status.answered") : t("pages:qa.status.pending")}
+              </span>
+              {showAnswerPreview && firstAnsweredByName && (
+                <span className="text-[11px] text-slate-400">• {firstAnsweredByName}</span>
               )}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleBookmark(e)
-              }}
-              disabled={bookmarkLoading}
-            >
-              <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
-            </Button>
+            </div>
+          )}
 
-            <Button
-              onClick={(e) => {
-                e.stopPropagation()
-                onWriteAnswer()
-              }}
-              className="bg-[#1E293B] hover:bg-[#0F172A] text-white gap-2 px-6 rounded-xl font-bold text-[13px] h-11 transition-all active:scale-95"
-            >
-              <MessageSquare size={16} />
-              {hasAnswered ? t('pages:qa.checkAnswer') : t('pages:qa.writeAnswer')}
-            </Button>
-          </>
-        )}
+          <div className="flex flex-col gap-2">
+            <span className="text-[#1E293B] font-bold text-[14px] opacity-60"># {question.category}</span>
+
+            {(isClient || isLawyer) && showAnswerPreview && (isLawyer ? myAnswer?.answer : firstAnswerText) && (
+              <div className="pt-1 text-slate-600 text-[13px] leading-relaxed line-clamp-4 bg-slate-50/50 p-3 rounded-xl border border-slate-50 mt-1">
+                <span className="font-bold text-[#1E293B] block mb-1 text-[11px] uppercase tracking-wider opacity-50">
+                  {isLawyer ? t('pages:qa.myAnswer') || "My Answer" : t('pages:qa.answerPreview') || "Answer Preview"}
+                </span>
+                {isLawyer ? myAnswer?.answer : firstAnswerText}
+              </div>
+            )}
+
+            {/* Answer Attachments for Lawyer */}
+            {isLawyer && showAnswerPreview && myAnswer && (myAnswer.images?.length || myAnswer.location) && (
+              <div className="space-y-3 mt-2">
+                {myAnswer.location && (
+                  <div className="flex items-center gap-1.5 text-blue-600 bg-blue-50/50 w-fit px-2.5 py-1 rounded-full border border-blue-100/50">
+                    <MapPin size={12} className="fill-blue-600/10" />
+                    <span className="text-[11px] font-bold">{myAnswer.location}</span>
+                  </div>
+                )}
+                {myAnswer.images && myAnswer.images.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {myAnswer.images.map((img, i) => (
+                      <div key={i} className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 shadow-sm shrink-0">
+                        <img src={img} alt="answer attachment" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Question Images */}
+            {question.images && question.images.length > 0 && (
+              <div className="space-y-2 mt-2">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t('pages:qa.questionImages') || "Question Attachments"}</span>
+                <div className="grid grid-cols-3 gap-3">
+                  {question.images.map((img, i) => (
+                    <div key={i} className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100">
+                      <img src={img} alt="attachment" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <span className="text-slate-400 text-[12px] font-medium tracking-tight">
+              {question.category} / {formatDate(question.createdAt)}
+            </span>
+          </div>
+        </div>
+
+        {/* Footer controls only */}
+        <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-50">
+          {isLawyer && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "text-slate-300 hover:text-blue-600 transition-colors",
+                  isBookmarked && "text-blue-600 fill-blue-600"
+                )}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleBookmark(e)
+                }}
+                disabled={bookmarkLoading}
+              >
+                <Bookmark className={cn("w-6 h-6", isBookmarked && "fill-current")} />
+              </Button>
+
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onWriteAnswer()
+                }}
+                className="bg-[#1E293B] hover:bg-[#0F172A] text-white gap-2 px-6 rounded-xl font-bold text-[13px] h-11 transition-all active:scale-95"
+              >
+                <MessageSquare size={16} />
+                {hasAnswered ? t('pages:qa.checkAnswer') : t('pages:qa.writeAnswer')}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -239,7 +338,27 @@ export default function QAListWithSearch() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null)
   const [selectedQuestion, setSelectedQuestion] = useState<QAQuestion | null>(null)
+  const [notInterestedIds, setNotInterestedIds] = useState<string[]>([])
   const { t } = useTranslation()
+
+  // Load not interested IDs from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('qa_not_interested')
+    if (saved) {
+      try {
+        setNotInterestedIds(JSON.parse(saved))
+      } catch (e) {
+        console.error("Failed to parse not interested IDs", e)
+      }
+    }
+  }, [])
+
+  // Persist not interested IDs whenever they change
+  useEffect(() => {
+    if (notInterestedIds.length > 0) {
+      localStorage.setItem('qa_not_interested', JSON.stringify(notInterestedIds))
+    }
+  }, [notInterestedIds])
 
   const refetchQuestions = async (options?: { setRefreshing?: boolean }) => {
     try {
@@ -287,10 +406,8 @@ export default function QAListWithSearch() {
 
   // Client safeguard: if a lawyer has answered, keep the question out of "My Questions"
   // and only show it under "Answers" (when backend filters already do this, this is harmless).
-  const visibleQuestions =
-    isClient && activeTab === "my_questions"
-      ? questions.filter((q) => !(q.answer && q.answer.length > 0))
-      : questions
+  const visibleQuestions = questions.filter(q => !notInterestedIds.includes(q._id))
+    .filter(q => isClient && activeTab === "my_questions" ? !(q.answer && q.answer.length > 0) : true)
 
   const tabs = isClient
     ? [
@@ -403,7 +520,8 @@ export default function QAListWithSearch() {
                 }}
                 isLawyer={isLawyer}
                 isClient={isClient}
-                showAnswerPreview={isClient && activeTab === "my_answers"}
+                showAnswerPreview={activeTab === "my_answers"}
+                onNotInterested={(id) => setNotInterestedIds(prev => [...prev, id])}
               />
             ))}
           </div>
@@ -433,6 +551,8 @@ export default function QAListWithSearch() {
                   onClose={() => {
                     setSelectedQuestionId(null)
                     setSelectedQuestion(null)
+                    refetchQuestions({ setRefreshing: true })
+                    if (isLawyer) setActiveTab("my_answers")
                   }}
                 />
               ) : (

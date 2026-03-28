@@ -49,9 +49,10 @@ interface AddDocumentsDialogProps {
     isOpen: boolean;
     onClose: () => void;
     onUploadSuccess: () => void;
+    targetFolder?: string | null;
 }
 
-export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess }: AddDocumentsDialogProps) {
+export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFolder }: AddDocumentsDialogProps) {
     const { t } = useTranslation()
     const [searchTerm, setSearchTerm] = useState('')
     const [sortBy, setSortBy] = useState('name')
@@ -148,6 +149,42 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess }: AddDocu
         })
     }
 
+    // Some browsers sometimes return an empty/incorrect `file.type` (especially for folder scans).
+    // For stable backend validation, infer MIME from the extension as a fallback.
+    const getUploadMimeType = (file: File): string | null => {
+        if (file.type && file.type.trim()) return file.type
+
+        const lower = file.name.toLowerCase()
+        const ext = lower.includes('.') ? lower.slice(lower.lastIndexOf('.') + 1) : ''
+
+        switch (ext) {
+            case 'pdf':
+                return 'application/pdf'
+            case 'doc':
+                return 'application/msword'
+            case 'docx':
+                return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            case 'txt':
+                return 'text/plain'
+            case 'jpg':
+            case 'jpeg':
+                return 'image/jpeg'
+            case 'png':
+                return 'image/png'
+            case 'gif':
+                return 'image/gif'
+            case 'bmp':
+                return 'image/bmp'
+            case 'webp':
+                return 'image/webp'
+            case 'tif':
+            case 'tiff':
+                return 'image/tiff'
+            default:
+                return null
+        }
+    }
+
     const handleUpload = async (mode: 'cloud' | 'app') => {
         const selectedFiles = files.filter(f => f.selected)
         if (selectedFiles.length === 0 || !user?._id) {
@@ -157,26 +194,56 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess }: AddDocu
 
         setUploadingMode(mode)
         try {
-            for (const fileObj of selectedFiles) {
-                const base64 = await fileToBase64(fileObj.file)
+            let successCount = 0
+            const failed: { name: string; message?: string }[] = []
 
-                await uploadDocumentEnhanced({
-                    userId: user._id as string,
-                    fileUrl: "",
-                    fileName: fileObj.name,
-                    privacy: 'private',
-                    processWithAI: true,
-                    fileSize: fileObj.file.size,
-                    fileType: fileObj.file.type || 'application/pdf',
-                    documentType: 'general',
-                    storageType: mode === 'cloud' ? 'cloud' : 'app',
-                    file_base64: base64
-                })
+            for (const fileObj of selectedFiles) {
+                const inferredMime = getUploadMimeType(fileObj.file)
+                if (!inferredMime) {
+                    failed.push({ name: fileObj.name, message: 'Unsupported file type' })
+                    continue
+                }
+
+                try {
+                    const base64 = await fileToBase64(fileObj.file)
+
+                    const result = await uploadDocumentEnhanced({
+                        userId: user._id as string,
+                        fileUrl: "",
+                        fileName: fileObj.name,
+                        privacy: 'private',
+                        processWithAI: true,
+                        fileSize: fileObj.file.size,
+                        fileType: inferredMime,
+                        documentType: 'general',
+                        storageType: mode === 'cloud' ? 'cloud' : 'app',
+                        // If user opened a folder in Documents page, upload into that folder.
+                        // Otherwise keep the scanned local relative folder path.
+                        storageLocation: targetFolder || fileObj.location,
+                        file_base64: base64
+                    })
+
+                    if (result?.success) successCount += 1
+                    else failed.push({ name: fileObj.name, message: result?.message })
+                } catch (error: any) {
+                    failed.push({ name: fileObj.name, message: error?.message || 'Upload failed' })
+                }
             }
-            toast.success(mode === 'cloud'
-                ? t('pages:documentManager.addDocumentsDialog.uploadSuccessCloud')
-                : t('pages:documentManager.addDocumentsDialog.uploadSuccessApp'))
-            onUploadSuccess()
+
+            if (successCount > 0) {
+                toast.success(mode === 'cloud'
+                    ? t('pages:documentManager.addDocumentsDialog.uploadSuccessCloud')
+                    : t('pages:documentManager.addDocumentsDialog.uploadSuccessApp'))
+                onUploadSuccess()
+            }
+
+            if (failed.length > 0) {
+                const preview = failed.slice(0, 3).map(f => f.name).join(', ')
+                toast.error(
+                    `${t('pages:documentManager.addDocumentsDialog.uploadFailed')} (${failed.length} failed)` +
+                    (preview ? `: ${preview}` : '')
+                )
+            }
         } catch (error) {
             console.error('Upload failed:', error)
             toast.error(t('pages:documentManager.addDocumentsDialog.uploadFailed'))
@@ -232,6 +299,7 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess }: AddDocu
                                 multiple
                                 /* @ts-ignore - webkitdirectory is non-standard but widely supported */
                                 webkitdirectory=""
+                                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.bmp,.webp,.tif,.tiff"
                                 directory=""
                                 ref={fileInputRef}
                                 className="hidden"
