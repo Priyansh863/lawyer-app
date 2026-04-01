@@ -89,6 +89,15 @@ export interface DocumentResponse {
   message?: string
 }
 
+const isLikelyOpenableUrl = (value?: string) => {
+  if (!value) return false
+  const v = value.trim()
+  if (!v || v === '#') return false
+  if (v.startsWith('http://') || v.startsWith('https://')) return true
+  if (v.startsWith('data:') || v.startsWith('blob:')) return true
+  return false
+}
+
 // Get all documents (with fallback endpoints)
 export const getDocuments = async (): Promise<DocumentResponse> => {
   try {
@@ -423,4 +432,50 @@ export const removeFromCloud = async (documentId: string): Promise<DocumentRespo
       message: error.response?.data?.message || 'Failed to remove from cloud'
     }
   }
+}
+
+// Resolve a viewable URL for a document (handles non-public/private links)
+export const getDocumentViewUrl = async (documentId: string, fallbackLink?: string): Promise<string> => {
+  if (isLikelyOpenableUrl(fallbackLink)) {
+    return fallbackLink!.trim()
+  }
+
+  const headers = getAuthHeaders()
+  const candidates = [
+    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}/view` },
+    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}/download` },
+    { method: 'get' as const, url: `${API_BASE_URL}/document/view/${documentId}` },
+    { method: 'get' as const, url: `${API_BASE_URL}/document/download/${documentId}` },
+    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}` },
+    { method: 'post' as const, url: `${API_BASE_URL}/document/generate-secure-link`, body: { fileId: documentId } },
+  ]
+
+  for (const candidate of candidates) {
+    try {
+      const response = candidate.method === 'post'
+        ? await axios.post(candidate.url, candidate.body || {}, { headers })
+        : await axios.get(candidate.url, { headers })
+
+      const data = response?.data || {}
+      const resolved =
+        data?.url ||
+        data?.link ||
+        data?.document?.url ||
+        data?.document?.link ||
+        data?.data?.url ||
+        data?.data?.link
+
+      if (isLikelyOpenableUrl(resolved)) {
+        return resolved.trim()
+      }
+    } catch {
+      // continue trying fallbacks
+    }
+  }
+
+  if (fallbackLink && fallbackLink.trim()) {
+    return fallbackLink.trim()
+  }
+
+  throw new Error('No view URL available')
 }

@@ -46,7 +46,7 @@ import {
     Volume2,
 } from 'lucide-react'
 import { useTranslation } from "@/hooks/useTranslation"
-import { getDocuments, updateDocumentStorageType, removeFromCloud, deleteDocument, downloadDocument, createFolder, type Document } from '@/lib/api/documents-api'
+import { getDocuments, updateDocumentStorageType, removeFromCloud, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document } from '@/lib/api/documents-api'
 import { uploadFileOnS3 } from '@/lib/helpers/fileupload'
 import { toast } from 'sonner'
 import { AddDocumentsDialog } from './add-documents-dialog'
@@ -227,11 +227,61 @@ export default function DocumentManager() {
     }
 
     // Action handlers
-    const handleViewDocument = (doc: Document) => {
-        if (doc.link && doc.link !== '#') {
-            window.open(doc.link, '_blank')
-        } else {
-            toast.info(t('pages:documentManager.toastInfoView'))
+    const handleViewDocument = async (doc: Document) => {
+        const rawLink = (doc.link || '').trim()
+        if (!rawLink || rawLink === '#') {
+            // Try backend resolution even when link is empty (app/private docs)
+            try {
+                const resolved = await getDocumentViewUrl(doc._id, rawLink)
+                const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
+                if (!opened) window.location.assign(resolved)
+                return
+            } catch {
+                toast.info(t('pages:documentManager.toastInfoView'))
+                return
+            }
+        }
+
+        const candidates: string[] = [rawLink]
+        const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(rawLink)
+
+        // //example.com/path
+        if (rawLink.startsWith('//')) {
+            candidates.push(`https:${rawLink}`)
+        }
+
+        // /relative/path
+        if (rawLink.startsWith('/')) {
+            candidates.push(`${window.location.origin}${rawLink}`)
+        }
+
+        // key/path or filename.ext that backend may store without protocol
+        if (!hasProtocol && !rawLink.startsWith('data:') && !rawLink.startsWith('blob:')) {
+            candidates.push(`https://${rawLink}`)
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || ''
+            if (apiBase) {
+                const origin = apiBase.replace(/\/api\/v1\/?$/, '')
+                candidates.push(`${origin}/${rawLink.replace(/^\/+/, '')}`)
+            }
+        }
+
+        for (const url of candidates) {
+            try {
+                const opened = window.open(url, '_blank', 'noopener,noreferrer')
+                if (opened) return
+            } catch {
+                // try next candidate
+            }
+        }
+
+        // Last fallback: ask backend for a signed/secure URL by document id
+        try {
+            const resolved = await getDocumentViewUrl(doc._id, rawLink)
+            const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
+            if (!opened) window.location.assign(resolved)
+            return
+        } catch {
+            toast.error(t('pages:documentManager.toastInfoView'))
         }
     }
 
