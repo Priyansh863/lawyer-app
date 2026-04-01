@@ -154,6 +154,20 @@ function QuestionCard({
     }
   }
 
+  const qrCodeDescription = (() => {
+    const v1 = t('pages:qa.qrCodeDesc')
+    if (v1 && v1 !== 'pages:qa.qrCodeDesc' && v1 !== 'qa.qrCodeDesc' && !v1.includes('qrCodeDesc')) {
+      return v1
+    }
+
+    const v2 = t('qa.qrCodeDesc')
+    if (v2 && v2 !== 'qa.qrCodeDesc' && v2 !== 'pages:qa.qrCodeDesc' && !v2.includes('qrCodeDesc')) {
+      return v2
+    }
+
+    return "Scan this QR code to view the question on your mobile device."
+  })()
+
   return (
     <div className="relative">
       {/* QR Code Modal - Outside main card clickable area */}
@@ -167,7 +181,7 @@ function QuestionCard({
             {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />}
           </div>
           <p className="text-center text-slate-500 text-sm font-medium mb-6">
-            {t('pages:qa.qrCodeDesc') || "Scan this QR code to view the question on your mobile device."}
+            {qrCodeDescription}
           </p>
           <Button 
             className="w-full h-12 rounded-xl bg-[#0F172A] text-white font-bold"

@@ -155,13 +155,28 @@ export default function DocumentManager() {
         }
     }
 
+    const normalizePath = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
+
     const filteredDocs = documents
         .filter(doc => doc.document_name.toLowerCase().includes(searchTerm.toLowerCase()))
         .filter(doc => {
-            if (!openFolder) return true
-            const loc = (doc.storage_location || '').toString()
+            const loc = normalizePath((doc.storage_location || '').toString())
+            const isFolderDoc = (doc.file_type || '').toLowerCase() === 'folder'
+
+            if (!openFolder) {
+                // Root list should not include files that are inside folders.
+                // Show folders and root-level docs only.
+                if (isFolderDoc) return true
+                return !loc || loc === '/'
+            }
+
             if (!loc) return false
-            return loc === openFolder || loc.startsWith(`${openFolder}/`) || loc.startsWith(`${openFolder}\\`)
+            const currentFolder = normalizePath(openFolder)
+
+            // Prevent a folder from showing itself when opened.
+            if (isFolderDoc && loc === currentFolder) return false
+
+            return loc === currentFolder || loc.startsWith(`${currentFolder}/`)
         })
         .sort((a, b) => {
         if (sortBy === 'name') return a.document_name.localeCompare(b.document_name)

@@ -117,6 +117,12 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
   const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
+  const addUniqueImage = (existing: string[] = [], nextImage?: string, max: number = 3) => {
+    if (!nextImage) return existing.slice(0, max);
+    if (existing.includes(nextImage)) return existing.slice(0, max);
+    return [...existing, nextImage].slice(0, max);
+  };
+
   // Download image function
   const downloadImage = async (imageUrl: string, filename: string) => {
     try {
@@ -308,7 +314,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         setPostData(prev => ({ 
           ...prev, 
           image: prev.images?.length === 0 ? imageUrl : prev.image, // Fallback for single image
-          images: [...(prev.images || []), imageUrl].slice(0, 3) 
+          images: addUniqueImage(prev.images || [], imageUrl, 3)
         }));
         toast({
           title: t('pages:creator.post.image.toast.success'),
@@ -584,7 +590,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       setPostData(prev => ({ 
         ...prev, 
         image: prev.images?.length === 0 ? response.data.imageUrl : prev.image,
-        images: [...(prev.images || []), response.data.imageUrl].slice(0, 3) 
+        images: addUniqueImage(prev.images || [], response.data.imageUrl, 3)
       }));
     } catch (error: any) {
       toast({
@@ -1213,7 +1219,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                               setPostData(prev => ({ 
                                 ...prev, 
                                 image: prev.images?.length === 0 ? aiImageUrl : prev.image,
-                                images: [...(prev.images || []), aiImageUrl].slice(0, 3) 
+                                images: addUniqueImage(prev.images || [], aiImageUrl, 3)
                               }));
                               setAiImageUrl(null);
                               toast({

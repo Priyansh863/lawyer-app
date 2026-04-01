@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
     Dialog,
     DialogContent,
@@ -34,7 +34,6 @@ import {
     Upload,
     Plus,
     Loader2,
-    Video,
     Clock
 } from "lucide-react"
 import type { Client } from "@/types/client"
@@ -65,6 +64,61 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
     const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
     const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
     const [showChat, setShowChat] = useState(false)
+    const [effectiveVideoRate, setEffectiveVideoRate] = useState<number>(0)
+
+    const getToken = () => {
+        if (typeof window !== "undefined") {
+            const directToken = localStorage.getItem("token")
+            if (directToken) return directToken
+            const user = localStorage.getItem("user")
+            return user ? JSON.parse(user).token : null
+        }
+        return null
+    }
+
+    const getLawyerIdForMeeting = () => {
+        if (profile?.account_type === "lawyer") {
+            return (profile as any)?._id || (profile as any)?.id
+        }
+        return (clientData as any)?._id || (clientData as any)?.id
+    }
+
+    const fetchEffectiveVideoRate = async () => {
+        const fallbackRate = Number(
+            profile?.account_type === "lawyer"
+                ? ((profile as any)?.video_rate || (profile as any)?.charges || 0)
+                : ((clientData as any)?.video_rate || (clientData as any)?.charges || 0)
+        ) || 0
+
+        setEffectiveVideoRate(fallbackRate)
+
+        const lawyerId = getLawyerIdForMeeting()
+        if (!lawyerId) return
+
+        try {
+            const token = getToken()
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/charges/charges/${lawyerId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                const rate = Number(data?.user?.video_rate || data?.user?.charges || fallbackRate || 0)
+                setEffectiveVideoRate(rate)
+            }
+        } catch (error) {
+            console.error("Failed to fetch video rate:", error)
+        }
+    }
+
+    useEffect(() => {
+        if (meetingDialogOpen) {
+            fetchEffectiveVideoRate()
+        }
+    }, [meetingDialogOpen, profile?._id, clientData?._id])
 
     if (!clientData) return null
 
@@ -107,6 +161,8 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                 meetingLink: meetingLink.trim(),
                 requested_date: new Date().toISOString().split('T')[0],
                 requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                consultation_type: "video",
+                hourly_rate: Number(effectiveVideoRate || 0),
             }
             const response = await createMeeting(meetingData)
             if (response.success) {

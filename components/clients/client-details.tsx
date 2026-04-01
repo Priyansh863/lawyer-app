@@ -1,7 +1,7 @@
 "use client"
 
 import type { Client } from "@/types/client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSelector } from "react-redux"
 import { Button } from "@/components/ui/button"
@@ -44,12 +44,67 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
   const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
+  const [effectiveVideoRate, setEffectiveVideoRate] = useState<number>(0)
   const router = useRouter()
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
   const user = useSelector((state: any) => state.auth.user)
   const isLawyer = user?.account_type === "lawyer";
   //  const lawyerData = !isLawyer ? initialClient?.account_type=== : null;
+  const getToken = () => {
+    if (typeof window !== "undefined") {
+      const directToken = localStorage.getItem("token")
+      if (directToken) return directToken
+      const localUser = localStorage.getItem("user")
+      return localUser ? JSON.parse(localUser).token : null
+    }
+    return null
+  }
+
+  const getLawyerIdForMeeting = () => {
+    if (profile?.account_type === "lawyer") {
+      return (profile as any)?._id || (profile as any)?.id
+    }
+    return (client as any)?._id || (client as any)?.id
+  }
+
+  const fetchEffectiveVideoRate = async () => {
+    const fallbackRate = Number(
+      profile?.account_type === "lawyer"
+        ? ((profile as any)?.video_rate || (profile as any)?.charges || 0)
+        : ((client as any)?.video_rate || (client as any)?.charges || 0)
+    ) || 0
+
+    setEffectiveVideoRate(fallbackRate)
+
+    const lawyerId = getLawyerIdForMeeting()
+    if (!lawyerId) return
+
+    try {
+      const token = getToken()
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/charges/charges/${lawyerId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        const rate = Number(data?.user?.video_rate || data?.user?.charges || fallbackRate || 0)
+        setEffectiveVideoRate(rate)
+      }
+    } catch (error) {
+      console.error("Failed to fetch video rate:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (meetingDialogOpen) {
+      fetchEffectiveVideoRate()
+    }
+  }, [meetingDialogOpen, profile?._id, client?._id])
+
   // Handle meeting scheduling
   const handleScheduleMeeting = async () => {
     if (!meetingLink.trim()) {
@@ -81,6 +136,8 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         meetingLink: meetingLink.trim(),
         requested_date: new Date().toISOString().split('T')[0],
         requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+        consultation_type: "video",
+        hourly_rate: Number(effectiveVideoRate || 0),
       }
       const response = await createMeeting(meetingData)
       console.log(response, "responseresponseresponseresponseresponseresponseresponse")
@@ -253,17 +310,6 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                       {t("pages:clientDetails.scheduleMeetingWith", { name: client.first_name })}
                     </DialogDescription>
                   </DialogHeader>
-
-                  {/* Show video consultation rate in dialog */}
-                  {user?.account_type === 'client' && client?.video_rate && (
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md mb-4">
-                      <Video className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-700">
-                        {t("pages:clientDetails.videoConsultationRate", { rate: client?.video_rate })}
-                      </span>
-
-                    </div>
-                  )}
 
                   <div className="space-y-4">
                     <div className="space-y-2">

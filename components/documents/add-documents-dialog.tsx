@@ -210,12 +210,16 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                         documentType: 'general',
                         storageType: mode === 'cloud' ? 'cloud' : 'app',
                         // If user opened a folder in Documents page, upload into that folder.
-                        // Otherwise keep the scanned local relative folder path.
-                        storageLocation: targetFolder || fileObj.location,
+                        // Otherwise store at root so new uploads are immediately visible in main list.
+                        storageLocation: targetFolder || '/',
                     })
 
-                    if (result?.success) successCount += 1
-                    else failed.push({ name: fileObj.name, message: result?.message })
+                    const isSuccess =
+                        result?.success === true ||
+                        (result?.success !== false && Boolean(result?.document))
+
+                    if (isSuccess) successCount += 1
+                    else failed.push({ name: fileObj.name, message: result?.message || 'Upload failed' })
                 } catch (error: any) {
                     failed.push({ name: fileObj.name, message: error?.message || 'Upload failed' })
                 }
@@ -391,7 +395,7 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                                 disabled={selectedCount === 0 || uploadingMode !== null}
                                 className="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#475569] border-none h-[40px] px-6 rounded shadow-none font-semibold text-[13px] min-w-[120px]"
                             >
-                                {t('pages:documentManager.addDocumentsDialog.linkToApp')}
+                                {uploadingMode === 'app' ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:documentManager.addDocumentsDialog.linkToApp')}
                             </Button>
                         </div>
                     </div>
