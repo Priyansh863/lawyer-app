@@ -20,6 +20,7 @@ import type { Case } from '@/types/case'
 import { User } from 'next-auth'
 import { getClients } from '@/lib/api/clients-api'
 import { getLawyers } from '@/lib/api/qa-api'
+import { uploadUniversalFile } from '@/lib/helpers/fileupload'
 
 interface PDFUploadEnhancedProps {
   isOpen: boolean
@@ -202,22 +203,13 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
     setIsUploading(true)
     setUploadProgress(0)
 
-    const fileToBase64 = (f: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(f)
-      })
-    }
-
     try {
       setUploadProgress(50)
-      const base64 = await fileToBase64(file)
+      const fileUrl = await uploadUniversalFile(user._id, file)
 
       const uploadData = {
         userId: user._id,
-        fileUrl: "",
+        fileUrl: fileUrl,
         fileName: file.name,
         fileType: fileTypeInfo?.label || 'Document',
         privacy: privacy,
@@ -226,7 +218,6 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
         documentType: 'general' as const,
         associatedUserId: selectedUserId,
         caseId: privacy === 'private' && selectedCaseId ? selectedCaseId : undefined,
-        file_base64: base64
       }
 
       const result = await uploadDocumentEnhanced(uploadData)

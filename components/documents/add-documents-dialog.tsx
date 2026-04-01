@@ -33,6 +33,7 @@ import { uploadDocumentEnhanced } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
+import { uploadUniversalFile } from '@/lib/helpers/fileupload'
 
 interface ScannedFile {
     id: string;
@@ -140,15 +141,6 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
         setFiles(prev => prev.filter(f => !f.selected))
     }
 
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(reader.result as string)
-            reader.onerror = reject
-            reader.readAsDataURL(file)
-        })
-    }
-
     // Some browsers sometimes return an empty/incorrect `file.type` (especially for folder scans).
     // For stable backend validation, infer MIME from the extension as a fallback.
     const getUploadMimeType = (file: File): string | null => {
@@ -205,11 +197,11 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                 }
 
                 try {
-                    const base64 = await fileToBase64(fileObj.file)
+                    const fileUrl = await uploadUniversalFile(user._id as string, fileObj.file)
 
                     const result = await uploadDocumentEnhanced({
                         userId: user._id as string,
-                        fileUrl: "",
+                        fileUrl: fileUrl,
                         fileName: fileObj.name,
                         privacy: 'private',
                         processWithAI: true,
@@ -220,7 +212,6 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                         // If user opened a folder in Documents page, upload into that folder.
                         // Otherwise keep the scanned local relative folder path.
                         storageLocation: targetFolder || fileObj.location,
-                        file_base64: base64
                     })
 
                     if (result?.success) successCount += 1

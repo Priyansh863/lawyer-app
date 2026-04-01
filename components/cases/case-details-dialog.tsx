@@ -56,6 +56,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import { toast } from "sonner"
 import { useTranslation } from "@/hooks/useTranslation"
+import { uploadUniversalFile } from "@/lib/helpers/fileupload"
 
 interface CaseDetailsDialogProps {
     caseData: Case | null
@@ -247,15 +248,6 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const clientPhone = (caseData.client_id && typeof caseData.client_id === 'object' && 'phone' in caseData.client_id)
         ? (caseData.client_id.phone || 'N/A') : 'N/A'
 
-    const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => resolve(reader.result as string)
-            reader.onerror = reject
-            reader.readAsDataURL(file)
-        })
-    }
-
     // Handle document upload to case
     const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files
@@ -265,11 +257,11 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
         try {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]
-                const base64 = await fileToBase64(file)
+                const fileUrl = await uploadUniversalFile(user._id as string, file)
 
                 const result = await uploadDocumentEnhanced({
                     userId: user._id as string,
-                    fileUrl: "",
+                    fileUrl: fileUrl,
                     fileName: file.name,
                     privacy: 'private',
                     processWithAI: true,
@@ -278,7 +270,6 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                     documentType: 'case_related',
                     caseId: caseId,
                     storageType: 'cloud',
-                    file_base64: base64
                 })
 
                 // Add to local documents list immediately
@@ -288,7 +279,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                     // Add mock entry so user sees it in table
                     setCaseDocuments(prev => [...prev, {
                         document_name: file.name,
-                        link: "",
+                        link: fileUrl,
                         storage_type: 'cloud',
                         privacy: 'private',
                         created_at: new Date().toISOString(),

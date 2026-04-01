@@ -22,42 +22,8 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
-
-// Enhanced API function for multi-file upload using base64
-const uploadDocumentEnhanced = async (data: {
-  userId: string
-  fileName: string
-  fileType?: string
-  file_base64: string
-}) => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  const token = localStorage.getItem('token')
-  
-  const response = await fetch(`${API_BASE_URL}/document/upload-enhanced`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({
-      user_id: data.userId,
-      link: "",
-      document_name: data.fileName,
-      file_type: data.fileType,
-      privacy: 'public',
-      process_with_ai: true,
-      file_size: 0,
-      case_id: null,
-      file_base64: data.file_base64,
-    }),
-  })
-  
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.statusText}`)
-  }
-  
-  return response.json()
-}
+import { uploadDocumentEnhanced } from "@/lib/api/documents-api"
+import { uploadUniversalFile } from "@/lib/helpers/fileupload"
 
 interface ProcessedFile {
   _id: string
@@ -166,15 +132,6 @@ export default function FileProcessor() {
     setSelectedFile(file)
   }
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
-
   const handleFileUpload = async () => {
     if (!selectedFile || !profile?._id) {
       toast({
@@ -190,7 +147,7 @@ export default function FileProcessor() {
     setIsProcessing(true)
 
     try {
-      // Step 1: Convert file to Base64 and send to backend
+      // Step 1: Upload to S3 via presigned PUT, then send S3 object URL to backend
       setUploadProgress(40)
       toast({
         title: t("pages:fileProcessor.uploadProgress.processing.title"),
@@ -198,13 +155,17 @@ export default function FileProcessor() {
       })
 
       const fileType = getFileType(selectedFile.name)
-      const base64 = await fileToBase64(selectedFile)
+      const fileUrl = await uploadUniversalFile(profile._id as string, selectedFile)
       
       const result = await uploadDocumentEnhanced({
         userId: profile._id as string,
+        fileUrl,
         fileName: selectedFile.name,
-        fileType: fileType?.type,
-        file_base64: base64,
+        privacy: 'public',
+        processWithAI: true,
+        fileSize: selectedFile.size,
+        fileType: selectedFile.type || 'application/octet-stream',
+        documentType: 'general',
       })
 
       setUploadProgress(100)
