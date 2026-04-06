@@ -248,7 +248,7 @@ export default function DocumentManager() {
             try {
                 const resolved = await getDocumentViewUrl(doc._id, rawLink)
                 const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
-                if (!opened) window.location.assign(resolved)
+                if (!opened) toast.error(t('pages:documentManager.popupBlocked', 'Popup blocked. Please allow popups to view documents.'))
                 return
             } catch {
                 toast.info(t('pages:documentManager.toastInfoView'))
@@ -292,7 +292,7 @@ export default function DocumentManager() {
         try {
             const resolved = await getDocumentViewUrl(doc._id, rawLink)
             const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
-            if (!opened) window.location.assign(resolved)
+            if (!opened) toast.error(t('pages:documentManager.popupBlocked', 'Popup blocked. Please allow popups to view documents.'))
             return
         } catch {
             toast.error(t('pages:documentManager.toastInfoView'))
