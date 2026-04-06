@@ -67,6 +67,7 @@ export default function CasesTable({ initialCases, onCaseCreated }: CasesTablePr
   const [activeTab, setActiveTab] = useState<"in_progress" | "completed">("in_progress")
 
   const [isLoading, setIsLoading] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [statusUpdateDialog, setStatusUpdateDialog] = useState<{
     open: boolean
     case: Case | null
@@ -123,7 +124,9 @@ export default function CasesTable({ initialCases, onCaseCreated }: CasesTablePr
       }
     }
     fetchCases()
-  }, [searchForm.watch('query'), searchForm.watch('status'), activeTab, searchForm])
+  }, [searchForm.watch('query'), searchForm.watch('status'), activeTab, searchForm, refreshKey])
+
+  const refresh = () => setRefreshKey(prev => prev + 1)
 
   // Handle search form submission
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -184,6 +187,7 @@ export default function CasesTable({ initialCases, onCaseCreated }: CasesTablePr
           : c
       )
     )
+    refresh()
   }
 
   return (
@@ -365,9 +369,11 @@ export default function CasesTable({ initialCases, onCaseCreated }: CasesTablePr
             )
           )
           setCaseDetailsDialog({ open: false, case: null })
+          refresh()
         }}
         onCaseDeleted={(caseId) => {
           setCases(prevCases => prevCases.filter(c => (c._id || c.id) !== caseId))
+          refresh()
         }}
       />
     </div>

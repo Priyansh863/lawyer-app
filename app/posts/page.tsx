@@ -56,11 +56,46 @@ export default function PostsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Content preferences (persisted)
+  const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
+  const [blockedAuthorIds, setBlockedAuthorIds] = useState<Set<string>>(new Set());
+
+  const PREF_HIDDEN_POSTS_KEY = "posts_hidden_posts_v1";
+  const PREF_BLOCKED_AUTHORS_KEY = "posts_blocked_authors_v1";
+
+  const loadPrefs = () => {
+    try {
+      const hiddenRaw = localStorage.getItem(PREF_HIDDEN_POSTS_KEY);
+      const blockedRaw = localStorage.getItem(PREF_BLOCKED_AUTHORS_KEY);
+      const hiddenArr: any[] = hiddenRaw ? JSON.parse(hiddenRaw) : [];
+      const blockedArr: any[] = blockedRaw ? JSON.parse(blockedRaw) : [];
+
+      setHiddenPostIds(new Set(hiddenArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean)));
+      setBlockedAuthorIds(new Set(blockedArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean)));
+    } catch {
+      setHiddenPostIds(new Set());
+      setBlockedAuthorIds(new Set());
+    }
+  };
+
+  const persistPrefs = (opts: {
+    hiddenPosts?: Array<{ id: string; title?: string }>;
+    blockedAuthors?: Array<{ id: string; name?: string }>;
+  }) => {
+    try {
+      if (opts.hiddenPosts) localStorage.setItem(PREF_HIDDEN_POSTS_KEY, JSON.stringify(opts.hiddenPosts));
+      if (opts.blockedAuthors) localStorage.setItem(PREF_BLOCKED_AUTHORS_KEY, JSON.stringify(opts.blockedAuthors));
+      window.dispatchEvent(new Event("contentPreferencesUpdated"));
+    } catch {
+      // ignore
+    }
+  };
+
   // QR and Report dialog states
   const [selectedPostForQr, setSelectedPostForQr] = useState<Post | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
-  
+
   const [selectedPostForReport, setSelectedPostForReport] = useState<Post | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -73,8 +108,16 @@ export default function PostsPage() {
       const response = await getPosts(page, 10, "published");
 
       const postsData = response.data.posts || [];
-      setPosts(postsData);
-      setFilteredPosts(postsData);
+      // Apply persisted preferences
+      const visible = postsData.filter((p: any) => {
+        const postId = p?._id;
+        const authorId = p?.author?._id;
+        if (postId && hiddenPostIds.has(postId)) return false;
+        if (authorId && blockedAuthorIds.has(authorId)) return false;
+        return true;
+      });
+      setPosts(visible);
+      setFilteredPosts(visible);
       setTotalPages(response.data.totalPages || 1);
       setCurrentPage(page);
     } catch (error: any) {
@@ -90,8 +133,26 @@ export default function PostsPage() {
 
   // Load posts on component mount
   useEffect(() => {
+    loadPrefs();
     fetchPosts(1);
   }, []);
+
+  // Re-apply preferences after prefs change (or when Settings undoes them)
+  useEffect(() => {
+    const handler = () => loadPrefs();
+    window.addEventListener("contentPreferencesUpdated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("contentPreferencesUpdated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    // When prefs change, refetch current page (keeps pagination consistent)
+    fetchPosts(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hiddenPostIds.size, blockedAuthorIds.size]);
 
   // Filter posts based on search
   useEffect(() => {
@@ -109,7 +170,20 @@ export default function PostsPage() {
 
   // Handle post creation
   const handlePostCreated = (post: Post) => {
-    setPosts(prev => [post, ...prev]);
+    const normalizedPost: Post = {
+      ...post,
+      author: post.author?._id
+        ? post.author
+        : {
+          _id: (user as any)?._id || "",
+          first_name: (user as any)?.first_name || "User",
+          last_name: (user as any)?.last_name || "",
+          email: (user as any)?.email || "",
+          avatar: (user as any)?.avatar,
+        },
+    };
+
+    setPosts(prev => [normalizedPost, ...prev]);
     // We don't close the dialog immediately anymore so the user can see the success card
     // setIsDialogOpen(false); 
     toast({
@@ -173,8 +247,21 @@ export default function PostsPage() {
   };
 
   const handleNotInterested = (postId: string) => {
-    setPosts(prev => prev.filter(p => p._id !== postId));
-    setFilteredPosts(prev => prev.filter(p => p._id !== postId));
+    const post = posts.find((p) => p._id === postId);
+    // Persist hide
+    try {
+      const existingRaw = localStorage.getItem(PREF_HIDDEN_POSTS_KEY);
+      const existing: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+      const next = [
+        ...existing.filter((x) => (typeof x === "string" ? x : x?.id) !== postId),
+        { id: postId, title: post?.title },
+      ];
+      persistPrefs({ hiddenPosts: next });
+    } catch {
+      // ignore
+    }
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
+    setFilteredPosts((prev) => prev.filter((p) => p._id !== postId));
     toast({
       title: t("pages:posts.actions.notInterestedTitle"),
       description: t("pages:posts.actions.notInterestedDesc"),
@@ -182,8 +269,22 @@ export default function PostsPage() {
   };
 
   const handleBlockUser = (authorId: string) => {
-    setPosts(prev => prev.filter(p => p.author._id !== authorId));
-    setFilteredPosts(prev => prev.filter(p => p.author._id !== authorId));
+    const authorPost = posts.find((p: any) => p?.author?._id === authorId);
+    const authorName = authorPost?.author?.first_name || (authorPost as any)?.author?.name || undefined;
+    // Persist block
+    try {
+      const existingRaw = localStorage.getItem(PREF_BLOCKED_AUTHORS_KEY);
+      const existing: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+      const next = [
+        ...existing.filter((x) => (typeof x === "string" ? x : x?.id) !== authorId),
+        { id: authorId, name: authorName },
+      ];
+      persistPrefs({ blockedAuthors: next });
+    } catch {
+      // ignore
+    }
+    setPosts((prev) => prev.filter((p: any) => p.author._id !== authorId));
+    setFilteredPosts((prev) => prev.filter((p: any) => p.author._id !== authorId));
     toast({
       title: t("pages:posts.actions.blockedTitle"),
       description: t("pages:posts.actions.blockedDesc"),
@@ -297,32 +398,32 @@ export default function PostsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-200 shadow-2xl animate-in fade-in zoom-in duration-200">
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleCopyLink(post)}
                             className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
                           >
                             <Link2 className="mr-3 h-4 w-4" /> {t("pages:posts.actions.copyLink")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleShowQrCode(post)}
                             className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
                           >
                             <QrCode className="mr-3 h-4 w-4" /> {t("pages:posts.actions.qrCode")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleNotInterested(post._id)}
                             className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
                           >
                             <EyeOff className="mr-3 h-4 w-4" /> {t("pages:posts.actions.notInterested")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleBlockUser(post.author._id)}
                             className="text-sm font-bold text-slate-700 py-3 px-4 cursor-pointer focus:bg-slate-50 focus:text-[#0F172A] rounded-xl transition-colors"
                           >
                             <Slash className="mr-3 h-4 w-4" /> {t("pages:posts.actions.block")}
                           </DropdownMenuItem>
                           <div className="h-px bg-slate-100 my-1 mx-2"></div>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => {
                               setSelectedPostForReport(post);
                               setIsReportDialogOpen(true);
@@ -428,9 +529,9 @@ export default function PostsPage() {
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
             {selectedPostForQr?.qrCodeUrl ? (
-              <img 
-                src={selectedPostForQr.qrCodeUrl} 
-                alt="QR Code" 
+              <img
+                src={selectedPostForQr.qrCodeUrl}
+                alt="QR Code"
                 className="w-64 h-64 shadow-2xl rounded-xl border-4 border-white"
               />
             ) : (
@@ -443,14 +544,14 @@ export default function PostsPage() {
             </p>
           </div>
           <div className="mt-8 flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 py-6 rounded-xl font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
               onClick={() => setIsQrDialogOpen(false)}
             >
               {t("common:actions.close")}
             </Button>
-            <Button 
+            <Button
               className="flex-1 py-6 rounded-xl font-bold bg-[#0F172A] hover:bg-slate-800 transition-all text-white"
               onClick={() => {
                 if (selectedPostForQr) handleCopyLink(selectedPostForQr);
@@ -490,8 +591,8 @@ export default function PostsPage() {
             </div>
           </div>
           <div className="mt-8 flex gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="flex-1 py-6 rounded-xl font-bold text-slate-600 border-slate-200 hover:bg-slate-50"
               onClick={() => {
                 setIsReportDialogOpen(false);
@@ -501,7 +602,7 @@ export default function PostsPage() {
             >
               {t("common:actions.cancel")}
             </Button>
-            <Button 
+            <Button
               className="flex-1 py-6 rounded-xl font-bold bg-red-500 hover:bg-red-600 transition-all text-white disabled:opacity-50"
               onClick={handleReportSubmit}
               disabled={isReporting || reportReason.trim().length < 10}

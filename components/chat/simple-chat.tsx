@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -61,6 +61,7 @@ export function SimpleChat({
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const isPollingRef = useRef(false)
   const { toast } = useToast()
 
   // 🔹 Drag state
@@ -177,13 +178,52 @@ export function SimpleChat({
     }
   }, [messages])
 
+  const mergeMessages = useCallback((incoming: Message[]) => {
+    setMessages((prev) => {
+      if (!incoming?.length) return prev
+      const map = new Map<string, Message>()
+      for (const msg of prev) map.set(msg._id, msg)
+      for (const msg of incoming) map.set(msg._id, msg)
+      return Array.from(map.values()).sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      )
+    })
+  }, [])
+
+  const refreshMessages = useCallback(async () => {
+    if (!chat?._id || isPollingRef.current) return
+    isPollingRef.current = true
+    try {
+      const latest = await getChatMessages(chat._id)
+      mergeMessages(latest)
+    } finally {
+      isPollingRef.current = false
+    }
+  }, [chat?._id, mergeMessages])
+
+  // Real-time-ish updates while chat window is open
+  useEffect(() => {
+    if (!chat?._id) return
+    const interval = window.setInterval(() => {
+      // Poll only while tab is visible to reduce noise
+      if (document.visibilityState === "visible") {
+        refreshMessages()
+      }
+    }, 2000)
+    return () => window.clearInterval(interval)
+  }, [chat?._id, refreshMessages])
+
   const handleSendMessage = async (data: MessageFormData) => {
     if (!chat || !data.content.trim()) return
     setIsSending(true)
     try {
       const newMessage = await sendChatMessage(chat._id, data.content.trim())
-      setMessages((prev) => [...prev, newMessage])
+      mergeMessages([newMessage])
       messageForm.reset()
+      // Notify chat list to refresh previews immediately
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
+      // Pull server state after send to keep both sides in sync quickly
+      refreshMessages()
     } catch (error) {
       toast({
         title: t("pages:conv.error"),

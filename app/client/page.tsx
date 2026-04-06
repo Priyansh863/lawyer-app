@@ -16,7 +16,7 @@ function ClientContent() {
 
   return (
     <div className="flex flex-col">
-      <ClientsHeader />
+      <ClientsHeader onClientCreated={handleClientCreated} />
       <ClientsTable
         key={refreshKey}
         initialClients={[]}

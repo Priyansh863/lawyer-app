@@ -93,6 +93,8 @@ const isLikelyOpenableUrl = (value?: string) => {
   if (!value) return false
   const v = value.trim()
   if (!v || v === '#') return false
+  // Allow relative URLs coming back from backend.
+  if (v.startsWith('/')) return true
   if (v.startsWith('http://') || v.startsWith('https://')) return true
   if (v.startsWith('data:') || v.startsWith('blob:')) return true
   return false
@@ -298,11 +300,30 @@ export const uploadDocument = async (data: any) => {
 }
 
 // Download original document
-export const downloadDocument = async (documentId: string, documentName: string, documentUrl: string) => {
+export const downloadDocument = async (documentId: string, documentName: string, documentUrl: string, fileBase64?: string) => {
   try {
+    let downloadHref = documentUrl;
+    
+    // 1. If base64 was passed directly, use it
+    if (fileBase64 && fileBase64.startsWith('data:')) {
+      downloadHref = fileBase64;
+    } else if (documentId) {
+      // 2. Try fetching the file base64 from the new download endpoint
+      try {
+        const response = await axios.get(`${API_BASE_URL}/document/${documentId}/download`, {
+          headers: getAuthHeaders()
+        });
+        if (response.data?.success && response.data?.file_base64) {
+          downloadHref = response.data.file_base64;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch document base64 from download API, falling back to stored URL', err);
+      }
+    }
+
     // Create a temporary link and trigger download
     const link = document.createElement('a');
-    link.href = documentUrl;
+    link.href = downloadHref;
     link.setAttribute('download', documentName);
     document.body.appendChild(link);
     link.click();
@@ -310,7 +331,9 @@ export const downloadDocument = async (documentId: string, documentName: string,
     // Clean up
     setTimeout(() => {
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(documentUrl);
+      if (downloadHref && downloadHref.startsWith('blob:')) {
+        window.URL.revokeObjectURL(downloadHref);
+      }
     }, 100);
 
     return { success: true };
@@ -436,8 +459,42 @@ export const removeFromCloud = async (documentId: string): Promise<DocumentRespo
 
 // Resolve a viewable URL for a document (handles non-public/private links)
 export const getDocumentViewUrl = async (documentId: string, fallbackLink?: string): Promise<string> => {
+  const normalizeResolvedUrl = (u?: string) => {
+    if (!u) return u
+    const v = u.trim()
+    if (!v) return v
+    // Normalize common backend formats to something window.open can open.
+    if (typeof window !== 'undefined') {
+      if (v.startsWith('/')) return `${window.location.origin}${v}`
+      if (v.startsWith('//')) return `https:${v}`
+      
+      // Chrome and modern browsers block window.open("data:...")
+      // Convert base64 data URLs to Blob URLs to bypass navigation restrictions.
+      if (v.startsWith('data:')) {
+        try {
+          const parts = v.split(',');
+          const match = parts[0].match(/:(.*?);/);
+          const mimeType = match ? match[1] : 'application/pdf';
+          const bstr = atob(parts[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mimeType });
+          return URL.createObjectURL(blob);
+        } catch (e) {
+          console.error("Failed to extract Blob from data URL", e);
+          return v;
+        }
+      }
+    }
+    return v
+  }
+
   if (isLikelyOpenableUrl(fallbackLink)) {
-    return fallbackLink!.trim()
+    const normalizedFallback = normalizeResolvedUrl(fallbackLink)
+    return normalizedFallback!.trim()
   }
 
   const headers = getAuthHeaders()
@@ -457,16 +514,25 @@ export const getDocumentViewUrl = async (documentId: string, fallbackLink?: stri
         : await axios.get(candidate.url, { headers })
 
       const data = response?.data || {}
-      const resolved =
-        data?.url ||
-        data?.link ||
-        data?.document?.url ||
-        data?.document?.link ||
-        data?.data?.url ||
-        data?.data?.link
+      const resolvedCandidates: Array<string | undefined> = [
+        data?.url,
+        data?.link,
+        data?.document?.url,
+        data?.document?.link,
+        data?.data?.url,
+        data?.data?.link,
+        data?.secureUrl,
+        data?.secure_url,
+        data?.document?.secure_url,
+        data?.document?.secureUrl,
+      ]
 
-      if (isLikelyOpenableUrl(resolved)) {
-        return resolved.trim()
+      for (const maybe of resolvedCandidates) {
+        if (!maybe) continue
+        const normalized = normalizeResolvedUrl(maybe)
+        if (isLikelyOpenableUrl(normalized)) {
+          return normalized!.trim()
+        }
       }
     } catch {
       // continue trying fallbacks
@@ -474,7 +540,8 @@ export const getDocumentViewUrl = async (documentId: string, fallbackLink?: stri
   }
 
   if (fallbackLink && fallbackLink.trim()) {
-    return fallbackLink.trim()
+    const normalizedFallback = normalizeResolvedUrl(fallbackLink)
+    return normalizedFallback!.trim()
   }
 
   throw new Error('No view URL available')

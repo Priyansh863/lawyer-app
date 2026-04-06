@@ -9,7 +9,15 @@ const getAuthHeaders = () => {
       'Content-Type': 'application/json'
     }
   }
-  const token = localStorage.getItem('token')
+  
+  let token = null;
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      token = JSON.parse(userStr).token;
+    } catch (e) {}
+  }
+  
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
@@ -85,7 +93,8 @@ export async function getLawyerFiles(clientId: string): Promise<FileMetadata[]> 
     }
 
     // Transform backend document format to frontend FileMetadata format
-    return Array.isArray(response.data.data) ? response.data.data : []
+    const docs = response.data.data || response.data.documents || []
+    return Array.isArray(docs) ? docs : []
 
   } catch (error) {
     console.error('Error fetching client files:', error)

@@ -60,6 +60,23 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
     loadChats()
   }, [])
 
+  // Keep list previews in sync in near real-time
+  useEffect(() => {
+    const onMessagesUpdated = () => loadChats(false)
+    window.addEventListener("chatMessagesUpdated", onMessagesUpdated)
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadChats(false)
+      }
+    }, 2000)
+
+    return () => {
+      window.removeEventListener("chatMessagesUpdated", onMessagesUpdated)
+      window.clearInterval(interval)
+    }
+  }, [])
+
   useEffect(() => {
     if (!searchQueryProp.trim()) {
       setFilteredChats(chats)
@@ -79,8 +96,8 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
     }
   }, [chats, searchQueryProp, user?._id])
 
-  const loadChats = async () => {
-    setIsLoading(true)
+  const loadChats = async (showLoader = true) => {
+    if (showLoader) setIsLoading(true)
     try {
       const fetchedChats = await getUserChats()
       setChats(fetchedChats)
@@ -92,7 +109,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      if (showLoader) setIsLoading(false)
     }
   }
 

@@ -55,16 +55,34 @@ interface ClientDetailsDialogProps {
 }
 
 export default function ClientDetailsDialog({ clientData, open, onOpenChange }: ClientDetailsDialogProps) {
+    const normalizeDateValue = (raw: string) => {
+      // Convert DD-MM-YYYY to YYYY-MM-DD for API payloads.
+      if (!raw) return raw
+      const parts = raw.split("-")
+      if (parts.length === 3) {
+        const [a, b, c] = parts
+        if (a.length === 4) return raw
+        if (c.length === 4) {
+          return `${c}-${b.padStart(2, "0")}-${a.padStart(2, "0")}`
+        }
+      }
+      return raw
+    }
     const { t } = useTranslation()
     const { toast } = useToast()
     const router = useRouter()
     const profile = useSelector((state: RootState) => state.auth.user)
+    const isClientViewer = profile?.account_type === "client"
 
     const [meetingLink, setMeetingLink] = useState("")
     const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
     const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
     const [showChat, setShowChat] = useState(false)
     const [effectiveVideoRate, setEffectiveVideoRate] = useState<number>(0)
+    const [requestedDate, setRequestedDate] = useState<string>("")
+    const [requestedTime, setRequestedTime] = useState<string>("")
+    const [endTime, setEndTime] = useState<string>("")
+    const [endTimeTouched, setEndTimeTouched] = useState(false)
 
     const getToken = () => {
         if (typeof window !== "undefined") {
@@ -117,8 +135,46 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
     useEffect(() => {
         if (meetingDialogOpen) {
             fetchEffectiveVideoRate()
+            // Prefill to next available defaults but still editable
+            const today = new Date()
+            const d = today.toISOString().split("T")[0]
+            const t = today.toTimeString().split(" ")[0].substring(0, 5)
+            setRequestedDate((prev) => prev || d)
+            setRequestedTime((prev) => prev || t)
+            // Default end time to +30 mins when possible
+            setEndTime((prev) => {
+              if (prev) return prev
+              try {
+                const [hh, mm] = t.split(":").map((x) => parseInt(x, 10))
+                const base = new Date()
+                base.setHours(hh)
+                base.setMinutes(mm + 30)
+                const end = `${String(base.getHours()).padStart(2, "0")}:${String(base.getMinutes()).padStart(2, "0")}`
+                return end
+              } catch {
+                return ""
+              }
+            })
+            setEndTimeTouched(false)
         }
     }, [meetingDialogOpen, profile?._id, clientData?._id])
+
+    // Keep end time in sync with start time unless user manually edits it
+    useEffect(() => {
+      if (!meetingDialogOpen) return
+      if (!requestedTime) return
+      if (endTimeTouched) return
+      try {
+        const [hh, mm] = requestedTime.split(":").map((x) => parseInt(x, 10))
+        const base = new Date()
+        base.setHours(hh)
+        base.setMinutes(mm + 30)
+        const end = `${String(base.getHours()).padStart(2, "0")}:${String(base.getMinutes()).padStart(2, "0")}`
+        setEndTime(end)
+      } catch {
+        // ignore
+      }
+    }, [meetingDialogOpen, requestedTime, requestedDate, endTimeTouched])
 
     if (!clientData) return null
 
@@ -141,6 +197,22 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
             })
             return
         }
+        if (!requestedDate || !requestedTime) {
+            toast({
+                title: t("pages:clientDetails.error"),
+                description: "Please select a date and time",
+                variant: "destructive",
+            })
+            return
+        }
+        if (!endTime) {
+            toast({
+                title: t("pages:clientDetails.error"),
+                description: "Please select an end time",
+                variant: "destructive",
+            })
+            return
+        }
         if (!profile?._id) {
             toast({
                 title: t("pages:clientDetails.error"),
@@ -159,8 +231,10 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                 lawyerId: lawyer_id!,
                 clientId: client_id!,
                 meetingLink: meetingLink.trim(),
-                requested_date: new Date().toISOString().split('T')[0],
-                requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+                requested_date: normalizeDateValue(requestedDate),
+                requested_time: requestedTime,
+                end_date: normalizeDateValue(requestedDate),
+                end_time: endTime,
                 consultation_type: "video",
                 hourly_rate: Number(effectiveVideoRate || 0),
             }
@@ -193,7 +267,18 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
 
     return (
         <>
-            <Dialog open={open} onOpenChange={onOpenChange} modal={!showChat}>
+            {/* Keep this dialog modal behavior stable to avoid flicker when opening chat */}
+            <Dialog
+                open={open}
+                onOpenChange={(nextOpen) => {
+                    if (!nextOpen) {
+                        setShowChat(false)
+                        setMeetingDialogOpen(false)
+                    }
+                    onOpenChange(nextOpen)
+                }}
+                modal={false}
+            >
                 <DialogContent
                     className="max-w-[85vw] max-h-[96vh] overflow-y-auto p-0 border-none shadow-2xl left-[53%] translate-x-[-50%] bg-[#FFFFFF] z-[100] outline-none [&>button]:hidden"
                     onInteractOutside={(e) => {
@@ -212,19 +297,35 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                         {/* Header Section */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-6">
-                                <h1 className="text-[20px] font-bold text-[#0F172A]">{t('pages:clientDetails.clientInformation')}</h1>
+                                <h1 className="text-[20px] font-bold text-[#0F172A]">
+                                  {isClientViewer ? t('pages:clientDetails.lawyerInformation') : t('pages:clientDetails.clientInformation')}
+                                </h1>
                                 <span className="text-[14px] text-slate-400 font-medium whitespace-nowrap">{t('pages:clientDetails.lastUpdatedColon')} {formatDate(clientData.lastContactDate || (clientData as any).updatedAt)}</span>
                             </div>
                             <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                      onClick={() => {
+                                        setMeetingDialogOpen(false)
+                                        setShowChat(true)
+                                      }}
+                                      className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 h-[44px] rounded-[4px] flex items-center gap-2 text-[14px] font-semibold border-none"
+                                  >
+                                      <MessageSquare className="h-4 w-4" />
+                                      {t('pages:clientDetails.chat')}
+                                  </Button>
+                                  {/* Show chat fee for clients viewing a lawyer */}
+                                  {isClientViewer && (clientData as any)?.chat_rate ? (
+                                    <div className="text-[12px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-md whitespace-nowrap">
+                                      Chat fee: {(clientData as any).chat_rate} tokens/min
+                                    </div>
+                                  ) : null}
+                                </div>
                                 <Button
-                                    onClick={() => setShowChat(true)}
-                                    className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 h-[44px] rounded-[4px] flex items-center gap-2 text-[14px] font-semibold border-none"
-                                >
-                                    <MessageSquare className="h-4 w-4" />
-                                    {t('pages:clientDetails.chat')}
-                                </Button>
-                                <Button
-                                    onClick={() => setMeetingDialogOpen(true)}
+                                    onClick={() => {
+                                      setShowChat(false)
+                                      setMeetingDialogOpen(true)
+                                    }}
                                     className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 h-[44px] rounded-[4px] flex items-center gap-2 text-[14px] font-semibold border-none"
                                 >
                                     <Clock className="h-4 w-4" />
@@ -232,7 +333,11 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                                 </Button>
                                 <Button
                                     variant="ghost"
-                                    onClick={() => onOpenChange(false)}
+                                    onClick={() => {
+                                      setShowChat(false)
+                                      setMeetingDialogOpen(false)
+                                      onOpenChange(false)
+                                    }}
                                     className="h-[44px] w-[44px] p-0 ml-2 hover:bg-slate-100 rounded-md"
                                 >
                                     <X className="h-5 w-5 text-slate-500" />
@@ -242,7 +347,9 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
 
                         {/* Client Profile Section */}
                         <div className="space-y-6">
-                            <h2 className="text-[16px] font-bold text-[#0F172A] tracking-tight">{t('pages:clientDetails.clientProfile')}</h2>
+                            <h2 className="text-[16px] font-bold text-[#0F172A] tracking-tight">
+                              {isClientViewer ? t('pages:clientDetails.lawyerProfile') : t('pages:clientDetails.clientProfile')}
+                            </h2>
                             <div className="grid grid-cols-3 gap-x-12 gap-y-6">
                                 <div className="flex items-center gap-4">
                                     <label className="text-[12px] text-slate-400 font-bold min-w-[70px]">{t('pages:clientDetails.client')}</label>
@@ -315,7 +422,7 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
             </Dialog>
 
             {/* Schedule Meeting Dialog */}
-            <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
+            <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen} modal={false}>
                 <DialogContent className="sm:max-w-md z-[130]">
                     <DialogHeader>
                         <DialogTitle>{t("pages:clientDetails.scheduleMeeting")}</DialogTitle>
@@ -324,6 +431,61 @@ export default function ClientDetailsDialog({ clientData, open, onOpenChange }: 
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
+                        {/* Rate display */}
+                        <div className="p-3 rounded-md bg-slate-50 border border-slate-200 text-sm">
+                          <div className="font-semibold text-[#0F172A]">Rate</div>
+                          <div className="text-slate-600">
+                            {Number(effectiveVideoRate || 0)} tokens/hour
+                          </div>
+                        </div>
+
+                        {/* Date/Time selection */}
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="meetingDate">Date</Label>
+                            <Input
+                              id="meetingDate"
+                              type="date"
+                              value={requestedDate}
+                              onChange={(e) => setRequestedDate(e.target.value)}
+                              min={new Date().toISOString().split("T")[0]}
+                              className="cursor-pointer"
+                              onFocus={(e) => e.target.showPicker()}
+                              onClick={(e) => e.currentTarget.showPicker()}
+                              disabled={isSchedulingMeeting}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="meetingTime">Time</Label>
+                            <Input
+                              id="meetingTime"
+                              type="time"
+                              value={requestedTime}
+                              onChange={(e) => setRequestedTime(e.target.value)}
+                              className="cursor-pointer"
+                              onFocus={(e) => e.target.showPicker()}
+                              onClick={(e) => e.currentTarget.showPicker()}
+                              disabled={isSchedulingMeeting}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="meetingEndTime">End</Label>
+                            <Input
+                              id="meetingEndTime"
+                              type="time"
+                              value={endTime}
+                              onChange={(e) => {
+                                setEndTimeTouched(true)
+                                setEndTime(e.target.value)
+                              }}
+                              className="cursor-pointer"
+                              onFocus={(e) => e.target.showPicker()}
+                              onClick={(e) => e.currentTarget.showPicker()}
+                              disabled={isSchedulingMeeting}
+                            />
+                          </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
                             <Input

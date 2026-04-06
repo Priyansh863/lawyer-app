@@ -242,8 +242,7 @@ export default function ConsultationTypeModal({
       setSending(true);
 
       // Get the lawyer's video rate or custom fee
-      const lawyerProfile = currentProfile?.account_type === 'lawyer' ? profileWithFreshRates : (selectedUser as any);
-      const defaultRate = lawyerProfile?.video_rate || lawyerProfile?.charges || 0;
+      const defaultRate = selectedLawyerBaseRate;
 
       // Use per-minute rate if custom rate is selected (!useBaseRate), otherwise use defaultRate
       const finalRate = consultationType === 'video'
@@ -370,6 +369,11 @@ export default function ConsultationTypeModal({
     return currentProfile?.account_type === "lawyer" ? t("pages:consultation.clients") : t("pages:consultation.lawyers");
   };
 
+  const selectedLawyerBaseRate =
+    currentProfile?.account_type === "lawyer"
+      ? (profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0)
+      : (selectedUser ? ((selectedUser as any).video_rate || (selectedUser as any).charges || 0) : 0);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className={cn(
@@ -495,9 +499,7 @@ export default function ConsultationTypeModal({
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="bg-[#F1F5F9] px-4 py-2 rounded font-bold text-[#0F172A] min-w-[100px] text-center">
-                              ${currentProfile?.account_type === 'lawyer' 
-                                ? (profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0)
-                                : (selectedUser ? ((selectedUser as any).video_rate || (selectedUser as any).charges || 0) : 0)}
+                              ${selectedLawyerBaseRate}
                             </div>
                             <span className="text-[13px] text-[#0F172A] font-bold">{t("pages:consultation.tokensPerMinuteShort")}</span>
                           </div>
@@ -535,7 +537,9 @@ export default function ConsultationTypeModal({
                           value={consultationDate}
                           onChange={(e) => setConsultationDate(e.target.value)}
                           min={new Date().toISOString().split('T')[0]}
-                          className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] pr-10 text-[14px] appearance-none"
+                          className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] pr-10 text-[14px] cursor-pointer"
+                          onFocus={(e) => e.target.showPicker()}
+                          onClick={(e) => e.currentTarget.showPicker()}
                         />
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 pointer-events-none stroke-[2.5]" />
                       </div>
@@ -550,7 +554,9 @@ export default function ConsultationTypeModal({
                             type="time"
                             value={consultationTime}
                             onChange={(e) => setConsultationTime(e.target.value)}
-                            className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] text-[14px] pr-10 appearance-none"
+                            className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] text-[14px] pr-10 cursor-pointer"
+                            onFocus={(e) => e.target.showPicker()}
+                            onClick={(e) => e.currentTarget.showPicker()}
                           />
                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 pointer-events-none stroke-[2.5]" />
                         </div>
@@ -560,7 +566,9 @@ export default function ConsultationTypeModal({
                             type="time"
                             value={reservationEndTime}
                             onChange={(e) => setReservationEndTime(e.target.value)}
-                            className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] text-[14px] pr-10 appearance-none"
+                            className="h-11 bg-white border-slate-200 rounded-[8px] focus-visible:ring-0 focus-visible:border-[#0F172A] text-[14px] pr-10 cursor-pointer"
+                            onFocus={(e) => e.target.showPicker()}
+                            onClick={(e) => e.currentTarget.showPicker()}
                           />
                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-600 pointer-events-none stroke-[2.5]" />
                         </div>
@@ -704,7 +712,7 @@ export default function ConsultationTypeModal({
                     <div className="h-11 bg-[#F1F5F9] border-none rounded-[8px] flex items-center px-4 font-bold text-[#0F172A] text-[14px]">
                       {consultationType === 'free'
                         ? t("pages:consultation.free")
-                        : `${useBaseRate ? (profileWithFreshRates?.video_rate || profileWithFreshRates?.charges || 0) : perMinuteRate} ${t("pages:consultation.tokensPerMinuteShort")} ${useBaseRate ? `(${t("pages:consultation.yourDefaultRate").split(':')[0]})` : `(${t("pages:consultation.customRate")})`}`
+                        : `${useBaseRate ? selectedLawyerBaseRate : perMinuteRate} ${t("pages:consultation.tokensPerMinuteShort")} ${useBaseRate ? `(${t("pages:consultation.yourDefaultRate").split(':')[0]})` : `(${t("pages:consultation.customRate")})`}`
                       }
                     </div>
                   </div>

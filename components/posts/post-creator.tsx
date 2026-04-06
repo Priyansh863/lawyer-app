@@ -71,6 +71,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
   // Form state
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('manual');
+  /** After AI text is generated, show inline editors + Regenerate above the image section (stay on AI tab). */
+  const [aiDraftReady, setAiDraftReady] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -123,15 +125,37 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     return [...existing, nextImage].slice(0, max);
   };
 
+  /** Same fetch path for download + copy: plain fetch first (matches working download), then same-origin proxy if needed. */
+  const fetchImageBlobForDownloadOrCopy = async (imageUrl: string): Promise<Blob | null> => {
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      if (blob.size > 0) return blob;
+    } catch {
+      /* cross-origin without CORS — try Next proxy */
+    }
+    if (typeof window === "undefined") return null;
+    if (!/^https?:\/\//i.test(imageUrl)) return null;
+    if (imageUrl.startsWith(window.location.origin)) return null;
+    try {
+      const r = await fetch(`/api/clipboard-image?url=${encodeURIComponent(imageUrl)}`, { cache: "no-store" });
+      if (!r.ok) return null;
+      const b = await r.blob();
+      return b.size > 0 ? b : null;
+    } catch {
+      return null;
+    }
+  };
+
   // Download image function
   const downloadImage = async (imageUrl: string, filename: string) => {
     try {
       // Open image in new tab
-      const newWindow = window.open(imageUrl, '_blank');
+      window.open(imageUrl, '_blank');
 
-      // Download and save to local storage
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
+      const blob = await fetchImageBlobForDownloadOrCopy(imageUrl);
+      if (!blob) throw new Error("Could not load image");
 
       // Create object URL for download
       const blobUrl = URL.createObjectURL(blob);
@@ -426,6 +450,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         images: []
       });
 
+      setAiDraftReady(false);
       setSelectedFile(null);
       setShowLocationModal(false);
 
@@ -489,9 +514,57 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         variant: "default",
       });
 
-      // Switch to manual tab to allow preview and editing
-      setActiveTab('manual');
+      setAiDraftReady(true);
 
+    } catch (error: any) {
+      toast({
+        title: t('pages:creator.post.ai.toast.failed'),
+        description: error.message || t('pages:creator.post.ai.toast.failedDesc'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
+  // Regenerate only text content (keep current images untouched)
+  const handleRegenerateAiText = async () => {
+    if (!aiData.prompt?.trim() && !aiData.topic?.trim()) {
+      toast({
+        title: t('pages:creator.post.ai.toast.missingInput'),
+        description: t('pages:creator.post.ai.toast.missingInputDesc'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsGeneratingAi(true);
+      const payload = { ...aiData, image: postData.image };
+      const response = await generateAiPost(payload);
+      const generatedPost = response.data;
+
+      setPostData(prev => ({
+        ...prev,
+        title: generatedPost.title || prev.title,
+        content: generatedPost.content || prev.content,
+        hashtag: generatedPost.hashtag || prev.hashtag,
+        spatialInfo: generatedPost.spatialInfo || prev.spatialInfo,
+        citations: generatedPost.citations || prev.citations,
+        // Intentionally preserve image/images for text-only regeneration
+        image: prev.image,
+        images: prev.images
+      }));
+
+      setCreatedPost(generatedPost);
+      setIsSuccess(false);
+      setAiDraftReady(true);
+
+      toast({
+        title: t('pages:creator.post.ai.toast.generated'),
+        description: t('pages:creator.post.ai.toast.generatedDesc', { title: generatedPost.title }),
+        variant: "default",
+      });
     } catch (error: any) {
       toast({
         title: t('pages:creator.post.ai.toast.failed'),
@@ -537,28 +610,172 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     });
   };
 
-  // Copy image to clipboard
+  // Copy: same blob load as download, then several strategies (no changes to your external API).
   const copyImageToClipboard = async (imageUrl: string) => {
-    try {
-      // Fetch the image
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-
-      // Create a clipboard item with the image
-      const clipboardItem = new ClipboardItem({
-        [blob.type]: blob
-      });
-
-      // Write to clipboard
-      await navigator.clipboard.write([clipboardItem]);
-
+    const toastCopied = () =>
       toast({
         title: t('pages:creator.buttons.copied'),
         description: t('pages:creator.buttons.copiedDesc'),
         variant: "default",
       });
-    } catch (error) {
-      console.error('Error copying image to clipboard:', error);
+
+    const toastUrlFallback = () =>
+      toast({
+        title: t('pages:creator.post.image.toast.copyUrlTitle'),
+        description: t('pages:creator.post.image.toast.copyUrlDesc'),
+        variant: "default",
+      });
+
+    const blobToPngBlob = async (input: Blob): Promise<Blob> => {
+      const bitmap = await createImageBitmap(input);
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("no canvas context");
+        ctx.drawImage(bitmap, 0, 0);
+        const out = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/png");
+        });
+        return out;
+      } finally {
+        bitmap.close();
+      }
+    };
+
+    const blobToDataUrl = (b: Blob) =>
+      new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(b);
+      });
+
+    /** Word / Gmail often accept HTML with an inline data-URL image when image/* clipboard is blocked. */
+    const copyViaExecCommandDataImg = (dataUrl: string): boolean => {
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("contenteditable", "true");
+      Object.assign(wrapper.style, {
+        position: "fixed",
+        left: "-10000px",
+        top: "0",
+        width: "1px",
+        height: "1px",
+        opacity: "0",
+        overflow: "hidden",
+      });
+      const img = document.createElement("img");
+      img.src = dataUrl;
+      wrapper.appendChild(img);
+      document.body.appendChild(wrapper);
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(wrapper);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      wrapper.focus();
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      } finally {
+        sel?.removeAllRanges();
+        document.body.removeChild(wrapper);
+      }
+      return ok;
+    };
+
+    const blob = await fetchImageBlobForDownloadOrCopy(imageUrl);
+
+    if (!blob) {
+      try {
+        await navigator.clipboard.writeText(imageUrl);
+        toastUrlFallback();
+      } catch {
+        toast({
+          title: t('pages:creator.buttons.copyFailed'),
+          description: t('pages:creator.buttons.copyFailedDesc'),
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    let pngBlob: Blob;
+    try {
+      pngBlob = await blobToPngBlob(blob);
+    } catch (e) {
+      console.error("copyImage: decode/PNG failed", e);
+      try {
+        await navigator.clipboard.writeText(imageUrl);
+        toastUrlFallback();
+      } catch {
+        toast({
+          title: t('pages:creator.buttons.copyFailed'),
+          description: t('pages:creator.buttons.copyFailedDesc'),
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    let dataUrl: string;
+    try {
+      dataUrl = await blobToDataUrl(pngBlob);
+    } catch {
+      dataUrl = "";
+    }
+
+    const htmlSnippet = `<!DOCTYPE html><html><body><!--StartFragment--><img src="${dataUrl}" alt="" /><!--EndFragment--></body></html>`;
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "image/png": Promise.resolve(pngBlob),
+          "text/html": Promise.resolve(new Blob([htmlSnippet], { type: "text/html" })),
+          "text/plain": Promise.resolve(new Blob([imageUrl], { type: "text/plain" })),
+        }),
+      ]);
+      toastCopied();
+      return;
+    } catch {
+      /* continue */
+    }
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": Promise.resolve(pngBlob) }),
+      ]);
+      toastCopied();
+      return;
+    } catch {
+      /* continue */
+    }
+
+    if (dataUrl && copyViaExecCommandDataImg(dataUrl)) {
+      toastCopied();
+      return;
+    }
+
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": Promise.resolve(new Blob([htmlSnippet], { type: "text/html" })),
+          "text/plain": Promise.resolve(new Blob([imageUrl], { type: "text/plain" })),
+        }),
+      ]);
+      toastCopied();
+      return;
+    } catch {
+      /* continue */
+    }
+
+    try {
+      await navigator.clipboard.writeText(imageUrl);
+      toastUrlFallback();
+    } catch {
       toast({
         title: t('pages:creator.buttons.copyFailed'),
         description: t('pages:creator.buttons.copyFailedDesc'),
@@ -615,14 +832,6 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
             <CardTitle className="flex items-center gap-2 text-green-800">
               <FileText className="h-5 w-5" />
               {t('pages:creator.post.created.title')}
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-auto"
-                onClick={() => setCreatedPost(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1160,6 +1369,103 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 </div>
               </div>
 
+              {/* After AI text is generated: edit here + regenerate (above image section) */}
+              {aiDraftReady && (
+                <Card className="rounded-md shadow-none border-slate-200 bg-slate-50/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-[14px] font-bold text-[#1a2332]">
+                      {t('pages:creator.post.ai.generatedSectionTitle', 'Generated post')}
+                    </CardTitle>
+                    <p className="text-[12px] font-medium text-[#64748b]">
+                      {t('pages:creator.post.ai.generatedSectionHint', 'You can edit the text below, then add images or continue.')}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-generated-title" className="text-[13px] font-bold text-[#64748b]">
+                        {t('pages:creator.post.fields.title')}
+                      </Label>
+                      <Input
+                        id="ai-generated-title"
+                        value={postData.title}
+                        onChange={(e) => setPostData((prev) => ({ ...prev, title: e.target.value }))}
+                        maxLength={200}
+                        className="bg-white border border-slate-200 h-11 rounded-md px-4 text-[14px] font-medium text-[#1a2332] focus-visible:ring-1 focus-visible:ring-slate-400"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-generated-content" className="text-[13px] font-bold text-[#64748b]">
+                        {t('pages:creator.post.fields.content')}
+                      </Label>
+                      <Textarea
+                        id="ai-generated-content"
+                        value={postData.content}
+                        onChange={(e) => setPostData((prev) => ({ ...prev, content: e.target.value }))}
+                        rows={8}
+                        className="bg-white border border-slate-200 p-4 text-[14px] text-[#1a2332] resize-y rounded-md focus-visible:ring-1 focus-visible:ring-slate-400 min-h-[160px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-generated-hashtag" className="text-[13px] font-bold text-[#64748b]">
+                        {t('pages:creator.post.fields.hashtag')}
+                      </Label>
+                      <Input
+                        id="ai-generated-hashtag"
+                        value={postData.hashtag}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          if (value && !value.startsWith('#')) value = '#' + value;
+                          setPostData((prev) => ({ ...prev, hashtag: value }));
+                        }}
+                        maxLength={100}
+                        className="bg-white border border-slate-200 h-11 rounded-md px-4 text-[14px] font-medium text-[#1a2332] focus-visible:ring-1 focus-visible:ring-slate-400"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleRegenerateAiText}
+                      disabled={isGeneratingAi || (!aiData.prompt?.trim() && !aiData.topic?.trim())}
+                      variant="outline"
+                      className="w-full h-11 rounded-md text-[14px] font-bold border-slate-300 text-slate-700 hover:bg-white bg-white"
+                    >
+                      {isGeneratingAi ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {t('pages:creator.post.ai.buttons.generating')}
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          {t('pages:creator.post.ai.buttons.regenerateText', 'Regenerate Text')}
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Generate text — directly above AI Image section */}
+              {!aiDraftReady && (
+                <Button
+                  type="button"
+                  onClick={handleGenerateAiPost}
+                  disabled={isGeneratingAi || (!aiData.prompt?.trim() && !aiData.topic?.trim())}
+                  className="w-full bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold h-11 rounded-md text-[14px] shadow-sm"
+                >
+                  {isGeneratingAi ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t('pages:creator.post.ai.buttons.generating')}
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      {t('pages:creator.post.ai.buttons.generateText')}
+                    </>
+                  )}
+                </Button>
+              )}
+
               {/* AI Image Generation Card */}
               <Card className="rounded-md shadow-none border-slate-200">
                 <CardHeader>
@@ -1424,22 +1730,15 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 </CardContent>
               </Card>
 
-              <Button
-                onClick={handleNext}
-                disabled={isGeneratingAi || (!aiData.prompt?.trim() && !aiData.topic?.trim())}
-                className="w-full bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#64748b] font-bold h-11 rounded-md text-[14px] shadow-none"
-              >
-                {isGeneratingAi ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t('pages:creator.post.ai.buttons.generating')}
-                  </>
-                ) : (
-                  <>
-                    {t('pages:creator.post.buttons.next')}
-                  </>
-                )}
-              </Button>
+              {aiDraftReady && (
+                <Button
+                  onClick={handleNext}
+                  disabled={isGeneratingAi || !postData.title.trim() || !postData.content.trim()}
+                  className="w-full bg-[#e2e8f0] hover:bg-[#cbd5e1] text-[#64748b] font-bold h-11 rounded-md text-[14px] shadow-none"
+                >
+                  {t('pages:creator.post.buttons.next')}
+                </Button>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

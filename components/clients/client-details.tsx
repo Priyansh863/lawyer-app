@@ -39,12 +39,26 @@ interface ClientDetailsProps {
 
 export default function ClientDetails({ client: initialClient }: ClientDetailsProps) {
   const { t } = useTranslation()
+  const normalizeDateValue = (raw: string) => {
+    if (!raw) return raw
+    const parts = raw.split("-")
+    if (parts.length === 3) {
+      const [a, b, c] = parts
+      if (a.length === 4) return raw
+      if (c.length === 4) return `${c}-${b.padStart(2, "0")}-${a.padStart(2, "0")}`
+    }
+    return raw
+  }
   console.log("initialClientinitialClientinitialClient", initialClient)
   const [client, setClient] = useState<Client & { video_rate?: number; chat_rate?: number }>(initialClient)
   const [meetingLink, setMeetingLink] = useState("")
   const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
   const [meetingDialogOpen, setMeetingDialogOpen] = useState(false)
   const [effectiveVideoRate, setEffectiveVideoRate] = useState<number>(0)
+  const [requestedDate, setRequestedDate] = useState<string>("")
+  const [requestedTime, setRequestedTime] = useState<string>("")
+  const [endTime, setEndTime] = useState<string>("")
+  const [endTimeTouched, setEndTimeTouched] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const profile = useSelector((state: RootState) => state.auth.user)
@@ -102,8 +116,41 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
   useEffect(() => {
     if (meetingDialogOpen) {
       fetchEffectiveVideoRate()
+      const now = new Date()
+      const d = now.toISOString().split("T")[0]
+      const t = now.toTimeString().split(" ")[0].substring(0, 5)
+      setRequestedDate((prev) => prev || d)
+      setRequestedTime((prev) => prev || t)
+      setEndTime((prev) => {
+        if (prev) return prev
+        try {
+          const [hh, mm] = t.split(":").map((x) => parseInt(x, 10))
+          const base = new Date()
+          base.setHours(hh)
+          base.setMinutes(mm + 30)
+          return `${String(base.getHours()).padStart(2, "0")}:${String(base.getMinutes()).padStart(2, "0")}`
+        } catch {
+          return ""
+        }
+      })
+      setEndTimeTouched(false)
     }
   }, [meetingDialogOpen, profile?._id, client?._id])
+
+  useEffect(() => {
+    if (!meetingDialogOpen) return
+    if (!requestedTime) return
+    if (endTimeTouched) return
+    try {
+      const [hh, mm] = requestedTime.split(":").map((x) => parseInt(x, 10))
+      const base = new Date()
+      base.setHours(hh)
+      base.setMinutes(mm + 30)
+      setEndTime(`${String(base.getHours()).padStart(2, "0")}:${String(base.getMinutes()).padStart(2, "0")}`)
+    } catch {
+      // ignore
+    }
+  }, [meetingDialogOpen, requestedTime, requestedDate, endTimeTouched])
 
   // Handle meeting scheduling
   const handleScheduleMeeting = async () => {
@@ -123,6 +170,22 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       })
       return
     }
+    if (!requestedDate || !requestedTime) {
+      toast({
+        title: t("pages:clientDetails.error"),
+        description: "Please select a date and time",
+        variant: "destructive",
+      })
+      return
+    }
+    if (!endTime) {
+      toast({
+        title: t("pages:clientDetails.error"),
+        description: "Please select an end time",
+        variant: "destructive",
+      })
+      return
+    }
     let lawyer_id = profile.account_type === "lawyer" ? profile._id : client._id
     let client_id = profile.account_type === "client" ? profile._id : client._id
 
@@ -134,8 +197,10 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
         lawyerId: lawyer_id,
         clientId: client_id,
         meetingLink: meetingLink.trim(),
-        requested_date: new Date().toISOString().split('T')[0],
-        requested_time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+        requested_date: normalizeDateValue(requestedDate),
+        requested_time: requestedTime,
+        end_date: normalizeDateValue(requestedDate),
+        end_time: endTime,
         consultation_type: "video",
         hourly_rate: Number(effectiveVideoRate || 0),
       }
@@ -292,11 +357,16 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                 <MessageSquare className="mr-2" size={16} />
                 {t("pages:clientDetails.chat")}
               </Button>
+              {client.account_type === "lawyer" && user?.account_type === "client" && client.chat_rate ? (
+                <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                  Chat fee: {client.chat_rate} tokens/min
+                </div>
+              ) : null}
             </div>
 
             {/* Video Meeting Button with Rate Display */}
             <div className="flex flex-col items-center gap-1">
-              <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen}>
+              <Dialog open={meetingDialogOpen} onOpenChange={setMeetingDialogOpen} modal={false}>
                 <DialogTrigger asChild>
                   <Button variant="outline" title={t("pages:clientDetails.scheduleMeeting")}>
                     <Calendar className="mr-2" size={16} />
@@ -312,6 +382,48 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
                   </DialogHeader>
 
                   <div className="space-y-4">
+                    <div className="p-3 rounded-md bg-slate-50 border border-slate-200 text-sm">
+                      <div className="font-semibold text-[#0F172A]">Rate</div>
+                      <div className="text-slate-600">{Number(effectiveVideoRate || 0)} tokens/hour</div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="meetingDate">Date</Label>
+                        <Input
+                          id="meetingDate"
+                          type="date"
+                          value={requestedDate}
+                          onChange={(e) => setRequestedDate(e.target.value)}
+                          onInput={(e) => setRequestedDate((e.target as HTMLInputElement).value)}
+                          disabled={isSchedulingMeeting}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="meetingTime">Time</Label>
+                        <Input
+                          id="meetingTime"
+                          type="time"
+                          value={requestedTime}
+                          onChange={(e) => setRequestedTime(e.target.value)}
+                          disabled={isSchedulingMeeting}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="meetingEndTime">End</Label>
+                        <Input
+                          id="meetingEndTime"
+                          type="time"
+                          value={endTime}
+                          onChange={(e) => {
+                            setEndTimeTouched(true)
+                            setEndTime(e.target.value)
+                          }}
+                          disabled={isSchedulingMeeting}
+                        />
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="meetingLink">{t("pages:clientDetails.meetingLink")}</Label>
                       <Input

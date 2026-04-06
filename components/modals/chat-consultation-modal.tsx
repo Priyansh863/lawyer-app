@@ -170,7 +170,16 @@ export default function ConsultationTypeModal({
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
+    // For client flow, default/base fee should reflect selected lawyer's chat rate.
+    if (profile?.account_type === "client") {
+      setBaseChatRate(Number((user as any)?.chat_rate || 0));
+    }
   };
+
+  const selectedBaseRate =
+    profile?.account_type === "client"
+      ? Number((selectedUser as any)?.chat_rate || 0)
+      : Number(baseChatRate || 0);
 
   const handleStartChat = async () => {
     if (!selectedUser) return;
@@ -327,7 +336,7 @@ export default function ConsultationTypeModal({
   );
 
   const renderUserSelectionStep = () => (
-    <div className="space-y-4 py-1 px-1 flex flex-col min-h-[580px]">
+    <div className="space-y-4 py-1 flex flex-col min-h-[580px]">
       <div className="text-left mb-4">
         <h3 className="text-[20px] font-bold text-[#0F172A] tracking-tight">
           {consultationType === 'free'
@@ -362,7 +371,7 @@ export default function ConsultationTypeModal({
               </div>
               <div className="flex items-center gap-3">
                 <Input
-                  value={baseChatRate.toString()}
+                  value={selectedBaseRate.toString()}
                   disabled
                   className="h-9 w-24 text-center bg-white border-none font-bold text-[#0F172A]"
                 />
@@ -453,7 +462,7 @@ export default function ConsultationTypeModal({
           className="bg-[#E5E5E5] border-none text-[#0F172A] font-bold px-10 h-12 rounded-md transition-all hover:bg-slate-300"
         >
           <ArrowLeft className="h-5 w-5 mr-3" />
-          {t("pages:consultation.back") || "Back"}
+          {t("pages:consultation.back")?.includes('.') ? "Back" : t("pages:consultation.back")}
         </Button>
         <Button
           onClick={handleStartChat}
@@ -464,8 +473,8 @@ export default function ConsultationTypeModal({
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
           ) : null}
           {consultationType === 'free'
-            ? t("pages:consultation.startFreeChat") || 'Start Free Chat'
-            : t("pages:consultation.startPaidChat") || 'Start Paid Chat'}
+            ? (t("pages:consultation.startFreeChat")?.includes('.') ? 'Start Free Chat' : t("pages:consultation.startFreeChat"))
+            : (t("pages:consultation.startPaidChat")?.includes('.') ? 'Start Paid Chat' : t("pages:consultation.startPaidChat"))}
         </Button>
       </div>
     </div>
@@ -475,14 +484,14 @@ export default function ConsultationTypeModal({
     <div className="flex flex-col items-center justify-center py-8">
       <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
       <h3 className="text-lg font-medium mb-2">
-        {t("pages:consultation.startingChat") || "Starting Chat..."}
+        {t("pages:consultation.startingChat")?.includes('.') ? "Starting Chat..." : t("pages:consultation.startingChat")}
       </h3>
       <p className="text-gray-500 text-center">
-        {t("pages:consultation.connectingWith") || "Connecting with"} {selectedUser?.first_name} {selectedUser?.last_name}
+        {t("pages:consultation.connectingWith")?.includes('.') ? "Connecting with" : t("pages:consultation.connectingWith")} {selectedUser?.first_name} {selectedUser?.last_name}
       </p>
       <Button variant="outline" onClick={handleBack} className="mt-4">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        {t("pages:consultation.back")}
+        {t("pages:consultation.back")?.includes('.') ? "Back" : t("pages:consultation.back")}
       </Button>
     </div>
   );
@@ -491,7 +500,7 @@ export default function ConsultationTypeModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className={cn(
         "transition-all duration-300",
-        currentStep === 'consultationType' ? "sm:max-w-2xl p-8 outline-none" : "sm:max-w-md"
+        currentStep === 'consultationType' ? "sm:max-w-2xl p-8 outline-none" : "sm:max-w-[600px] p-8 outline-none"
       )}>
         {(currentStep !== 'consultationType' && currentStep !== 'userSelection') && (
           <DialogHeader>

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import LawyerChargesSettings, { LawyerChargesSettingsHandle } from "@/components/settings/lawyer-charges-settings"
 import PcIdSettings from "@/components/settings/pc-id-settings"
+import ContentPreferencesSettings from "@/components/settings/content-preferences-settings"
 import { toast } from "@/hooks/use-toast"
 import { useForm } from "react-hook-form"
 import { updateUser } from "@/services/user"
@@ -33,7 +34,7 @@ export default function SettingsPage() {
   const { t } = useTranslation()
   const { language, setLanguage } = useI18n()
   const { theme = "light", setTheme } = useTheme()
-  const [activeTab, setActiveTab] = useState<'profile' | 'rates' | 'pc-id'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'rates' | 'pc-id' | 'content'>('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const ratesRef = useRef<LawyerChargesSettingsHandle>(null)
@@ -181,6 +182,17 @@ export default function SettingsPage() {
               )}
             >
               {t('pages:settings.pcLicense')}
+            </button>
+            <button
+              onClick={() => { setActiveTab('content'); setIsEditing(false); }}
+              className={cn(
+                "relative pb-3 text-[15px] font-bold transition-all",
+                activeTab === 'content'
+                  ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {t('pages:settings.contentPreferences.title')}
             </button>
           </div>
 
@@ -471,9 +483,13 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <LawyerChargesSettings ref={ratesRef} />
             </div>
-          ) : (
+          ) : activeTab === 'pc-id' ? (
             <div className="space-y-6">
               <PcIdSettings />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <ContentPreferencesSettings />
             </div>
           )}
         </div>

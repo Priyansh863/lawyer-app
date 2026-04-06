@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getClientFiles } from "@/lib/api/files-api"; // only client files used here
+import { getClientFiles, getLawyerFiles } from "@/lib/api/files-api";
+import { downloadDocument, getDocumentViewUrl } from "@/lib/api/documents-api";
 import { FileText, Download, MoreVertical, Share2, Eye, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { FileMetadata } from "@/types/file";
@@ -30,30 +31,74 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<FileMetadata | null>(null);
   const user = useSelector((state: RootState) => state.auth.user);
+  const isLawyer = user?.account_type === "lawyer";
 
   useEffect(() => {
-    const loadFiles = async () => {
+    const refreshIntervalMs = 10_000; // Keep client status view in sync after uploads
+    let isCancelled = false;
+    let inFlight = false;
+
+    const loadFiles = async (opts?: { silent?: boolean }) => {
+      if (inFlight) return; // prevent overlapping fetches
+      inFlight = true;
+
       try {
-        setIsLoading(true);
+        if (!opts?.silent) setIsLoading(true);
+
         console.log("Fetching client files for clientId:", clientId);
-        const clientFiles = await getClientFiles(clientId);
+        const clientFiles = isLawyer ? await getLawyerFiles(clientId) : await getClientFiles(clientId);
+        if (isCancelled) return;
 
         console.log("✅ Files loaded:", clientFiles);
-        setFiles(clientFiles);
+        // Normalize backend payload to what the UI expects.
+        // Backend responses may use `_id`/`created_at` instead of `id`/`createdAt`.
+        const normalized = clientFiles.map((f: any) => {
+          const id = f.id ?? f._id ?? f.document_id
+          const createdAt = f.createdAt ?? f.created_at ?? f.created_at
+          const document_name = f.document_name ?? f.name ?? f.documentTitle
+
+          return {
+            ...f,
+            id,
+            createdAt,
+            document_name,
+            // Ensure privacy comparison is consistent.
+            privacy: typeof f.privacy === "string" ? f.privacy.toLowerCase() : f.privacy,
+            // UI expects an array for shared_with badge.
+            shared_with: Array.isArray(f.shared_with) ? f.shared_with : [],
+          }
+        })
+
+        setFiles(normalized as FileMetadata[]);
       } catch (error) {
         console.error("❌ Failed to load files", error);
-        toast({
-          title: t("error"),
-          description: t("pages:prdoc.failedToLoadClientFiles"),
-          variant: "destructive",
-        });
+        if (!opts?.silent) {
+          toast({
+            title: t("error"),
+            description: t("pages:prdoc.failedToLoadClientFiles"),
+            variant: "destructive",
+          });
+        }
       } finally {
-        setIsLoading(false);
+        inFlight = false;
+        if (!isCancelled && !opts?.silent) setIsLoading(false);
       }
     };
 
+    // Initial load
     loadFiles();
-  }, [clientId]); // ✅ only re-run when clientId changes
+
+    // Poll for changes so newly uploaded documents show up automatically
+    const intervalId = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      loadFiles({ silent: true });
+    }, refreshIntervalMs);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [clientId, isLawyer]); // Re-run when switching clients or role
 
   const handleFileUploaded = (newFile: FileMetadata) => {
     setFiles((prevFiles) => [...prevFiles, newFile]);
@@ -69,8 +114,47 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
     setShareDialogOpen(true);
   };
 
-  const handleViewDocument = (file: FileMetadata) => {
-    window.open(file.link, "_blank");
+  const handleViewDocument = async (file: FileMetadata) => {
+    const rawLink = (file.link || '').trim()
+    const docId = file.id ?? (file as any)._id
+    if (!docId && !rawLink) {
+        toast({
+          title: t("error"),
+          description: "Document id missing",
+          variant: "destructive"
+        })
+        return
+    }
+
+    try {
+        const url = await getDocumentViewUrl(docId, rawLink)
+        window.open(url, "_blank", "noopener,noreferrer")
+    } catch (e) {
+        console.error("Failed to open document via API:", e)
+        if (rawLink && rawLink.trim() && rawLink.trim() !== '#') {
+            const openUrl = rawLink.startsWith('http') || rawLink.startsWith('/') || rawLink.startsWith('data:') || rawLink.startsWith('blob:')
+                ? rawLink
+                : `https://${rawLink}`
+            window.open(openUrl, "_blank", "noopener,noreferrer")
+        } else {
+            toast({
+              title: t("error"),
+              description: "Unable to open document",
+              variant: "destructive"
+            })
+        }
+    }
+  };
+
+  const handleDownloadDocument = async (file: FileMetadata) => {
+    const rawLink = (file.link || '').trim()
+    const docId = (file.id ?? (file as any)._id) || ""
+    try {
+        await downloadDocument(docId, file.document_name || "document", rawLink, (file as any).file_base64)
+        toast({ title: t("download"), description: "Download started" })
+    } catch (error) {
+        toast({ variant: 'destructive', title: t("error"), description: "Failed to download document" })
+    }
   };
 
   const handleShareUpdate = (updatedDocument: any) => {
@@ -100,7 +184,7 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {files.map((file) => (
               <div
-                key={file.id}
+                key={file.id ?? (file as any)._id ?? file.document_name}
                 className="border rounded-md p-4 flex items-start gap-3"
               >
                 <div className="p-2 bg-gray-100 rounded-md">
@@ -135,7 +219,7 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
                     variant="ghost"
                     size="icon"
                     title={t("download")}
-                    onClick={() => window.open(file.link)}
+                    onClick={() => handleDownloadDocument(file)}
                   >
                     <Download size={16} />
                   </Button>

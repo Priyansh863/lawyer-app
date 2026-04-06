@@ -105,6 +105,20 @@ export default function DocumentManager() {
         }
     }, [user])
 
+    // If user clicked "Open Folder" from a case dialog, pre-open that folder here.
+    useEffect(() => {
+        try {
+            const folder = localStorage.getItem("documentManagerOpenFolder")
+            if (folder) {
+                setOpenFolder(folder)
+                localStorage.removeItem("documentManagerOpenFolder")
+            }
+        } catch {
+            // ignore
+        }
+        // run once on mount
+    }, [])
+
     const loadDocuments = async () => {
         setIsLoading(true)
         try {

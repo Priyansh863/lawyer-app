@@ -105,6 +105,7 @@ export default function LocationUrlGenerator({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [currentAltitude, setCurrentAltitude] = useState<number | null>(null);
   const [inputMethod, setInputMethod] = useState<'manual' | 'address' | 'place' | 'map' | 'auto'>('manual');
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -116,38 +117,58 @@ export default function LocationUrlGenerator({
       return;
     }
 
+    setIsGettingLocation(true);
+
+    const applyPosition = (position: GeolocationPosition) => {
+      const lat = parseFloat(position.coords.latitude.toFixed(6));
+      const lng = parseFloat(position.coords.longitude.toFixed(6));
+
+      setSpatialInfo(prev => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng
+      }));
+
+      if (position.coords.altitude !== null && position.coords.altitude !== undefined) {
+        setCurrentAltitude(Math.round(position.coords.altitude));
+      }
+
+      toast({
+        title: t('pages:locla.location.toast.locationObtained'),
+        description: `${t('pages:locla.location.toast.coordinates')}: ${lat}, ${lng}`,
+        variant: "default",
+      });
+      setIsGettingLocation(false);
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      toast({
+        title: t('pages:locla.location.toast.locationError'),
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsGettingLocation(false);
+    };
+
+    // Fast path first: quicker response using cached/coarse location
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = parseFloat(position.coords.latitude.toFixed(6));
-        const lng = parseFloat(position.coords.longitude.toFixed(6));
-        
-        setSpatialInfo(prev => ({
-          ...prev,
-          latitude: lat,
-          longitude: lng
-        }));
-
-        if (position.coords.altitude) {
-          setCurrentAltitude(Math.round(position.coords.altitude));
-        }
-
-        toast({
-          title: t('pages:locla.location.toast.locationObtained'),
-          description: `${t('pages:locla.location.toast.coordinates')}: ${lat}, ${lng}`,
-          variant: "default",
-        });
-      },
-      (error) => {
-        toast({
-          title: t('pages:locla.location.toast.locationError'),
-          description: error.message,
-          variant: "destructive",
-        });
+      applyPosition,
+      () => {
+        // Fallback path: more accurate GPS if quick path fails
+        navigator.geolocation.getCurrentPosition(
+          applyPosition,
+          handleError,
+          {
+            enableHighAccuracy: true,
+            timeout: 7000,
+            maximumAge: 0
+          }
+        );
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
+        enableHighAccuracy: false,
+        timeout: 2500,
+        maximumAge: 300000
       }
     );
   };
@@ -445,10 +466,25 @@ export default function LocationUrlGenerator({
 
         {inputMethod === 'auto' && (
           <div className="space-y-2">
-            <Button onClick={getCurrentLocation} className="w-full">
-              <Crosshair className="h-4 w-4 mr-2" />
-              {t('pages:locla.location.getCurrentLocation')}
+            <Button onClick={getCurrentLocation} className="w-full" disabled={isGettingLocation}>
+              {isGettingLocation ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  {t('pages:common.loading', 'Loading...')}
+                </>
+              ) : (
+                <>
+                  <Crosshair className="h-4 w-4 mr-2" />
+                  {t('pages:locla.location.getCurrentLocation')}
+                </>
+              )}
             </Button>
+            {isGettingLocation && (
+              <div className="text-xs text-slate-500 flex items-center gap-2">
+                <Clock className="h-3 w-3 animate-spin" />
+                {t('pages:locla.location.loadingHint', 'Detecting your current location...')}
+              </div>
+            )}
             {currentAltitude && (
               <div className="text-sm text-gray-600">
                 <Info className="h-4 w-4 inline mr-1" />

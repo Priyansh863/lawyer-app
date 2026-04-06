@@ -8,17 +8,20 @@ interface ClientsHeaderProps {
   onClientCreated?: () => void;
 }
 
-export default function ClientsHeader() {
+export default function ClientsHeader({ onClientCreated }: ClientsHeaderProps) {
   const user = useSelector((state: RootState) => state.auth.user)
   const { t } = useTranslation()
 
   return (
-    <div className="mb-2">
+    <div className="mb-2 flex items-center justify-between">
       <h2 className="text-2xl font-bold text-[#0F172A]">
         {user?.account_type === "client"
           ? t('pages:client.lawyerManagement')
           : t('pages:client.clientManagement')}
       </h2>
+      {user?.account_type === "lawyer" && (
+        <OnboardClientForm onClientCreated={onClientCreated} />
+      )}
     </div>
   )
 }

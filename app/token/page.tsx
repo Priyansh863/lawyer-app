@@ -73,6 +73,41 @@ interface PaymentSession {
   tokenBalance?: TokenBalance
 }
 
+interface EarnedTransaction {
+  id: string
+  amount: number
+  clientName: string
+  consultationType: string
+  status: string
+  /** ISO string when the meeting record includes a parseable date */
+  createdAt: string
+  description: string
+}
+
+/** Meeting records from the API often use snake_case timestamps; missing fields were falling back to `new Date()` and showed identical times for every row. */
+function meetingTimestampIso(m: Record<string, unknown>): string {
+  const candidates = [
+    m.created_at,
+    m.createdAt,
+    m.updated_at,
+    m.updatedAt,
+    m.scheduled_at,
+    m.scheduledAt,
+    m.completed_at,
+    m.completedAt,
+    m.start_time,
+    m.startTime,
+    m.end_time,
+    m.endTime
+  ]
+  for (const c of candidates) {
+    if (c == null || c === "") continue
+    const d = new Date(c as string | number | Date)
+    if (!Number.isNaN(d.getTime())) return d.toISOString()
+  }
+  return ""
+}
+
 // Token packages configuration
 const TOKEN_PACKAGES = (t: any) => ({
   starter: {
@@ -206,7 +241,9 @@ export default function TokenPage() {
   const [paymentMessage, setPaymentMessage] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [activeTab, setActiveTab] = useState<'Overview' | 'Buy'>('Overview')
+  const [activeTab, setActiveTab] = useState<'Overview' | 'Buy' | 'Earned'>('Overview')
+  const [earnedTransactions, setEarnedTransactions] = useState<EarnedTransaction[]>([])
+  const [earnedLoading, setEarnedLoading] = useState(false)
 
   const tokenPackages = TOKEN_PACKAGES(t)
 
@@ -246,7 +283,8 @@ export default function TokenPage() {
       await Promise.all([
         fetchTokenBalance(),
         fetchTransactions(1),
-        fetchTokenStats()
+        fetchTokenStats(),
+        ...(profile?.account_type === 'lawyer' ? [fetchEarnedTransactions()] : [])
       ])
     } catch (error) {
       console.error('Error fetching token data:', error)
@@ -287,6 +325,65 @@ export default function TokenPage() {
       setTokenStats(stats)
     } catch (error) {
       console.error('Error fetching token stats:', error)
+    }
+  }
+
+  const fetchEarnedTransactions = async () => {
+    if (!token || profile?.account_type !== 'lawyer') return
+    setEarnedLoading(true)
+    try {
+      const response = await axios.get(`${API_BASE_URL}/meeting/list`, {
+        headers: getAuthHeaders(token)
+      })
+
+      const meetings =
+        response?.data?.data?.meetings ||
+        response?.data?.data ||
+        response?.data?.meetings ||
+        []
+
+      const myId = (profile as any)?._id
+      const rows: EarnedTransaction[] = (Array.isArray(meetings) ? meetings : [])
+        .filter((m: any) => {
+          const lawyerId = typeof m?.lawyer_id === 'string' ? m.lawyer_id : m?.lawyer_id?._id
+          return lawyerId === myId
+        })
+        .filter((m: any) => ['completed', 'approved', 'scheduled', 'active'].includes((m?.status || '').toLowerCase()))
+        .map((m: any) => {
+          const explicitAmount = Number(m?.calculated_total || m?.earned_tokens || m?.token_amount || 0)
+          const fallbackRate = Number(m?.hourly_rate || m?.per_minute_rate || 0)
+          const amount = explicitAmount > 0 ? explicitAmount : Math.max(fallbackRate, 0)
+
+          const clientObj = m?.client_id || {}
+          const clientName =
+            `${clientObj?.first_name || ''} ${clientObj?.last_name || ''}`.trim() ||
+            m?.client_name ||
+            'Client'
+
+          const createdAt = meetingTimestampIso(m as Record<string, unknown>)
+
+          return {
+            id: m?._id || `${clientName}-${createdAt || m?._id || String(Math.random())}`,
+            amount,
+            clientName,
+            consultationType: m?.consultation_type || 'video',
+            status: m?.status || 'completed',
+            createdAt,
+            description: m?.meeting_title || 'Consultation earning'
+          }
+        })
+        .filter((r: EarnedTransaction) => r.amount > 0)
+        .sort((a: EarnedTransaction, b: EarnedTransaction) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return tb - ta
+        })
+
+      setEarnedTransactions(rows)
+    } catch (error) {
+      console.error('Error fetching earned transactions:', error)
+    } finally {
+      setEarnedLoading(false)
     }
   }
 
@@ -381,6 +478,11 @@ export default function TokenPage() {
     return `${month} ${day}, ${year} - ${hours}:${minutes} ${ampm}`;
   }
 
+  const totalEarned = useMemo(
+    () => earnedTransactions.reduce((sum, item) => sum + (item.amount || 0), 0),
+    [earnedTransactions]
+  )
+
   if (!token) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -438,6 +540,19 @@ export default function TokenPage() {
             >
               {t('pages:tok.token.buyTokens')}
             </button>
+            {profile?.account_type === 'lawyer' && (
+              <button
+                onClick={() => setActiveTab('Earned')}
+                className={cn(
+                  "relative pb-3 text-[15px] font-bold transition-all",
+                  activeTab === 'Earned'
+                    ? "text-[#0F172A] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-[#0F172A]"
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                {t('pages:tok.token.tokensEarned', 'Tokens Earned')}
+              </button>
+            )}
           </div>
 
           {activeTab === 'Overview' && (
@@ -496,6 +611,17 @@ export default function TokenPage() {
                     <span className="text-[20px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
                   </div>
                 </div>
+                {profile?.account_type === 'lawyer' && (
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                    <p className="text-[#0F172A] font-bold text-[15px] mb-4">{t('pages:tok.token.tokensEarned', 'Tokens Earned')}</p>
+                    <div className="text-right">
+                      <span className="text-[32px] font-bold text-[#0F172A] mr-2">
+                        {loading || earnedLoading ? <Skeleton width={60} /> : totalEarned.toLocaleString()}
+                      </span>
+                      <span className="text-[20px] font-bold text-[#0F172A]">{t('pages:tok.token.tokens')}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Right Column: Transaction Table */}
@@ -586,7 +712,7 @@ export default function TokenPage() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'Buy' ? (
           /* Buy Tokens Tab - Perfected layout and alignment */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
             {Object.values(tokenPackages).map((pkg) => (
@@ -642,6 +768,70 @@ export default function TokenPage() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-[#F1F5F9] border-b border-slate-300 text-left text-[#0F172A] text-[13px] font-bold">
+                    <th className="px-5 py-3 font-bold">{t('pages:tok.token.paymentDetails')}</th>
+                    <th className="px-5 py-3 font-bold">{t('pages:tok.token.tokensEarned', 'Tokens Earned')}</th>
+                    <th className="px-5 py-3 font-bold">{t('pages:tok.token.status')}</th>
+                    <th className="px-5 py-3 font-bold">{t('pages:tok.token.date')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading || earnedLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse border-b border-slate-200 last:border-0">
+                        <td colSpan={4} className="px-6 py-6 bg-slate-50"></td>
+                      </tr>
+                    ))
+                  ) : earnedTransactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center py-20 text-slate-500 bg-white italic font-bold">
+                        {t('pages:tok.token.noTransactions')}
+                      </td>
+                    </tr>
+                  ) : (
+                    earnedTransactions.map((transaction) => (
+                      <tr key={transaction.id} className="border-b border-slate-200 last:border-0 hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-3">
+                          <span className="text-[#0F172A] font-bold text-[13px]">
+                            {transaction.clientName} - {transaction.description}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className="font-bold text-[13px] text-emerald-600">
+                            +{transaction.amount.toLocaleString()} {t('pages:tok.token.tokens')}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "h-2.5 w-2.5 rounded-full shrink-0",
+                              transaction.status === 'completed' ? "bg-[#4ADE80]" :
+                                transaction.status === 'pending' ? "bg-[#FFB600]" : "bg-[#94A3B8]"
+                            )} />
+                            <span className="text-[#0F172A] font-bold text-[13px] capitalize">
+                              {transaction.status}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <span className="text-[#0F172A] font-bold text-[13px]">
+                            {transaction.createdAt
+                              ? formatDate(transaction.createdAt)
+                              : "—"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

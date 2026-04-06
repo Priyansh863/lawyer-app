@@ -1,8 +1,18 @@
 import type { Client, ClientStatus } from "@/types/client"
+
+function normalizeClientStatus(raw: unknown): ClientStatus {
+  const s = String(raw ?? "")
+    .toLowerCase()
+    .trim()
+  if (s === "inactive") return "inactive"
+  if (s === "pending") return "pending"
+  return "active"
+}
 import type { Case } from "@/types/case"
 import axios from "axios"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+// Keep in sync with the backend used by cases/documents (commonly :3001 in dev).
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -43,7 +53,7 @@ export async function getClients({
   status = "all",
   query = "",
   page = 1,
-  limit = 10,
+  limit = 50,
 }: GetClientsParams = {}) {
   try {
     const currentUser = getCurrentUser()
@@ -73,7 +83,7 @@ export async function getClients({
       response = await axios.get(`${API_BASE_URL}/user/list`, {
         headers: getAuthHeaders(),
         params: {
-          accountType,
+          account_type: accountType,
           offset,
           limit
         }
@@ -87,7 +97,7 @@ export async function getClients({
     // Transform backend response to match Client interface
     const users = (currentUser.account_type === 'client' && accountType === 'lawyer')
       ? response.data.lawyers || []
-      : response.data.data || []
+      : response.data.data || response.data.clients || []
 
     const transformedClients: Client[] = users.map((user: any) => ({
       id: user._id,
@@ -97,7 +107,9 @@ export async function getClients({
       email: user.email,
       phone: user.phone || 'N/A',
       address: user.address || 'N/A',
-      status: 'active' as ClientStatus, // Default status
+      status: normalizeClientStatus(
+        user.status ?? user.client_status ?? user.account_status
+      ),
       createdAt: user.created_at || new Date().toISOString(),
       lastContactDate: user.updated_at || user.created_at || new Date().toISOString(),
       caseId: '', // Will be populated if needed
@@ -142,7 +154,8 @@ export async function getClients({
  */
 export async function getClientById(id: string): Promise<Client | null> {
   try {
-    const response = await axios.get(`${API_BASE_URL}/user/${id}`, {
+    // Backend exposes user details via /user/info/:id (not /user/:id)
+    const response = await axios.get(`${API_BASE_URL}/user/info/${id}`, {
       headers: getAuthHeaders()
     })
 
@@ -174,6 +187,73 @@ export async function getClientById(id: string): Promise<Client | null> {
     console.error('Error fetching client by ID:', error)
     return null
   }
+}
+
+/**
+ * Fetch a user's profile via the existing update endpoint.
+ * Some deployments return the full profile only from this route.
+ */
+export async function getUserProfileViaUpdate(id: string): Promise<any | null> {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/user/update/${id}`, {}, {
+      headers: getAuthHeaders()
+    })
+
+    const data = response.data
+    if (!data) return null
+    if (data.success === false) return null
+    // Support common shapes: {success, data}, or direct user object
+    return data.data || data.user || data
+  } catch (error) {
+    console.error('Error fetching user via update endpoint:', error)
+    return null
+  }
+}
+
+/**
+ * Get only the contact info we need for Case Details.
+ * Uses the provided update endpoint first, then falls back to GET /user/:id
+ * when some fields (commonly `email`) are not returned by the update endpoint.
+ */
+export async function getClientContactForCaseDetails(id: string): Promise<{ email?: string | null; phone?: string | null } | null> {
+  const viaUpdate = await getUserProfileViaUpdate(id)
+  // Some backends return phone/email with different key casing or nesting.
+  const v: any = viaUpdate || {}
+  const emailFromUpdate =
+    v?.email ??
+    v?.Email ??
+    v?.user?.email ??
+    v?.contact?.email ??
+    null
+  const phoneFromUpdate =
+    v?.phone ??
+    v?.Phone ??
+    v?.mobile ??
+    v?.phone_number ??
+    v?.user?.phone ??
+    v?.contact?.phone ??
+    null
+
+  // Helpful for debugging "N/A" issues in Case Details.
+  console.log("[getClientContactForCaseDetails] viaUpdate parsed:", {
+    id,
+    emailFromUpdate,
+    phoneFromUpdate,
+    rawKeys: v ? Object.keys(v) : [],
+  })
+
+  // If update endpoint already provides at least one useful field, keep it,
+  // but fall back to /user/:id for missing email.
+  if (emailFromUpdate || phoneFromUpdate) {
+    if (emailFromUpdate) return { email: emailFromUpdate, phone: phoneFromUpdate }
+    const viaGet = await getClientById(id)
+    return { email: (viaGet as any)?.email ?? null, phone: phoneFromUpdate }
+  }
+
+  // If update endpoint provides nothing, fallback to /user/:id entirely.
+  const viaGet = await getClientById(id)
+  if (!viaGet) return null
+  return { email: (viaGet as any)?.email ?? null, phone: (viaGet as any)?.phone ?? null }
 }
 
 // Placeholder functions for backward compatibility

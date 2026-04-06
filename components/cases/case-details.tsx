@@ -13,6 +13,7 @@ const { getCaseById } = casesApi
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 import CaseDocuments from "./case-documents"
+import { getClientContactForCaseDetails } from "@/lib/api/clients-api"
 
 interface CaseDetailsProps {
   caseData: Case
@@ -20,6 +21,7 @@ interface CaseDetailsProps {
 
 export default function CaseDetails({ caseData }: CaseDetailsProps) {
   const [caseState, setCaseState] = useState<any>(caseData)
+  const [clientProfile, setClientProfile] = useState<any | null>(null)
   const router = useRouter()
   const { toast } = useToast()
   const { t } = useTranslation()
@@ -47,6 +49,22 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
     // only run once for initial case id
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const rawClientId =
+      (caseState?.client_id && typeof caseState.client_id === "object")
+        ? (caseState.client_id._id || caseState.client_id.id)
+        : caseState?.client_id
+
+    if (!rawClientId) {
+      setClientProfile(null)
+      return
+    }
+
+    getClientContactForCaseDetails(String(rawClientId))
+      .then((client) => setClientProfile(client))
+      .catch(() => setClientProfile(null))
+  }, [caseState?.client_id])
 
   /** Replace English summary/description labels & status with translations */
   const translateEmbeddedText = (text: string) => {
@@ -269,6 +287,24 @@ export default function CaseDetails({ caseData }: CaseDetailsProps) {
                 {caseState.client_id
                   ? `${caseState.client_id.first_name} ${caseState.client_id.last_name || ""}`.trim()
                   : caseState.clientName || t("pages:commonl:na")}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.email")}</h3>
+              <p className="text-base font-medium mt-1">
+                {(caseState.client_id && typeof caseState.client_id === "object" && caseState.client_id.email) ||
+                  clientProfile?.email ||
+                  t("pages:commonl:na")}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">{t("pages:caseDetailsq.contact")}</h3>
+              <p className="text-base font-medium mt-1">
+                {(caseState.client_id && typeof caseState.client_id === "object" && caseState.client_id.phone) ||
+                  clientProfile?.phone ||
+                  t("pages:commonl:na")}
               </p>
             </div>
 

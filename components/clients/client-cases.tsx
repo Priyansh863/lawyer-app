@@ -37,22 +37,28 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
   const { toast } = useToast()
   const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
+  const isClientViewer = profile?.account_type === "client"
 
   useEffect(() => {
+    let isCancelled = false
     const loadCases = async () => {
       try {
         setIsLoading(true)
         const clientCases = await getClientCases(clientId, profile?.account_type === "lawyer" ? "client" : "lawyer")
+        if (isCancelled) return
         setCases(clientCases || [])
       } catch (error) {
         console.error("Error fetching client cases:", error)
       } finally {
-        setIsLoading(false)
+        if (!isCancelled) setIsLoading(false)
       }
     }
 
     if (clientId) {
       loadCases()
+    }
+    return () => {
+      isCancelled = true
     }
   }, [clientId])
 
@@ -100,7 +106,9 @@ export default function ClientCases({ clientId }: ClientCasesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-[16px] font-bold text-[#0F172A]">{t('pages:clientDetails.clientCases')}</h3>
+        <h3 className="text-[16px] font-bold text-[#0F172A]">
+          {isClientViewer ? t('pages:clientDetails.lawyerCases') : t('pages:clientDetails.clientCases')}
+        </h3>
         {profile?.account_type === 'lawyer' && (
           <Button
             onClick={() => router.push(`/cases/new?clientId=${clientId}`)}

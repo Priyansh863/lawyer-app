@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogClose,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -35,7 +36,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
     X,
-    FolderOpen,
     Eye,
     PlayCircle,
     MoreHorizontal,
@@ -50,8 +50,18 @@ import type { Case, CaseStatus, CaseType, CourtType } from "@/types/case"
 import { caseTypeConfig, courtTypeConfig } from "@/types/case"
 import { updateCase, deleteCase, casesApi } from "@/lib/api/cases-api"
 const { getCaseById } = casesApi
-import { uploadDocumentEnhanced, getCaseDocuments } from "@/lib/api/documents-api"
+import {
+    uploadDocumentEnhanced,
+    getCaseDocuments,
+    getDocumentViewUrl,
+    downloadDocument,
+    deleteDocument,
+    removeFromCloud,
+    updateDocumentStorageType,
+} from "@/lib/api/documents-api"
+import { getClientContactForCaseDetails } from "@/lib/api/clients-api"
 import { cn } from "@/lib/utils"
+import { ShareDocumentDialog } from "@/components/documents/share-with-lawyer-dialog"
 import { useSelector } from "react-redux"
 import { RootState } from "@/lib/store"
 import { toast } from "sonner"
@@ -77,12 +87,28 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const docFileInputRef = useRef<HTMLInputElement>(null)
     const user = useSelector((state: RootState) => state.auth.user)
     const { t } = useTranslation()
+    const [clientProfile, setClientProfile] = useState<any | null>(null)
+    const [fullCaseData, setFullCaseData] = useState<any | null>(null)
 
     // AI Voice Summary states
     const [voiceSummaryDoc, setVoiceSummaryDoc] = useState<any | null>(null)
     const [isSpeaking, setIsSpeaking] = useState(false)
     const [isPaused, setIsPaused] = useState(false)
     const [selectedLang, setSelectedLang] = useState('en-US')
+
+    // Document visibility / sharing (used by "Visibility" badge + dropdown)
+    const [visibilityDialogOpen, setVisibilityDialogOpen] = useState(false)
+    const [visibilityDoc, setVisibilityDoc] = useState<{
+        id: string
+        document_name: string
+        privacy: string
+        shared_with?: any[]
+    } | null>(null)
+
+    // Document delete confirmation (replace native window.confirm)
+    const [deleteDocConfirmOpen, setDeleteDocConfirmOpen] = useState(false)
+    const [deleteDocTarget, setDeleteDocTarget] = useState<any | null>(null)
+    const [isDeletingDoc, setIsDeletingDoc] = useState(false)
 
     const languages = [
         { value: 'en-US', label: 'English' },
@@ -105,6 +131,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
             const result = await getCaseById(id)
             if (result.success && result.case) {
                 const fullCase = result.case as any
+                setFullCaseData(fullCase)
                 setCaseType(fullCase.case_type || '')
                 setCourtType(fullCase.court_type || fullCase.court_name || '')
                 setStatus(fullCase.status || fullCase.case_status || '')
@@ -113,6 +140,8 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                 setNotes(fullCase.notes || '')
             }
         } catch (error) {
+            // Some backends return 403 for this endpoint even when the dialog is allowed.
+            // We still show what we can from the passed caseData and fetch client contact directly.
             console.error('Error loading case details:', error)
         }
     }
@@ -136,12 +165,147 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
         }
     }
 
+    const refreshCaseDocuments = async () => {
+        const id = caseData?._id || caseData?.id
+        if (id) {
+            await loadCaseDocuments(id)
+        }
+    }
+
+    const handleViewDocument = async (file: any) => {
+        const docId = file?._id || file?.id
+        const fallbackUrl = file.link || file.url
+        if (!docId) {
+            if (fallbackUrl) {
+                window.open(fallbackUrl, "_blank", "noopener,noreferrer")
+                return
+            }
+            toast.error("Document id missing")
+            return
+        }
+
+        try {
+            const url = await getDocumentViewUrl(docId, file.link || file.url)
+            window.open(url, "_blank", "noopener,noreferrer")
+        } catch (e) {
+            console.error("Failed to open document:", e)
+            toast.error("Unable to open document")
+        }
+    }
+
+    const handleDownloadDocument = async (file: any) => {
+        const docId = file?._id || file?.id
+        const docName = file?.document_name || file?.name || "document"
+        const fallbackUrl = file.link || file.url
+        if (!docId) {
+            if (fallbackUrl) {
+                await downloadDocument(docId || "", docName, fallbackUrl, file.file_base64)
+                toast.success("Download started")
+                return
+            }
+            toast.error("Document id missing")
+            return
+        }
+
+        try {
+            const url = await getDocumentViewUrl(docId, file.link || file.url)
+            await downloadDocument(docId, docName, url, file.file_base64)
+            toast.success("Download started")
+        } catch (e) {
+            console.error("Failed to download document:", e)
+            toast.error("Unable to download document")
+        }
+    }
+
+    const handleRemoveFromCloud = async (file: any) => {
+        const docId = file?._id || file?.id
+        if (!docId) return
+        try {
+            await removeFromCloud(docId)
+            toast.success("Removed from Cloud")
+            await refreshCaseDocuments()
+        } catch (e) {
+            console.error("Remove from cloud failed:", e)
+            toast.error("Failed to remove from Cloud")
+        }
+    }
+
+    const handleDisconnectFromPC = async (file: any) => {
+        const docId = file?._id || file?.id
+        if (!docId) return
+        try {
+            // "Disconnect from PC" => keep only cloud copy.
+            await updateDocumentStorageType(docId, "cloud")
+            toast.success("Disconnected from PC (kept Cloud)")
+            await refreshCaseDocuments()
+        } catch (e) {
+            console.error("Disconnect from PC failed:", e)
+            toast.error("Failed to disconnect from PC")
+        }
+    }
+
+    const handleDeleteDocumentFromCase = async (file: any) => {
+        const docId = file?._id || file?.id
+        if (!docId) return
+
+        setDeleteDocTarget(file)
+        setDeleteDocConfirmOpen(true)
+    }
+
+    const confirmDeleteDocumentFromCase = async () => {
+        const doc = deleteDocTarget
+        const docId = doc?._id || doc?.id
+        if (!docId) {
+            setDeleteDocConfirmOpen(false)
+            setDeleteDocTarget(null)
+            return
+        }
+
+        setIsDeletingDoc(true)
+        try {
+            await deleteDocument(docId)
+            await refreshCaseDocuments()
+            toast.success("Document deleted")
+        } catch (e) {
+            console.error("Delete document failed:", e)
+            toast.error("Failed to delete document")
+        } finally {
+            setIsDeletingDoc(false)
+            setDeleteDocConfirmOpen(false)
+            setDeleteDocTarget(null)
+        }
+    }
+
+    const openVisibilitySettings = (file: any) => {
+        const docId = file?._id || file?.id
+        if (!docId) return
+
+        setVisibilityDoc({
+            id: docId,
+            document_name: file?.document_name || file?.name || "document",
+            privacy: file?.privacy || "private",
+            shared_with: file?.shared_with || [],
+        })
+        setVisibilityDialogOpen(true)
+    }
+
+    const handleShareUpdate = (updatedDocument: any) => {
+        // ShareDocumentDialog returns `{ ...document, shared_with: updatedSharedWith }`
+        setCaseDocuments(prev =>
+            prev.map(d => {
+                const dId = d?._id || d?.id
+                if (dId !== updatedDocument?.id) return d
+                return { ...d, shared_with: updatedDocument.shared_with || [] }
+            })
+        )
+    }
+
     // Initialize form when caseData changes or dialog opens
     useEffect(() => {
         if (caseData && open) {
             // Extract values with various possible field names from backend
             const rawCase = caseData as any
-            
+
             setCaseType(rawCase.case_type || '')
             setCourtType(rawCase.court_type || rawCase.court_name || '')
             setStatus(rawCase.status || rawCase.case_status || '')
@@ -159,8 +323,31 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
             } else {
                 setCaseDocuments(caseData.files || [])
             }
+
+            // Ensure client email/phone are available even when `client_id` is not populated.
+            setClientProfile(null)
+            setFullCaseData(null)
         }
     }, [caseData, open])
+
+    // When we have full case details, use its client_id to fetch client profile (if needed)
+    useEffect(() => {
+        const raw = fullCaseData || caseData
+        if (!raw) return
+
+        const rawClientId =
+            (raw?.client_id && typeof raw.client_id === "object")
+                ? (raw.client_id._id || raw.client_id.id)
+                : raw?.client_id
+
+        if (rawClientId) {
+            getClientContactForCaseDetails(String(rawClientId))
+                .then((contact) => setClientProfile(contact))
+                .catch(() => setClientProfile(null))
+        } else {
+            setClientProfile(null)
+        }
+    }, [fullCaseData, caseData])
 
     if (!caseData) return null
 
@@ -210,8 +397,12 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
             })
             toast.success(t('pages:caseDetails.buttons.caseUpdatedSuccess'))
             setIsEditing(false)
-            if (onCaseUpdated && result.case) {
-                onCaseUpdated(result.case)
+            const updatedCase = result.case || (result as any).data
+            if (onCaseUpdated && updatedCase) {
+                onCaseUpdated(updatedCase)
+            } else {
+                // Even if we don't have the updated case object, close the dialog so the table can refresh
+                onOpenChange(false)
             }
         } catch (error) {
             console.error('Error updating case:', error)
@@ -240,13 +431,13 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
         }
     }
 
-    const clientName = caseData.client_id && typeof caseData.client_id === 'object'
-        ? `${caseData.client_id.first_name} ${caseData.client_id.last_name || ''}`.trim()
-        : 'N/A'
-    const clientEmail = (caseData.client_id && typeof caseData.client_id === 'object' && 'email' in caseData.client_id)
-        ? (caseData.client_id.email || 'N/A') : 'N/A'
-    const clientPhone = (caseData.client_id && typeof caseData.client_id === 'object' && 'phone' in caseData.client_id)
-        ? (caseData.client_id.phone || 'N/A') : 'N/A'
+    const caseForDisplay = (fullCaseData || caseData) as any
+    const populatedClient = (caseForDisplay?.client_id && typeof caseForDisplay.client_id === "object") ? caseForDisplay.client_id : null
+    const clientName = populatedClient
+        ? `${(populatedClient as any).first_name || ""} ${(populatedClient as any).last_name || ""}`.trim()
+        : `${clientProfile?.first_name || ""} ${clientProfile?.last_name || ""}`.trim() || "N/A"
+    const clientEmail = (populatedClient as any)?.email || clientProfile?.email || "N/A"
+    const clientPhone = (populatedClient as any)?.phone || clientProfile?.phone || "N/A"
 
     // Handle document upload to case
     const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -343,10 +534,10 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div className="space-y-1.5">
                                     <label className="text-xs text-slate-500 font-medium">{t('pages:caseDetails.caseNumber')}</label>
-                                    <Input 
-                                        value={(caseData as any).case_identifier || caseData.case_number} 
-                                        readOnly 
-                                        className="bg-[#f8f9fa] border-slate-200 h-10 text-sm font-medium" 
+                                    <Input
+                                        value={(caseData as any).case_identifier || caseData.case_number}
+                                        readOnly
+                                        className="bg-[#f8f9fa] border-slate-200 h-10 text-sm font-medium"
                                     />
                                 </div>
                                 <div className="space-y-1.5">
@@ -507,7 +698,6 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                         <TableRow className="border-b border-slate-200">
                                             <TableHead className="text-[11px] font-bold text-[#0F172A] py-2">{t('pages:caseDetails.docTable.title')}</TableHead>
                                             <TableHead className="text-[11px] font-bold text-[#0F172A] py-2 text-center">{t('pages:caseDetails.docTable.storedOn')}</TableHead>
-                                            <TableHead className="text-[11px] font-bold text-[#0F172A] py-2 text-center">{t('pages:caseDetails.docTable.openFolder')}</TableHead>
                                             <TableHead className="text-[11px] font-bold text-[#0F172A] py-2 text-center">{t('pages:caseDetails.docTable.view')}</TableHead>
                                             <TableHead className="text-[11px] font-bold text-[#0F172A] py-2 text-center">{t('pages:caseDetails.docTable.aiVoiceSummary')}</TableHead>
                                             <TableHead className="text-[11px] font-bold text-[#0F172A] py-2 text-center">{t('pages:caseDetails.docTable.visibility')}</TableHead>
@@ -518,7 +708,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                     <TableBody>
                                         {isLoadingDocs ? (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="text-center py-10">
+                                                <TableCell colSpan={7} className="text-center py-10">
                                                     <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
                                                         <Loader2 className="h-4 w-4 animate-spin" />
                                                         {t('pages:caseDetails.loadingDocs')}
@@ -527,7 +717,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                             </TableRow>
                                         ) : (!caseDocuments || caseDocuments.length === 0) ? (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="text-center py-10 text-xs text-slate-400">
+                                                <TableCell colSpan={7} className="text-center py-10 text-xs text-slate-400">
                                                     {t('pages:caseDetails.noDocs')}
                                                 </TableCell>
                                             </TableRow>
@@ -544,13 +734,10 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                             {isCloud && <Badge className="bg-sky-500 hover:bg-sky-600 text-[9px] h-5">{t('pages:documentManager.badgeCloud')}</Badge>}
                                                         </TableCell>
                                                         <TableCell className="text-center py-2">
-                                                            <FolderOpen className="h-4 w-4 mx-auto text-slate-500 cursor-pointer hover:text-slate-700 transition-colors" />
-                                                        </TableCell>
-                                                        <TableCell className="text-center py-2">
-                                                            <Eye className="h-4 w-4 mx-auto text-slate-500 cursor-pointer hover:text-slate-700 transition-colors" onClick={() => {
-                                                                const url = file.link || file.url
-                                                                if (url) window.open(url, '_blank')
-                                                            }} />
+                                                            <Eye
+                                                                className="h-4 w-4 mx-auto text-slate-500 cursor-pointer hover:text-slate-700 transition-colors"
+                                                                onClick={() => handleViewDocument(file)}
+                                                            />
                                                         </TableCell>
                                                         <TableCell className="text-center py-2">
                                                             <PlayCircle
@@ -564,7 +751,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                                 file.privacy === 'public'
                                                                     ? "border-emerald-400 text-emerald-600 bg-emerald-50"
                                                                     : "border-slate-400 text-slate-500"
-                                                            )}>
+                                                            )} onClick={() => openVisibilitySettings(file)}>
                                                                 {file.privacy === 'public' ? t('pages:caseDetails.visibility.public') : file.shared_with?.length ? t('pages:caseDetails.visibility.shared') : t('pages:caseDetails.visibility.private')}
                                                             </Badge>
                                                         </TableCell>
@@ -577,11 +764,11 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg z-[200]">
-                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer">{t('pages:caseDetails.docTable.download')}</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDownloadDocument(file)}>{t('pages:caseDetails.docTable.download')}</DropdownMenuItem>
                                                                     <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => setVoiceSummaryDoc(file)}>{t('pages:caseDetails.docTable.summary')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer">{t('pages:caseDetails.docTable.removeCloud')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer">{t('pages:caseDetails.docTable.disconnectPC')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] text-red-500 cursor-pointer">{t('pages:caseDetails.docTable.delete')}</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleRemoveFromCloud(file)}>{t('pages:caseDetails.docTable.removeCloud')}</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDisconnectFromPC(file)}>{t('pages:caseDetails.docTable.disconnectPC')}</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-[12px] text-red-500 cursor-pointer" onClick={() => handleDeleteDocumentFromCase(file)}>{t('pages:caseDetails.docTable.delete')}</DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
                                                         </TableCell>
@@ -819,6 +1006,49 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                 </Button>
                             </>
                         )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Document visibility / sharing dialog */}
+            {visibilityDoc && (
+                <ShareDocumentDialog
+                    open={visibilityDialogOpen}
+                    onOpenChange={setVisibilityDialogOpen}
+                    document={visibilityDoc}
+                    onShareUpdate={handleShareUpdate}
+                />
+            )}
+
+            {/* Document delete confirmation dialog */}
+            <Dialog open={deleteDocConfirmOpen} onOpenChange={setDeleteDocConfirmOpen}>
+                <DialogContent className="sm:max-w-[520px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-[#0F172A]">
+                            {t("pages:caseDetails.docTable.delete")}
+                        </DialogTitle>
+                        <DialogDescription className="text-[#475569]">
+                            {`Delete "${deleteDocTarget?.document_name || deleteDocTarget?.name || "document"}"?`}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setDeleteDocConfirmOpen(false)
+                                setDeleteDocTarget(null)
+                            }}
+                            disabled={isDeletingDoc}
+                        >
+                            {t("pages:caseDetails.buttons.cancel")}
+                        </Button>
+                        <Button
+                            onClick={confirmDeleteDocumentFromCase}
+                            disabled={isDeletingDoc}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {isDeletingDoc ? <Loader2 className="h-4 w-4 animate-spin" /> : t("pages:caseDetails.docTable.delete")}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

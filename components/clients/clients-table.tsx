@@ -1,7 +1,7 @@
 "use client";
 import type { Client, ClientStatus } from "@/types/client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,7 +61,6 @@ interface ClientsTableProps {
 
 export default function ClientsTable({ initialClients, onClientCreated }: ClientsTableProps) {
   const [clients, setClients] = useState<Client[]>(initialClients);
-  const [filteredClients, setFilteredClients] = useState<Client[]>(initialClients);
   const [isLoading, setIsLoading] = useState(false);
   const [updatingClients, setUpdatingClients] = useState<Set<string>>(new Set());
   const [clientDetailsDialog, setClientDetailsDialog] = useState<{
@@ -84,7 +83,33 @@ export default function ClientsTable({ initialClients, onClientCreated }: Client
     }
   });
 
-  // Load clients with filters
+  const searchQuery = searchForm.watch("query") || "";
+  const statusWatch = searchForm.watch("status");
+
+  const filteredClients = useMemo(() => {
+    let filtered = clients;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (client) =>
+          `${client.first_name || ""} ${client.last_name || ""}`
+            .toLowerCase()
+            .includes(q) ||
+          client.email?.toLowerCase().includes(q) ||
+          client.phone?.toLowerCase().includes(q) ||
+          client.contactInfo?.toLowerCase().includes(q)
+      );
+    }
+
+    if (statusWatch && statusWatch !== "all") {
+      filtered = filtered.filter((client) => client.status === statusWatch);
+    }
+
+    return filtered;
+  }, [clients, searchQuery, statusWatch]);
+
+  // Load clients with filters (high limit so new onboarded clients are not cut off the first page)
   useEffect(() => {
     const fetchClients = async () => {
       setIsLoading(true);
@@ -92,10 +117,10 @@ export default function ClientsTable({ initialClients, onClientCreated }: Client
         const formData = searchForm.getValues();
         const fetchedClients = await getClients({
           status: formData.status === "all" ? undefined : formData.status,
-          query: formData.query || undefined
+          query: formData.query || undefined,
+          limit: 500
         });
         setClients(fetchedClients);
-        setFilteredClients(fetchedClients);
       } catch (error) {
         toast({
           title: t("common.error"),
@@ -109,34 +134,6 @@ export default function ClientsTable({ initialClients, onClientCreated }: Client
 
     fetchClients();
   }, [searchParams, searchForm]);
-
-  // Real-time frontend search
-  useEffect(() => {
-    const query = searchForm.watch("query") || "";
-    const status = searchForm.watch("status");
-
-    let filtered = clients;
-
-    // Filter by search query
-    if (query.trim()) {
-      filtered = filtered.filter(
-        (client) =>
-          `${client.first_name || ""} ${client.last_name || ""}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) ||
-          client.email?.toLowerCase().includes(query.toLowerCase()) ||
-          client.phone?.toLowerCase().includes(query.toLowerCase()) ||
-          client.contactInfo?.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-
-    // Filter by status
-    if (status && status !== "all") {
-      filtered = filtered.filter((client) => client.status === status);
-    }
-
-    setFilteredClients(filtered);
-  }, [searchForm.watch("query"), searchForm.watch("status")]);
 
   // Handle search submit
   const onSearchSubmit = async (data: SearchFormData) => {
@@ -251,9 +248,7 @@ export default function ClientsTable({ initialClients, onClientCreated }: Client
             )}
           />
 
-          {profile?.account_type === "lawyer" && (
-            <OnboardClientForm onClientCreated={onClientCreated} />
-          )}
+          <div className="flex flex-1"></div>
         </form>
       </Form>
 
@@ -306,7 +301,7 @@ export default function ClientsTable({ initialClients, onClientCreated }: Client
                   <TableCell className="py-2 px-4 text-[13px] font-medium">{client.email || "N/A"}</TableCell>
                   <TableCell className="py-2 px-4 text-[13px] font-medium">{client.phone || "N/A"}</TableCell>
                   <TableCell className="py-2 px-4 text-[13px] font-medium">
-                    {formatLastContacted(client.lastContactDate || "2025-10-31T18:53:00")}
+                    {formatLastContacted(client.lastContactDate)}
                   </TableCell>
                   <TableCell className="py-2 px-4">
                     {getStatusDisplay(client.status)}

@@ -400,6 +400,9 @@ export default function EditMeetingModal({
                 value={requestedDate}
                 onChange={(e) => handleStartDateChange(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
+                className="cursor-pointer"
+                onFocus={(e) => e.target.showPicker()}
+                onClick={(e) => e.currentTarget.showPicker()}
               />
             </div>
 
@@ -413,6 +416,9 @@ export default function EditMeetingModal({
                 type="time"
                 value={requestedTime}
                 onChange={(e) => handleStartTimeChange(e.target.value)}
+                className="cursor-pointer"
+                onFocus={(e) => e.target.showPicker()}
+                onClick={(e) => e.currentTarget.showPicker()}
               />
             </div>
           </div>
@@ -430,6 +436,9 @@ export default function EditMeetingModal({
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={requestedDate || new Date().toISOString().split('T')[0]}
+                className="cursor-pointer"
+                onFocus={(e) => e.target.showPicker()}
+                onClick={(e) => e.currentTarget.showPicker()}
               />
             </div>
 
@@ -443,6 +452,9 @@ export default function EditMeetingModal({
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                className="cursor-pointer"
+                onFocus={(e) => e.target.showPicker()}
+                onClick={(e) => e.currentTarget.showPicker()}
               />
             </div>
           </div>

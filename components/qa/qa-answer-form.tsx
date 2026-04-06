@@ -32,7 +32,10 @@ export default function QAAnswerForm({
   const [isLocating, setIsLocating] = useState(false)
   const [isPosted, setIsPosted] = useState(false)
   const [hasAlreadyAnswered, setHasAlreadyAnswered] = useState(false)
+  const [isEditingAnswered, setIsEditingAnswered] = useState(false)
   const [existingImages, setExistingImages] = useState<string[]>([])
+  const [initialAnswer, setInitialAnswer] = useState("")
+  const [initialLocation, setInitialLocation] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { t } = useTranslation()
 
@@ -54,6 +57,9 @@ export default function QAAnswerForm({
             setLocationName(myAnswer.location || null)
             setExistingImages(myAnswer.images || [])
             setHasAlreadyAnswered(true)
+            setIsEditingAnswered(false)
+            setInitialAnswer(myAnswer.answer || "")
+            setInitialLocation(myAnswer.location || null)
           }
         }
       } catch (err) {
@@ -106,7 +112,22 @@ export default function QAAnswerForm({
   }
 
   const handleCancel = () => {
-    if (answer.trim().length > 0 || selectedImages.length > 0 || locationName) {
+    // Already answered and not editing -> close immediately (no discard popup)
+    if (hasAlreadyAnswered && !isEditingAnswered) {
+      if (onClose) onClose()
+      else router.back()
+      return
+    }
+
+    const hasDraftChanges = hasAlreadyAnswered
+      ? (
+          answer.trim() !== initialAnswer.trim() ||
+          (locationName || null) !== initialLocation ||
+          selectedImages.length > 0
+        )
+      : (answer.trim().length > 0 || selectedImages.length > 0 || locationName)
+
+    if (hasDraftChanges) {
       setShowDiscardModal(true)
     } else if (onClose) {
       onClose()
@@ -141,12 +162,25 @@ export default function QAAnswerForm({
 
       const lawyerName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || user?.first_name || "Lawyer"
       
+      const finalImages = hasAlreadyAnswered
+        ? [...existingImages, ...imageUrls]
+        : imageUrls
+
       if (hasAlreadyAnswered) {
-        await updateAnswer(questionId, answer, imageUrls, locationName || undefined, lawyerName)
+        await updateAnswer(questionId, answer, finalImages, locationName || undefined, lawyerName)
       } else {
         await answerQuestion(questionId, answer, imageUrls, locationName || undefined, lawyerName)
       }
       setIsPosted(true)
+      if (hasAlreadyAnswered) {
+        setIsEditingAnswered(false)
+        setInitialAnswer(answer)
+        setInitialLocation(locationName || null)
+        if (imageUrls.length > 0) {
+          setExistingImages((prev) => [...prev, ...imageUrls])
+          setSelectedImages([])
+        }
+      }
       toast.success(t('pages:qa.postedSuccessfully'))
       setTimeout(() => {
         if (onClose) onClose()
@@ -260,10 +294,10 @@ export default function QAAnswerForm({
               placeholder={t('pages:qa.answerPlaceholder')}
               value={answer}
               onChange={(e) => setAnswer(e.target.value.slice(0, MAX_CHARS))}
-              readOnly={hasAlreadyAnswered}
+              readOnly={hasAlreadyAnswered && !isEditingAnswered}
               className={cn(
                 "min-h-[160px] border-none focus-visible:ring-0 p-0 text-[16px] text-[#1E293B] leading-relaxed resize-none scrollbar-hide placeholder:text-slate-300",
-                hasAlreadyAnswered && "cursor-default select-none"
+                hasAlreadyAnswered && !isEditingAnswered && "cursor-default select-none"
               )}
             />
           </div>
@@ -332,10 +366,10 @@ export default function QAAnswerForm({
               />
               <button
                 onClick={handleImageClick}
-                disabled={hasAlreadyAnswered}
+                disabled={hasAlreadyAnswered && !isEditingAnswered}
                 className={cn(
                   "flex items-center gap-1.5 transition-colors font-bold text-[13px]",
-                  hasAlreadyAnswered ? "text-slate-300 cursor-default" : "text-slate-400 hover:text-[#1E293B]"
+                  (hasAlreadyAnswered && !isEditingAnswered) ? "text-slate-300 cursor-default" : "text-slate-400 hover:text-[#1E293B]"
                 )}
               >
                 <ImageIcon size={20} className="stroke-[1.5px]" />
@@ -343,10 +377,10 @@ export default function QAAnswerForm({
               </button>
               <button
                 onClick={handleLocationClick}
-                disabled={isLocating || hasAlreadyAnswered}
+                disabled={isLocating || (hasAlreadyAnswered && !isEditingAnswered)}
                 className={cn(
                   "flex items-center gap-1.5 transition-colors font-bold text-[13px]",
-                  (isLocating || hasAlreadyAnswered) ? "text-slate-300 cursor-default opacity-50" : "text-slate-400 hover:text-[#1E293B]"
+                  (isLocating || (hasAlreadyAnswered && !isEditingAnswered)) ? "text-slate-300 cursor-default opacity-50" : "text-slate-400 hover:text-[#1E293B]"
                 )}
               >
                 {isLocating ? <Loader2 size={16} className="animate-spin" /> : <MapPin size={20} className="stroke-[1.5px]" />}
@@ -355,11 +389,20 @@ export default function QAAnswerForm({
             </div>
 
             <div className="flex items-center gap-6">
+              {hasAlreadyAnswered && !isEditingAnswered && (
+                <Button
+                  onClick={() => setIsEditingAnswered(true)}
+                  variant="outline"
+                  className="h-11 px-6 rounded-lg font-bold"
+                >
+                  {t('pages:qa.editAnswer', 'Edit Answer')}
+                </Button>
+              )}
               <span
                 className={cn(
                   "text-[13px] font-bold",
                   answer.length >= MAX_CHARS ? "text-red-500" : "text-slate-400 font-medium",
-                  hasAlreadyAnswered && "opacity-0"
+                  hasAlreadyAnswered && !isEditingAnswered && "opacity-0"
                 )}
               >
                 {answer.length}/{MAX_CHARS}
@@ -367,16 +410,22 @@ export default function QAAnswerForm({
 
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || hasAlreadyAnswered || (answer.trim().length < 10 && !isPosted)}
+                disabled={
+                  submitting ||
+                  (hasAlreadyAnswered && !isEditingAnswered) ||
+                  (answer.trim().length < 10 && !isPosted)
+                }
                 className={cn(
                   "bg-[#0F172A] hover:bg-[#1E293B] text-white px-10 rounded-lg font-bold text-[15px] h-12 shadow-sm transition-all active:scale-95 disabled:bg-slate-100 disabled:text-slate-300",
-                  (isPosted || hasAlreadyAnswered) && "bg-slate-100 text-slate-300 cursor-default opacity-100 hover:bg-slate-100"
+                  (isPosted || (hasAlreadyAnswered && !isEditingAnswered)) && "bg-slate-100 text-slate-300 cursor-default opacity-100 hover:bg-slate-100"
                 )}
               >
                 {submitting ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
-                  t('pages:qa.submitAnswer')
+                  (hasAlreadyAnswered && isEditingAnswered)
+                    ? t('pages:qa.updateAnswer', 'Update Answer')
+                    : t('pages:qa.submitAnswer')
                 )}
               </Button>
             </div>
