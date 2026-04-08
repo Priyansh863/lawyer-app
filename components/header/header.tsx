@@ -37,7 +37,12 @@ export default function Header() {
                     <NotificationBell />
                 </div>
                 
-                <div className="flex items-center gap-3 group cursor-pointer hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors">
+                <div className="flex items-center gap-3 group cursor-pointer hover:bg-slate-50 p-1.5 pl-3 rounded-full transition-colors">
+                    <div className="hidden sm:flex flex-col text-right">
+                        <p className="text-sm font-semibold text-slate-900 leading-none">
+                            {user?.first_name} {user?.last_name || "User"}
+                        </p>
+                    </div>
                     <div className="w-9 h-9 rounded-full bg-[#0F172A] flex items-center justify-center border border-slate-100 group-hover:border-slate-300 transition-all overflow-hidden shadow-sm">
                         <Avatar className="w-full h-full">
                             <AvatarImage src={user?.profile_image ?? ""} />
@@ -45,11 +50,6 @@ export default function Header() {
                                 {user?.first_name?.[0]}{user?.last_name?.[0]}
                             </AvatarFallback>
                         </Avatar>
-                    </div>
-                    <div className="hidden sm:flex flex-col">
-                        <p className="text-sm font-semibold text-slate-900 leading-none">
-                            {user?.first_name} {user?.last_name || "User"}
-                        </p>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,9 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const secureLinkClient = axios.create({
+  baseURL: API_BASE_URL,
+});
 
 // Get token from localStorage
 const getToken = () => {
@@ -27,6 +30,7 @@ export interface SecureLink {
   created_at: string;
   expires_at: string;
   used_at?: string;
+  upload_count?: number;
   uploaded_document?: {
     file_name: string;
     upload_date: string;
@@ -78,7 +82,7 @@ export const generateSecureLink = async (data: GenerateSecureLinkData) => {
  */
 export const validateSecureLink = async (token: string): Promise<SecureLinkValidation> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/secure-link/validate/${token}`);
+    const response = await secureLinkClient.get(`/secure-link/validate/${token}`);
     return response.data.data;
   } catch (error: any) {
     console.error('Error validating secure link:', error);
@@ -91,14 +95,21 @@ export const validateSecureLink = async (token: string): Promise<SecureLinkValid
  */
 export const authenticateSecureLink = async (token: string, password: string): Promise<SecureLinkAuth> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/secure-link/authenticate`, {
+    const response = await secureLinkClient.post(`/secure-link/authenticate`, {
       token,
       password
     });
     return response.data.data;
   } catch (error: any) {
     console.error('Error authenticating secure link:', error);
-    throw error.response?.data || error;
+    const apiError = error.response?.data;
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw {
+        ...apiError,
+        message: apiError?.message || 'Incorrect password',
+      };
+    }
+    throw apiError || error;
   }
 };
 
@@ -112,7 +123,7 @@ export const uploadThroughSecureLink = async (
   fileSize?: number
 ) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/secure-link/upload`, {
+    const response = await secureLinkClient.post(`/secure-link/upload`, {
       upload_token: uploadToken,
       file_url: fileUrl,
       file_name: fileName,

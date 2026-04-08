@@ -45,6 +45,14 @@ export const getUserInfo = (id: string): Promise<ApiResponse<any>> =>
 
 
 /**
+ * update profile image
+ * @param data
+ * @returns
+ */
+export const updateProfileImage = (data: { user_id: string, profile_image: string }): Promise<ApiResponse<any>> =>
+    http.post(`${endpoints.user.UPDATE_PROFILE_IMAGE}`, data);
+
+/**
  * update user details
  * @param data
  * @returns

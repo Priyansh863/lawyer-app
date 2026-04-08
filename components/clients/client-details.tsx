@@ -328,9 +328,9 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={client.avatar || "/placeholder.svg?height=48&width=48"} alt={client?.first_name} />
-              <AvatarFallback>{client?.first_name.charAt(0)}</AvatarFallback>
+            <Avatar className="h-12 w-12 border border-slate-100 shadow-sm transition-transform hover:scale-105">
+              <AvatarImage src={client.profile_image || client.avatar || "/placeholder.svg?height=48&width=48"} alt={client?.first_name} />
+              <AvatarFallback className="bg-[#0F172A] text-white font-bold">{client?.first_name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="text-xl">{client?.first_name}</CardTitle>
@@ -525,25 +525,34 @@ export default function ClientDetails({ client: initialClient }: ClientDetailsPr
           )}
 
           <Tabs defaultValue="cases" className="mt-6">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cases">{t("pages:clientDetails.cases")}</TabsTrigger>
               <TabsTrigger value="documents">{t("pages:clientDetails.documents")}</TabsTrigger>
             </TabsList>
-            <TabsContent value="cases" className="mt-4">
-              <ClientCases clientId={client.id} />
-            </TabsContent>
-            <TabsContent value="documents" className="mt-4">
-              <ClientDocuments clientId={client.id} />
-            </TabsContent>
+            {/* Hide cases and documents for clients viewing lawyers */}
+            {!(user?.account_type === "client" && client.account_type === "lawyer") ? (
+              <>
+                <TabsContent value="cases" className="mt-4">
+                  <ClientCases clientId={client.id} />
+                </TabsContent>
+                <TabsContent value="documents" className="mt-4">
+                  <ClientDocuments clientId={client.id} />
+                </TabsContent>
+              </>
+            ) : (
+              <div className="mt-8 p-4 bg-muted/30 rounded-lg text-center text-sm text-muted-foreground italic">
+                {t("pages:clientDetails.privacyHidden") || "Personal information is hidden for privacy."}
+              </div>
+            )}
           </Tabs>
         </CardContent>
       </Card>
-      {showChat && (
+      {showChat && client?.id && (
         <SimpleChat
           onClose={() => setShowChat(false)}
           clientId={client.id}
           clientName={`${client?.first_name} ${client?.last_name}`}
-          clientAvatar={client?.avatar}
+          clientAvatar={client?.profile_image || client?.avatar}
           chatRate={client?.chat_rate} // Pass chat rate to SimpleChat
         />
       )}

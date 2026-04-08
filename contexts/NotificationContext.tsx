@@ -76,13 +76,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       setLoading(true)
       const response = await notificationsApi.getNotifications(params)
-      
+
       if (params?.page && params.page > 1) {
         setNotifications(prev => [...prev, ...response.notifications])
       } else {
         setNotifications(response.notifications)
       }
-      
+
       setUnreadCount(response.unreadCount)
     } catch (error) {
       console.error('Error fetching notifications:', error)
@@ -113,15 +113,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       const response = await notificationsApi.getNotifications({ page: 1, limit: 5 })
       const newCount = response.unreadCount
-      
+
       // Check if there are new notifications since last check
       if (!isInitialLoadRef.current && newCount > lastNotificationCount) {
         // Fetch the latest full page of notifications to update the global state
         const fullResponse = await notificationsApi.getNotifications({ page: 1, limit: 50 });
         setNotifications(fullResponse.notifications);
-        
+
         const latestUnreadNotification = fullResponse.notifications.find(n => !n.isRead)
-        
+
         // Show toast only for the latest notification
         if (latestUnreadNotification) {
           const getNotificationIcon = (type: string) => {
@@ -173,6 +173,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             }
           }
 
+          /* 
           toast.success(`${getNotificationIcon(latestUnreadNotification.type)} ${getNotificationTitle(latestUnreadNotification)}`, {
             description: getNotificationMessage(latestUnreadNotification),
             duration: 5000,
@@ -188,18 +189,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
               }
             }
           })
+          */
         }
       }
-      
+
       setUnreadCount(newCount)
       setLastNotificationCount(newCount)
-      
+
       if (isInitialLoadRef.current) {
         setNotifications(response.notifications) // Ensure we have the list even on first load
         isInitialLoadRef.current = false
         setLastNotificationCount(newCount)
       }
-      
+
     } catch (error) {
       console.error('Error checking for new notifications:', error)
     }
@@ -212,18 +214,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       await notificationsApi.markAsRead(notificationId)
-      
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification._id === notificationId 
+
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification._id === notificationId
             ? { ...notification, isRead: true }
             : notification
         )
       )
-      
+
       setUnreadCount(prev => Math.max(0, prev - 1))
       setLastNotificationCount(prev => Math.max(0, prev - 1))
-      
+
     } catch (error) {
       console.error('Error marking notification as read:', error)
       toast.error('Failed to mark notification as read')
@@ -237,14 +239,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       await notificationsApi.markAllAsRead()
-      
-      setNotifications(prev => 
+
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, isRead: true }))
       )
-      
+
       setUnreadCount(0)
       setLastNotificationCount(0)
-      
+
     } catch (error) {
       console.error('Error marking all notifications as read:', error)
       toast.error('Failed to mark all notifications as read')
@@ -258,17 +260,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     try {
       await notificationsApi.deleteNotification(notificationId)
-      
+
       const deletedNotification = notifications.find(n => n._id === notificationId)
       setNotifications(prev => prev.filter(notification => notification._id !== notificationId))
-      
+
       if (deletedNotification && !deletedNotification.isRead) {
         setUnreadCount(prev => Math.max(0, prev - 1))
         setLastNotificationCount(prev => Math.max(0, prev - 1))
       }
-      
+
       toast.success('Notification deleted')
-      
+
     } catch (error) {
       console.error('Error deleting notification:', error)
       toast.error('Failed to delete notification')
@@ -293,13 +295,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   // Background polling for new notifications every 15 seconds
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (isUserLoggedIn()) {
       interval = setInterval(() => {
         checkForNewNotifications();
       }, 5000); // 5 seconds
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };

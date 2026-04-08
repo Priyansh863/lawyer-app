@@ -70,11 +70,18 @@ export default function PostsPage() {
       const hiddenArr: any[] = hiddenRaw ? JSON.parse(hiddenRaw) : [];
       const blockedArr: any[] = blockedRaw ? JSON.parse(blockedRaw) : [];
 
-      setHiddenPostIds(new Set(hiddenArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean)));
-      setBlockedAuthorIds(new Set(blockedArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean)));
+      const hiddenSet = new Set(hiddenArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean));
+      const blockedSet = new Set(blockedArr.map((x) => (typeof x === "string" ? x : x?.id)).filter(Boolean));
+      
+      setHiddenPostIds(hiddenSet);
+      setBlockedAuthorIds(blockedSet);
+      return { hidden: hiddenSet, blocked: blockedSet };
     } catch {
-      setHiddenPostIds(new Set());
-      setBlockedAuthorIds(new Set());
+      const h = new Set<string>();
+      const b = new Set<string>();
+      setHiddenPostIds(h);
+      setBlockedAuthorIds(b);
+      return { hidden: h, blocked: b };
     }
   };
 
@@ -102,18 +109,32 @@ export default function PostsPage() {
   const [isReporting, setIsReporting] = useState(false);
 
   // Fetch posts
-  const fetchPosts = async (page = 1) => {
+  const fetchPosts = async (page = 1, currentPrefs?: { hidden: Set<string>, blocked: Set<string> }) => {
     try {
       setIsLoading(true);
       const response = await getPosts(page, 10, "published");
 
       const postsData = response.data.posts || [];
+      
+      // Use provided prefs or load them fresh from localStorage to avoid race conditions with React state
+      let hidden = currentPrefs?.hidden;
+      let blocked = currentPrefs?.blocked;
+      
+      if (!hidden || !blocked) {
+        const hRaw = localStorage.getItem(PREF_HIDDEN_POSTS_KEY);
+        const bRaw = localStorage.getItem(PREF_BLOCKED_AUTHORS_KEY);
+        const hArr = hRaw ? JSON.parse(hRaw || '[]') : [];
+        const bArr = bRaw ? JSON.parse(bRaw || '[]') : [];
+        hidden = new Set(hArr.map((x: any) => typeof x === "string" ? x : x?.id).filter(Boolean));
+        blocked = new Set(bArr.map((x: any) => typeof x === "string" ? x : x?.id).filter(Boolean));
+      }
+
       // Apply persisted preferences
       const visible = postsData.filter((p: any) => {
         const postId = p?._id;
         const authorId = p?.author?._id;
-        if (postId && hiddenPostIds.has(postId)) return false;
-        if (authorId && blockedAuthorIds.has(authorId)) return false;
+        if (postId && hidden!.has(postId)) return false;
+        if (authorId && blocked!.has(authorId)) return false;
         return true;
       });
       setPosts(visible);
@@ -133,8 +154,8 @@ export default function PostsPage() {
 
   // Load posts on component mount
   useEffect(() => {
-    loadPrefs();
-    fetchPosts(1);
+    const prefs = loadPrefs();
+    fetchPosts(1, prefs);
   }, []);
 
   // Re-apply preferences after prefs change (or when Settings undoes them)
@@ -148,11 +169,8 @@ export default function PostsPage() {
     };
   }, []);
 
-  useEffect(() => {
-    // When prefs change, refetch current page (keeps pagination consistent)
-    fetchPosts(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hiddenPostIds.size, blockedAuthorIds.size]);
+  // No longer refetching on preference change to avoid race conditions and redundant network calls.
+  // The local state handles the immediate removal, and fetchPosts handles the filtering for new fetches.
 
   // Filter posts based on search
   useEffect(() => {
@@ -257,6 +275,7 @@ export default function PostsPage() {
         { id: postId, title: post?.title },
       ];
       persistPrefs({ hiddenPosts: next });
+      setHiddenPostIds(new Set(next.map(x => x.id)));
     } catch {
       // ignore
     }
@@ -280,6 +299,7 @@ export default function PostsPage() {
         { id: authorId, name: authorName },
       ];
       persistPrefs({ blockedAuthors: next });
+      setBlockedAuthorIds(new Set(next.map(x => x.id)));
     } catch {
       // ignore
     }
@@ -376,6 +396,12 @@ export default function PostsPage() {
             {filteredPosts.map((post) => {
               const isExpanded = expandedPosts.has(post._id);
               const isLong = post.content.length > 220;
+              const postVideos = (post.videos && post.videos.length > 0)
+                ? post.videos
+                : (post.video ? [post.video] : []);
+              const postImages = (post.images && post.images.length > 0)
+                ? post.images
+                : (post.image ? [post.image] : []);
 
               return (
                 <Card key={post._id} className="break-inside-avoid border border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white hover:shadow-xl transition-all duration-300 group">
@@ -457,21 +483,25 @@ export default function PostsPage() {
                         </p>
                       )}
 
-                      {(post.images && post.images.length > 0) || post.image ? (
+                      {postVideos.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-3">
+                          {postVideos.slice(0, 1).map((video, idx) => (
+                            <div key={idx} className="rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
+                              <video
+                                src={video}
+                                controls
+                                className="w-full h-auto max-h-[420px] object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : postImages.length > 0 ? (
                         <div className="grid grid-cols-3 gap-3">
-                          {post.images && post.images.length > 0 ? (
-                            post.images.slice(0, 3).map((img, idx) => (
-                              <div key={idx} className="aspect-square rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
-                                <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                              </div>
-                            ))
-                          ) : (
-                            post.image && (
-                              <div className="aspect-square rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
-                                <img src={post.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                              </div>
-                            )
-                          )}
+                          {postImages.slice(0, 3).map((img, idx) => (
+                            <div key={idx} className="aspect-square rounded-2xl bg-slate-50 overflow-hidden border border-slate-100 group-hover:border-slate-200 transition-all duration-300">
+                              <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            </div>
+                          ))}
                         </div>
                       ) : null}
 

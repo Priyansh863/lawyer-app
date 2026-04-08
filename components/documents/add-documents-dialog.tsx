@@ -58,7 +58,7 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
     const [searchTerm, setSearchTerm] = useState('')
     const [sortBy, setSortBy] = useState('name')
     const [files, setFiles] = useState<ScannedFile[]>([])
-    const [uploadingMode, setUploadingMode] = useState<'cloud' | 'app' | null>(null)
+    const [uploadingMode, setUploadingMode] = useState<'cloud' | 'app' | 'both' | null>(null)
     const [showAppConfirm, setShowAppConfirm] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -177,7 +177,7 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
         }
     }
 
-    const handleUpload = async (mode: 'cloud' | 'app') => {
+    const handleUpload = async (mode: 'cloud' | 'app' | 'both') => {
         const selectedFiles = files.filter(f => f.selected)
         if (selectedFiles.length === 0 || !user?._id) {
             if (!user?._id) toast.error(t('pages:documentManager.addDocumentsDialog.userSessionNotFound'))
@@ -208,7 +208,7 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                         fileSize: fileObj.file.size,
                         fileType: inferredMime,
                         documentType: 'general',
-                        storageType: mode === 'cloud' ? 'cloud' : 'app',
+                        storageType: mode === 'cloud' ? 'cloud' : mode === 'both' ? 'app_cloud' : 'app',
                         // If user opened a folder in Documents page, upload into that folder.
                         // Otherwise store at root so new uploads are immediately visible in main list.
                         storageLocation: targetFolder || '/',
@@ -228,6 +228,8 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
             if (successCount > 0) {
                 toast.success(mode === 'cloud'
                     ? t('pages:documentManager.addDocumentsDialog.uploadSuccessCloud')
+                    : mode === 'both'
+                        ? t('pages:documentManager.addDocumentsDialog.uploadSuccessBoth')
                     : t('pages:documentManager.addDocumentsDialog.uploadSuccessApp'))
                 onUploadSuccess()
             }
@@ -396,6 +398,13 @@ export function AddDocumentsDialog({ isOpen, onClose, onUploadSuccess, targetFol
                                 className="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#475569] border-none h-[40px] px-6 rounded shadow-none font-semibold text-[13px] min-w-[120px]"
                             >
                                 {uploadingMode === 'app' ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:documentManager.addDocumentsDialog.linkToApp')}
+                            </Button>
+                            <Button
+                                onClick={() => handleUpload('both')}
+                                disabled={selectedCount === 0 || uploadingMode !== null}
+                                className="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#94a3b8] hover:text-[#475569] border-none h-[40px] px-6 rounded shadow-none font-semibold text-[13px] min-w-[100px]"
+                            >
+                                {uploadingMode === 'both' ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:documentManager.addDocumentsDialog.both')}
                             </Button>
                         </div>
                     </div>

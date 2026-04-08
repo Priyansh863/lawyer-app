@@ -18,7 +18,8 @@ export interface Client {
   activeCases: number
   isFavorite: boolean
   isBlocked: boolean
-  avatar?: string
+  avatar?: string;
+  profile_image?: string;
   // Backend fields
   account_type?: string
   _id?: string

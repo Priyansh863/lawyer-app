@@ -41,12 +41,12 @@ export default function QAClientView({
     : firstAnswer?.lawyer_name || "Lawyer"
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden w-full">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-h-[92vh] overflow-y-auto scrollbar-hide">
       <div className="relative">
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute right-6 top-6 text-slate-300 hover:text-slate-600 transition-colors z-10"
+            className="absolute right-6 top-4 text-slate-300 hover:text-slate-600 transition-colors z-10"
             type="button"
             aria-label="Close"
           >

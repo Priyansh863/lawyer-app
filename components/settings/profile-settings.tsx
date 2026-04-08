@@ -399,14 +399,17 @@ export default function ProfileSettings() {
                 type="button" 
                 variant="outline" 
                 className="flex-1" 
-                onClick={() => form.reset()}
+                onClick={() => {
+                  form.reset()
+                  setprofile_image(profile?.profile_image || "")
+                }}
               >
                 {t("pages:profileD.profile.buttons.cancel")}
               </Button>
               <Button
                 type="submit"
                 className="bg-black hover:bg-gray-800 text-white flex-1"
-                disabled={form.formState.isSubmitting || !form.formState.isDirty}
+                disabled={form.formState.isSubmitting || (!form.formState.isDirty && profile_image === profile?.profile_image)}
               >
                 {form.formState.isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

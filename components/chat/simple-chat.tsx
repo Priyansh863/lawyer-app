@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { X, Send, Loader2, MessageSquare, Trash2, MessageCircle } from "lucide-react"
+import { X, Send, Loader2, MessageSquare, Trash2, MessageCircle, Play, Square } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,10 @@ import {
   getChatMessages,
   sendMessage as sendChatMessage,
   deleteChat,
+  getConsultationStatus,
+  startConsultation,
+  endConsultation,
+  type ConsultationSessionStatus,
   type Message,
   type Chat,
 } from "@/lib/api/simple-chat-api"
@@ -56,8 +60,10 @@ export function SimpleChat({
   const [isSending, setIsSending] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false) // Add state for delete confirmation
+  const [consultation, setConsultation] = useState<ConsultationSessionStatus | null>(null)
+  const [isStartingConsultation, setIsStartingConsultation] = useState(false)
+  const [isEndingConsultation, setIsEndingConsultation] = useState(false)
   const profile = useSelector((state: RootState) => state.auth.user)
-  const currentUserId = profile?._id
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -91,23 +97,29 @@ export function SimpleChat({
   useEffect(() => {
     const initializeChat = async () => {
       if (!clientId && !initialChatId) return
+      if (initialChatId && !profile?.account_type) return
       setIsInitializing(true)
       try {
         let chatData
         if (initialChatId) {
+          const currentUserId = profile?._id || (profile as any)?.id || "current_user"
+          const isCurrentUserClient = profile?.account_type === "client"
+          const selfUser = {
+            _id: currentUserId,
+            first_name: profile?.first_name || "",
+            last_name: profile?.last_name || "",
+            avatar: profile?.profile_image || (profile as any)?.avatar,
+          }
+          const otherUser = {
+            _id: clientId || "unknown",
+            first_name: clientName.split(" ")[0] || "User",
+            last_name: clientName.split(" ")[1] || "",
+            avatar: clientAvatar,
+          }
           chatData = {
             _id: initialChatId,
-            lawyer_id: {
-              _id: "current_user",
-              first_name: t("pages:conv.lawyer"),
-              last_name: t("pages:conv.user"),
-            },
-            client_id: {
-              _id: clientId || "unknown",
-              first_name: clientName.split(" ")[0] || "User",
-              last_name: clientName.split(" ")[1] || "",
-              avatar: clientAvatar,
-            },
+            lawyer_id: isCurrentUserClient ? otherUser : selfUser,
+            client_id: isCurrentUserClient ? selfUser : otherUser,
             unreadCount: 0,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -168,14 +180,17 @@ export function SimpleChat({
       }
     }
     initializeChat()
-  }, [clientId, initialChatId, clientName, clientAvatar, toast])
+  }, [clientId, initialChatId, clientName, clientAvatar, profile?._id, profile?.first_name, profile?.last_name, profile?.account_type, toast])
+
+  const prevMessagesLength = useRef(messages.length)
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > prevMessagesLength.current) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
       }, 100)
     }
+    prevMessagesLength.current = messages.length
   }, [messages])
 
   const mergeMessages = useCallback((incoming: Message[]) => {
@@ -201,6 +216,16 @@ export function SimpleChat({
     }
   }, [chat?._id, mergeMessages])
 
+  const refreshConsultationStatus = useCallback(async () => {
+    if (!chat?._id) return
+    try {
+      const status = await getConsultationStatus(chat._id)
+      setConsultation(status)
+    } catch {
+      // Keep chat usable if status endpoint is unavailable.
+    }
+  }, [chat?._id])
+
   // Real-time-ish updates while chat window is open
   useEffect(() => {
     if (!chat?._id) return
@@ -208,10 +233,69 @@ export function SimpleChat({
       // Poll only while tab is visible to reduce noise
       if (document.visibilityState === "visible") {
         refreshMessages()
+        refreshConsultationStatus()
       }
     }, 2000)
     return () => window.clearInterval(interval)
-  }, [chat?._id, refreshMessages])
+  }, [chat?._id, refreshMessages, refreshConsultationStatus])
+
+  useEffect(() => {
+    refreshConsultationStatus()
+  }, [refreshConsultationStatus])
+
+  const consultationFeatureAvailable = consultation !== null
+  const isConsultationActive = consultationFeatureAvailable
+    ? consultation?.status === "active" ||
+      (consultation?.started_by_me && consultation?.started_by_other && consultation?.status !== "ended" && consultation?.status !== "auto_ended")
+    : true
+  const isConsultationEnded = consultationFeatureAvailable
+    ? consultation?.status === "ended" || consultation?.status === "auto_ended"
+    : false
+  const isAwaitingOtherParty = consultationFeatureAvailable
+    ? !!consultation?.started_by_me && !consultation?.started_by_other && !isConsultationEnded
+    : false
+
+  const handleStartConsultation = async () => {
+    if (!chat?._id) return
+    try {
+      setIsStartingConsultation(true)
+      const next = await startConsultation(chat._id)
+      if (next) setConsultation(next)
+      toast({
+        title: "Start request sent",
+        description: "Consultation starts when both sides click Start Chat.",
+      })
+    } catch {
+      toast({
+        title: t("pages:conv.error"),
+        description: "Failed to start consultation",
+        variant: "destructive",
+      })
+    } finally {
+      setIsStartingConsultation(false)
+    }
+  }
+
+  const handleEndConsultation = async () => {
+    if (!chat?._id) return
+    try {
+      setIsEndingConsultation(true)
+      const next = await endConsultation(chat._id, "manual")
+      if (next) setConsultation(next)
+      toast({
+        title: "End request sent",
+        description: "Consultation ends when both sides click End Chat.",
+      })
+    } catch {
+      toast({
+        title: t("pages:conv.error"),
+        description: "Failed to end consultation",
+        variant: "destructive",
+      })
+    } finally {
+      setIsEndingConsultation(false)
+    }
+  }
 
   const handleSendMessage = async (data: MessageFormData) => {
     if (!chat || !data.content.trim()) return
@@ -293,20 +377,58 @@ export function SimpleChat({
   }
 
   useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => {
+        if (typeof window === 'undefined') return prev
+        const maxX = window.innerWidth - 380
+        const maxY = window.innerHeight - 520
+        return {
+          x: Math.min(prev.x, Math.max(20, maxX)),
+          y: Math.min(prev.y, Math.max(20, maxY)),
+        }
+      })
+    }
+
+    window.addEventListener("resize", handleResize)
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
     return () => {
+      window.removeEventListener("resize", handleResize)
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
     }
   }, [])
 
-  const participant = chat?.lawyer_id?._id === currentUserId ? chat?.client_id : chat?.lawyer_id
-  const participantName = participant ? `${participant.first_name} ${participant.last_name}`.trim() : clientName
+  const currentUserId = profile?._id || (profile as any)?.id
+  const lawyerId = typeof chat?.lawyer_id === 'object' ? (chat?.lawyer_id?._id || (chat?.lawyer_id as any)?.id) : chat?.lawyer_id
+  const participant = lawyerId === currentUserId 
+    ? chat?.client_id 
+    : chat?.lawyer_id
+  const participantName = (participant 
+    ? ((participant as any)?.name || `${(participant as any)?.first_name || ''} ${(participant as any)?.last_name || ''}`.trim())
+    : clientName) || (participant as any)?.email || t("pages:conv.user") || "User"
+  const isChatIdMode = !!initialChatId
+  const headerName = isChatIdMode
+    ? (clientName || participantName)
+    : participantName
+  const headerAvatar = isChatIdMode
+    ? (clientAvatar ||
+      participant?.profile_image ||
+      participant?.avatar ||
+      (participant as any)?.image ||
+      (participant as any)?.user_image)
+    : (participant?.profile_image ||
+      participant?.avatar ||
+      (participant as any)?.image ||
+      (participant as any)?.user_image ||
+      clientAvatar)
+  const headerAccountType = isChatIdMode
+    ? (profile?.account_type === "client" ? t("pages:conv.lawyer") : t("pages:conv.client"))
+    : ((participant as any)?.account_type || t("pages:conv.client"))
 
   if (isInitializing) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-[1000]">
         <div className="w-[360px] h-[500px] bg-white rounded-lg shadow-xl flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
@@ -321,9 +443,10 @@ export function SimpleChat({
         position: "fixed",
         top: position.y,
         left: position.x,
-        width: 360,
-        height: 500,
+        width: "min(360px, 100vw - 20px)",
+        height: "min(500px, 100vh - 40px)",
         pointerEvents: "auto",
+        transition: isDragging.current ? "none" : "top 0.2s ease-out, left 0.2s ease-out",
       }}
     >
       <div
@@ -333,26 +456,32 @@ export function SimpleChat({
         {/* Header */}
         <div className="flex flex-col border-b cursor-move">
           <div className="flex items-center justify-between p-4">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar className="h-10 w-10 border border-slate-100 shadow-sm transition-transform hover:scale-105 shrink-0">
                 <AvatarImage
-                  src={
-                    participant?.avatar ||
-                    clientAvatar ||
-                    `/placeholder.svg?height=40&width=40&query=${encodeURIComponent(participantName)}`
-                  }
+                  src={headerAvatar || undefined}
+                  alt={headerName}
+                  className="object-cover"
                 />
-                <AvatarFallback>
-                  {participantName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()}
+                <AvatarFallback className="bg-[#0F172A] text-white font-bold text-xs">
+                  {headerName
+                    ? headerName
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((n: string) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "?"}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <h3 className="font-semibold">{participantName}</h3>
-                <p className="text-sm text-gray-500">{participant?.email || t("pages:conv.client")}</p>
+              <div className="flex flex-col text-left min-w-0">
+                <h3 className="text-[15px] font-bold text-[#0F172A] leading-tight transition-all truncate">
+                  {headerName}
+                </h3>
+                <p className="text-[12px] text-slate-500 font-medium leading-none mt-1 uppercase tracking-wider truncate">
+                  {headerAccountType}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -375,6 +504,43 @@ export function SimpleChat({
                 </div>
               </div>
             ) : null}
+        </div>
+
+        <div className="px-4 py-3 border-b bg-white">
+          <div className="rounded-md border bg-amber-50 text-amber-900 px-3 py-2 text-xs">
+            When there is no conversation for 5 minutes and the session ends automatically.
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartConsultation}
+                disabled={!consultationFeatureAvailable || isStartingConsultation || isConsultationEnded || !!consultation?.started_by_me}
+              >
+                {isStartingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+                Start Chat
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEndConsultation}
+                disabled={!consultationFeatureAvailable || isEndingConsultation || !isConsultationActive || !!consultation?.ended_by_me}
+              >
+                {isEndingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Square className="h-4 w-4 mr-2" />}
+                End Chat
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {isConsultationEnded
+                  ? "Consultation ended"
+                  : isConsultationActive
+                    ? "Consultation active"
+                    : isAwaitingOtherParty
+                      ? "Waiting for other party to start chat"
+                      : consultationFeatureAvailable
+                        ? "Consultation not started"
+                        : "Consultation controls available after backend deployment"}
+              </span>
+          </div>
         </div>
 
         {/* Messages */}
@@ -423,9 +589,9 @@ export function SimpleChat({
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormControl>
-                      <Input 
-                        placeholder={t("pages:conv.typeYourMessage")} 
-                        {...field} 
+                      <Input
+                        placeholder={t("pages:conv.typeYourMessage")}
+                        {...field}
                         ref={(e) => {
                           field.ref(e);
                           (inputRef as any).current = e;
@@ -434,7 +600,7 @@ export function SimpleChat({
                           e.stopPropagation();
                         }}
                         onClick={(e) => e.stopPropagation()}
-                        disabled={isSending} 
+                        disabled={isSending}
                         autoFocus
                       />
                     </FormControl>
@@ -442,7 +608,11 @@ export function SimpleChat({
                   </FormItem>
                 )}
               />
-              <Button type="submit" size="sm" disabled={!messageForm.watch("content")?.trim() || isSending}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!messageForm.watch("content")?.trim() || isSending || !isConsultationActive || isConsultationEnded}
+              >
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </form>

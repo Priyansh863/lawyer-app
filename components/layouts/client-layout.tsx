@@ -40,21 +40,26 @@ export default function ClientLayout({ children, fullWidth = false }: ClientLayo
             <h1 className="text-xl font-serif font-bold text-[#0F172A] tracking-tight">Lawgg</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-4">
             <div className="md:hidden">
               <NotificationBell />
             </div>
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-sm font-medium text-[#0F172A]">
-                {user ? `${user.first_name} ${user.last_name || ""}` : "Satoshi moto"}
-              </span>
+            
+            <div className="flex items-center gap-3 group cursor-pointer hover:bg-slate-50 p-1.5 pl-3 rounded-full transition-colors">
+              <div className="hidden sm:flex flex-col text-right">
+                <p className="text-sm font-semibold text-slate-900 leading-none">
+                  {user ? `${user.first_name} ${user.last_name || "User"}` : "Satoshi moto"}
+                </p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-[#0F172A] flex items-center justify-center border border-slate-100 group-hover:border-slate-300 transition-all overflow-hidden shadow-sm">
+                <Avatar className="w-full h-full">
+                  <AvatarImage src={user?.profile_image} />
+                  <AvatarFallback className="bg-[#0F172A] text-white font-bold text-xs">
+                    {user?.first_name?.[0]}{user?.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
             </div>
-            <Avatar className="h-9 w-9 bg-[#0F172A]">
-              <AvatarImage src={user?.profile_image} />
-              <AvatarFallback className="bg-[#0F172A] text-white">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
           </div>
         </header>
         <main className="flex-1 p-4 md:px-8 md:pt-4 md:pb-8 overflow-y-auto">

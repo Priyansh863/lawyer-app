@@ -1,5 +1,5 @@
 "use client";
-
+import { toast as sonnerToast } from "sonner";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,14 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 
-import { 
-  MapPin, 
-  Globe, 
-  Mountain, 
-  Building, 
-  Clock, 
-  Copy, 
+import {
+  MapPin,
+  Globe,
+  CheckCircle2,
+  Mountain,
+  Building,
+  Clock,
+  Copy,
   RotateCcw,
   Search,
   Crosshair,
@@ -44,11 +45,11 @@ const searchPlacesAPI = async (
   opts?: { type?: 'address' | 'place'; language?: string; region?: string }
 ) => {
   if (!query.trim()) return [];
-  
+
   try {
     const params = new URLSearchParams();
     params.set('query', query);
-    
+
     // Default to Korean language and South Korea region
     params.set('language', opts?.language || 'ko');
     params.set('region', opts?.region || 'kr');
@@ -57,13 +58,13 @@ const searchPlacesAPI = async (
     // Use backend proxy instead of direct Google API call
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
     const url = `${backendUrl}/places/search?${params.toString()}`;
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch places');
     }
-    
+
     const data = await response.json();
 
     // Handle backend response
@@ -79,15 +80,15 @@ const searchPlacesAPI = async (
   }
 };
 
-export default function LocationUrlGenerator({ 
-  onLocationSelect, 
+export default function LocationUrlGenerator({
+  onLocationSelect,
   initialData,
   postTitle,
-  postImage 
+  postImage
 }: LocationUrlGeneratorProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
-  
+
   const [spatialInfo, setSpatialInfo] = useState<SpatialInfo>({
     planet: 'Earth',
     latitude: undefined,
@@ -109,10 +110,8 @@ export default function LocationUrlGenerator({
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      toast({
-        title: t('pages:locla.location.toast.geolocationNotSupported'),
+      sonnerToast.error(t('pages:locla.location.toast.geolocationNotSupported'), {
         description: t('pages:locla.location.toast.browserNotSupported'),
-        variant: "destructive",
       });
       return;
     }
@@ -133,19 +132,15 @@ export default function LocationUrlGenerator({
         setCurrentAltitude(Math.round(position.coords.altitude));
       }
 
-      toast({
-        title: t('pages:locla.location.toast.locationObtained'),
+      sonnerToast.success(t('pages:locla.location.toast.locationObtained'), {
         description: `${t('pages:locla.location.toast.coordinates')}: ${lat}, ${lng}`,
-        variant: "default",
       });
       setIsGettingLocation(false);
     };
 
     const handleError = (error: GeolocationPositionError) => {
-      toast({
-        title: t('pages:locla.location.toast.locationError'),
+      sonnerToast.error(t('pages:locla.location.toast.locationError'), {
         description: error.message,
-        variant: "destructive",
       });
       setIsGettingLocation(false);
     };
@@ -181,10 +176,8 @@ export default function LocationUrlGenerator({
       const results = await searchPlacesAPI(query, t, { type, language: 'ko', region: 'kr' });
       setSearchResults(results);
     } catch (error) {
-      toast({
-        title: t('pages:locla.location.toast.searchFailed'),
+      sonnerToast.error(t('pages:locla.location.toast.searchFailed'), {
         description: t('pages:locla.location.toast.searchFailedDesc'),
-        variant: "destructive",
       });
     } finally {
       setIsSearching(false);
@@ -194,7 +187,7 @@ export default function LocationUrlGenerator({
   const selectPlace = (place: any) => {
     const lat = parseFloat(place.lat.toFixed(6));
     const lng = parseFloat(place.lng.toFixed(6));
-    
+
     setSpatialInfo(prev => ({
       ...prev,
       latitude: lat,
@@ -205,10 +198,8 @@ export default function LocationUrlGenerator({
     setAddressQuery("");
     setPlaceQuery("");
 
-    toast({
-      title: t('pages:locla.location.toast.locationSelected'),
+    sonnerToast.success(t('pages:locla.location.toast.locationSelected'), {
       description: place.description,
-      variant: "default",
     });
   };
 
@@ -241,58 +232,58 @@ export default function LocationUrlGenerator({
   const generateCustomUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
     // Generate slug from post title
-    const slug = postTitle 
+    const slug = postTitle
       ? postTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .trim()
-          .substring(0, 100)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+        .substring(0, 100)
       : 'post-title';
-    
+
     let url = `${baseUrl}/${slug}`;
-    
+
     if (spatialInfo.latitude && spatialInfo.longitude) {
       const params = new URLSearchParams();
-      
+
       if (spatialInfo.planet) params.append('planet', spatialInfo.planet);
       params.append('lat', spatialInfo.latitude.toString());
       params.append('lng', spatialInfo.longitude.toString());
-      
+
       if (spatialInfo.altitude !== null && spatialInfo.altitude !== undefined) {
         params.append('altitude', spatialInfo.altitude.toString());
       }
-      
+
       if (spatialInfo.timestamp) {
         params.append('timestamp', spatialInfo.timestamp);
       }
-      
+
       if (spatialInfo.floor !== null && spatialInfo.floor !== undefined) {
         params.append('floor', spatialInfo.floor.toString());
       }
-      
+
       url += `?${params.toString()}`;
     }
-    
+
     return url;
   };
 
   const generateShortUrl = () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lawgg.net';
     // Generate slug from post title
-    const slug = postTitle 
+    const slug = postTitle
       ? postTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .trim()
-          .substring(0, 100)
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-가-힣]/g, '') // Keep Korean characters
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+        .substring(0, 100)
       : 'post-title';
-    
+
     let url = `${baseUrl}/l/${slug}`;
-    
+
     if (spatialInfo.latitude && spatialInfo.longitude) {
       const parts = [
         spatialInfo.planet || 'Earth',
@@ -302,40 +293,35 @@ export default function LocationUrlGenerator({
         spatialInfo.timestamp || '',
         spatialInfo.floor?.toString() || ''
       ];
-      
+
       url += `?${parts.join(',')}`;
     }
-    
+
     return url;
   };
 
   const handleSubmit = () => {
     if (spatialInfo.latitude && spatialInfo.longitude) {
       if (spatialInfo.latitude < -90 || spatialInfo.latitude > 90) {
-        toast({
-          title: t('pages:locla.location.toast.invalidLatitude'),
+        sonnerToast.error(t('pages:locla.location.toast.invalidLatitude'), {
           description: t('pages:locla.location.toast.invalidLatitudeDesc'),
-          variant: "destructive",
         });
         return;
       }
 
       if (spatialInfo.longitude < -180 || spatialInfo.longitude > 180) {
-        toast({
-          title: t('pages:locla.location.toast.invalidLongitude'), 
+        sonnerToast.error(t('pages:locla.location.toast.invalidLongitude'), {
           description: t('pages:locla.location.toast.invalidLongitudeDesc'),
-          variant: "destructive",
         });
         return;
       }
     }
 
     onLocationSelect(spatialInfo);
-    
-    toast({
-      title: t('pages:locla.location.toast.dataSaved'),
+
+    sonnerToast.success(t('pages:locla.location.toast.dataSaved'), {
       description: t('pages:locla.location.toast.dataSavedDesc'),
-      variant: "default",
+      duration: 3000,
     });
   };
 
@@ -452,7 +438,7 @@ export default function LocationUrlGenerator({
                   </div>
                 )}
               </div>
-              <Button 
+              <Button
                 onClick={() => searchPlaces(addressQuery, 'address')}
                 disabled={isSearching}
               >
@@ -462,7 +448,7 @@ export default function LocationUrlGenerator({
           </div>
         )}
 
-   
+
 
         {inputMethod === 'auto' && (
           <div className="space-y-2">
@@ -571,7 +557,7 @@ export default function LocationUrlGenerator({
 
             <div className="space-y-3">
               <Label>{t('pages:locla.location.generatedUrls')}</Label>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline">{t('pages:locla.location.fullUrl')}</Badge>

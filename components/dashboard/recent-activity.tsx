@@ -27,16 +27,16 @@ function ActivityLogItem({ title, category, time, type }: ActivityLogItemProps) 
   }
 
   return (
-    <div className="flex items-center justify-between px-6 py-5 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all group cursor-default">
+    <div className="flex items-center justify-between px-6 py-5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm hover:shadow-md transition-all group cursor-default">
       <div className="flex-1 min-w-0 pr-8">
-        <span className="text-[14px] font-bold text-[#1E293B] group-hover:text-black transition-colors truncate block">
+        <span className="text-[14px] font-bold text-[#1E293B] dark:text-slate-100 group-hover:text-black dark:group-hover:text-white transition-colors truncate block">
           {title}
         </span>
       </div>
 
       <div className="flex items-center shrink-0">
         <div className="hidden lg:block text-right min-w-[200px] px-6">
-          <span className="text-[13px] font-bold text-[#1E293B] opacity-80 tracking-tight">{category}</span>
+          <span className="text-[13px] font-bold text-[#1E293B] dark:text-slate-200 opacity-80 tracking-tight">{category}</span>
         </div>
 
         <div className="text-right min-w-[200px] px-6">
@@ -80,23 +80,23 @@ export default function RecentActivity({ activities = [] }: RecentActivityProps)
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-start gap-10">
-        <h3 className="text-[#1E293B] font-bold text-2xl tracking-tight shrink-0">{t('pages:recentActivity.title')}</h3>
+        <h3 className="text-[#1E293B] dark:text-slate-100 font-bold text-2xl tracking-tight shrink-0">{t('pages:recentActivity.title')}</h3>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.client')}</span>
+            <span className="text-[11px] text-[#1E293B] dark:text-slate-200 font-bold uppercase tracking-wider">{t('pages:recentActivity.client')}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.caseDocument')}</span>
+            <span className="text-[11px] text-[#1E293B] dark:text-slate-200 font-bold uppercase tracking-wider">{t('pages:recentActivity.caseDocument')}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.appointmentsConsultations')}</span>
+            <span className="text-[11px] text-[#1E293B] dark:text-slate-200 font-bold uppercase tracking-wider">{t('pages:recentActivity.appointmentsConsultations')}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-2.5 h-2.5 rounded-full bg-gray-400"></div>
-            <span className="text-[11px] text-[#1E293B] font-bold uppercase tracking-wider">{t('pages:recentActivity.system')}</span>
+            <span className="text-[11px] text-[#1E293B] dark:text-slate-200 font-bold uppercase tracking-wider">{t('pages:recentActivity.system')}</span>
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function RecentActivity({ activities = [] }: RecentActivityProps)
             />
           ))
         ) : (
-          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200 shadow-sm">
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-gray-200 dark:border-slate-700 shadow-sm">
             <p className="text-slate-400 text-sm font-bold tracking-tight">{t('pages:recentActivity.noActivities')}</p>
           </div>
         )}

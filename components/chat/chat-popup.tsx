@@ -87,13 +87,16 @@ export function ChatPopup({ onClose, chatId, participantName = "User", participa
     setCurrentChat(chatSummary)
   }, [chatId, participantName, participantAvatar, setCurrentChat])
 
+  const prevMessagesLength = useRef(messages.length)
+
   // Auto-scroll when messages change
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > prevMessagesLength.current) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
       }, 100)
     }
+    prevMessagesLength.current = messages.length
   }, [messages])
 
   // Handle typing indicators

@@ -16,10 +16,10 @@ interface StatCardProps {
 
 function StatCard({ title, value }: StatCardProps) {
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm rounded-xl h-32 flex flex-col justify-between p-5 hover:shadow-md transition-shadow">
-      <div className="text-[#1E293B] font-bold text-sm tracking-tight">{title}</div>
+    <Card className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm rounded-xl h-32 flex flex-col justify-between p-5 hover:shadow-md transition-shadow">
+      <div className="text-[#1E293B] dark:text-slate-100 font-bold text-sm tracking-tight">{title}</div>
       <div className="flex justify-end">
-        <span className="text-5xl font-bold text-[#1E293B] tracking-tighter">{value}</span>
+        <span className="text-5xl font-bold text-[#1E293B] dark:text-slate-100 tracking-tighter">{value}</span>
       </div>
     </Card>
   )

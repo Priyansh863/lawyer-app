@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSelector } from "react-redux"
 import { useTranslation } from "@/hooks/useTranslation"
-import { getQAItem, answerQuestion, updateAnswer, type QAQuestion } from "@/lib/api/qa-api"
+import { getQAItem, answerQuestion, updateAnswer, deleteQuestion, type QAQuestion } from "@/lib/api/qa-api"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Image as ImageIcon, MapPin, Loader2, X, CheckCircle2, MoreHorizontal } from "lucide-react"
+import { Image as ImageIcon, MapPin, Loader2, X, CheckCircle2, MoreHorizontal, Trash2 } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -194,6 +195,29 @@ export default function QAAnswerForm({
     }
   }
 
+  const handleDeleteQuestion = async () => {
+    if (!qaItem) return
+    
+    if (window.confirm(t('pages:qa.confirmDeleteQuestion') || "Are you sure you want to delete this question?")) {
+      try {
+        setSubmitting(true)
+        const success = await deleteQuestion(qaItem._id)
+        if (success) {
+          toast.success(t('pages:qa.deletedSuccessfully') || "Question deleted successfully")
+          if (onClose) onClose()
+          else router.push("/qa")
+        } else {
+          toast.error(t('pages:qa.failedToDeleteQuestion') || "Failed to delete question")
+        }
+      } catch (err) {
+        console.error("Failed to delete question:", err)
+        toast.error(t('pages:qa.failedToDeleteQuestion') || "Failed to delete question")
+      } finally {
+        setSubmitting(false)
+      }
+    }
+  }
+
   const maskUser = (name: string) => {
     if (!name) return "user***"
     if (name.length <= 3) return name + "***"
@@ -233,12 +257,12 @@ export default function QAAnswerForm({
 
   return (
     <div className="relative">
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col h-full">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col max-h-[92vh] overflow-y-auto scrollbar-hide">
         {/* Header with question context */}
         <div className="p-8 pb-4 relative">
           <button
             onClick={handleCancel}
-            className="absolute right-6 top-6 text-slate-300 hover:text-slate-600 transition-colors z-10"
+            className="absolute right-6 top-4 text-slate-300 hover:text-slate-600 transition-colors z-10"
           >
             <X size={24} />
           </button>
@@ -250,9 +274,23 @@ export default function QAAnswerForm({
                 {maskUser(qaItem.clientId?.first_name || "user")}
               </span>
             </div>
-            <button className="text-slate-300">
-              <MoreHorizontal size={24} />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-slate-300 hover:text-slate-600 transition-colors">
+                  <MoreHorizontal size={24} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border-slate-100">
+                <DropdownMenuItem 
+                  onClick={handleDeleteQuestion}
+                  disabled={submitting}
+                  className="text-red-500 font-bold focus:text-red-600 focus:bg-red-50 rounded-lg py-2.5 cursor-pointer"
+                >
+                  <Trash2 size={16} className="mr-2 stroke-[2.5px]" />
+                  {t('pages:qa.deleteQuestion') || "Delete Question"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="space-y-4 pr-8">

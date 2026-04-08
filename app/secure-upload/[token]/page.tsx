@@ -44,10 +44,13 @@ export default function SecureUploadPage() {
   const [authData, setAuthData] = useState<SecureLinkAuth | null>(null);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingFileName, setUploadingFileName] = useState<string | null>(null);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Validate link on mount
@@ -82,6 +85,7 @@ export default function SecureUploadPage() {
 
     try {
       setIsAuthenticating(true);
+      setPasswordError(null);
       const auth = await authenticateSecureLink(token, password);
       setAuthData(auth);
       setStep('upload');
@@ -91,9 +95,11 @@ export default function SecureUploadPage() {
         variant: "default",
       });
     } catch (error: any) {
+      const message = error.message || "Incorrect password";
+      setPasswordError(message);
       toast({
         title: "Authentication Failed",
-        description: error.message || "Invalid password",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -102,21 +108,26 @@ export default function SecureUploadPage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const incomingFiles = Array.from(e.target.files || []);
+    if (incomingFiles.length === 0) return;
 
-    // Validate file using helper
-    const validation = validateSecureUploadFile(file);
-    if (!validation.valid) {
-      toast({
-        title: "Invalid File",
-        description: validation.error,
-        variant: "destructive",
-      });
-      return;
+    const validFiles: File[] = [];
+    for (const file of incomingFiles) {
+      const validation = validateSecureUploadFile(file);
+      if (!validation.valid) {
+        toast({
+          title: "Invalid File",
+          description: `${file.name}: ${validation.error}`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      validFiles.push(file);
     }
 
-    setSelectedFile(file);
+    if (validFiles.length === 0) return;
+
+    setSelectedFiles(validFiles);
   };
 
   // Upload file to S3 using the helper function
@@ -127,27 +138,36 @@ export default function SecureUploadPage() {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !authData) return;
+    if (selectedFiles.length === 0 || !authData) return;
 
     try {
       setIsUploading(true);
       setUploadProgress(0);
+      let completedCount = 0;
 
-      // Upload file to S3 first
-      const fileUrl = await uploadFileToS3(selectedFile);
+      for (const file of selectedFiles) {
+        setUploadingFileName(file.name);
+        setUploadProgress(0);
+        const fileUrl = await uploadFileToS3(file);
 
-      // Then register the document through secure link
-      await uploadThroughSecureLink(
-        authData.upload_token,
-        fileUrl,
-        selectedFile.name,
-        selectedFile.size
-      );
+        await uploadThroughSecureLink(
+          authData.upload_token,
+          fileUrl,
+          file.name,
+          file.size
+        );
+
+        completedCount += 1;
+        setUploadedCount(completedCount);
+      }
 
       setStep('success');
       toast({
         title: "Upload Successful",
-        description: "Your document has been uploaded and shared with your lawyer",
+        description:
+          selectedFiles.length > 1
+            ? `${selectedFiles.length} documents uploaded and shared with your lawyer`
+            : "Your document has been uploaded and shared with your lawyer",
         variant: "default",
       });
     } catch (error: any) {
@@ -237,6 +257,9 @@ export default function SecureUploadPage() {
               </>
             )}
           </Button>
+          {passwordError ? (
+            <p className="text-sm text-red-600">{passwordError}</p>
+          ) : null}
         </form>
       </CardContent>
     </Card>
@@ -267,40 +290,50 @@ export default function SecureUploadPage() {
             type="file"
             onChange={handleFileSelect}
             accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            multiple
             disabled={isUploading}
           />
           <p className="text-xs text-gray-500">
-            Supported formats: PDF, Word documents, Images (Max 10MB)
+            Supported formats: PDF, Word documents, Images (Max 10MB each)
           </p>
         </div>
 
-        {selectedFile && (
+        {selectedFiles.length > 0 && (
           <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">{selectedFile.name}</p>
-                <p className="text-xs text-gray-500">
-                  {formatFileSize(selectedFile.size)}
-                </p>
-              </div>
+            <div className="space-y-2">
+              {selectedFiles.map((file) => (
+                <div className="flex items-center gap-2" key={`${file.name}-${file.size}`}>
+                  <FileText className="h-4 w-4" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{file.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(file.size)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-gray-500">
+                {selectedFiles.length} file(s) selected
+              </p>
             </div>
           </div>
         )}
 
-        {isUploading && (
+        {isUploading ? (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span>Uploading...</span>
+              <span>
+                Uploading{uploadingFileName ? `: ${uploadingFileName}` : "..."}
+              </span>
               <span>{uploadProgress}%</span>
             </div>
             <Progress value={uploadProgress} />
           </div>
-        )}
+        ) : null}
 
         <Button 
           onClick={handleUpload} 
-          disabled={!selectedFile || isUploading}
+          disabled={selectedFiles.length === 0 || isUploading}
           className="w-full"
         >
           {isUploading ? (
@@ -330,8 +363,12 @@ export default function SecureUploadPage() {
       <CardContent className="text-center space-y-4">
         <div className="p-4 bg-green-50 rounded-lg">
           <p className="text-green-800">
-            Your document has been uploaded successfully and shared with your lawyer.
-            This secure link has now expired.
+            {uploadedCount > 1
+              ? `${uploadedCount} documents were uploaded successfully and shared with your lawyer.`
+              : "Your document has been uploaded successfully and shared with your lawyer."}
+          </p>
+          <p className="text-xs text-green-700 mt-2">
+            This secure link can still be used until its expiry time.
           </p>
         </div>
         <Button onClick={() => router.push('/')} className="w-full">

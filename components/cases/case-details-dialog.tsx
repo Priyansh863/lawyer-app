@@ -86,6 +86,8 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const [caseDocuments, setCaseDocuments] = useState<any[]>([])
     const docFileInputRef = useRef<HTMLInputElement>(null)
     const user = useSelector((state: RootState) => state.auth.user)
+    const isLawyer = user?.account_type === 'lawyer'
+    const isClient = user?.account_type === 'client'
     const { t } = useTranslation()
     const [clientProfile, setClientProfile] = useState<any | null>(null)
     const [fullCaseData, setFullCaseData] = useState<any | null>(null)
@@ -766,9 +768,13 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                                 <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg z-[200]">
                                                                     <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDownloadDocument(file)}>{t('pages:caseDetails.docTable.download')}</DropdownMenuItem>
                                                                     <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => setVoiceSummaryDoc(file)}>{t('pages:caseDetails.docTable.summary')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleRemoveFromCloud(file)}>{t('pages:caseDetails.docTable.removeCloud')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDisconnectFromPC(file)}>{t('pages:caseDetails.docTable.disconnectPC')}</DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-[12px] text-red-500 cursor-pointer" onClick={() => handleDeleteDocumentFromCase(file)}>{t('pages:caseDetails.docTable.delete')}</DropdownMenuItem>
+                                                                    {isLawyer && (
+                                                                        <>
+                                                                            <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleRemoveFromCloud(file)}>{t('pages:caseDetails.docTable.removeCloud')}</DropdownMenuItem>
+                                                                            <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDisconnectFromPC(file)}>{t('pages:caseDetails.docTable.disconnectPC')}</DropdownMenuItem>
+                                                                            <DropdownMenuItem className="text-[12px] text-red-500 cursor-pointer" onClick={() => handleDeleteDocumentFromCase(file)}>{t('pages:caseDetails.docTable.delete')}</DropdownMenuItem>
+                                                                        </>
+                                                                    )}
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
                                                         </TableCell>
@@ -804,35 +810,37 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
 
                     {/* Footer */}
                     <div className="p-6 border-t border-slate-100 flex items-center justify-between sticky bottom-0 bg-white z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                        {showDeleteConfirm ? (
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm text-red-600 font-medium">{t('pages:caseDetails.deleteConfirm.areYouSure')}</span>
+                        {isLawyer && (
+                            showDeleteConfirm ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm text-red-600 font-medium">{t('pages:caseDetails.deleteConfirm.areYouSure')}</span>
+                                    <Button
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                        variant="destructive"
+                                        className="bg-red-600 hover:bg-red-700 px-6 rounded-lg shadow-sm"
+                                    >
+                                        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:caseDetails.deleteConfirm.yesDelete')}
+                                    </Button>
+                                    <Button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        variant="ghost"
+                                        className="text-slate-600"
+                                    >
+                                        {t('pages:caseDetails.deleteConfirm.no')}
+                                    </Button>
+                                </div>
+                            ) : (
                                 <Button
-                                    onClick={handleDelete}
-                                    disabled={isDeleting}
+                                    onClick={() => setShowDeleteConfirm(true)}
                                     variant="destructive"
-                                    className="bg-red-600 hover:bg-red-700 px-6 rounded-lg shadow-sm"
+                                    className="bg-red-600 hover:bg-red-700 px-8 rounded-lg shadow-sm"
                                 >
-                                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('pages:caseDetails.deleteConfirm.yesDelete')}
+                                    {t('pages:caseDetails.buttons.delete')}
                                 </Button>
-                                <Button
-                                    onClick={() => setShowDeleteConfirm(false)}
-                                    variant="ghost"
-                                    className="text-slate-600"
-                                >
-                                    {t('pages:caseDetails.deleteConfirm.no')}
-                                </Button>
-                            </div>
-                        ) : (
-                            <Button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                variant="destructive"
-                                className="bg-red-600 hover:bg-red-700 px-8 rounded-lg shadow-sm"
-                            >
-                                {t('pages:caseDetails.buttons.delete')}
-                            </Button>
+                            )
                         )}
-                        <div className="flex gap-3">
+                        <div className={cn("flex gap-3", !isLawyer && "ml-auto")}>
                             {isEditing ? (
                                 <>
                                     <Button
@@ -861,13 +869,15 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                 </>
                             ) : (
                                 <>
-                                    <Button variant="ghost" onClick={() => onOpenChange(false)} className="px-8 rounded-lg text-slate-600 hover:bg-slate-50">{t('pages:caseDetails.buttons.cancel')}</Button>
-                                    <Button
-                                        onClick={() => setIsEditing(true)}
-                                        className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 rounded-lg shadow-sm"
-                                    >
-                                        {t('pages:caseDetails.buttons.edit')}
-                                    </Button>
+                                    <Button variant="ghost" onClick={() => onOpenChange(false)} className="px-8 rounded-lg text-slate-600 hover:bg-slate-50">{isLawyer ? t('pages:caseDetails.buttons.cancel') : t('common:close') || "Close"}</Button>
+                                    {isLawyer && (
+                                        <Button
+                                            onClick={() => setIsEditing(true)}
+                                            className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 rounded-lg shadow-sm"
+                                        >
+                                            {t('pages:caseDetails.buttons.edit')}
+                                        </Button>
+                                    )}
                                 </>
                             )}
                         </div>

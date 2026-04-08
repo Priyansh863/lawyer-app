@@ -45,7 +45,7 @@ import {
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
-import { getDocuments, deleteDocument, downloadDocumentSummary, downloadDocument } from '@/lib/api/documents-api'
+import { getDocuments, deleteDocument, downloadDocumentSummary, downloadDocument, getDocumentViewUrl } from '@/lib/api/documents-api'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from "@/hooks/useTranslation"
@@ -381,6 +381,24 @@ export default function DocumentsTable({
     }
   }
 
+  const handleViewDocument = async (doc: Document) => {
+    const rawLink = (doc.link || '').trim()
+    try {
+      const resolved = await getDocumentViewUrl(doc._id, rawLink)
+      if (resolved) {
+        const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
+        if (!opened) {
+          toast.error(t('pages:documentT.documents.viewError') || 'Popup blocked. Please allow popups to view documents.')
+        }
+      } else {
+        toast.info(t('pages:documentT.documents.noViewUrl') || 'No viewable URL available for this document.')
+      }
+    } catch (error) {
+      console.error('Error opening document:', error)
+      toast.error(t('pages:documentT.documents.viewError') || 'Failed to open document.')
+    }
+  }
+
   // Get uploader name
   const getUploaderName = (uploadedBy: Document['uploaded_by']) => {
     if (typeof uploadedBy === 'string') return t('pages:documentT.general.unknown')
@@ -584,6 +602,14 @@ export default function DocumentsTable({
                               {downloadingSummaryId === doc._id
                                 ? t('pages:documentT.documents.downloadingSummary')
                                 : t('pages:documentT.table.actions.downloadSummary')}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => handleViewDocument(doc)}
+                              className="flex items-center gap-2"
+                            >
+                              <Eye className="h-4 w-4" />
+                              {t('pages:documentT.table.actions.viewDocument') || 'View Document'}
                             </DropdownMenuItem>
 
                             <DropdownMenuItem

@@ -11,10 +11,10 @@ export default function DashboardHeader() {
   const { t } = useTranslation()
 
   return (
-    <header className="h-14 border-b border-gray-100 bg-white/50 backdrop-blur-md flex items-center justify-end px-8 sticky top-0 z-30">
+    <header className="h-14 border-b border-gray-100 dark:border-slate-700 bg-white/50 dark:bg-slate-900/70 backdrop-blur-md flex items-center justify-end px-8 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         <div className="text-right">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">
+          <p className="text-sm font-semibold text-gray-900 dark:text-slate-100 leading-tight">
             {user?.first_name} {user?.last_name}
           </p>
         </div>

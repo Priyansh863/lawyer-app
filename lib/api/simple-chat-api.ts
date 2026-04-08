@@ -23,7 +23,8 @@ export interface User {
   first_name: string
   last_name: string
   email: string
-  avatar?: string
+  avatar?: string;
+  profile_image?: string;
 }
 
 export interface Message {
@@ -49,6 +50,18 @@ export interface Chat {
   unreadCount: number
   createdAt: string
   updatedAt: string
+}
+
+export interface ConsultationSessionStatus {
+  chat_id: string
+  status: "pending" | "active" | "ended" | "auto_ended"
+  started_by_me: boolean
+  started_by_other: boolean
+  ended_by_me: boolean
+  ended_by_other: boolean
+  started_at?: string
+  ended_at?: string
+  auto_end_at?: string
 }
 
 // API Response interfaces
@@ -135,6 +148,57 @@ export const deleteChat = async (chatId: string): Promise<void> => {
     )
   } catch (error) {
     console.error('Error deleting chat:', error)
+    throw error
+  }
+}
+
+// 6. Get consultation session status
+export const getConsultationStatus = async (chatId: string): Promise<ConsultationSessionStatus | null> => {
+  try {
+    const response = await axios.get<ApiResponse<ConsultationSessionStatus>>(
+      `${API_BASE_URL}/chat/${chatId}/consultation/status`,
+      { headers: getAuthHeaders() }
+    )
+    return response.data?.data || null
+  } catch (error: any) {
+    // Backend may not be deployed yet for this feature.
+    if (error?.response?.status === 404) return null
+    console.error('Error getting consultation status:', error)
+    throw error
+  }
+}
+
+// 7. Start consultation (user readiness)
+export const startConsultation = async (chatId: string): Promise<ConsultationSessionStatus | null> => {
+  try {
+    const response = await axios.post<ApiResponse<ConsultationSessionStatus>>(
+      `${API_BASE_URL}/chat/${chatId}/consultation/start`,
+      {},
+      { headers: getAuthHeaders() }
+    )
+    return response.data?.data || null
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null
+    console.error('Error starting consultation:', error)
+    throw error
+  }
+}
+
+// 8. End consultation (manual end intent)
+export const endConsultation = async (
+  chatId: string,
+  reason: "manual" | "inactivity" = "manual"
+): Promise<ConsultationSessionStatus | null> => {
+  try {
+    const response = await axios.post<ApiResponse<ConsultationSessionStatus>>(
+      `${API_BASE_URL}/chat/${chatId}/consultation/end`,
+      { reason },
+      { headers: getAuthHeaders() }
+    )
+    return response.data?.data || null
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null
+    console.error('Error ending consultation:', error)
     throw error
   }
 }

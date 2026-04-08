@@ -5,9 +5,10 @@ import "./globals.css"
 import ReduxProvider from "@/lib/redux-provider"
 import TokenValidationProvider from "@/components/providers/TokenValidationProvider"
 import { I18nProvider } from "@/contexts/i18nContext"
-import toast, { Toaster as HotToaster } from 'react-hot-toast';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import { NotificationProvider } from "@/contexts/NotificationContext"
-import { Toaster as SonnerToaster } from "sonner"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster as SonnerToaster } from "@/components/ui/sonner"
 import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
 import NotificationToastProvider from "@/components/providers/NotificationToastProvider"
 // import { SessionProvider } from "next-auth/react"
@@ -30,22 +31,28 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className={`${dmSans.variable} font-dm-sans`}>
         <ReduxProvider>
-          <I18nProvider>
-            <TokenValidationProvider>
-              <NotificationProvider>
-                <NotificationToastProvider />
-                {children}
-                {/* <SonnerToaster position="top-right" /> */}
-              </NotificationProvider>
-            </TokenValidationProvider>
-          </I18nProvider>
-          <HotToaster />
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <I18nProvider>
+              <TokenValidationProvider>
+                <NotificationProvider>
+                  <NotificationToastProvider />
+                  {children}
+                  <SonnerToaster position="bottom-right" />
+                </NotificationProvider>
+              </TokenValidationProvider>
+            </I18nProvider>
+          </ThemeProvider>
+          <HotToaster
+            position="bottom-right"
+            containerStyle={{ zIndex: 1200 }}
+            toastOptions={{ style: { zIndex: 1200 } }}
+          />
           <ShadcnToaster />
         </ReduxProvider>
       </body>

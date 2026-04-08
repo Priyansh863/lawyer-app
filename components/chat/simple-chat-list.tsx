@@ -85,7 +85,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
       const filtered = chats.filter(chat => {
         const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
         if (!participant) return false;
-        
+
         const participantName = `${participant.first_name || ''} ${participant.last_name || ''}`.toLowerCase()
         const lastMessage = chat.lastMessage?.content?.toLowerCase() || ''
 
@@ -174,7 +174,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
     try {
       // Fetch all messages for this chat (pass a large limit to get history)
       const messages = await getChatMessages(chat._id, 1, 1000)
-      
+
       const currentUserId = user?._id || 'current_user'
       const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
       const participantName = `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim() || t("pages:conv.user")
@@ -189,7 +189,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
         const senderId = typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId
         const senderName = senderId === currentUserId ? 'Me' : participantName
         const timeString = new Date(msg.createdAt).toLocaleString()
-        
+
         textContent += `[${timeString}] ${senderName}: \n`
         textContent += `${msg.content}\n\n`
       })
@@ -277,16 +277,37 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
             </div>
           ) : (
             filteredChats.map((chat) => {
-              const currentUserId = user?._id || 'current_user'
-              const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
-              const participantName = `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim() || t("pages:conv.user")
+              const currentUserId = user?._id || (user as any)?.id || 'current_user'
+              const participant = (chat.lawyer_id?._id === currentUserId || (chat.lawyer_id as any)?.id === currentUserId) 
+                ? chat.client_id 
+                : chat.lawyer_id
+              const participantName = (participant as any)?.name || `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim() || t("pages:conv.user")
 
               return (
                 <div
                   key={chat._id}
-                  className="bg-white border border-slate-300 rounded-xl py-4 px-6 hover:shadow-sm transition-all cursor-pointer flex items-center group"
+                  className="bg-white border border-slate-300 rounded-xl py-4 px-6 hover:shadow-sm transition-all cursor-pointer flex items-center group gap-4"
                   onClick={() => handleChatClick(chat)}
                 >
+                  <Avatar className="h-12 w-12 border border-slate-100 shadow-sm shrink-0">
+                    <AvatarImage
+                      src={participant?.profile_image || participant?.avatar || undefined}
+                      alt={participantName}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-[#0F172A] text-white font-bold text-sm">
+                      {participantName
+                        ? participantName
+                            .split(" ")
+                            .filter(Boolean)
+                            .map((n: string) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)
+                        : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+
                   <div className="flex-1 flex flex-col space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-[15px] text-[#0F172A]">{participantName}</span>
@@ -296,7 +317,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
                         </div>
                       )}
                     </div>
-                    <p className="text-[13px] text-slate-600 font-medium">
+                    <p className="text-[13px] text-slate-600 font-medium line-clamp-1">
                       {chat.lastMessage?.content || t("pages:chatbox.noMessages")}
                     </p>
                   </div>
@@ -334,6 +355,13 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
 
       {/* Chat Modal */}
       {showChat && selectedChat && (
+        (() => {
+          const currentUserId = user?._id || (user as any)?.id || 'current_user'
+          const lawyerId = selectedChat.lawyer_id?._id || (selectedChat.lawyer_id as any)?.id
+          const participant =
+            lawyerId === currentUserId ? selectedChat.client_id : selectedChat.lawyer_id
+
+          return (
         <SimpleChat
           onClose={() => {
             setShowChat(false)
@@ -341,17 +369,16 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
             loadChats()
           }}
           chatId={selectedChat._id}
+          clientId={participant?._id || (participant as any)?.id}
           clientName={
-            selectedChat.lawyer_id?._id === (user?._id || 'current_user')
-              ? `${selectedChat.client_id?.first_name || ''} ${selectedChat.client_id?.last_name || ''}`.trim()
-              : `${selectedChat.lawyer_id?.first_name || ''} ${selectedChat.lawyer_id?.last_name || ''}`.trim()
+            `${participant?.first_name || ''} ${participant?.last_name || ''}`.trim()
           }
           clientAvatar={
-            selectedChat.lawyer_id?._id === (user?._id || 'current_user')
-              ? selectedChat.client_id?.avatar
-              : selectedChat.lawyer_id?.avatar
+            participant?.profile_image || participant?.avatar
           }
         />
+          )
+        })()
       )}
 
       {/* Delete Confirmation Dialog */}

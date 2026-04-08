@@ -24,8 +24,9 @@ import PcIdSettings from "@/components/settings/pc-id-settings"
 import ContentPreferencesSettings from "@/components/settings/content-preferences-settings"
 import { toast } from "@/hooks/use-toast"
 import { useForm } from "react-hook-form"
-import { updateUser } from "@/services/user"
+import { updateUser, updateProfileImage } from "@/services/user"
 import { updateUserData, logout } from "@/lib/slices/authSlice"
+import { uploadUniversalFile } from "@/lib/helpers/fileupload"
 
 export default function SettingsPage() {
   const profile = useSelector((state: RootState) => state.auth.user)
@@ -37,7 +38,9 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'rates' | 'pc-id' | 'content'>('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [profileImage, setProfileImage] = useState(profile?.profile_image || "")
   const ratesRef = useRef<LawyerChargesSettingsHandle>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { register, handleSubmit, reset, watch } = useForm({
     defaultValues: {
@@ -74,6 +77,7 @@ export default function SettingsPage() {
         postal_code: (profile as any)?.postal_code || "",
         country: (profile as any)?.country || "",
       })
+      setProfileImage(profile?.profile_image || "")
     }
   }, [profile, isEditing, reset])
 
@@ -88,7 +92,7 @@ export default function SettingsPage() {
     setIsSubmitting(true)
     try {
       // Remove email from update as it's usually protected
-      const { email, ...payload } = data
+      const { email, ...payload } = { ...data, profile_image: profileImage }
       const res = await updateUser(profile?._id as string, payload)
 
       if (res && res.data && res.data.success) {
@@ -133,6 +137,44 @@ export default function SettingsPage() {
     localStorage.removeItem("token")
     dispatch(logout())
     router.replace("/login")
+  }
+
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !profile?._id) return
+
+    try {
+      setIsSubmitting(true)
+      const url = await uploadUniversalFile(profile._id, file)
+      if (url) {
+        // Save to backend immediately using dedicated endpoint
+        const res = await updateProfileImage({ user_id: profile._id, profile_image: url })
+        if (res?.data?.success) {
+          setProfileImage(url)
+          // Update Redux and localStorage so refresh doesn't lose it
+          const updatedUser = { ...profile, profile_image: url }
+          dispatch(updateUserData(updatedUser))
+          if (typeof window !== "undefined") {
+            window.localStorage.setItem("user", JSON.stringify(updatedUser))
+          }
+          toast({
+            title: t('pages:settings.profileUpdated'),
+            description: t('pages:settings.avatarUpdatedSuccess') || 'Profile picture updated successfully.',
+          })
+        } else {
+          throw new Error(res?.data?.message || 'Failed to update profile image on server')
+        }
+      }
+    } catch (error) {
+      console.error("Failed to upload/save profile image:", error)
+      toast({
+        title: t('pages:settings.updateFailed'),
+        description: t('pages:settings.imageUploadError') || 'Failed to update profile picture.',
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -257,14 +299,24 @@ export default function SettingsPage() {
                 <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col items-center text-center">
                   <div className="relative mb-6">
                     <Avatar className="h-32 w-32 border-4 border-slate-50 shadow-sm">
-                      <AvatarImage src={profile?.profile_image} />
+                      <AvatarImage src={profileImage} />
                       <AvatarFallback className="text-3xl bg-slate-100 text-slate-400">
                         {profile?.first_name?.[0]}{profile?.last_name?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <button className="absolute bottom-1 right-1 h-8 w-8 bg-[#0F172A] rounded-full flex items-center justify-center text-white border-2 border-white shadow-md hover:bg-[#1E293B] transition-all">
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-1 right-1 h-8 w-8 bg-[#0F172A] rounded-full flex items-center justify-center text-white border-2 border-white shadow-md hover:bg-[#1E293B] transition-all"
+                    >
                       <Plus className="h-4 w-4" />
                     </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleProfileImageChange}
+                    />
                   </div>
 
                   <div className="space-y-1">

@@ -170,12 +170,20 @@ export default function DocumentManager() {
     }
 
     const normalizePath = (value: string) => value.replace(/\\/g, '/').replace(/\/+$/, '')
+    const isFolderDocument = (doc: Document) => {
+        const fileType = (doc.file_type || '').toLowerCase()
+        if (fileType === 'folder') return true
+        // Backend normalization may omit file_type for folders; infer from shape.
+        const hasNoLink = !doc.link || doc.link === '#'
+        const loc = (doc.storage_location || '').toString().trim()
+        return hasNoLink && !!loc && loc === doc.document_name
+    }
 
     const filteredDocs = documents
         .filter(doc => doc.document_name.toLowerCase().includes(searchTerm.toLowerCase()))
         .filter(doc => {
             const loc = normalizePath((doc.storage_location || '').toString())
-            const isFolderDoc = (doc.file_type || '').toLowerCase() === 'folder'
+            const isFolderDoc = isFolderDocument(doc)
 
             if (!openFolder) {
                 // Root list should not include files that are inside folders.
@@ -216,85 +224,46 @@ export default function DocumentManager() {
         })
     }
 
-    // Get storage type badge(s) for a document
-    const getStorageBadges = (doc: Document) => {
-        const st = doc.storage_type || 'cloud'
-        const badges = []
+    // Get single storage badge text: PC / Cloud / PC + Cloud
+    const getStorageBadge = (doc: Document) => {
+        const st = doc.storage_type || 'app'
+        const label =
+            st === 'app_cloud'
+                ? t('pages:documentManager.badgePCCloud')
+                : st === 'cloud'
+                    ? t('pages:documentManager.badgeCloud')
+                    : t('pages:documentManager.badgePC')
 
-        if (st === 'app' || st === 'app_cloud') {
-            badges.push(
-                <span key="app" className="px-3.5 py-1 bg-[#22c55e] text-white rounded-full text-[11px] font-extrabold leading-none shadow-sm">{t('pages:documentManager.badgeApp')}</span>
-            )
-        }
-        if (st === 'cloud' || st === 'app_cloud') {
-            badges.push(
-                <span key="cloud" className="px-3.5 py-1 bg-[#0ea5e9] text-white rounded-full text-[11px] font-extrabold leading-none shadow-sm">{t('pages:documentManager.badgeCloud')}</span>
-            )
-        }
-        // Fallback for old docs without storage_type
-        if (badges.length === 0) {
-            badges.push(
-                <span key="app" className="px-3.5 py-1 bg-[#22c55e] text-white rounded-full text-[11px] font-extrabold leading-none shadow-sm">{t('pages:documentManager.badgeApp')}</span>
-            )
-        }
-        return badges
+        const color =
+            st === 'app_cloud'
+                ? 'bg-[#2563eb]'
+                : st === 'cloud'
+                    ? 'bg-[#0ea5e9]'
+                    : 'bg-[#22c55e]'
+
+        return (
+            <span className={`px-3.5 py-1 ${color} text-white rounded-full text-[11px] font-extrabold leading-none shadow-sm`}>
+                {label}
+            </span>
+        )
     }
 
     // Action handlers
     const handleViewDocument = async (doc: Document) => {
         const rawLink = (doc.link || '').trim()
-        if (!rawLink || rawLink === '#') {
-            // Try backend resolution even when link is empty (app/private docs)
-            try {
-                const resolved = await getDocumentViewUrl(doc._id, rawLink)
-                const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
-                if (!opened) toast.error(t('pages:documentManager.popupBlocked', 'Popup blocked. Please allow popups to view documents.'))
-                return
-            } catch {
-                toast.info(t('pages:documentManager.toastInfoView'))
-                return
-            }
-        }
-
-        const candidates: string[] = [rawLink]
-        const hasProtocol = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(rawLink)
-
-        // //example.com/path
-        if (rawLink.startsWith('//')) {
-            candidates.push(`https:${rawLink}`)
-        }
-
-        // /relative/path
-        if (rawLink.startsWith('/')) {
-            candidates.push(`${window.location.origin}${rawLink}`)
-        }
-
-        // key/path or filename.ext that backend may store without protocol
-        if (!hasProtocol && !rawLink.startsWith('data:') && !rawLink.startsWith('blob:')) {
-            candidates.push(`https://${rawLink}`)
-            const apiBase = process.env.NEXT_PUBLIC_API_URL || ''
-            if (apiBase) {
-                const origin = apiBase.replace(/\/api\/v1\/?$/, '')
-                candidates.push(`${origin}/${rawLink.replace(/^\/+/, '')}`)
-            }
-        }
-
-        for (const url of candidates) {
-            try {
-                const opened = window.open(url, '_blank', 'noopener,noreferrer')
-                if (opened) return
-            } catch {
-                // try next candidate
-            }
-        }
-
-        // Last fallback: ask backend for a signed/secure URL by document id
         try {
+            // Use the centralized utility to resolve the best view URL
             const resolved = await getDocumentViewUrl(doc._id, rawLink)
-            const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
-            if (!opened) toast.error(t('pages:documentManager.popupBlocked', 'Popup blocked. Please allow popups to view documents.'))
-            return
-        } catch {
+            if (resolved) {
+                const opened = window.open(resolved, '_blank', 'noopener,noreferrer')
+                if (!opened) {
+                    toast.error(t('pages:documentManager.popupBlocked', 'Popup blocked. Please allow popups to view documents.'))
+                }
+            } else {
+                toast.info(t('pages:documentManager.toastInfoView'))
+            }
+        } catch (error) {
+            console.error('Error opening document:', error)
             toast.error(t('pages:documentManager.toastInfoView'))
         }
     }
@@ -318,8 +287,11 @@ export default function DocumentManager() {
         const doc = removeCloudDialog.doc
         if (!doc) return
         try {
-            const newType = doc.storage_type === 'app_cloud' ? 'app' : 'app'
-            const res = await updateDocumentStorageType(doc._id, newType)
+            const hasApp = doc.storage_type === 'app' || doc.storage_type === 'app_cloud' || !doc.storage_type
+            const hasCloud = doc.storage_type === 'cloud' || doc.storage_type === 'app_cloud'
+            const res = hasCloud && !hasApp
+                ? await deleteDocument(doc._id) // cloud-only: remove from list entirely
+                : await updateDocumentStorageType(doc._id, 'app') // app+cloud: keep only PC
             if (res.success) {
                 toast.success(t('pages:documentManager.toastRemovedCloud'))
                 loadDocuments()
@@ -336,8 +308,10 @@ export default function DocumentManager() {
         const doc = removeAppDialog.doc
         if (!doc) return
         try {
-            const newType = doc.storage_type === 'app_cloud' ? 'cloud' : 'cloud'
-            const res = await updateDocumentStorageType(doc._id, newType)
+            const hasCloud = doc.storage_type === 'cloud' || doc.storage_type === 'app_cloud'
+            const res = hasCloud
+                ? await updateDocumentStorageType(doc._id, 'cloud') // keep cloud only
+                : await deleteDocument(doc._id) // PC-only: delete from list and local linkage
             if (res.success) {
                 toast.success(t('pages:documentManager.toastRemovedApp'))
                 loadDocuments()
@@ -407,7 +381,7 @@ export default function DocumentManager() {
     return (
         <div className="flex flex-col w-full max-w-[1400px] mx-auto font-sans">
             {/* Page Title */}
-            <h1 className="text-[22px] font-bold text-[#1e293b] mb-6">{t('pages:documentManager.title')}</h1>
+            <h1 className="text-[22px] font-bold text-[#1e293b] dark:text-slate-100 mb-6">{t('pages:documentManager.title')}</h1>
 
             {openFolder && (
                 <div className="flex items-center justify-between mb-4">
@@ -433,7 +407,7 @@ export default function DocumentManager() {
                         onChange={toggleSelectAll}
                         className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
                     />
-                    <span className="text-[15px] font-medium text-[#1e293b]">{t('pages:documentManager.selected')} {selectedDocs.size}</span>
+                    <span className="text-[15px] font-medium text-[#1e293b] dark:text-slate-100">{t('pages:documentManager.selected')} {selectedDocs.size}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -447,7 +421,7 @@ export default function DocumentManager() {
                     </div>
 
                     <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="bg-white border-[#cbd5e1] border h-[44px] w-[130px] px-4 text-[#1e293b] font-medium text-[14px] rounded-md focus:ring-0 shadow-none">
+                        <SelectTrigger className="bg-white dark:bg-slate-900 border-[#cbd5e1] dark:border-slate-700 border h-[44px] w-[130px] px-4 text-[#1e293b] dark:text-slate-100 font-medium text-[14px] rounded-md focus:ring-0 shadow-none">
                             <SelectValue placeholder="Sort" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-slate-200">
@@ -459,7 +433,7 @@ export default function DocumentManager() {
 
                     {user?.account_type === 'lawyer' && (
                         <SecureLinkGenerator clients={clients} customTrigger={
-                            <Button variant="outline" className="bg-[#e2e8f0] hover:bg-[#cbd5e1] border-none text-[#1e293b] font-semibold h-[44px] px-6 rounded-md shadow-none text-[14px]">
+                            <Button variant="outline" className="bg-[#e2e8f0] dark:bg-slate-700 hover:bg-[#cbd5e1] dark:hover:bg-slate-600 border-none text-[#1e293b] dark:text-slate-100 font-semibold h-[44px] px-6 rounded-md shadow-none text-[14px]">
                                 {t('pages:documentManager.generateLink')}
                             </Button>
                         } />
@@ -468,7 +442,7 @@ export default function DocumentManager() {
                     <Button 
                         variant="outline" 
                         onClick={() => setIsAddFolderOpen(true)}
-                        className="bg-[#e2e8f0] hover:bg-[#cbd5e1] border-none text-[#1e293b] font-semibold h-[44px] px-6 rounded-md shadow-none text-[14px]">
+                        className="bg-[#e2e8f0] dark:bg-slate-700 hover:bg-[#cbd5e1] dark:hover:bg-slate-600 border-none text-[#1e293b] dark:text-slate-100 font-semibold h-[44px] px-6 rounded-md shadow-none text-[14px]">
                         {t('pages:documentManager.addFolder')}
                     </Button>
 
@@ -513,7 +487,7 @@ export default function DocumentManager() {
                                 const st = doc.storage_type || 'app'
                                 const hasApp = st === 'app' || st === 'app_cloud'
                                 const hasCloud = st === 'cloud' || st === 'app_cloud'
-                                const isFolder = (doc.file_type || '').toLowerCase() === 'folder' || doc.file_type === 'folder'
+                                const isFolder = isFolderDocument(doc)
 
                                 return (
                                     <div
@@ -560,7 +534,7 @@ export default function DocumentManager() {
                                         </div>
 
                                         <div className="flex justify-center gap-2">
-                                            {!isFolder && getStorageBadges(doc)}
+                                            {!isFolder && getStorageBadge(doc)}
                                         </div>
 
                                         <div className="flex justify-center">
@@ -634,7 +608,7 @@ export default function DocumentManager() {
                                                                 </DropdownMenuItem>
                                                             )}
         
-                                                            {/* If has cloud, show "Remove from Cloud" */}
+                                                            {/* If has cloud, show delete cloud */}
                                                             {hasCloud && (
                                                                 <DropdownMenuItem
                                                                     onClick={() => setRemoveCloudDialog({ open: true, doc })}
@@ -645,8 +619,8 @@ export default function DocumentManager() {
                                                                 </DropdownMenuItem>
                                                             )}
         
-                                                            {/* If has app and cloud, show "Remove from App" */}
-                                                            {hasApp && hasCloud && (
+                                                            {/* If has app, show delete PC */}
+                                                            {hasApp && (
                                                                 <DropdownMenuItem
                                                                     onClick={() => setRemoveAppDialog({ open: true, doc })}
                                                                     className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#ef4444] cursor-pointer rounded-md hover:bg-red-50"
@@ -674,7 +648,9 @@ export default function DocumentManager() {
                     <DialogHeader className="text-center space-y-2">
                         <DialogTitle className="text-lg font-bold text-[#1a2332] text-center">{t('pages:documentManager.removeCloudTitle')}</DialogTitle>
                         <DialogDescription className="text-[14px] text-[#64748b] text-center">
-                            {t('pages:documentManager.removeCloudDescription')}
+                            {removeCloudDialog.doc?.storage_type === 'app_cloud'
+                                ? t('pages:documentManager.removeCloudDescriptionKeepPC')
+                                : t('pages:documentManager.removeCloudDescriptionOnlyCloud')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex justify-center gap-3 mt-4">
@@ -701,7 +677,9 @@ export default function DocumentManager() {
                     <DialogHeader className="text-center space-y-2">
                         <DialogTitle className="text-lg font-bold text-[#1a2332] text-center">{t('pages:documentManager.removeAppTitle')}</DialogTitle>
                         <DialogDescription className="text-[14px] text-[#64748b] text-center">
-                            {t('pages:documentManager.removeAppDescription')}
+                            {removeAppDialog.doc?.storage_type === 'app_cloud'
+                                ? t('pages:documentManager.removeAppDescriptionKeepCloud')
+                                : t('pages:documentManager.removeAppDescriptionOnlyPC')}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex justify-center gap-3 mt-4">

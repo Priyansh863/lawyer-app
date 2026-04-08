@@ -81,6 +81,8 @@ export interface Post {
   aiPrompt?: string;
   image?: string;
   images?: string[];
+  video?: string;
+  videos?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -94,6 +96,8 @@ export interface CreatePostData {
   status?: 'draft' | 'published';
   image?: string;
   images?: string[];
+  video?: string;
+  videos?: string[];
 }
 
 export interface GenerateAiPostData {

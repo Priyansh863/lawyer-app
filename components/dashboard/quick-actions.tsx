@@ -19,14 +19,14 @@ interface ActionCardProps {
 function ActionCard({ title, onClick }: ActionCardProps) {
   return (
     <Card
-      className="bg-white border border-gray-200 shadow-sm rounded-xl h-31 flex flex-col justify-between p-6 hover:shadow-md transition-all cursor-pointer group w-full sm:w-[220px] flex-shrink-0"
+      className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-sm rounded-xl h-31 flex flex-col justify-between p-6 hover:shadow-md transition-all cursor-pointer group w-full sm:w-[220px] flex-shrink-0"
       onClick={onClick}
     >
       <div className="flex-shrink-0">
-        <Plus className="w-6 h-6 text-[#1E293B] group-hover:text-black transition-colors" />
+        <Plus className="w-6 h-6 text-[#1E293B] dark:text-slate-200 group-hover:text-black dark:group-hover:text-white transition-colors" />
       </div>
       <div className="flex justify-end">
-        <span className="text-[#1E293B] font-bold text-[13px] tracking-tight">{title}</span>
+        <span className="text-[#1E293B] dark:text-slate-100 font-bold text-[13px] tracking-tight">{title}</span>
       </div>
     </Card>
   )
@@ -45,7 +45,7 @@ export default function QuickActions() {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-[#1E293B] font-bold text-2xl tracking-tight">{t('pages:quickActions.title')}</h3>
+      <h3 className="text-[#1E293B] dark:text-slate-100 font-bold text-2xl tracking-tight">{t('pages:quickActions.title')}</h3>
       <div className="flex flex-wrap gap-4">
         {actions.map((action, index) => (
           <ActionCard key={index} title={action.title} onClick={action.onClick} icon={<Plus />} />

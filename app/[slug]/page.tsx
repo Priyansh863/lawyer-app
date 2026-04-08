@@ -300,17 +300,27 @@ export default function PostPage() {
           </Card>
         )}
 
-        {/* Post Image */}
-        {post.image && (
+        {/* Post Media */}
+        {((post.videos && post.videos.length > 0) || post.video || (post.images && post.images.length > 0) || post.image) && (
           <Card className="mb-6">
             <CardContent className="p-0">
-              <div className="relative w-full h-64 rounded-lg overflow-hidden">
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {(post.videos && post.videos.length > 0) || post.video ? (
+                <div className="relative w-full rounded-lg overflow-hidden bg-black">
+                  <video
+                    src={post.videos?.[0] || post.video}
+                    controls
+                    className="w-full h-auto max-h-[540px] object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="relative w-full h-64 rounded-lg overflow-hidden">
+                  <img
+                    src={post.images?.[0] || post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

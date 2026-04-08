@@ -41,6 +41,7 @@ import {
 import { uploadFileOnS3 } from "@/lib/helpers/fileupload";
 import LocationUrlGenerator from "./location-url-generator";
 import {
+  CheckCircle2,
   Wand2,
   FileText,
   Send,
@@ -93,6 +94,7 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     hashtag: '',
     status: 'published',
     images: [],
+    videos: [],
     ...initialData
   });
 
@@ -310,8 +312,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
     }
   };
 
-  // Handle image upload
-  const handleImageUpload = async (file: File) => {
+  // Handle media upload (image/video)
+  const handleMediaUpload = async (file: File) => {
     try {
       setIsUploadingImage(true);
       setUploadProgress(0);
@@ -329,20 +331,32 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         });
       }, 100);
 
-      const imageUrl = await uploadFileOnS3(file, filePath);
+      const mediaUrl = await uploadFileOnS3(file, filePath);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      if (imageUrl) {
-        setPostData(prev => ({ 
-          ...prev, 
-          image: prev.images?.length === 0 ? imageUrl : prev.image, // Fallback for single image
-          images: addUniqueImage(prev.images || [], imageUrl, 3)
-        }));
+      if (mediaUrl) {
+        const isVideo = file.type.startsWith("video/");
+        setPostData(prev => {
+          if (isVideo) {
+            return {
+              ...prev,
+              video: prev.videos?.length === 0 ? mediaUrl : prev.video,
+              videos: addUniqueImage(prev.videos || [], mediaUrl, 3)
+            };
+          }
+          return {
+            ...prev,
+            image: prev.images?.length === 0 ? mediaUrl : prev.image,
+            images: addUniqueImage(prev.images || [], mediaUrl, 3)
+          };
+        });
         toast({
           title: t('pages:creator.post.image.toast.success'),
-          description: t('pages:creator.post.image.toast.successDesc'),
+          description: isVideo
+            ? "The video has been uploaded and will be included in the post"
+            : t('pages:creator.post.image.toast.successDesc'),
           variant: "default",
         });
       } else {
@@ -415,7 +429,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
       // Ensure we send at least the first image to the 'image' field for compatibility
       const finalPostData = {
         ...postData,
-        image: postData.images && postData.images.length > 0 ? postData.images[0] : postData.image
+        image: postData.images && postData.images.length > 0 ? postData.images[0] : postData.image,
+        video: postData.videos && postData.videos.length > 0 ? postData.videos[0] : postData.video
       };
 
       let response;
@@ -435,7 +450,16 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
 
       toast({
         title: t('pages:creator.post.toast.created'),
-        description: t('pages:creator.post.toast.createdDesc', { title: post.title }),
+        description: (
+          <div className="flex items-center gap-3 py-1">
+            <div className="bg-green-100 p-1.5 rounded-full">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+            </div>
+            <span className="text-[14px] font-medium text-slate-600">
+              {t('pages:creator.post.toast.createdDesc', { title: post.title })}
+            </span>
+          </div>
+        ),
         variant: "default",
       });
 
@@ -447,7 +471,8 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
         citations: [],
         hashtag: '',
         status: 'published',
-        images: []
+        images: [],
+        videos: []
       });
 
       setAiDraftReady(false);
@@ -974,53 +999,63 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                   </div>
                 </div>
 
-                {/* Display image if available */}
-                {((createdPost.images && createdPost.images.length > 0) || createdPost.image) && (
+                {/* Display media if available */}
+                {((createdPost.videos && createdPost.videos.length > 0) || createdPost.video || (createdPost.images && createdPost.images.length > 0) || createdPost.image) && (
                   <div className="space-y-3 pt-4">
-                    <Label className="text-sm font-bold text-slate-700">{t('pages:creator.post.success.images', 'Post Images')}</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {createdPost.images && createdPost.images.length > 0 ? (
-                        createdPost.images.map((img, idx) => (
-                          <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
-                            <img
-                              src={img}
-                              alt={`Post image ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="h-8 w-8 p-0 rounded-full"
-                                onClick={() => downloadImage(img, `post-img-${idx + 1}-${Date.now()}.jpg`)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
+                    <Label className="text-sm font-bold text-slate-700">{t('pages:creator.post.success.images', 'Post Media')}</Label>
+                    {(createdPost.videos && createdPost.videos.length > 0) || createdPost.video ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        {(createdPost.videos && createdPost.videos.length > 0 ? createdPost.videos : [createdPost.video]).filter(Boolean).map((video, idx) => (
+                          <div key={idx} className="rounded-xl overflow-hidden border border-slate-200 bg-black">
+                            <video src={video as string} controls className="w-full h-auto max-h-72 object-contain" />
                           </div>
-                        ))
-                      ) : (
-                        createdPost.image && (
-                          <div className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
-                            <img
-                              src={createdPost.image}
-                              alt="Post image"
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="h-8 w-8 p-0 rounded-full"
-                                onClick={() => downloadImage(createdPost.image!, `post-img-${Date.now()}.jpg`)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-3">
+                        {createdPost.images && createdPost.images.length > 0 ? (
+                          createdPost.images.map((img, idx) => (
+                            <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                              <img
+                                src={img}
+                                alt={`Post image ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-8 w-8 p-0 rounded-full"
+                                  onClick={() => downloadImage(img, `post-img-${idx + 1}-${Date.now()}.jpg`)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      )}
-                    </div>
+                          ))
+                        ) : (
+                          createdPost.image && (
+                            <div className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                              <img
+                                src={createdPost.image}
+                                alt="Post image"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-8 w-8 p-0 rounded-full"
+                                  onClick={() => downloadImage(createdPost.image!, `post-img-${Date.now()}.jpg`)}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1181,13 +1216,22 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                 <Input
                   id="image"
                   type="file"
-                  accept="image/*"
-                  disabled={isUploadingImage || (postData.images && postData.images.length >= 3)}
+                  accept="image/*,video/mp4,video/webm,video/quicktime"
+                  disabled={isUploadingImage || ((postData.images?.length || 0) >= 3 && (postData.videos?.length || 0) >= 3)}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      const isSupported = file.type.startsWith("image/") || file.type.startsWith("video/");
+                      if (!isSupported) {
+                        toast({
+                          title: "Unsupported file type",
+                          description: "Please upload an image or MP4/WebM/MOV video file.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
                       setSelectedFile(file);
-                      handleImageUpload(file);
+                      handleMediaUpload(file);
                     }
                   }}
                   className="bg-[#f4f4f5] border-0 rounded-md h-11 px-4 text-[14px] file:mr-4 file:py-0 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#e2e8f0] file:text-[#1a2332] hover:file:bg-[#cbd5e1] disabled:opacity-50 focus-visible:ring-0"
@@ -1233,6 +1277,33 @@ export default function PostCreator({ onPostCreated, initialData }: PostCreatorP
                               setPostData(prev => ({ 
                                 ...prev, 
                                 images: prev.images?.filter((_, i) => i !== index) || [] 
+                              }));
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {postData.videos && postData.videos.length > 0 && !isUploadingImage && (
+                  <div className="space-y-4">
+                    <div className="text-xs text-green-600">Video uploaded successfully</div>
+                    <div className="grid grid-cols-1 gap-3">
+                      {postData.videos.map((video, index) => (
+                        <div key={index} className="relative group">
+                          <video src={video} controls className="w-full h-40 object-cover rounded-lg border border-slate-200" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                            onClick={() => {
+                              setPostData(prev => ({
+                                ...prev,
+                                videos: prev.videos?.filter((_, i) => i !== index) || []
                               }));
                             }}
                           >

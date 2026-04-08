@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,8 +49,10 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
   const [password, setPassword] = useState("");
   const [expiresIn, setExpiresIn] = useState("24");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [generatedClientName, setGeneratedClientName] = useState<string | null>(null);
   const [myLinks, setMyLinks] = useState<SecureLink[]>([]);
   const [showMyLinks, setShowMyLinks] = useState(false);
+  const [hasLoadedLinks, setHasLoadedLinks] = useState(false);
 
   const handleGenerateLink = async () => {
     if (!selectedClient || !password) {
@@ -80,6 +82,7 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
       });
 
       setGeneratedLink(response.data.secure_url);
+      setGeneratedClientName(response.data.client_name);
       toast({
         title: t("pages:secureLink.success.generatedTitle"),
         description: t("pages:secureLink.success.generatedDesc", { name: response.data.client_name }),
@@ -112,12 +115,15 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
   };
 
   const handleViewMyLinks = async () => {
+    setShowMyLinks(true);
     try {
       setIsLoadingLinks(true);
       const response = await getMySecureLinks(1, 20, "all");
-      setMyLinks(response.data.links);
-      setShowMyLinks(true);
+      setMyLinks(response?.data?.links || []);
+      setHasLoadedLinks(true);
     } catch (error: any) {
+      setMyLinks([]);
+      setHasLoadedLinks(true);
       toast({
         title: t("pages:secureLink.errors.errorTitle"),
         description: error.message || t("pages:secureLink.errors.errorDefault"),
@@ -132,16 +138,20 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
     const now = new Date();
     const expiresAt = new Date(link.expires_at);
 
-    if (link.is_used) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">{t("pages:secureLink.status.used")}</Badge>;
-    } else if (expiresAt < now) {
+    if (expiresAt < now) {
       return <Badge variant="destructive">{t("pages:secureLink.status.expired")}</Badge>;
     } else {
       return <Badge variant="secondary">{t("pages:secureLink.status.active")}</Badge>;
     }
   };
 
-  const selectedClientData = clients.find(c => c._id === selectedClient);
+  useEffect(() => {
+    if (isOpen) {
+      setShowMyLinks(false);
+      setHasLoadedLinks(false);
+      setMyLinks([]);
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -251,7 +261,7 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
                 <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center justify-between mb-2">
                     <Label className="text-sm font-medium text-green-800">
-                      {t("pages:secureLink.generatedFor", { name: `${selectedClientData?.first_name} ${selectedClientData?.last_name}` })}
+                      {t("pages:secureLink.generatedFor", { name: generatedClientName || "-" })}
                     </Label>
                     <Button size="sm" variant="outline" onClick={handleCopyLink}>
                       <Copy className="h-3 w-3 mr-1" />
@@ -280,7 +290,11 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
             <CardContent>
               {showMyLinks ? (
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {myLinks.length === 0 ? (
+                  {isLoadingLinks && !hasLoadedLinks ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {t("pages:secureLink.buttons.loading")}
+                    </p>
+                  ) : myLinks.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
                       {t("pages:secureLink.noLinks")}
                     </p>
