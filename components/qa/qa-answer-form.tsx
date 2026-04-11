@@ -17,9 +17,11 @@ import { getUploadFileUrl } from "@/lib/helpers/fileupload"
 export default function QAAnswerForm({
   questionId,
   onClose,
+  hideHeaderActions = false,
 }: {
   questionId: string
   onClose?: () => void
+  hideHeaderActions?: boolean
 }) {
   const router = useRouter()
   const user = useSelector((state: any) => state.auth.user)
@@ -274,23 +276,25 @@ export default function QAAnswerForm({
                 {maskUser(qaItem.clientId?.first_name || "user")}
               </span>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-slate-300 hover:text-slate-600 transition-colors">
-                  <MoreHorizontal size={24} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border-slate-100">
-                <DropdownMenuItem 
-                  onClick={handleDeleteQuestion}
-                  disabled={submitting}
-                  className="text-red-500 font-bold focus:text-red-600 focus:bg-red-50 rounded-lg py-2.5 cursor-pointer"
-                >
-                  <Trash2 size={16} className="mr-2 stroke-[2.5px]" />
-                  {t('pages:qa.deleteQuestion') || "Delete Question"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!hideHeaderActions ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-slate-300 hover:text-slate-600 transition-colors">
+                    <MoreHorizontal size={24} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border-slate-100">
+                  <DropdownMenuItem 
+                    onClick={handleDeleteQuestion}
+                    disabled={submitting}
+                    className="text-red-500 font-bold focus:text-red-600 focus:bg-red-50 rounded-lg py-2.5 cursor-pointer"
+                  >
+                    <Trash2 size={16} className="mr-2 stroke-[2.5px]" />
+                    {t('pages:qa.deleteQuestion') || "Delete Question"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
           </div>
 
           <div className="space-y-4 pr-8">

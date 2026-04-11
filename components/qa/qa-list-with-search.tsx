@@ -587,6 +587,7 @@ export default function QAListWithSearch() {
               {isLawyer ? (
                 <QAAnswerForm
                   questionId={selectedQuestionId}
+                  hideHeaderActions={activeTab === "waiting"}
                   onClose={() => {
                     setSelectedQuestionId(null)
                     setSelectedQuestion(null)
