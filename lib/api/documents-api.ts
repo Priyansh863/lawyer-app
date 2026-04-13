@@ -62,6 +62,9 @@ export interface Document {
   } | string
   link: string
   summary?: string
+  ai_summary?: string
+  summary_text?: string
+  document_summary?: string
   privacy?: 'public' | 'private'
   file_size?: number
   file_type?: string
@@ -80,6 +83,20 @@ export interface Document {
   updated_at?: string
   createdAt: string
   updatedAt: string
+}
+
+const normalizeDocumentSummary = (doc: any) => {
+  const resolvedSummary =
+    doc?.summary ||
+    doc?.ai_summary ||
+    doc?.summary_text ||
+    doc?.document_summary ||
+    ''
+
+  return {
+    ...doc,
+    summary: resolvedSummary,
+  } as Document
 }
 
 export interface DocumentResponse {
@@ -149,11 +166,16 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
     // Ensure consistent response format
     const data = response.data
     if (data.success !== undefined) {
-      return data
+      return {
+        ...data,
+        documents: (data.documents || []).map(normalizeDocumentSummary),
+        document: data.document ? normalizeDocumentSummary(data.document) : data.document
+      }
     } else if (data.documents || Array.isArray(data)) {
+      const normalizedDocs = (data.documents || data || []).map(normalizeDocumentSummary)
       return {
         success: true,
-        documents: data.documents || data
+        documents: normalizedDocs
       }
     } else {
       return {

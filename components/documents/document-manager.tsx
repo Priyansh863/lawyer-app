@@ -119,6 +119,49 @@ export default function DocumentManager() {
         // run once on mount
     }, [])
 
+    // Keep summary dialog data fresh while it's open (AI summary can complete asynchronously).
+    useEffect(() => {
+        if (!audioSummaryDialog.open || !audioSummaryDialog.doc?._id) return
+
+        let isMounted = true
+        const currentDocId = audioSummaryDialog.doc._id
+
+        const refreshSummaryDoc = async () => {
+            try {
+                const response = await getDocuments()
+                if (!isMounted || !response.success || !response.documents) return
+
+                setDocuments(response.documents)
+                const latestDoc = response.documents.find((d) => d._id === currentDocId)
+                if (latestDoc) {
+                    setAudioSummaryDialog((prev) => {
+                        if (!prev.open || prev.doc?._id !== currentDocId) return prev
+                        return { open: true, doc: latestDoc }
+                    })
+                }
+            } catch (error) {
+                // Keep current UI state; silent refresh failure should not disrupt user.
+            }
+        }
+
+        // Fetch immediately, then poll until the dialog closes.
+        refreshSummaryDoc()
+        const interval = setInterval(refreshSummaryDoc, 5000)
+
+        return () => {
+            isMounted = false
+            clearInterval(interval)
+        }
+    }, [audioSummaryDialog.open, audioSummaryDialog.doc?._id])
+
+    const hasSummaryText = (doc?: Document | null) => {
+        return !!doc?.summary?.trim()
+    }
+
+    const isSummaryProcessing = (doc?: Document | null) => {
+        return !hasSummaryText(doc) && (doc?.status || '').toLowerCase() === 'pending'
+    }
+
     const loadDocuments = async () => {
         setIsLoading(true)
         try {
@@ -868,7 +911,11 @@ export default function DocumentManager() {
                         {/* Summary Text */}
                         <div className="max-h-[200px] overflow-y-auto p-4 bg-[#f8fafc] rounded-lg border border-slate-100">
                             <p className="text-[13px] leading-relaxed text-[#475569]">
-                                {audioSummaryDialog.doc?.summary || t('pages:documentManager.noSummaryAvailable')}
+                                {hasSummaryText(audioSummaryDialog.doc)
+                                    ? audioSummaryDialog.doc?.summary
+                                    : isSummaryProcessing(audioSummaryDialog.doc)
+                                        ? t('pages:documentManager.summaryProcessing', 'AI summary is still processing. Please wait a moment and reopen, or keep this dialog open to auto-refresh.')
+                                        : t('pages:documentManager.noSummaryAvailable')}
                             </p>
                         </div>
 
@@ -906,12 +953,24 @@ export default function DocumentManager() {
 
                     {/* Controls Footer */}
                     <div className="border-t border-slate-200 px-8 py-5 flex justify-center gap-3">
+                        {isSummaryProcessing(audioSummaryDialog.doc) ? (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                                <span className="text-[12px] font-medium text-amber-700">
+                                    {t('pages:documentManager.summaryProcessingShort', 'Summary is processing...')}
+                                </span>
+                            </div>
+                        ) : null}
                         {!isSpeaking && !isPaused ? (
                             <Button
                                 onClick={() => {
                                     const doc = audioSummaryDialog.doc
                                     if (!doc) return
-                                    const text = doc.summary || t('pages:documentManager.noSummaryAvailable')
+                                    if (!hasSummaryText(doc)) {
+                                        toast.error(t('pages:documentManager.noSummaryAvailable'))
+                                        return
+                                    }
+                                    const text = doc.summary as string
                                     if ('speechSynthesis' in window) {
                                         speechSynthesis.cancel()
                                         const utterance = new SpeechSynthesisUtterance(text)
@@ -926,6 +985,7 @@ export default function DocumentManager() {
                                         toast.error(t('pages:commona.error'))
                                     }
                                 }}
+                                disabled={!hasSummaryText(audioSummaryDialog.doc)}
                                 className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold h-11 px-8 rounded-md shadow-none flex items-center gap-2"
                             >
                                 <Play className="h-4 w-4" />
