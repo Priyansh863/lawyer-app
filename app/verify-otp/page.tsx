@@ -19,11 +19,13 @@ function VerifyOtpContent() {
   const [email, setEmail] = useState<string>("")
   const [purpose, setPurpose] = useState<"signup" | "login">("signup")
   const [otpExpires, setOtpExpires] = useState<Date | null>(null)
+  const [nextPath, setNextPath] = useState<string>("")
 
   useEffect(() => {
     // Get email and purpose from URL params
     const emailParam = searchParams.get("email")
     const purposeParam = searchParams.get("purpose") as "signup" | "login" | null
+    const nextParam = searchParams.get("next")
 
     if (!emailParam) {
       // If no email provided, redirect to home
@@ -33,6 +35,7 @@ function VerifyOtpContent() {
 
     setEmail(emailParam)
     setPurpose(purposeParam === "login" ? "login" : "signup")
+    setNextPath(nextParam || "")
   }, [searchParams, router])
 
   const handleOtpSuccess = async (data: VerifyOtpData | null) => {
@@ -72,7 +75,7 @@ function VerifyOtpContent() {
             description: "Account verified, but failed to sign in. Please try logging in manually.",
             variant: "error",
           })
-          router.push("/login")
+          router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login")
         }
       } else {
         // If no token in response, redirect to login page
@@ -81,7 +84,7 @@ function VerifyOtpContent() {
           description: "Your account has been verified successfully! Please log in to continue.",
           variant: "success",
         })
-        router.push("/login")
+        router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login")
       }
     } else {
       // For signup flow, redirect to login page
@@ -90,7 +93,7 @@ function VerifyOtpContent() {
         description: "Your account has been verified successfully! Please log in to continue.",
         variant: "success",
       })
-      router.push("/login")
+      router.push(nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login")
     }
   }
 

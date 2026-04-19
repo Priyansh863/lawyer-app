@@ -9,6 +9,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { Badge } from '@/components/ui/badge'
 import {
     Select,
     SelectContent,
@@ -44,9 +45,12 @@ import {
     Pause,
     Square,
     Volume2,
+    Briefcase,
 } from 'lucide-react'
 import { useTranslation } from "@/hooks/useTranslation"
-import { getDocuments, updateDocumentStorageType, removeFromCloud, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document } from '@/lib/api/documents-api'
+import { getDocuments, updateDocumentStorageType, removeFromCloud, removeFromApp, buildRemoveAppPayload, bulkDeleteDocuments, bulkAssignCaseToDocuments, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document, type RemoveFromAppResponse } from '@/lib/api/documents-api'
+import { getCases } from '@/lib/api/cases-api'
+import type { Case } from '@/types/case'
 import { uploadFileOnS3 } from '@/lib/helpers/fileupload'
 import { toast } from 'sonner'
 import { AddDocumentsDialog } from './add-documents-dialog'
@@ -89,6 +93,17 @@ export default function DocumentManager() {
     // Remove Folder dialog
     const [removeFolderDialog, setRemoveFolderDialog] = useState<{ open: boolean; doc: Document | null }>({ open: false, doc: null })
 
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+
+    // Assign Case dialog
+    const [assignCaseOpen, setAssignCaseOpen] = useState(false)
+    const [isAssigningCase, setIsAssigningCase] = useState(false)
+    const [assignCaseQuery, setAssignCaseQuery] = useState('')
+    const [cases, setCases] = useState<Case[]>([])
+    const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
+    const [isLoadingCases, setIsLoadingCases] = useState(false)
+
     const languages = [
         { value: 'en-US', label: 'English' },
         { value: 'ko-KR', label: '한국어' },
@@ -118,6 +133,26 @@ export default function DocumentManager() {
         }
         // run once on mount
     }, [])
+
+    const loadCases = async (query = '') => {
+        setIsLoadingCases(true)
+        try {
+            const res = await getCases({ query, limit: 100 })
+            if (res.success) {
+                setCases(res.cases || [])
+            }
+        } catch (error) {
+            console.error('Error fetching cases', error)
+        } finally {
+            setIsLoadingCases(false)
+        }
+    }
+
+    useEffect(() => {
+        if (assignCaseOpen) {
+            loadCases(assignCaseQuery)
+        }
+    }, [assignCaseOpen, assignCaseQuery])
 
     // Keep summary dialog data fresh while it's open (AI summary can complete asynchronously).
     useEffect(() => {
@@ -267,6 +302,66 @@ export default function DocumentManager() {
         })
     }
 
+    const selectedNonFolderIds = () =>
+        [...selectedDocs].filter((id) => {
+            const d = documents.find((x) => x._id === id)
+            return !!d && !isFolderDocument(d)
+        })
+
+    const handleBulkDeleteConfirmed = async () => {
+        const ids = selectedNonFolderIds()
+        if (ids.length === 0) {
+            toast.error(t('pages:documentManager.bulkDeleteNone'))
+            setBulkDeleteOpen(false)
+            return
+        }
+        setIsBulkDeleting(true)
+        try {
+            const res = await bulkDeleteDocuments(ids)
+            if (!res.success) {
+                toast.error(res.message || t('pages:documentManager.bulkDeleteFailed'))
+                return
+            }
+            const deleted = res.deleted ?? res.deletedCount ?? ids.length
+            const skipped = res.skipped ?? res.skippedCount ?? 0
+            if (skipped > 0) {
+                toast.warning(t('pages:documentManager.bulkDeletePartial', { count: deleted, total: deleted + skipped }))
+            } else {
+                toast.success(t('pages:documentManager.bulkDeleteSuccess', { count: deleted }))
+            }
+            setSelectedDocs(new Set())
+            loadDocuments()
+        } finally {
+            setIsBulkDeleting(false)
+            setBulkDeleteOpen(false)
+        }
+    }
+
+    const handleBulkAssignCaseConfirmed = async () => {
+        const ids = selectedNonFolderIds()
+        if (ids.length === 0 || !selectedCaseId) {
+            toast.error(t('pages:documentManager.bulkAssignNone', 'Please select documents and a case'))
+            return
+        }
+        setIsAssigningCase(true)
+        try {
+            const res = await bulkAssignCaseToDocuments(ids, selectedCaseId)
+            if (!res.success) {
+                toast.error(res.message || t('pages:documentManager.bulkAssignFailed', 'Failed to assign case'))
+                return
+            }
+            toast.success(t('pages:documentManager.bulkAssignSuccess', 'Case assigned successfully'))
+            setSelectedDocs(new Set())
+            setAssignCaseOpen(false)
+            setSelectedCaseId(null)
+            loadDocuments()
+        } catch (error) {
+            toast.error(t('pages:documentManager.bulkAssignFailed', 'Failed to assign case'))
+        } finally {
+            setIsAssigningCase(false)
+        }
+    }
+
     // Get single storage badge text: PC / Cloud / PC + Cloud
     const getStorageBadge = (doc: Document) => {
         const st = doc.storage_type || 'app'
@@ -352,14 +447,36 @@ export default function DocumentManager() {
         if (!doc) return
         try {
             const hasCloud = doc.storage_type === 'cloud' || doc.storage_type === 'app_cloud'
-            const res = hasCloud
-                ? await updateDocumentStorageType(doc._id, 'cloud') // keep cloud only
-                : await deleteDocument(doc._id) // PC-only: delete from list and local linkage
-            if (res.success) {
-                toast.success(t('pages:documentManager.toastRemovedApp'))
+            if (hasCloud) {
+                const res = await updateDocumentStorageType(doc._id, 'cloud')
+                if (!res.success) {
+                    toast.error(res.message || t('pages:documentManager.toastRemoveAppFailed'))
+                    setRemoveAppDialog({ open: false, doc: null })
+                    return
+                }
+                const pc = (await removeFromApp(
+                    doc._id,
+                    buildRemoveAppPayload({ ...doc, storage_type: 'cloud' })
+                )) as RemoveFromAppResponse
+                if (!pc.success) {
+                    toast.warning(t('pages:documentManager.pcDeletePending'))
+                } else if (pc.alreadyQueued) {
+                    toast.success(t('pages:documentManager.pcDeleteAlreadyQueued'))
+                } else {
+                    toast.success(t('pages:documentManager.toastRemovedApp'))
+                }
                 loadDocuments()
             } else {
-                toast.error(res.message || t('pages:documentManager.toastRemoveAppFailed'))
+                try {
+                    await deleteDocument(doc._id)
+                } catch {
+                    toast.error(t('pages:documentManager.toastRemoveAppFailed'))
+                    setRemoveAppDialog({ open: false, doc: null })
+                    return
+                }
+                await removeFromApp(doc._id)
+                toast.success(t('pages:documentManager.toastRemovedApp'))
+                loadDocuments()
             }
         } catch (error) {
             toast.error(t('pages:documentManager.toastRemoveAppFailed'))
@@ -442,8 +559,8 @@ export default function DocumentManager() {
             )}
 
             {/* Action Bar */}
-            <div className="flex flex-row items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div className="flex flex-wrap items-center gap-4">
                     <input
                         type="checkbox"
                         checked={selectedDocs.size === filteredDocs.length && filteredDocs.length > 0}
@@ -451,10 +568,35 @@ export default function DocumentManager() {
                         className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
                     />
                     <span className="text-[15px] font-medium text-[#1e293b] dark:text-slate-100">{t('pages:documentManager.selected')} {selectedDocs.size}</span>
+                    {selectedDocs.size > 0 && (
+                        <>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-9 font-semibold border-slate-300 ml-2"
+                                onClick={() => setAssignCaseOpen(true)}
+                            >
+                                <Briefcase className="h-4 w-4 mr-1.5" />
+                                {t('pages:documentManager.assignCase', 'Assign Case')}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="h-9 font-semibold ml-2"
+                                onClick={() => setBulkDeleteOpen(true)}
+                                disabled={isBulkDeleting}
+                            >
+                                <Trash2 className="h-4 w-4 mr-1.5" />
+                                {t('pages:documentManager.bulkDeleteSelected')}
+                            </Button>
+                        </>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="relative w-[300px]">
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative flex-1 min-w-[200px] sm:flex-none sm:w-[300px]">
                         <Input
                             placeholder={t('pages:documentManager.search')}
                             value={searchTerm}
@@ -512,11 +654,12 @@ export default function DocumentManager() {
                         </p>
                     </div>
                 ) : (
-                    <div className="w-full">
-                        {/* Custom Headers */}
+                    <div className="w-full overflow-x-auto pb-4">
+                        <div className="min-w-[950px]">
+                            {/* Custom Headers */}
                         <div className="grid grid-cols-[60px_1.5fr_1fr_1.2fr_1.2fr_100px_80px] px-6 py-3 bg-[#f1f5f9] border border-[#e2e8f0] rounded-md text-[13px] font-bold text-[#475569] mb-4">
-                            <div className="flex items-center">{t('pages:documentManager.name')}</div>
                             <div></div>
+                            <div className="flex items-center">{t('pages:documentManager.name')}</div>
                             <div className="flex items-center justify-end pr-8">{t('pages:documentManager.fileSize')}</div>
                             <div className="flex items-center justify-center">{t('pages:documentManager.lastModified')}</div>
                             <div className="flex items-center justify-center">{t('pages:documentManager.status')}</div>
@@ -576,7 +719,7 @@ export default function DocumentManager() {
                                             {formatLastModified(doc.created_at || doc.createdAt)}
                                         </div>
 
-                                        <div className="flex justify-center gap-2">
+                                        <div className="flex justify-center gap-2 flex-wrap items-center">
                                             {!isFolder && getStorageBadge(doc)}
                                         </div>
 
@@ -681,6 +824,7 @@ export default function DocumentManager() {
                                 )
                             })}
                         </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -738,6 +882,36 @@ export default function DocumentManager() {
                             className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold h-10 px-6 rounded-md shadow-none"
                         >
                             {t('pages:documentManager.remove')}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <DialogContent className="sm:max-w-[420px] rounded-md border border-slate-200 bg-white shadow-xl p-8">
+                    <DialogHeader className="text-center space-y-2">
+                        <DialogTitle className="text-lg font-bold text-[#1a2332] text-center">
+                            {t('pages:documentManager.bulkDeleteTitle')}
+                        </DialogTitle>
+                        <DialogDescription className="text-[14px] text-[#64748b] text-center">
+                            {t('pages:documentManager.bulkDeleteDescription', { count: selectedNonFolderIds().length })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex justify-center gap-3 mt-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                            className="border-slate-200 text-[#64748b] font-bold h-10 px-6 rounded-md shadow-none"
+                            disabled={isBulkDeleting}
+                        >
+                            {t('pages:documentManager.cancel')}
+                        </Button>
+                        <Button
+                            onClick={handleBulkDeleteConfirmed}
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold h-10 px-6 rounded-md shadow-none"
+                            disabled={isBulkDeleting}
+                        >
+                            {isBulkDeleting ? t('pages:documentManager.bulkDeleteWorking') : t('pages:documentManager.remove')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1026,6 +1200,70 @@ export default function DocumentManager() {
                             </>
                         )}
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Assign Case Dialog */}
+            <Dialog open={assignCaseOpen} onOpenChange={(open) => {
+                setAssignCaseOpen(open)
+                if (!open) {
+                    setSelectedCaseId(null)
+                    setAssignCaseQuery('')
+                }
+            }}>
+                <DialogContent className="sm:max-w-[480px] rounded-md border border-slate-200 bg-white shadow-xl p-6">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-[#1a2332]">{t('pages:documentManager.assignCase', 'Assign to Case')}</DialogTitle>
+                        <DialogDescription className="text-[14px] text-[#64748b]">
+                            {t('pages:documentManager.assignCaseDescription', 'Select a case to link with the selected documents.')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="mt-4">
+                        <Input 
+                            placeholder={t('pages:documentManager.searchCase', 'Search cases...')}
+                            value={assignCaseQuery}
+                            onChange={(e) => setAssignCaseQuery(e.target.value)}
+                            className="mb-4"
+                        />
+
+                        <div className="max-h-[300px] overflow-y-auto space-y-2 border rounded-md p-2">
+                            {isLoadingCases ? (
+                                <div className="p-4 text-center text-sm text-slate-500">{t('pages:common.loading', 'Loading...')}</div>
+                            ) : cases.length === 0 ? (
+                                <div className="p-4 text-center text-sm text-slate-500">{t('pages:common.noResults', 'No cases found.')}</div>
+                            ) : (
+                                cases.map(c => (
+                                    <div 
+                                        key={c._id} 
+                                        onClick={() => setSelectedCaseId(c._id)}
+                                        className={`p-3 rounded-md cursor-pointer border hover:border-slate-400 transition-colors ${selectedCaseId === c._id ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+                                    >
+                                        <div className="font-bold text-[14px] text-slate-800">{c.title || c.case_number || 'Unnamed Case'}</div>
+                                        {c.case_number && <div className="text-xs text-slate-500">{c.case_number}</div>}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-6 flex justify-end gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => setAssignCaseOpen(false)}
+                            className="border-slate-200 text-[#64748b] font-bold h-10 px-6 rounded-md"
+                            disabled={isAssigningCase}
+                        >
+                            {t('pages:documentManager.cancel', 'Cancel')}
+                        </Button>
+                        <Button
+                            onClick={handleBulkAssignCaseConfirmed}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-6 rounded-md"
+                            disabled={isAssigningCase || !selectedCaseId}
+                        >
+                            {isAssigningCase ? t('pages:common.saving', 'Saving...') : t('pages:documentManager.assignCase', 'Assign Case')}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div >

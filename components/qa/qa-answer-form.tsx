@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "react-hot-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { getUploadFileUrl } from "@/lib/helpers/fileupload"
+import { qaAnswerLawyerIdString } from "@/lib/utils/qa-answer"
 
 export default function QAAnswerForm({
   questionId,
@@ -52,8 +53,9 @@ export default function QAAnswerForm({
         if (item) {
           setQaItem(item)
           // Pre-load my answer if I've already answered this question
-          const myAnswer = item.answer?.find((a: any) =>
-            a.lawyer_id === user?._id || a.answeredBy?._id === user?._id
+          const myAnswer = item.answer?.find(
+            (a) =>
+              qaAnswerLawyerIdString(a.lawyer_id) === user?._id || a.answeredBy?._id === user?._id
           )
           if (myAnswer) {
             setAnswer(myAnswer.answer)

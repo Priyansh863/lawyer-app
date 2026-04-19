@@ -435,8 +435,13 @@ export async function createClient(clientData: Partial<Client>): Promise<Client>
       throw new Error(response.data.message || 'Failed to create client')
     }
 
-    const client = response.data.data
-    return client
+    const client = response.data.data || {}
+    return {
+      ...client,
+      email_sent: response.data?.data?.email_sent,
+      emailSent: response.data?.data?.email_sent,
+      _createMessage: response.data?.message,
+    } as Client
   } catch (error) {
     console.error('Error creating client:', error)
     throw error

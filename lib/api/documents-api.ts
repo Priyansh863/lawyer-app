@@ -83,6 +83,11 @@ export interface Document {
   updated_at?: string
   createdAt: string
   updatedAt: string
+  /** Set when server queued a desktop.delete / remove-app job for the local file */
+  pc_delete_queued_at?: string | null
+  /** Optional sync identifier from backend for cloud-only remove-app body */
+  sync_key?: string
+  syncKey?: string
 }
 
 const normalizeDocumentSummary = (doc: any) => {
@@ -104,6 +109,41 @@ export interface DocumentResponse {
   documents?: Document[]
   document?: Document
   message?: string
+}
+
+export type RemoveFromAppResponse = DocumentResponse & {
+  queued?: boolean
+  alreadyQueued?: boolean
+  documentId?: string
+}
+
+export type BulkDeleteDocumentsResponse = DocumentResponse & {
+  deleted?: number
+  skipped?: number
+  /** Some APIs use alternate names */
+  deletedCount?: number
+  skippedCount?: number
+}
+
+/**
+ * Optional body for PATCH remove-app when the row is cloud-only but `storage_location` / sync key
+ * still identifies the local file. For `app_cloud` → `cloud`, call with `{ ...doc, storage_type: 'cloud' }`
+ * so paths are included after the logical transition.
+ */
+export function buildRemoveAppPayload(doc: Partial<Document> & { sync_key?: string }): {
+  localPath?: string
+  syncKey?: string
+} | undefined {
+  const st = doc.storage_type || 'app'
+  const hasApp = st === 'app' || st === 'app_cloud'
+  if (hasApp) return undefined
+  const loc = (doc.storage_location || '').toString().trim()
+  const key = (doc.sync_key || doc.syncKey || '').toString().trim()
+  if (!loc && !key) return undefined
+  return {
+    ...(loc ? { localPath: loc } : {}),
+    ...(key ? { syncKey: key } : {}),
+  }
 }
 
 const isLikelyOpenableUrl = (value?: string) => {
@@ -219,6 +259,44 @@ export const createFolder = async (folderName: string, userId: string): Promise<
     return {
       success: false,
       message: error.response?.data?.message || 'Failed to create folder'
+    }
+  }
+}
+
+/** Bulk delete via transaction on the API (uploader/admin per doc; others skipped). */
+export const bulkDeleteDocuments = async (ids: string[]): Promise<BulkDeleteDocumentsResponse> => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/document/bulk-delete`,
+      { ids },
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Bulk delete documents error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to bulk delete documents',
+      deleted: 0,
+      skipped: 0,
+    }
+  }
+}
+
+/** Bulk assign case to multiple documents. */
+export const bulkAssignCaseToDocuments = async (documentIds: string[], caseId: string): Promise<DocumentResponse> => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/document/bulk-assign-case`,
+      { documentIds, caseId },
+      { headers: getAuthHeaders() }
+    )
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Bulk assign case error:', error)
+    return {
+       success: false,
+       message: error?.response?.data?.message || 'Failed to assign case to documents',
     }
   }
 }
@@ -419,6 +497,10 @@ export const getCaseDocuments = async (caseId: string): Promise<DocumentResponse
           file_size: doc.file_size,
           summary: doc.summary,
           storage_type: doc.storage_type || 'cloud',
+          storage_location: doc.storage_location,
+          sync_key: doc.sync_key,
+          syncKey: doc.syncKey,
+          pc_delete_queued_at: doc.pc_delete_queued_at,
           created_at: doc.created_at || doc.createdAt,
           updated_at: doc.updated_at || doc.updatedAt,
           updatedAt: doc.updatedAt || doc.updated_at,
@@ -479,6 +561,37 @@ export const removeFromCloud = async (documentId: string): Promise<DocumentRespo
   }
 }
 
+/**
+ * Queue PC local file deletion (Socket.IO desktop.remove_local_file on the server).
+ * Optional body when row is cloud-only but `storage_location` / sync key still identifies the local file.
+ */
+export const removeFromApp = async (
+  documentId: string,
+  opts?: { localPath?: string; syncKey?: string }
+): Promise<RemoveFromAppResponse> => {
+  try {
+    const payload: Record<string, string> = {}
+    if (opts?.localPath?.trim()) payload.localPath = opts.localPath.trim()
+    if (opts?.syncKey?.trim()) payload.syncKey = opts.syncKey.trim()
+    const response = await axios.patch(`${API_BASE_URL}/document/${documentId}/remove-app`, payload, {
+      headers: getAuthHeaders()
+    })
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Remove from app (PC) error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to remove from PC'
+    }
+  }
+}
+
+const DOCUMENT_VIEW_REQUEST_TIMEOUT_MS = 7000
+
+type ViewUrlCandidate =
+  | { method: 'get'; url: string }
+  | { method: 'post'; url: string; body?: Record<string, string> }
+
 // Resolve a viewable URL for a document (handles non-public/private links)
 export const getDocumentViewUrl = async (documentId: string, fallbackLink?: string): Promise<string> => {
   const normalizeResolvedUrl = (u?: string) => {
@@ -520,45 +633,69 @@ export const getDocumentViewUrl = async (documentId: string, fallbackLink?: stri
   }
 
   const headers = getAuthHeaders()
-  const candidates = [
-    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}/view` },
-    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}/download` },
-    { method: 'get' as const, url: `${API_BASE_URL}/document/view/${documentId}` },
-    { method: 'get' as const, url: `${API_BASE_URL}/document/download/${documentId}` },
-    { method: 'get' as const, url: `${API_BASE_URL}/document/${documentId}` },
-    { method: 'post' as const, url: `${API_BASE_URL}/document/generate-secure-link`, body: { fileId: documentId } },
+  const axiosConfig = { headers, timeout: DOCUMENT_VIEW_REQUEST_TIMEOUT_MS }
+
+  const candidates: ViewUrlCandidate[] = [
+    { method: 'get', url: `${API_BASE_URL}/document/${documentId}/view` },
+    { method: 'get', url: `${API_BASE_URL}/document/${documentId}/download` },
+    { method: 'get', url: `${API_BASE_URL}/document/view/${documentId}` },
+    { method: 'get', url: `${API_BASE_URL}/document/download/${documentId}` },
+    { method: 'get', url: `${API_BASE_URL}/document/${documentId}` },
+    { method: 'post', url: `${API_BASE_URL}/document/generate-secure-link`, body: { fileId: documentId } },
   ]
 
-  for (const candidate of candidates) {
-    try {
-      const response = candidate.method === 'post'
-        ? await axios.post(candidate.url, candidate.body || {}, { headers })
-        : await axios.get(candidate.url, { headers })
-
-      const data = response?.data || {}
-      const resolvedCandidates: Array<string | undefined> = [
-        data?.url,
-        data?.link,
-        data?.document?.url,
-        data?.document?.link,
-        data?.data?.url,
-        data?.data?.link,
-        data?.secureUrl,
-        data?.secure_url,
-        data?.document?.secure_url,
-        data?.document?.secureUrl,
-      ]
-
-      for (const maybe of resolvedCandidates) {
-        if (!maybe) continue
-        const normalized = normalizeResolvedUrl(maybe)
-        if (isLikelyOpenableUrl(normalized)) {
-          return normalized!.trim()
-        }
+  const extractFromResponse = (data: any): string | null => {
+    const resolvedCandidates: Array<string | undefined> = [
+      data?.url,
+      data?.link,
+      data?.document?.url,
+      data?.document?.link,
+      data?.data?.url,
+      data?.data?.link,
+      data?.secureUrl,
+      data?.secure_url,
+      data?.document?.secure_url,
+      data?.document?.secureUrl,
+    ]
+    for (const maybe of resolvedCandidates) {
+      if (!maybe) continue
+      const normalized = normalizeResolvedUrl(maybe)
+      if (isLikelyOpenableUrl(normalized)) {
+        return normalized!.trim()
       }
-    } catch {
-      // continue trying fallbacks
     }
+    return null
+  }
+
+  const tryCandidate = async (candidate: ViewUrlCandidate): Promise<string | null> => {
+    try {
+      const response =
+        candidate.method === 'post'
+          ? await axios.post(candidate.url, candidate.body || {}, axiosConfig)
+          : await axios.get(candidate.url, axiosConfig)
+      return extractFromResponse(response?.data || {})
+    } catch {
+      return null
+    }
+  }
+
+  const firstWave = candidates.slice(0, 3)
+  try {
+    return await Promise.any(
+      firstWave.map((c) =>
+        tryCandidate(c).then((u) => {
+          if (u) return u
+          throw new Error('no-url')
+        })
+      )
+    )
+  } catch {
+    // All first-wave attempts failed; try remaining endpoints sequentially.
+  }
+
+  for (const candidate of candidates.slice(3)) {
+    const u = await tryCandidate(candidate)
+    if (u) return u
   }
 
   if (fallbackLink && fallbackLink.trim()) {

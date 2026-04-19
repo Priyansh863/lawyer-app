@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { type QAQuestion } from "@/lib/api/qa-api"
+import { resolveProfileImageUrl, resolveProfileImageUrlLoose } from "@/lib/utils/profile-image"
+import { qaAnswerDisplayLawyerName, qaAnswerLawyerProfileRow, qaAnswerPrimaryInitial } from "@/lib/utils/qa-answer"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MapPin } from "lucide-react"
 import { useTranslation } from "@/hooks/useTranslation"
-import { Textarea } from "@/components/ui/textarea"
 import { X } from "lucide-react"
 
 export default function QAClientView({
@@ -16,7 +17,6 @@ export default function QAClientView({
 }) {
   const { t } = useTranslation()
   const answers = question.answer || []
-  const firstAnswer = answers[0]
 
   const maskUser = (name?: string) => {
     if (!name) return "user***"
@@ -36,10 +36,9 @@ export default function QAClientView({
   }
 
   const clientName = maskUser(question.clientId?.first_name || "user")
-  const lawyerName = firstAnswer?.answeredBy
-    ? `${firstAnswer.answeredBy.first_name} ${firstAnswer.answeredBy.last_name}`
-    : firstAnswer?.lawyer_name || "Lawyer"
-
+  const clientAvatarUrl =
+    resolveProfileImageUrl(question.clientId as any) ||
+    resolveProfileImageUrlLoose(question.clientId as unknown as Record<string, unknown>)
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-h-[92vh] overflow-y-auto scrollbar-hide">
       <div className="relative">
@@ -58,7 +57,12 @@ export default function QAClientView({
         <div className="p-8 pb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200" />
+              <Avatar className="h-10 w-10 border border-slate-200">
+                <AvatarImage src={clientAvatarUrl} alt="" className="object-cover" />
+                <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-semibold">
+                  {(question.clientId?.first_name?.[0] || "?").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <span className="text-[#1E293B] font-bold text-[15px]">{clientName}</span>
             </div>
           </div>
@@ -92,16 +96,24 @@ export default function QAClientView({
               <p className="text-slate-700 font-medium">{t("pages:qa.unanswered")}</p>
             </div>
           ) : (
-            answers.map((ans, idx) => (
+            answers.map((ans, idx) => {
+              const row = qaAnswerLawyerProfileRow(ans)
+              const lawyerAvatar =
+                resolveProfileImageUrl(ans.answeredBy as any) ||
+                (row ? resolveProfileImageUrlLoose(row) : undefined)
+              return (
               <div key={ans._id || idx} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-200" />
+                    <Avatar className="h-10 w-10 border border-slate-200">
+                      <AvatarImage src={lawyerAvatar} alt="" className="object-cover" />
+                      <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-semibold">
+                        {qaAnswerPrimaryInitial(ans)}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex flex-col">
                       <span className="text-[#1E293B] font-bold text-[15px]">
-                        {ans.answeredBy
-                          ? `${ans.answeredBy.first_name} ${ans.answeredBy.last_name}`
-                          : ans.lawyer_name || "Lawyer"}
+                        {qaAnswerDisplayLawyerName(ans)}
                       </span>
                       {ans.createdAt && (
                         <span className="text-slate-400 text-[11px] font-medium">
@@ -143,7 +155,7 @@ export default function QAClientView({
                   <div className="border-b border-slate-50 pt-4" />
                 )}
               </div>
-            ))
+            )})
           )}
         </div>
       </div>

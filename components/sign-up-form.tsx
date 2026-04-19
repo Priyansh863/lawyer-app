@@ -12,13 +12,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { signUp } from "@/services/auth"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useToast } from "./ui/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
 
 export default function SignUpForm() {
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { t } = useTranslation()
 
@@ -56,6 +57,8 @@ export default function SignUpForm() {
       const response = await signUp(data)
 
       if (response?.data?.success) {
+        const next = searchParams.get("next")
+        const nextQuery = next ? `&next=${encodeURIComponent(next)}` : ""
         if (response?.data?.data?.otp) {
           toast({
             title: t("pages:signu.signup.otp_sent"),
@@ -72,7 +75,7 @@ export default function SignUpForm() {
           })
         }
 
-        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup`)
+        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=signup${nextQuery}`)
       } else {
         toast({
           title: t("pages:signu.error"),
@@ -97,7 +100,7 @@ export default function SignUpForm() {
         <h1 className="text-2xl font-bold font-heading">{t("pages:signu.signup.title")}</h1>
         <p className="text-sm text-gray-600">
           {t("pages:signu.signup.have_account")}{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
+          <Link href={searchParams.get("next") ? `/login?next=${encodeURIComponent(searchParams.get("next") as string)}` : "/login"} className="text-blue-600 hover:underline">
             {t("pages:signu.signup.sign_in")}
           </Link>
         </p>
@@ -235,7 +238,7 @@ export default function SignUpForm() {
 
         <div className="text-center text-sm mt-4">
           {t("pages:signu.signup.have_account")}{" "}
-          <Link href="/login" className="font-medium hover:underline">
+          <Link href={searchParams.get("next") ? `/login?next=${encodeURIComponent(searchParams.get("next") as string)}` : "/login"} className="font-medium hover:underline">
             {t("pages:signu.signup.sign_in")}
           </Link>
         </div>

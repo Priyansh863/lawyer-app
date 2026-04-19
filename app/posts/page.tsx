@@ -37,6 +37,7 @@ import {
   User
 } from "lucide-react";
 import type { RootState } from "@/lib/store";
+import { resolveProfileImageUrl } from "@/lib/utils/profile-image";
 
 export default function PostsPage() {
   const { toast } = useToast();
@@ -198,6 +199,7 @@ export default function PostsPage() {
           last_name: (user as any)?.last_name || "",
           email: (user as any)?.email || "",
           avatar: (user as any)?.avatar,
+          profile_image: (user as any)?.profile_image,
         },
     };
 
@@ -396,6 +398,7 @@ export default function PostsPage() {
             {filteredPosts.map((post) => {
               const isExpanded = expandedPosts.has(post._id);
               const isLong = post.content.length > 220;
+              const authorImg = resolveProfileImageUrl(post.author);
               const postVideos = (post.videos && post.videos.length > 0)
                 ? post.videos
                 : (post.video ? [post.video] : []);
@@ -409,8 +412,8 @@ export default function PostsPage() {
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
-                          {post.author.avatar ? (
-                            <img src={post.author.avatar} alt="" className="w-full h-full object-cover" />
+                          {authorImg ? (
+                            <img src={authorImg} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <User className="h-6 w-6 text-slate-400" />
                           )}

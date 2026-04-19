@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
+import { casesApi } from "@/lib/api/cases-api";
 
 interface ClientDocumentsProps {
   clientId: string;
@@ -46,7 +47,10 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
         if (!opts?.silent) setIsLoading(true);
 
         console.log("Fetching client files for clientId:", clientId);
-        const clientFiles = isLawyer ? await getLawyerFiles(clientId) : await getClientFiles(clientId);
+        const [clientFiles, casesResp] = await Promise.all([
+          isLawyer ? getLawyerFiles(clientId) : getClientFiles(clientId),
+          isLawyer ? casesApi.getCases({ status: "all", page: 1, limit: 200 }) : Promise.resolve(null),
+        ])
         if (isCancelled) return;
 
         console.log("✅ Files loaded:", clientFiles);
@@ -56,12 +60,14 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
           const id = f.id ?? f._id ?? f.document_id
           const createdAt = f.createdAt ?? f.created_at ?? f.created_at
           const document_name = f.document_name ?? f.name ?? f.documentTitle
+          const caseId = f.caseId ?? f.case_id ?? f.case?.id ?? f.case?._id ?? f.caseID
 
           return {
             ...f,
             id,
             createdAt,
             document_name,
+            caseId,
             // Ensure privacy comparison is consistent.
             privacy: typeof f.privacy === "string" ? f.privacy.toLowerCase() : f.privacy,
             // UI expects an array for shared_with badge.
@@ -69,7 +75,28 @@ export default function ClientDocuments({ clientId }: ClientDocumentsProps) {
           }
         })
 
-        setFiles(normalized as FileMetadata[]);
+        if (isLawyer && casesResp?.cases) {
+          const allowedCaseIds = new Set(
+            casesResp.cases
+              .filter((c: any) => {
+                const cClient = c.client_id
+                const cClientId = typeof cClient === "string" ? cClient : (cClient?._id ?? cClient?.id)
+                return String(cClientId ?? "") === String(clientId)
+              })
+              .map((c: any) => String(c._id ?? c.id ?? ""))
+              .filter(Boolean)
+          )
+
+          // Privacy-safe default: if a doc doesn't declare caseId, don't show it to lawyer.
+          const restricted = normalized.filter((f: any) => {
+            const cid = f.caseId ?? (f as any).case_id
+            if (!cid) return false
+            return allowedCaseIds.has(String(cid))
+          })
+          setFiles(restricted as FileMetadata[])
+        } else {
+          setFiles(normalized as FileMetadata[]);
+        }
       } catch (error) {
         console.error("❌ Failed to load files", error);
         if (!opts?.silent) {

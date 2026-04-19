@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
 import { useTranslation } from "@/hooks/useTranslation"
+import { useSocket } from "@/hooks/use-socket"
 
 import {
   createOrGetChat,
@@ -63,12 +64,15 @@ export function SimpleChat({
   const [consultation, setConsultation] = useState<ConsultationSessionStatus | null>(null)
   const [isStartingConsultation, setIsStartingConsultation] = useState(false)
   const [isEndingConsultation, setIsEndingConsultation] = useState(false)
+  const [statusNotice, setStatusNotice] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const isPollingRef = useRef(false)
+  const previousConsultationRef = useRef<ConsultationSessionStatus | null>(null)
   const { toast } = useToast()
+  const { socket, isConnected, joinChat, leaveChat } = useSocket({ autoConnect: true })
 
   // 🔹 Drag state
   const [position, setPosition] = useState(() => {
@@ -239,6 +243,42 @@ export function SimpleChat({
     return () => window.clearInterval(interval)
   }, [chat?._id, refreshMessages, refreshConsultationStatus])
 
+  // True realtime consultation/message sync via socket events.
+  useEffect(() => {
+    if (!chat?._id || !socket || !isConnected) return
+
+    joinChat(chat._id)
+
+    const handleRealtimeMessage = (payload: any) => {
+      const incomingChatId = payload?.chatId || payload?.message?.chatId
+      if (incomingChatId !== chat._id) return
+      if (payload?.message?._id) {
+        mergeMessages([payload.message])
+      } else {
+        refreshMessages()
+      }
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
+    }
+
+    const handleRealtimeConsultationUpdate = (payload: any) => {
+      if (!payload || payload.chat_id !== chat._id) return
+      setConsultation((prev) => ({
+        ...(prev || {}),
+        ...payload,
+      }))
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
+    }
+
+    socket.on("new_message", handleRealtimeMessage)
+    socket.on("chat.consultation.status.updated", handleRealtimeConsultationUpdate)
+
+    return () => {
+      socket.off("new_message", handleRealtimeMessage)
+      socket.off("chat.consultation.status.updated", handleRealtimeConsultationUpdate)
+      leaveChat(chat._id)
+    }
+  }, [chat?._id, socket, isConnected, joinChat, leaveChat, mergeMessages, refreshMessages])
+
   useEffect(() => {
     refreshConsultationStatus()
   }, [refreshConsultationStatus])
@@ -254,6 +294,78 @@ export function SimpleChat({
   const isAwaitingOtherParty = consultationFeatureAvailable
     ? !!consultation?.started_by_me && !consultation?.started_by_other && !isConsultationEnded
     : false
+  const isAwaitingMyStart = consultationFeatureAvailable
+    ? !!consultation?.started_by_other && !consultation?.started_by_me && !isConsultationEnded
+    : false
+  const isAwaitingMyEnd = consultationFeatureAvailable
+    ? !!consultation?.ended_by_other && !consultation?.ended_by_me && !isConsultationEnded
+    : false
+
+  const consultationDurationSeconds = consultation?.duration_seconds ??
+    ((consultation?.duration_minutes ?? 0) * 60)
+  const computedTokenUsage = (chatRate && consultationDurationSeconds > 0)
+    ? Math.max(0, Math.round((consultationDurationSeconds / 60) * chatRate))
+    : undefined
+  const displayTokenUsage = computedTokenUsage ?? consultation?.token_usage
+
+  const canStartConsultation = consultationFeatureAvailable && !isConsultationEnded && !consultation?.started_by_me
+  const canEndConsultation =
+    consultationFeatureAvailable &&
+    !isConsultationEnded &&
+    !consultation?.ended_by_me &&
+    !!consultation?.started_by_me
+
+  useEffect(() => {
+    if (!consultationFeatureAvailable || !consultation) {
+      previousConsultationRef.current = consultation
+      return
+    }
+
+    const prev = previousConsultationRef.current
+    if (!prev) {
+      previousConsultationRef.current = consultation
+      return
+    }
+
+    if (!prev.started_by_other && consultation.started_by_other && !consultation.started_by_me) {
+      setStatusNotice("Other party requested Start Chat. Click Start Chat to activate.")
+      toast({
+        title: "Chat start request received",
+        description: "The other participant clicked Start Chat.",
+      })
+    }
+
+    if (!prev.ended_by_other && consultation.ended_by_other && !consultation.ended_by_me && !isConsultationEnded) {
+      setStatusNotice("Other party requested End Chat. Click End Chat to finish consultation.")
+      toast({
+        title: "Chat end request received",
+        description: "The other participant clicked End Chat. Click End Chat to finish.",
+      })
+    }
+
+    const prevEnded = prev.status === "ended" || prev.status === "auto_ended"
+    const nextEnded = consultation.status === "ended" || consultation.status === "auto_ended"
+    if (!prevEnded && nextEnded) {
+      const mins = consultation?.duration_minutes ?? Math.floor((consultationDurationSeconds || 0) / 60)
+      const secs = consultationDurationSeconds ? consultationDurationSeconds % 60 : 0
+      setStatusNotice(
+        `Consultation ended • Duration: ${mins}m ${secs}s${displayTokenUsage !== undefined ? ` • Tokens: ${displayTokenUsage}` : ""}`
+      )
+      toast({
+        title: "Consultation ended",
+        description: `Duration: ${mins}m ${secs}s${displayTokenUsage !== undefined ? ` • Tokens: ${displayTokenUsage}` : ""}`,
+      })
+    }
+
+    previousConsultationRef.current = consultation
+  }, [
+    consultation,
+    consultationFeatureAvailable,
+    isConsultationEnded,
+    consultationDurationSeconds,
+    displayTokenUsage,
+    toast
+  ])
 
   const handleStartConsultation = async () => {
     if (!chat?._id) return
@@ -261,9 +373,11 @@ export function SimpleChat({
       setIsStartingConsultation(true)
       const next = await startConsultation(chat._id)
       if (next) setConsultation(next)
+      await refreshConsultationStatus()
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
       toast({
         title: "Start request sent",
-        description: "Consultation starts when both sides click Start Chat.",
+        description: "Start status shared with the other participant.",
       })
     } catch {
       toast({
@@ -282,9 +396,11 @@ export function SimpleChat({
       setIsEndingConsultation(true)
       const next = await endConsultation(chat._id, "manual")
       if (next) setConsultation(next)
+      await refreshConsultationStatus()
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
       toast({
         title: "End request sent",
-        description: "Consultation ends when both sides click End Chat.",
+        description: "End status shared with the other participant.",
       })
     } catch {
       toast({
@@ -299,6 +415,16 @@ export function SimpleChat({
 
   const handleSendMessage = async (data: MessageFormData) => {
     if (!chat || !data.content.trim()) return
+
+    if (consultationFeatureAvailable && !isConsultationActive && !isConsultationEnded) {
+      toast({
+        title: "Start Chat required",
+        description: "Please click Start Chat before sending messages.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSending(true)
     try {
       const newMessage = await sendChatMessage(chat._id, data.content.trim())
@@ -309,9 +435,13 @@ export function SimpleChat({
       // Pull server state after send to keep both sides in sync quickly
       refreshMessages()
     } catch (error) {
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message ||
+        t("pages:conv.failedToSendMessage")
       toast({
         title: t("pages:conv.error"),
-        description: t("pages:conv.failedToSendMessage"),
+        description: message,
         variant: "destructive",
       })
     } finally {
@@ -510,12 +640,17 @@ export function SimpleChat({
           <div className="rounded-md border bg-amber-50 text-amber-900 px-3 py-2 text-xs">
             When there is no conversation for 5 minutes and the session ends automatically.
           </div>
+          {statusNotice ? (
+            <div className="mt-2 rounded-md border bg-slate-50 text-slate-700 px-3 py-2 text-xs">
+              {statusNotice}
+            </div>
+          ) : null}
           <div className="flex items-center gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleStartConsultation}
-                disabled={!consultationFeatureAvailable || isStartingConsultation || isConsultationEnded || !!consultation?.started_by_me}
+                disabled={!canStartConsultation || isStartingConsultation}
               >
                 {isStartingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
                 Start Chat
@@ -524,18 +659,24 @@ export function SimpleChat({
                 variant="outline"
                 size="sm"
                 onClick={handleEndConsultation}
-                disabled={!consultationFeatureAvailable || isEndingConsultation || !isConsultationActive || !!consultation?.ended_by_me}
+                disabled={!canEndConsultation || isEndingConsultation}
               >
                 {isEndingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Square className="h-4 w-4 mr-2" />}
                 End Chat
               </Button>
               <span className="text-xs text-muted-foreground">
                 {isConsultationEnded
-                  ? "Consultation ended"
-                  : isConsultationActive
-                    ? "Consultation active"
+                  ? `Consultation ended${consultation?.duration_minutes !== undefined || consultation?.duration_seconds !== undefined
+                    ? ` • Duration: ${consultation?.duration_minutes ?? Math.floor((consultation?.duration_seconds ?? 0) / 60)}m ${consultation?.duration_seconds !== undefined ? consultation.duration_seconds % 60 : 0}s`
+                    : ""}${displayTokenUsage !== undefined ? ` • Tokens: ${displayTokenUsage}` : ""}`
+                  : isAwaitingMyEnd
+                      ? "Other party requested End Chat. Click End Chat to finish consultation."
+                      : isAwaitingMyStart
+                        ? "Other party requested Start Chat. Click Start Chat to activate."
                     : isAwaitingOtherParty
                       ? "Waiting for other party to start chat"
+                    : isConsultationActive
+                      ? "Consultation active"
                       : consultationFeatureAvailable
                         ? "Consultation not started"
                         : "Consultation controls available after backend deployment"}
@@ -611,7 +752,12 @@ export function SimpleChat({
               <Button
                 type="submit"
                 size="sm"
-                disabled={!messageForm.watch("content")?.trim() || isSending || !isConsultationActive || isConsultationEnded}
+                disabled={
+                  !messageForm.watch("content")?.trim() ||
+                  isSending ||
+                  isConsultationEnded ||
+                  (consultationFeatureAvailable && !isConsultationActive && !isConsultationEnded)
+                }
               >
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>

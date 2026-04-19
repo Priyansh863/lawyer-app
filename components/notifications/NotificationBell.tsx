@@ -40,8 +40,19 @@ export default function NotificationBell() {
       // Always go to the Q&A list page.
       // (redirectUrl from backend can be missing/invalid and cause 404.)
       router.push("/qa")
+    } else if (
+      notification.type === "chat_ended" ||
+      notification.type === "consultation_ended" ||
+      notification.type === "chat_end_requested"
+    ) {
+      router.push("/chat")
     } else if (notification.redirectUrl) {
-      router.push(notification.redirectUrl)
+      const sanitizedUrl = notification.redirectUrl.replace(/_/g, '-')
+      if (sanitizedUrl.includes('/chat') || sanitizedUrl.includes('chat')) {
+        router.push('/chat')
+      } else {
+        router.push(sanitizedUrl)
+      }
     } else if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
@@ -52,6 +63,9 @@ export default function NotificationBell() {
     switch (type) {
       case 'chat_started':
       case 'chat_message':
+      case 'chat_ended':
+      case 'consultation_ended':
+      case 'chat_end_requested':
         return '/chat'
       case 'case_created':
       case 'case_status_changed':

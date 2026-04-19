@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,8 +24,13 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import { generateSecureLink, getMySecureLinks, type SecureLink } from "@/lib/api/secure-link-api";
-import { Shield, Copy, Eye, Loader2 } from "lucide-react";
+import {
+  generateSecureLink,
+  getMySecureLinks,
+  updateSecureLinkPassword,
+  type SecureLink,
+} from "@/lib/api/secure-link-api";
+import { Shield, Copy, Eye, Loader2, Pencil } from "lucide-react";
 
 interface Client {
   _id: string;
@@ -46,6 +52,7 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoadingLinks, setIsLoadingLinks] = useState(false);
   const [selectedClient, setSelectedClient] = useState("");
+  const [isNonCustomerUser, setIsNonCustomerUser] = useState(false);
   const [password, setPassword] = useState("");
   const [expiresIn, setExpiresIn] = useState("24");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -53,9 +60,53 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
   const [myLinks, setMyLinks] = useState<SecureLink[]>([]);
   const [showMyLinks, setShowMyLinks] = useState(false);
   const [hasLoadedLinks, setHasLoadedLinks] = useState(false);
+  const [editingLink, setEditingLink] = useState<SecureLink | null>(null);
+  const [editPassword, setEditPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<{ password?: string; confirm?: string }>({});
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const loadMyLinks = async () => {
+    try {
+      setIsLoadingLinks(true);
+      const response = await getMySecureLinks(1, 20, "all");
+      setMyLinks(response?.data?.links || []);
+      setHasLoadedLinks(true);
+    } catch (error: any) {
+      setMyLinks([]);
+      setHasLoadedLinks(true);
+      toast({
+        title: t("pages:secureLink.errors.errorTitle"),
+        description: error.message || t("pages:secureLink.errors.errorDefault"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingLinks(false);
+    }
+  };
+
+  const validatePasswordForm = () => {
+    const nextErrors: { password?: string; confirm?: string } = {};
+
+    if (editPassword.trim().length < 6) {
+      nextErrors.password = t("pages:secureLink.editPassword.errors.minLength");
+    }
+
+    if (confirmPassword !== editPassword) {
+      nextErrors.confirm = t("pages:secureLink.editPassword.errors.mismatch");
+    }
+
+    setPasswordErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const isLinkActive = (link: SecureLink) => {
+    if (link.status) return link.status === "active";
+    return new Date(link.expires_at) >= new Date() && !link.is_used;
+  };
 
   const handleGenerateLink = async () => {
-    if (!selectedClient || !password) {
+    if (!password || (!selectedClient && !isNonCustomerUser)) {
       toast({
         title: t("pages:secureLink.errors.missingInfoTitle"),
         description: t("pages:secureLink.errors.missingInfoDesc"),
@@ -76,20 +127,27 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
     try {
       setIsGenerating(true);
       const response = await generateSecureLink({
-        client_id: selectedClient,
+        ...(isNonCustomerUser ? { non_customer_user: true } : { client_id: selectedClient }),
         password,
         expires_in_hours: parseInt(expiresIn),
       });
 
       setGeneratedLink(response.data.secure_url);
-      setGeneratedClientName(response.data.client_name);
+      setGeneratedClientName(
+        response.data.client_name ||
+          (isNonCustomerUser ? t("pages:secureLink.nonCustomer.generatedName") : "-")
+      );
+      const displayName =
+        response.data.client_name ||
+        (isNonCustomerUser ? t("pages:secureLink.nonCustomer.generatedName") : "-");
       toast({
         title: t("pages:secureLink.success.generatedTitle"),
-        description: t("pages:secureLink.success.generatedDesc", { name: response.data.client_name }),
+        description: t("pages:secureLink.success.generatedDesc", { name: displayName }),
         variant: "default",
       });
 
       setSelectedClient("");
+      setIsNonCustomerUser(false);
       setPassword("");
       setExpiresIn("24");
     } catch (error: any) {
@@ -116,21 +174,56 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
 
   const handleViewMyLinks = async () => {
     setShowMyLinks(true);
+    await loadMyLinks();
+  };
+
+  const openEditPasswordModal = (link: SecureLink) => {
+    setEditingLink(link);
+    setEditPassword("");
+    setConfirmPassword("");
+    setPasswordErrors({});
+  };
+
+  const handleSavePassword = async () => {
+    if (!editingLink) return;
+    if (!validatePasswordForm()) return;
+
     try {
-      setIsLoadingLinks(true);
-      const response = await getMySecureLinks(1, 20, "all");
-      setMyLinks(response?.data?.links || []);
-      setHasLoadedLinks(true);
+      setIsSavingPassword(true);
+      const response = await updateSecureLinkPassword(editingLink.link_id, editPassword.trim());
+      toast({
+        title: t("pages:secureLink.success.passwordUpdatedTitle"),
+        description: t("pages:secureLink.success.passwordUpdatedDesc"),
+      });
+
+      const updatedLink = response?.data as SecureLink | undefined;
+      if (updatedLink?.link_id) {
+        setMyLinks((prev) => prev.map((link) => (link.link_id === updatedLink.link_id ? { ...link, ...updatedLink } : link)));
+      } else {
+        await loadMyLinks();
+      }
+
+      setEditingLink(null);
+      setEditPassword("");
+      setConfirmPassword("");
+      setPasswordErrors({});
     } catch (error: any) {
-      setMyLinks([]);
-      setHasLoadedLinks(true);
+      const status = error?.status;
+      let description = error?.message || t("pages:secureLink.errors.passwordUpdateDefault");
+
+      if (status === 403) {
+        description = t("pages:secureLink.errors.notAllowed");
+      } else if (status === 401) {
+        description = t("pages:secureLink.errors.relogin");
+      }
+
       toast({
         title: t("pages:secureLink.errors.errorTitle"),
-        description: error.message || t("pages:secureLink.errors.errorDefault"),
+        description,
         variant: "destructive",
       });
     } finally {
-      setIsLoadingLinks(false);
+      setIsSavingPassword(false);
     }
   };
 
@@ -187,6 +280,80 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
           </DialogDescription>
         </DialogHeader>
 
+        <Dialog open={!!editingLink} onOpenChange={(open) => !open && setEditingLink(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t("pages:secureLink.editPassword.title")}</DialogTitle>
+              <DialogDescription>
+                {t("pages:secureLink.editPassword.description", { name: editingLink?.client_name || "-" })}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-secure-link-password">{t("pages:secureLink.editPassword.newPasswordLabel")}</Label>
+                <Input
+                  id="edit-secure-link-password"
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => {
+                    setEditPassword(e.target.value);
+                    if (passwordErrors.password) {
+                      setPasswordErrors((prev) => ({ ...prev, password: undefined }));
+                    }
+                  }}
+                  placeholder={t("pages:secureLink.editPassword.newPasswordPlaceholder")}
+                  minLength={6}
+                />
+                {passwordErrors.password ? (
+                  <p className="text-sm text-destructive">{passwordErrors.password}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-secure-link-password-confirm">{t("pages:secureLink.editPassword.confirmPasswordLabel")}</Label>
+                <Input
+                  id="edit-secure-link-password-confirm"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (passwordErrors.confirm) {
+                      setPasswordErrors((prev) => ({ ...prev, confirm: undefined }));
+                    }
+                  }}
+                  placeholder={t("pages:secureLink.editPassword.confirmPasswordPlaceholder")}
+                  minLength={6}
+                />
+                {passwordErrors.confirm ? (
+                  <p className="text-sm text-destructive">{passwordErrors.confirm}</p>
+                ) : null}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditingLink(null)}
+                  disabled={isSavingPassword}
+                >
+                  {t("pages:secureLink.editPassword.cancel")}
+                </Button>
+                <Button type="button" onClick={handleSavePassword} disabled={isSavingPassword}>
+                  {isSavingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t("pages:secureLink.editPassword.saving")}
+                    </>
+                  ) : (
+                    t("pages:secureLink.editPassword.save")
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Generate New Link */}
           <Card className="w-full">
@@ -196,7 +363,14 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>{t("pages:secureLink.form.clientLabel")}</Label>
-                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                <Select
+                  value={selectedClient}
+                  onValueChange={(value) => {
+                    setSelectedClient(value);
+                    if (value) setIsNonCustomerUser(false);
+                  }}
+                  disabled={isNonCustomerUser}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("pages:secureLink.form.clientPlaceholder")} />
                   </SelectTrigger>
@@ -208,6 +382,26 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-md border p-3">
+                <Checkbox
+                  id="non-customer-user"
+                  checked={isNonCustomerUser}
+                  onCheckedChange={(checked) => {
+                    const enabled = checked === true;
+                    setIsNonCustomerUser(enabled);
+                    if (enabled) setSelectedClient("");
+                  }}
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="non-customer-user" className="font-medium cursor-pointer">
+                    {t("pages:secureLink.nonCustomer.checkbox")}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t("pages:secureLink.nonCustomer.helper")}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -241,7 +435,7 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
 
               <Button
                 onClick={handleGenerateLink}
-                disabled={isGenerating || !selectedClient || !password}
+                disabled={isGenerating || (!selectedClient && !isNonCustomerUser) || !password}
                 className="w-full"
               >
                 {isGenerating ? (
@@ -318,6 +512,20 @@ export default function SecureLinkGenerator({ clients, customTrigger }: SecureLi
                             {t("pages:secureLink.expires")}: {new Date(link.expires_at).toLocaleDateString()}
                           </span>
                         </div>
+                        {isLinkActive(link) ? (
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="gap-2"
+                              onClick={() => openEditPasswordModal(link)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              {t("pages:secureLink.editPassword.trigger")}
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
                     ))
                   )}

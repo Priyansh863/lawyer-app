@@ -62,6 +62,9 @@ export interface ConsultationSessionStatus {
   started_at?: string
   ended_at?: string
   auto_end_at?: string
+  duration_minutes?: number
+  duration_seconds?: number
+  token_usage?: number
 }
 
 // API Response interfaces

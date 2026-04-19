@@ -43,13 +43,23 @@ export default function NotificationsPage() {
     
     if (notification.type === "qa_answer_posted" || notification.type === "qa_question_posted") {
       router.push("/qa")
+    } else if (
+      notification.type === "chat_ended" ||
+      notification.type === "consultation_ended" ||
+      notification.type === "chat_end_requested"
+    ) {
+      router.push("/chat")
     } else if (navUrl && navUrl !== "/notifications") {
       // If we have a specific mapping and it's not the fallback, use it
       router.push(navUrl)
     } else if (notification.redirectUrl) {
-      // Sanitize redirect URL – common mistake is underscores vs hyphens
       const sanitizedUrl = notification.redirectUrl.replace(/_/g, '-')
-      router.push(sanitizedUrl)
+      // Guard against stale/bad backend redirect URLs that can 404.
+      if (sanitizedUrl.includes('/chat') || sanitizedUrl.includes('chat')) {
+        router.push('/chat')
+      } else {
+        router.push(sanitizedUrl)
+      }
     } else if (notification.type) {
       router.push(getNavigationUrl(notification.type))
     }
@@ -59,6 +69,9 @@ export default function NotificationsPage() {
     switch (type) {
       case 'chat_started':
       case 'chat_message':
+      case 'chat_ended':
+      case 'consultation_ended':
+      case 'chat_end_requested':
         return '/chat'
       case 'case_created':
       case 'case_status_changed':

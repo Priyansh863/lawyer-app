@@ -59,6 +59,11 @@ export default function SecureUploadPage() {
       try {
         const validation = await validateSecureLink(token);
         setLinkData(validation);
+        if (validation?.requires_signup) {
+          const nextUrl = encodeURIComponent(`/secure-upload/${token}`);
+          router.replace(`/signup?next=${nextUrl}`);
+          return;
+        }
         setStep('password');
       } catch (error: any) {
         setError(error.message || 'Invalid or expired link');
@@ -69,7 +74,7 @@ export default function SecureUploadPage() {
     if (token) {
       validateLink();
     }
-  }, [token]);
+  }, [token, router]);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,6 +100,11 @@ export default function SecureUploadPage() {
         variant: "default",
       });
     } catch (error: any) {
+      if (error?.status === 401) {
+        const nextUrl = encodeURIComponent(`/secure-upload/${token}`);
+        router.push(`/login?next=${nextUrl}`);
+        return;
+      }
       const message = error.message || "Incorrect password";
       setPasswordError(message);
       toast({

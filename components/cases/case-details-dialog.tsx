@@ -57,7 +57,10 @@ import {
     downloadDocument,
     deleteDocument,
     removeFromCloud,
+    removeFromApp,
+    buildRemoveAppPayload,
     updateDocumentStorageType,
+    type RemoveFromAppResponse,
 } from "@/lib/api/documents-api"
 import { getClientContactForCaseDetails } from "@/lib/api/clients-api"
 import { cn } from "@/lib/utils"
@@ -111,6 +114,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const [deleteDocConfirmOpen, setDeleteDocConfirmOpen] = useState(false)
     const [deleteDocTarget, setDeleteDocTarget] = useState<any | null>(null)
     const [isDeletingDoc, setIsDeletingDoc] = useState(false)
+    const [openingDocId, setOpeningDocId] = useState<string | null>(null)
 
     const languages = [
         { value: 'en-US', label: 'English' },
@@ -177,21 +181,36 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     const handleViewDocument = async (file: any) => {
         const docId = file?._id || file?.id
         const fallbackUrl = file.link || file.url
-        if (!docId) {
-            if (fallbackUrl) {
-                window.open(fallbackUrl, "_blank", "noopener,noreferrer")
-                return
-            }
+        const viewKey = docId ? String(docId) : (fallbackUrl || "").trim()
+        if (!viewKey) {
             toast.error("Document id missing")
             return
         }
 
+        const openTab = (url: string) => {
+            const w = window.open(url, "_blank", "noopener,noreferrer")
+            if (!w) {
+                toast.error(t("pages:caseDetails.popupBlocked"))
+            }
+        }
+
+        setOpeningDocId(viewKey)
         try {
+            if (!docId) {
+                if (fallbackUrl) {
+                    openTab(fallbackUrl)
+                    return
+                }
+                toast.error("Document id missing")
+                return
+            }
             const url = await getDocumentViewUrl(docId, file.link || file.url)
-            window.open(url, "_blank", "noopener,noreferrer")
+            openTab(url)
         } catch (e) {
             console.error("Failed to open document:", e)
             toast.error("Unable to open document")
+        } finally {
+            setOpeningDocId(null)
         }
     }
 
@@ -220,6 +239,10 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     }
 
     const handleRemoveFromCloud = async (file: any) => {
+        if (isLawyer) {
+            toast.error("Not allowed")
+            return
+        }
         const docId = file?._id || file?.id
         if (!docId) return
         try {
@@ -233,12 +256,43 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     }
 
     const handleDisconnectFromPC = async (file: any) => {
+        if (isLawyer) {
+            toast.error("Not allowed")
+            return
+        }
         const docId = file?._id || file?.id
         if (!docId) return
+        const st = file.storage_type || "cloud"
+        const hasCloud = st === "cloud" || st === "app_cloud"
         try {
-            // "Disconnect from PC" => keep only cloud copy.
-            await updateDocumentStorageType(docId, "cloud")
-            toast.success("Disconnected from PC (kept Cloud)")
+            if (hasCloud) {
+                const res = await updateDocumentStorageType(docId, "cloud")
+                if (!res.success) {
+                    toast.error(res.message || "Failed to update document")
+                    return
+                }
+                const pc = (await removeFromApp(
+                    docId,
+                    buildRemoveAppPayload({ ...file, storage_type: "cloud" })
+                )) as RemoveFromAppResponse
+                if (!pc.success) {
+                    toast.warning(t("pages:caseDetails.pcDeletePending"))
+                } else if (pc.alreadyQueued) {
+                    toast.success(t("pages:caseDetails.pcDeleteAlreadyQueued"))
+                } else {
+                    toast.success(t("pages:caseDetails.disconnectPCSuccess"))
+                }
+            } else {
+                try {
+                    await deleteDocument(docId)
+                } catch (delErr) {
+                    console.error(delErr)
+                    toast.error("Failed to delete document")
+                    return
+                }
+                await removeFromApp(docId)
+                toast.success(t("pages:caseDetails.removedFromPC"))
+            }
             await refreshCaseDocuments()
         } catch (e) {
             console.error("Disconnect from PC failed:", e)
@@ -247,6 +301,10 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     }
 
     const handleDeleteDocumentFromCase = async (file: any) => {
+        if (isLawyer) {
+            toast.error("Not allowed")
+            return
+        }
         const docId = file?._id || file?.id
         if (!docId) return
 
@@ -255,6 +313,12 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
     }
 
     const confirmDeleteDocumentFromCase = async () => {
+        if (isLawyer) {
+            toast.error("Not allowed")
+            setDeleteDocConfirmOpen(false)
+            setDeleteDocTarget(null)
+            return
+        }
         const doc = deleteDocTarget
         const docId = doc?._id || doc?.id
         if (!docId) {
@@ -728,18 +792,26 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                 const storedOn = file.storage_type || 'cloud'
                                                 const isPC = storedOn === 'app' || storedOn === 'app_cloud'
                                                 const isCloud = storedOn === 'cloud' || storedOn === 'app_cloud'
+                                                const docIdPart = file?._id || file?.id
+                                                const viewKey = docIdPart ? String(docIdPart) : (file.link || file.url || "").trim()
                                                 return (
                                                     <TableRow key={idx} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
                                                         <TableCell className="text-[11px] font-medium text-[#0F172A] py-2 max-w-[250px] truncate">{file.name || file.document_name || "Untitled Document"}</TableCell>
                                                         <TableCell className="text-center py-2">
-                                                            {isPC && <Badge className="bg-emerald-600 hover:bg-emerald-700 text-[9px] h-5 mr-1">{t('pages:documentManager.badgeApp')}</Badge>}
-                                                            {isCloud && <Badge className="bg-sky-500 hover:bg-sky-600 text-[9px] h-5">{t('pages:documentManager.badgeCloud')}</Badge>}
+                                                            <div className="flex flex-wrap items-center justify-center gap-1">
+                                                                {isPC && <Badge className="bg-emerald-600 hover:bg-emerald-700 text-[9px] h-5">{t('pages:documentManager.badgeApp')}</Badge>}
+                                                                {isCloud && <Badge className="bg-sky-500 hover:bg-sky-600 text-[9px] h-5">{t('pages:documentManager.badgeCloud')}</Badge>}
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-center py-2">
-                                                            <Eye
-                                                                className="h-4 w-4 mx-auto text-slate-500 cursor-pointer hover:text-slate-700 transition-colors"
-                                                                onClick={() => handleViewDocument(file)}
-                                                            />
+                                                            {openingDocId === viewKey ? (
+                                                                <Loader2 className="h-4 w-4 mx-auto text-slate-400 animate-spin" aria-hidden />
+                                                            ) : (
+                                                                <Eye
+                                                                    className="h-4 w-4 mx-auto text-slate-500 cursor-pointer hover:text-slate-700 transition-colors"
+                                                                    onClick={() => handleViewDocument(file)}
+                                                                />
+                                                            )}
                                                         </TableCell>
                                                         <TableCell className="text-center py-2">
                                                             <PlayCircle
@@ -768,7 +840,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                                                 <DropdownMenuContent align="end" className="w-44 bg-white border border-slate-200 shadow-lg z-[200]">
                                                                     <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDownloadDocument(file)}>{t('pages:caseDetails.docTable.download')}</DropdownMenuItem>
                                                                     <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => setVoiceSummaryDoc(file)}>{t('pages:caseDetails.docTable.summary')}</DropdownMenuItem>
-                                                                    {isLawyer && (
+                                                                    {isClient && (
                                                                         <>
                                                                             <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleRemoveFromCloud(file)}>{t('pages:caseDetails.docTable.removeCloud')}</DropdownMenuItem>
                                                                             <DropdownMenuItem className="text-[12px] cursor-pointer" onClick={() => handleDisconnectFromPC(file)}>{t('pages:caseDetails.docTable.disconnectPC')}</DropdownMenuItem>
@@ -785,26 +857,7 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                                     </TableBody>
                                 </Table>
                             </div>
-                            <input
-                                type="file"
-                                ref={docFileInputRef}
-                                className="hidden"
-                                multiple
-                                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
-                                onChange={handleDocUpload}
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => docFileInputRef.current?.click()}
-                                disabled={isUploadingDoc}
-                                className="w-full border-dashed border-slate-300 bg-slate-50/30 text-slate-500 hover:bg-slate-50 flex items-center gap-2 h-10 rounded-lg transition-colors"
-                            >
-                                {isUploadingDoc ? (
-                                    <><Loader2 className="h-4 w-4 animate-spin" /> {t('pages:caseDetails.buttons.uploading')}</>
-                                ) : (
-                                    <><Upload className="h-4 w-4" /> {t('pages:caseDetails.buttons.upload')}</>
-                                )}
-                            </Button>
+                            {/* Upload control intentionally hidden for both lawyer and client in this dialog */}
                         </div>
                     </div>
 
@@ -1062,6 +1115,20 @@ export default function CaseDetailsDialog({ caseData, open, onOpenChange, onCase
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {openingDocId && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 backdrop-blur-[1px]"
+                    role="status"
+                    aria-live="polite"
+                    aria-busy="true"
+                >
+                    <div className="rounded-xl border border-slate-200/80 bg-white px-8 py-6 shadow-xl flex flex-col items-center gap-3">
+                        <Loader2 className="h-9 w-9 animate-spin text-slate-600" aria-hidden />
+                        <p className="text-sm font-medium text-slate-700">{t("pages:caseDetails.openingDocument")}</p>
+                    </div>
+                </div>
+            )}
         </>
     )
 }

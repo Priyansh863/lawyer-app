@@ -60,11 +60,20 @@ export default function OnboardClientForm({ onClientCreated }: OnboardClientForm
       });
 
       if (res?.email) {
-        toast({
-          title: t("pages:client.onboard.successTitle"),
-          description: t("pages:client.onboard.successDescription"),
-          variant: "success",
-        });
+        const emailSent = res?.email_sent === true || res?.emailSent === true
+        if (emailSent) {
+          toast({
+            title: t("pages:client.onboard.successTitle"),
+            description: t("pages:client.onboard.successDescription"),
+            variant: "success",
+          });
+        } else {
+          toast({
+            title: t("pages:client.onboard.partialSuccessTitle"),
+            description: t("pages:client.onboard.partialSuccessDescription"),
+            variant: "default",
+          });
+        }
         form.reset();
         setIsOpen(false);
 

@@ -61,7 +61,9 @@ export interface Post {
     first_name: string;
     last_name: string;
     email: string;
+    /** @deprecated Prefer profile_image; kept for API compatibility */
     avatar?: string;
+    profile_image?: string;
   };
   slug: string;
   spatialInfo?: SpatialInfo;

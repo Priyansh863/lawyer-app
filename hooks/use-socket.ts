@@ -135,14 +135,40 @@ export const useSocket = ({ autoConnect = true }: UseSocketProps = {}): UseSocke
       if (callback) callback(data)
     })
     
-    newSocket.on('error', (error) => {
+    newSocket.on('error', (error: any) => {
+      const hasPayload =
+        error &&
+        (typeof error === 'string' ||
+          (typeof error === 'object' && Object.keys(error).length > 0))
+
+      const normalizedMessage =
+        typeof error === 'string'
+          ? error
+          : error?.message ||
+            error?.error ||
+            error?.reason ||
+            null
+      const normalizedLower = (normalizedMessage || '').toString().toLowerCase()
+
+      // Some servers emit a bare "error" event with {} as a heartbeat/placeholder.
+      // Ignore empty payloads to avoid noisy console/toast spam.
+      if (!hasPayload || (!normalizedMessage && typeof error === 'object')) {
+        return
+      }
+
+      // Some socket servers emit a transient join-room error for one payload
+      // format while still accepting the fallback format right after.
+      if (normalizedLower.includes('failed to join chat')) {
+        return
+      }
+
       console.error('Socket error:', error)
       const callback = eventListenersRef.current.get('error')
       if (callback) callback(error)
       
       toast({
         title: 'Chat Error',
-        description: error.message || 'An error occurred in chat',
+        description: normalizedMessage || 'An error occurred in chat',
         variant: 'destructive'
       })
     })
@@ -164,12 +190,15 @@ export const useSocket = ({ autoConnect = true }: UseSocketProps = {}): UseSocke
   // Chat methods
   const joinChat = useCallback((chatId: string) => {
     if (socket && isConnected) {
+      // Dual-format emit for backend compatibility.
+      socket.emit('join_chat', { chatId })
       socket.emit('join_chat', chatId)
     }
   }, [socket, isConnected])
   
   const leaveChat = useCallback((chatId: string) => {
     if (socket && isConnected) {
+      socket.emit('leave_chat', { chatId })
       socket.emit('leave_chat', chatId)
     }
   }, [socket, isConnected])

@@ -20,6 +20,13 @@ const getAuthHeaders = () => ({
   'Content-Type': 'application/json'
 });
 
+const getOptionalAuthHeaders = () => {
+  const token = getToken();
+  return token
+    ? { 'Authorization': `Bearer ${token}` }
+    : {};
+};
+
 // Interfaces
 export interface SecureLink {
   link_id: string;
@@ -31,6 +38,7 @@ export interface SecureLink {
   expires_at: string;
   used_at?: string;
   upload_count?: number;
+  status?: string;
   uploaded_document?: {
     file_name: string;
     upload_date: string;
@@ -38,9 +46,10 @@ export interface SecureLink {
 }
 
 export interface GenerateSecureLinkData {
-  client_id: string;
+  client_id?: string;
   password: string;
   expires_in_hours?: number;
+  non_customer_user?: boolean;
 }
 
 export interface SecureLinkValidation {
@@ -49,6 +58,8 @@ export interface SecureLinkValidation {
   client_name: string;
   expires_at: string;
   created_at: string;
+  mode?: "existing_client" | "non_customer";
+  requires_signup?: boolean;
 }
 
 export interface SecureLinkAuth {
@@ -56,6 +67,7 @@ export interface SecureLinkAuth {
   lawyer_name: string;
   client_name: string;
   expires_at: string;
+  mode?: "existing_client" | "non_customer";
 }
 
 // API Functions
@@ -82,7 +94,9 @@ export const generateSecureLink = async (data: GenerateSecureLinkData) => {
  */
 export const validateSecureLink = async (token: string): Promise<SecureLinkValidation> => {
   try {
-    const response = await secureLinkClient.get(`/secure-link/validate/${token}`);
+    const response = await secureLinkClient.get(`/secure-link/validate/${token}`, {
+      headers: getOptionalAuthHeaders(),
+    });
     return response.data.data;
   } catch (error: any) {
     console.error('Error validating secure link:', error);
@@ -98,6 +112,11 @@ export const authenticateSecureLink = async (token: string, password: string): P
     const response = await secureLinkClient.post(`/secure-link/authenticate`, {
       token,
       password
+    }, {
+      headers: {
+        ...getOptionalAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
     });
     return response.data.data;
   } catch (error: any) {
@@ -105,11 +124,15 @@ export const authenticateSecureLink = async (token: string, password: string): P
     const apiError = error.response?.data;
     if (error.response?.status === 401 || error.response?.status === 403) {
       throw {
+        status: error.response?.status,
         ...apiError,
         message: apiError?.message || 'Incorrect password',
       };
     }
-    throw apiError || error;
+    throw {
+      status: error.response?.status,
+      ...(apiError || {}),
+    };
   }
 };
 
@@ -128,6 +151,11 @@ export const uploadThroughSecureLink = async (
       file_url: fileUrl,
       file_name: fileName,
       file_size: fileSize
+    }, {
+      headers: {
+        ...getOptionalAuthHeaders(),
+        'Content-Type': 'application/json'
+      }
     });
     return response.data;
   } catch (error: any) {
@@ -149,5 +177,25 @@ export const getMySecureLinks = async (page = 1, limit = 10, status = 'all') => 
   } catch (error: any) {
     console.error('Error fetching secure links:', error);
     throw error.response?.data || error;
+  }
+};
+
+/**
+ * Update password for an existing active secure link (Lawyer only)
+ */
+export const updateSecureLinkPassword = async (linkId: string, password: string) => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE_URL}/secure-link/${linkId}/password`,
+      { password },
+      { headers: getAuthHeaders() }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Error updating secure link password:', error);
+    throw {
+      status: error.response?.status,
+      ...(error.response?.data || {}),
+    };
   }
 };

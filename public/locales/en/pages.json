@@ -83,6 +83,8 @@
       "submit": "Onboard Client",
       "successTitle": "Success",
       "successDescription": "Client has been successfully onboarded",
+      "partialSuccessTitle": "Client Created",
+      "partialSuccessDescription": "Client was created, but invite email failed. Please retry after mail service is available.",
       "errorTitle": "Error",
       "errorDescription": "Failed to onboard client"
     },
@@ -977,6 +979,13 @@
       "delete": "Delete"
     },
     "loadingDocs": "Loading documents...",
+    "openingDocument": "Opening document…",
+    "popupBlocked": "Popup blocked. Allow popups for this site and try again.",
+    "pcDeletePending": "Cloud copy updated. If the file is still on your PC, open the desktop app to sync.",
+    "disconnectPCSuccess": "Disconnected from PC (cloud copy kept).",
+    "removedFromPC": "Removed from PC.",
+    "pcDeleteQueuedBadge": "PC queued",
+    "pcDeleteAlreadyQueued": "PC delete was already queued; open the desktop app to sync.",
     "noDocs": "No documents uploaded for this case.",
     "visibility": {
       "public": "Public",
@@ -1200,6 +1209,11 @@
       "passwordPlaceholder": "Enter secure password (min 6 characters)",
       "expiryLabel": "Expires In"
     },
+    "nonCustomer": {
+      "checkbox": "Non-Customer User",
+      "helper": "Use this when sharing with someone who is not yet in the system.",
+      "generatedName": "Non-Customer User"
+    },
     "expiry": {
       "1h": "1 Hour",
       "6h": "6 Hours",
@@ -1215,19 +1229,40 @@
       "viewMyLinks": "View My Links",
       "copy": "Copy"
     },
+    "editPassword": {
+      "trigger": "Edit Password",
+      "title": "Edit Password",
+      "description": "Update the password for {{name}}'s active secure link.",
+      "newPasswordLabel": "New Password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "Re-enter new password",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "errors": {
+        "minLength": "Password must be at least 6 characters long",
+        "mismatch": "Passwords do not match"
+      }
+    },
     "success": {
       "generatedTitle": "Secure Link Generated",
       "generatedDesc": "Link created for {{name}}",
       "copiedTitle": "Link Copied",
-      "copiedDesc": "Secure link copied to clipboard"
+      "copiedDesc": "Secure link copied to clipboard",
+      "passwordUpdatedTitle": "Password updated",
+      "passwordUpdatedDesc": "The secure link password was updated successfully."
     },
     "errors": {
       "missingInfoTitle": "Missing Information",
-      "missingInfoDesc": "Please select a client and enter a password",
+      "missingInfoDesc": "Please select an existing client or choose Non-Customer User, and enter a password",
       "shortPasswordTitle": "Password Too Short",
       "shortPasswordDesc": "Password must be at least 6 characters long",
       "errorTitle": "Error",
-      "errorDefault": "Failed to generate secure link"
+      "errorDefault": "Failed to generate secure link",
+      "passwordUpdateDefault": "Failed to update password",
+      "notAllowed": "Not allowed",
+      "relogin": "Your session expired. Please log in again."
     },
     "status": {
       "used": "Used",
@@ -3176,6 +3211,17 @@
     "removeAppDescription": "You can link it again from this PC.",
     "removeAppDescriptionOnlyPC": "It will be deleted together with the original PC file.",
     "removeAppDescriptionKeepCloud": "It will be deleted together with the original PC file, and the cloud file will be kept.",
+    "pcDeletePending": "Cloud copy updated. If the file is still on your PC, open the desktop app to sync.",
+    "bulkDeleteSelected": "Delete selected",
+    "bulkDeleteTitle": "Delete selected documents?",
+    "bulkDeleteDescription": "Permanently delete {{count}} file(s)? This cannot be undone.",
+    "bulkDeleteNone": "No files selected (folders cannot be bulk-deleted here).",
+    "bulkDeleteSuccess": "Deleted {{count}} document(s).",
+    "bulkDeletePartial": "Deleted {{count}} of {{total}}. Some could not be removed.",
+    "bulkDeleteFailed": "Could not delete selected documents.",
+    "bulkDeleteWorking": "Deleting…",
+    "pcDeleteQueuedBadge": "PC delete queued",
+    "pcDeleteAlreadyQueued": "PC delete was already queued; desktop will sync.",
     "listenToAiSummary": "Listen to an AI-generated summary of this document.",
     "noSummaryAvailable": "No summary available for this document. The AI summary may still be processing.",
     "language": "Language",

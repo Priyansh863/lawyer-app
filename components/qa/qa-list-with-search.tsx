@@ -13,6 +13,14 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import QAAnswerForm from "./qa-answer-form"
 import QAClientView from "./qa-client-view"
 import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { resolveProfileImageUrl, resolveProfileImageUrlLoose } from "@/lib/utils/profile-image"
+import {
+  qaAnswerLawyerIdString,
+  qaAnswerDisplayLawyerName,
+  qaAnswerLawyerProfileRow,
+  qaAnswerPrimaryInitial,
+} from "@/lib/utils/qa-answer"
 import Skeleton from "react-loading-skeleton"
 import "react-loading-skeleton/dist/skeleton.css"
 import { toast } from "react-hot-toast"
@@ -69,14 +77,20 @@ function QuestionCard({
   }, [question.isBookmarked])
 
   const myAnswer = isLawyer
-    ? question.answer?.find((a: any) => a.lawyer_id === currentUserId || a.answeredBy?._id === currentUserId)
+    ? question.answer?.find(
+        (a) =>
+          qaAnswerLawyerIdString(a.lawyer_id) === currentUserId ||
+          a.answeredBy?._id === currentUserId
+      )
     : undefined
   const hasAnswered = !!myAnswer
   const firstAnswer = question.answer?.[0]
   const firstAnswerText = firstAnswer?.answer
-  const firstAnsweredByName = firstAnswer?.answeredBy
-    ? `${firstAnswer.answeredBy.first_name} ${firstAnswer.answeredBy.last_name}`
-    : firstAnswer?.lawyer_name
+  const firstAnsweredByName = firstAnswer ? qaAnswerDisplayLawyerName(firstAnswer) : undefined
+  const firstLawyerRow = firstAnswer ? qaAnswerLawyerProfileRow(firstAnswer) : null
+  const answererAvatarUrl =
+    resolveProfileImageUrl(firstAnswer?.answeredBy as any) ||
+    (firstLawyerRow ? resolveProfileImageUrlLoose(firstLawyerRow) : undefined)
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -137,6 +151,8 @@ function QuestionCard({
     if (name.length <= 3) return name + "***"
     return name.substring(0, 3) + "***"
   }
+
+  const clientAvatarUrl = resolveProfileImageUrl(question.clientId as any)
 
   const formatDate = (dateString: string) => {
     try {
@@ -209,7 +225,12 @@ function QuestionCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-slate-200" />
+            <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-600">
+              <AvatarImage src={clientAvatarUrl} alt="" className="object-cover" />
+              <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-semibold">
+                {(question.clientId?.first_name?.[0] || "?").toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <span className="text-[#1E293B] dark:text-slate-100 font-bold text-[15px]">{maskUser(question.clientId?.first_name || 'user')}</span>
           </div>
           {isLawyer && (
@@ -241,7 +262,15 @@ function QuestionCard({
                 {question.answer?.length ? t("pages:qa.status.answered") : t("pages:qa.status.pending")}
               </span>
               {showAnswerPreview && firstAnsweredByName && (
-                <span className="text-[11px] text-slate-400 dark:text-slate-300">• {firstAnsweredByName}</span>
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-300">
+                  <Avatar className="h-5 w-5 border border-slate-200 dark:border-slate-600">
+                    <AvatarImage src={answererAvatarUrl} alt="" className="object-cover" />
+                    <AvatarFallback className="text-[8px] bg-slate-200">
+                      {firstAnswer ? qaAnswerPrimaryInitial(firstAnswer) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>• {firstAnsweredByName}</span>
+                </span>
               )}
             </div>
           )}

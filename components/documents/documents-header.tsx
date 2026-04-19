@@ -140,7 +140,7 @@ export function DocumentsHeader({
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {user?.account_type === 'lawyer' && (
             <SecureLinkGenerator clients={clients} />
           )}

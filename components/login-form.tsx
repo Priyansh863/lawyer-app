@@ -1,6 +1,6 @@
 "use client"
 import { getSession, signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -26,6 +26,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const dispatch = useDispatch()
   const { toast } = useToast()
   const { t } = useTranslation()
@@ -50,6 +51,7 @@ export default function LoginForm() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const nextPath = searchParams.get("next")
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -67,7 +69,8 @@ export default function LoginForm() {
 
       if (result.error) {
         if (result.error === 'account_not_verified') {
-          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=login`);
+          const nextQuery = nextPath ? `&next=${encodeURIComponent(nextPath)}` : ""
+          router.push(`/verify-otp?email=${encodeURIComponent(data.email)}&purpose=login${nextQuery}`);
           toast({
             title: t('auth.accountNotVerified'),
             description: t('auth.verifyEmailOtp'),
@@ -95,7 +98,7 @@ export default function LoginForm() {
           variant: "success",
         });
 
-        router.push("/dashboard");
+        router.push(nextPath || "/dashboard");
       } else {
         throw new Error(t('auth.userDataNotFound'));
       }
@@ -183,7 +186,7 @@ export default function LoginForm() {
 
         <div className="text-center text-sm mt-4">
           {t('auth.dontHaveAccount')}{" "}
-          <Link href="/signup" className="font-medium hover:underline">
+          <Link href={nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : "/signup"} className="font-medium hover:underline">
             {t('auth.signUp')}
           </Link>
         </div>

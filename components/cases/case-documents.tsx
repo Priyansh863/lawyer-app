@@ -4,18 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Download, Eye, Share2, Trash2, MoreVertical } from "lucide-react"
-import { getCaseDocuments, downloadDocumentSummary, deleteDocument } from "@/lib/api/documents-api"
+import { FileText, Eye, Trash2, Loader2 } from "lucide-react"
+import { getCaseDocuments, downloadDocumentSummary, deleteDocument, getDocumentViewUrl } from "@/lib/api/documents-api"
 import { formatDate, formatFileSize } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Table,
   TableBody,
@@ -24,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useSelector } from "react-redux"
+import type { RootState } from "@/lib/store"
 
 interface CaseDocument {
   _id: string
@@ -58,8 +53,11 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
   const [loading, setLoading] = useState(true)
   const [downloadingSummaryId, setDownloadingSummaryId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [openingDocId, setOpeningDocId] = useState<string | null>(null)
   const { toast } = useToast()
   const { t } = useTranslation()
+  const user = useSelector((state: RootState) => state.auth.user)
+  const isClient = user?.account_type === "client"
 
   useEffect(() => {
     fetchCaseDocuments()
@@ -89,15 +87,31 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
     }
   }
 
-  const handleViewDocument = (doc: CaseDocument) => {
-    if (doc.link) {
-      window.open(doc.link, '_blank')
-    } else {
+  const handleViewDocument = async (doc: CaseDocument) => {
+    const openTab = (url: string) => {
+      const w = window.open(url, "_blank", "noopener,noreferrer")
+      if (!w) {
+        toast({
+          title: t("common:error"),
+          description: t("pages:caseDetails.popupBlocked"),
+          variant: "destructive"
+        })
+      }
+    }
+
+    setOpeningDocId(doc._id)
+    try {
+      const url = await getDocumentViewUrl(doc._id, doc.link?.trim() ? doc.link : undefined)
+      openTab(url)
+    } catch (error) {
+      console.error(error)
       toast({
         title: t("common:error"),
         description: t("pages:caseDocuments.errors.noDocumentLink"),
         variant: "destructive"
       })
+    } finally {
+      setOpeningDocId(null)
     }
   }
 
@@ -229,6 +243,7 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -290,9 +305,35 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
                     <TableCell>{formatFileSize(doc.file_size)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => handleViewDocument(doc)}>
-                          <Eye className="h-4 w-4" />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={openingDocId !== null}
+                          onClick={() => handleViewDocument(doc)}
+                          aria-busy={openingDocId === doc._id}
+                        >
+                          {openingDocId === doc._id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </Button>
+                        {isClient ? (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDeleteDocument(doc)}
+                            disabled={deletingId !== null}
+                            aria-busy={deletingId === doc._id}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            {deletingId === doc._id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -303,5 +344,20 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
         )}
       </CardContent>
     </Card>
+
+    {openingDocId && (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 backdrop-blur-[1px]"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div className="rounded-xl border border-slate-200/80 bg-white px-8 py-6 shadow-xl flex flex-col items-center gap-3">
+          <Loader2 className="h-9 w-9 animate-spin text-slate-600" aria-hidden />
+          <p className="text-sm font-medium text-slate-700">{t("pages:caseDetails.openingDocument")}</p>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
