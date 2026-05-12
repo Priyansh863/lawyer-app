@@ -43,7 +43,7 @@ interface ConsultationTypeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConsultationScheduled?: (user: User) => void;
-  onChatStarted?: (chatId: string, user: User) => void;
+  onChatStarted?: (chatId: string, user: User, billingType?: ConsultationType) => void;
 }
 
 type ModalStep = 'consultationType' | 'userSelection' | 'startingChat';
@@ -100,15 +100,9 @@ export default function ConsultationTypeModal({
       if (profile?.account_type === 'lawyer') {
         fetchBaseChatRate();
       }
-      // For clients, skip consultation type selection and go directly to paid consultation
-      if (profile?.account_type === 'client') {
-        setConsultationType('paid');
-        setCurrentStep('userSelection');
-      } else {
-        // For lawyers, start with consultation type selection
-        setCurrentStep('consultationType');
-        setConsultationType(null);
-      }
+      // Clients and lawyers both choose Free vs Paid first
+      setCurrentStep('consultationType');
+      setConsultationType(null);
       setSelectedUser(null);
       setSearchQuery("");
       setStartingChat(false);
@@ -189,7 +183,7 @@ export default function ConsultationTypeModal({
       setCurrentStep('startingChat');
 
       // Create or get existing chat
-      const chatResponse = await createOrGetChat(selectedUser._id);
+      const chatResponse = await createOrGetChat(selectedUser._id, consultationType || undefined);
 
       console.log("Chat Response:", chatResponse);
 
@@ -201,7 +195,7 @@ export default function ConsultationTypeModal({
 
         // Call callback to open chat modal if provided
         if (onChatStarted) {
-          onChatStarted(chatResponse._id, selectedUser);
+          onChatStarted(chatResponse._id, selectedUser, consultationType || undefined);
         }
 
         // Show success message first
@@ -238,11 +232,8 @@ export default function ConsultationTypeModal({
       setCurrentStep('userSelection');
       setSelectedUser(null);
     } else if (currentStep === 'userSelection') {
-      // Only show consultation type step for lawyers
-      if (profile?.account_type === 'lawyer') {
-        setCurrentStep('consultationType');
-        setConsultationType(null);
-      }
+      setCurrentStep('consultationType');
+      setConsultationType(null);
     }
   };
 

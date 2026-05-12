@@ -2297,7 +2297,9 @@
     "startNewChat": "Start a new chat",
     "chatSummary": "Chat Summary",
     "keyPoints": "Key Points",
-    "tokenUsage": "Token Usage"
+    "tokenUsage": "Token Usage",
+    "pendingPaidPreview": "{{count}} new message(s) — open chat and tap Start to read",
+    "chatRate": "Rate"
   },
   "blog": {
     "title": "Blog",
@@ -3184,6 +3186,7 @@
     "noDocumentsFound": "No documents found matching your search",
     "loading": "Loading documents...",
     "justNow": "Just now",
+    "minutesAgo": "{{minutes}} minutes ago",
     "hoursAgo": "about {{hours}} hours ago",
     "daysAgo": "{{days}} days ago",
     "monthsAgo": "{{months}} months ago",

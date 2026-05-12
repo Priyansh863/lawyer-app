@@ -173,7 +173,7 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
     setIsLoading(true)
     try {
       // Fetch all messages for this chat (pass a large limit to get history)
-      const messages = await getChatMessages(chat._id, 1, 1000)
+      const { messages } = await getChatMessages(chat._id, 1, 1000)
 
       const currentUserId = user?._id || 'current_user'
       const participant = (chat.lawyer_id?._id === currentUserId) ? chat.client_id : chat.lawyer_id
@@ -312,13 +312,16 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-[15px] text-[#0F172A]">{participantName}</span>
                       {chat.unreadCount > 0 && (
-                        <div className="w-5 h-5 bg-[#EF4444] rounded-full flex items-center justify-center text-white text-[10px] font-bold">
-                          N
+                        <div className="min-w-[22px] h-5 px-1 bg-[#EF4444] rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                          {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                         </div>
                       )}
                     </div>
                     <p className="text-[13px] text-slate-600 font-medium line-clamp-1">
-                      {chat.lastMessage?.content || t("pages:chatbox.noMessages")}
+                      {chat.billing_type === "paid" && (chat.unreadCount ?? 0) > 0
+                        ? t("pages:chat.pendingPaidPreview", { count: chat.unreadCount }) ||
+                          `${chat.unreadCount} new message(s) — open chat and tap Start to read`
+                        : chat.lastMessage?.content || t("pages:chatbox.noMessages")}
                     </p>
                   </div>
 
@@ -376,6 +379,8 @@ const SimpleChatList = forwardRef<SimpleChatListRef, SimpleChatListProps>(({ sea
           clientAvatar={
             participant?.profile_image || participant?.avatar
           }
+          chatRate={selectedChat.billing_type === 'free' ? 0 : (selectedChat.chat_rate ?? (participant as any)?.chat_rate)}
+          initialUnreadCount={selectedChat.unreadCount ?? 0}
         />
           )
         })()

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,6 @@ import {
 
 export default function SecureUploadPage() {
   const params = useParams();
-  const router = useRouter();
   const { toast } = useToast();
   const token = params.token as string;
 
@@ -59,11 +58,6 @@ export default function SecureUploadPage() {
       try {
         const validation = await validateSecureLink(token);
         setLinkData(validation);
-        if (validation?.requires_signup) {
-          const nextUrl = encodeURIComponent(`/secure-upload/${token}`);
-          router.replace(`/signup?next=${nextUrl}`);
-          return;
-        }
         setStep('password');
       } catch (error: any) {
         setError(error.message || 'Invalid or expired link');
@@ -74,7 +68,7 @@ export default function SecureUploadPage() {
     if (token) {
       validateLink();
     }
-  }, [token, router]);
+  }, [token]);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,11 +94,6 @@ export default function SecureUploadPage() {
         variant: "default",
       });
     } catch (error: any) {
-      if (error?.status === 401) {
-        const nextUrl = encodeURIComponent(`/secure-upload/${token}`);
-        router.push(`/login?next=${nextUrl}`);
-        return;
-      }
       const message = error.message || "Incorrect password";
       setPasswordError(message);
       toast({

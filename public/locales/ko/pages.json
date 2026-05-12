@@ -2797,7 +2797,9 @@
     "startNewChat": "새 채팅 시작",
     "chatSummary": "채팅 요약",
     "keyPoints": "주요 포인트",
-    "tokenUsage": "토큰 사용량"
+    "tokenUsage": "토큰 사용량",
+    "pendingPaidPreview": "새 메시지 {{count}}개 — 채팅을 열고 시작을 눌러 확인하세요",
+    "chatRate": "요금"
   },
   "blog": {
     "title": "블로그",
@@ -3236,6 +3238,7 @@
     "noDocumentsFound": "일치하는 문서를 찾을 수 없습니다",
     "loading": "문서 로딩 중...",
     "justNow": "방금 전",
+    "minutesAgo": "{{minutes}}분 전",
     "hoursAgo": "약 {{hours}}시간 전",
     "daysAgo": "{{days}}일 전",
     "monthsAgo": "{{months}}개월 전",

@@ -17,6 +17,7 @@ export default function ChatPage() {
   const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<any | null>(null)
+  const [selectedBillingType, setSelectedBillingType] = useState<string | null>(null)
   const [showChat, setShowChat] = useState(false)
   const chatListRef = useRef<SimpleChatListRef | null>(null)
   const { toast } = useToast()
@@ -40,12 +41,13 @@ export default function ChatPage() {
     })
   }
 
-  const handleChatStarted = (chatId: string, user: any) => {
+  const handleChatStarted = (chatId: string, user: any, billingType?: any) => {
     if (chatListRef.current?.refreshChats) {
       chatListRef.current.refreshChats()
     }
     setSelectedChatId(chatId)
     setSelectedUser(user)
+    setSelectedBillingType(billingType || null)
     setShowChat(true)
   }
 
@@ -53,6 +55,7 @@ export default function ChatPage() {
     setShowChat(false)
     setSelectedChatId(null)
     setSelectedUser(null)
+    setSelectedBillingType(null)
   }
 
   return (
@@ -101,7 +104,7 @@ export default function ChatPage() {
             clientName={`${selectedUser.first_name} ${selectedUser.last_name}`}
             clientAvatar={selectedUser.profile_image}
             chatId={selectedChatId}
-            chatRate={selectedUser.chat_rate}
+            chatRate={selectedBillingType === 'free' ? 0 : selectedUser.chat_rate}
           />
         )}
       </div>

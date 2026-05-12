@@ -16,8 +16,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/hooks/useTranslation"
-import { Loader2, Users, Share2, X } from "lucide-react"
-import { getAvailableLawyers, getAvailableClients, shareDocumentWithLawyers, unshareDocumentFromLawyer } from '@/lib/api/document-sharing-api'
+import { Loader2, Users, Share2 } from "lucide-react"
+import { getAvailableUsers, shareDocumentWithLawyers, unshareDocumentFromLawyer, type ShareableUser } from '@/lib/api/document-sharing-api'
 import { useSelector } from "react-redux"
 import type { RootState } from "@/lib/store"
 
@@ -39,20 +39,19 @@ export function ShareDocumentDialog({
   document,
   onShareUpdate
 }: ShareDocumentDialogProps) {
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<ShareableUser[]>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
   const { toast } = useToast()
   const { t } = useTranslation()
   const profile = useSelector((state: RootState) => state.auth.user)
-  const isClient = profile?.account_type === 'client'
 
   useEffect(() => {
     if (open) {
       fetchUsers()
       // Pre-select already shared users
-      const sharedUserIds = document.shared_with?.map((user: any) => user._id) || []
+      const sharedUserIds = document.shared_with?.map((user: any) => typeof user === 'string' ? user : user._id) || []
       setSelectedUsers(sharedUserIds)
     }
   }, [open, document.shared_with])
@@ -60,14 +59,12 @@ export function ShareDocumentDialog({
   const fetchUsers = async () => {
     setIsFetching(true)
     try {
-      const availableUsers = isClient 
-        ? await getAvailableLawyers() 
-        : await getAvailableClients()
+      const availableUsers = await getAvailableUsers()
       setUsers(availableUsers)
     } catch (error) {
       toast({
         title: t('error'),
-        description: t('pages:shar.failedToLoadUsers', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') }),
+        description: t('pages:shar.failedToLoadUsers', { userType: t('pages:shar.users') || 'users' }),
         variant: "destructive"
       })
     } finally {
@@ -95,7 +92,7 @@ export function ShareDocumentDialog({
 
     setIsLoading(true)
     try {
-      const currentlyShared = document.shared_with?.map((user: any) => user._id) || []
+      const currentlyShared = document.shared_with?.map((user: any) => typeof user === 'string' ? user : user._id) || []
       const toShare = selectedUsers.filter((id: string) => !currentlyShared.includes(id))
       const toUnshare = currentlyShared.filter((id: string) => !selectedUsers.includes(id))
 
@@ -148,7 +145,8 @@ export function ShareDocumentDialog({
     else return "NA";
   };
 
-  const isPrivateDocument = document.privacy === 'private'
+  const normalizedPrivacy = (document.privacy || 'public').toLowerCase()
+  const isPrivateDocument = normalizedPrivacy === 'private' || normalizedPrivacy === 'fully_private'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -156,16 +154,16 @@ export function ShareDocumentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            {t('pages:shar.shareWithUserType', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}
+            {t('pages:shar.shareWithUserType', { userType: t('pages:shar.users') || 'users' })}
           </DialogTitle>
           <DialogDescription>
             {t('pages:shar.shareDocumentDescription', { 
               documentName: document.document_name,
-              userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients')
+              userType: t('pages:shar.users') || 'users'
             })}
             {!isPrivateDocument && (
               <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                {t('pages:shar.privateDocumentSharingNote', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}
+                {t('pages:shar.privateDocumentSharingNote', { userType: t('pages:shar.users') || 'users' })}
               </div>
             )}
           </DialogDescription>
@@ -181,18 +179,18 @@ export function ShareDocumentDialog({
             {isFetching ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2">{t('pages:shar.loadingUsers', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}</span>
+                <span className="ml-2">{t('pages:shar.loadingUsers', { userType: t('pages:shar.users') || 'users' })}</span>
               </div>
             ) : users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>{t('pages:shar.noUsersAvailable', { userType: isClient ? t('pages:shar.lawyers') : t('pages:shar.clients') })}</p>
+                <p>{t('pages:shar.noUsersAvailable', { userType: t('pages:shar.users') || 'users' })}</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-60 overflow-y-auto">
-                {users.map((user: any) => {
+                {users.map((user) => {
                   const isSelected = selectedUsers.includes(user._id)
-                  const wasOriginallyShared = document.shared_with?.some((l: any) => l._id === user._id)
+                  const wasOriginallyShared = document.shared_with?.some((l: any) => (typeof l === 'string' ? l : l._id) === user._id)
                   
                   return (
                     <div
@@ -205,7 +203,9 @@ export function ShareDocumentDialog({
                         onChange={() => handleUserToggle(user._id)}
                       />
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={`/placeholder.svg?height=40&width=40&query=${encodeURIComponent(`${user.first_name} ${user.last_name}`)}`} />
+                        <AvatarImage
+                          src={(user as any)?.profile_image || (user as any)?.avatar || `/placeholder.svg?height=40&width=40&query=${encodeURIComponent(`${user.first_name} ${user.last_name}`)}`}
+                        />
                         <AvatarFallback>
                           {getInitials(user.first_name, user.last_name)}
                         </AvatarFallback>

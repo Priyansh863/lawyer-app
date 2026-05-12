@@ -3,9 +3,19 @@ import axios from 'axios'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('token')
+  // Keep consistent with the rest of the app: token is stored inside `localStorage.user`
+  const token = (() => {
+    try {
+      const raw = localStorage.getItem('user')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return parsed?.token ?? null
+    } catch {
+      return null
+    }
+  })()
   return {
-    'Authorization': `Bearer ${token}`,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     'Content-Type': 'application/json'
   }
 }
@@ -25,6 +35,8 @@ export interface Client {
   email: string
   account_type: 'client'
 }
+
+export type ShareableUser = Lawyer | Client
 
 export interface ShareDocumentRequest {
   documentId: string
@@ -85,6 +97,28 @@ export async function getAvailableClients(): Promise<Client[]> {
 }
 
 /**
+ * Get all shareable users (clients + lawyers).
+ * The backend share/unshare endpoints should accept any user id; the UI should not be role-limited.
+ */
+export async function getAvailableUsers(): Promise<ShareableUser[]> {
+  const [lawyers, clients] = await Promise.allSettled([getAvailableLawyers(), getAvailableClients()])
+
+  const merged: ShareableUser[] = []
+  const seen = new Set<string>()
+
+  for (const result of [lawyers, clients]) {
+    if (result.status !== 'fulfilled') continue
+    for (const u of result.value || []) {
+      if (!u?._id || seen.has(u._id)) continue
+      seen.add(u._id)
+      merged.push(u)
+    }
+  }
+
+  return merged
+}
+
+/**
  * Share a document with specific lawyers
  */
 export async function shareDocumentWithLawyers({
@@ -127,8 +161,8 @@ export async function unshareDocumentFromLawyer({
     const response = await axios.post(
       `${API_BASE_URL}/document/${documentId}/unshare`,
       {
-        userId,
-        lawyerId
+        userId: lawyerId, // Pass target user as userId to avoid removing the owner
+        lawyerId: lawyerId
       },
       {
         headers: getAuthHeaders(),

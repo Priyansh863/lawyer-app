@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { X, Send, Loader2, MessageSquare, Trash2, MessageCircle, Play, Square } from "lucide-react"
+import { X, Send, Loader2, MessageSquare, Trash2, MessageCircle, Play, Square, Pause } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,8 @@ import {
   deleteChat,
   getConsultationStatus,
   startConsultation,
+  pauseConsultation,
+  resumeConsultation,
   endConsultation,
   type ConsultationSessionStatus,
   type Message,
@@ -44,6 +46,8 @@ interface SimpleChatProps {
   clientAvatar?: string
   chatId?: string
   chatRate?: number // Add chat rate prop
+  /** Unread count from chat list (lawyer sees messages only after Start). */
+  initialUnreadCount?: number
 }
 
 export function SimpleChat({
@@ -53,6 +57,7 @@ export function SimpleChat({
   clientAvatar,
   chatId: initialChatId,
   chatRate,
+  initialUnreadCount = 0,
 }: SimpleChatProps) {
   const { t } = useTranslation()
   const [chat, setChat] = useState<Chat | null>(null)
@@ -63,14 +68,19 @@ export function SimpleChat({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false) // Add state for delete confirmation
   const [consultation, setConsultation] = useState<ConsultationSessionStatus | null>(null)
   const [isStartingConsultation, setIsStartingConsultation] = useState(false)
+  const [isPausingConsultation, setIsPausingConsultation] = useState(false)
+  const [isResumingConsultation, setIsResumingConsultation] = useState(false)
   const [isEndingConsultation, setIsEndingConsultation] = useState(false)
   const [statusNotice, setStatusNotice] = useState<string | null>(null)
   const profile = useSelector((state: RootState) => state.auth.user)
+  const isLawyerUser = profile?.account_type === "lawyer"
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const isPollingRef = useRef(false)
   const previousConsultationRef = useRef<ConsultationSessionStatus | null>(null)
+  /** True if we intentionally skipped loading messages until this user clicks Start (paid receiver). */
+  const threadGateRef = useRef(false)
   const { toast } = useToast()
   const { socket, isConnected, joinChat, leaveChat } = useSocket({ autoConnect: true })
 
@@ -125,6 +135,7 @@ export function SimpleChat({
             lawyer_id: isCurrentUserClient ? otherUser : selfUser,
             client_id: isCurrentUserClient ? selfUser : otherUser,
             unreadCount: 0,
+            billing_type: (chatRate ?? 0) > 0 ? "paid" : "free",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           }
@@ -157,8 +168,35 @@ export function SimpleChat({
         }
 
         setChat(chatData)
-        const chatMessages = await getChatMessages(chatData._id)
-        setMessages(chatMessages)
+
+        const status = await getConsultationStatus(chatData._id)
+        setConsultation(status)
+
+        const billingPaid =
+          chatData?.billing_type === "paid" ||
+          status?.billing_type === "paid" ||
+          (Number((chatData as Chat)?.chat_rate ?? chatRate ?? 0) > 0 &&
+            (chatData as Chat)?.billing_type !== "free")
+        // Paid receiver: other party already "started" (e.g. auto on send), this user has not — do not load messages yet.
+        const hideThread =
+          billingPaid &&
+          !!status &&
+          !status.started_by_me &&
+          !!status.started_by_other
+
+        if (hideThread) {
+          threadGateRef.current = true
+          setMessages([])
+        } else {
+          threadGateRef.current = false
+          const chatMessages = await getChatMessages(chatData._id)
+          if (chatMessages.messages_hidden_until_start) {
+            threadGateRef.current = true
+            setMessages([])
+          } else {
+            setMessages(chatMessages.messages)
+          }
+        }
       } catch (error) {
         // Log error details for debugging
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -214,11 +252,20 @@ export function SimpleChat({
     isPollingRef.current = true
     try {
       const latest = await getChatMessages(chat._id)
-      mergeMessages(latest)
+      if (latest.messages_hidden_until_start) {
+        setMessages([])
+        return
+      }
+      mergeMessages(latest.messages)
     } finally {
       isPollingRef.current = false
     }
   }, [chat?._id, mergeMessages])
+
+  const consultationRef = useRef<ConsultationSessionStatus | null>(null)
+  useEffect(() => {
+    consultationRef.current = consultation
+  }, [consultation])
 
   const refreshConsultationStatus = useCallback(async () => {
     if (!chat?._id) return
@@ -235,13 +282,21 @@ export function SimpleChat({
     if (!chat?._id) return
     const interval = window.setInterval(() => {
       // Poll only while tab is visible to reduce noise
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState !== "visible") return
+      const c = consultationRef.current
+      const paid =
+        chat?.billing_type === "paid" ||
+        c?.billing_type === "paid" ||
+        (Number(chatRate ?? 0) > 0 && chat?.billing_type !== "free")
+      const hideReceiverThread =
+        paid && c && !c.started_by_me && !!c.started_by_other
+      refreshConsultationStatus()
+      if (!hideReceiverThread) {
         refreshMessages()
-        refreshConsultationStatus()
       }
     }, 2000)
     return () => window.clearInterval(interval)
-  }, [chat?._id, refreshMessages, refreshConsultationStatus])
+  }, [chat?._id, chat?.billing_type, chatRate, refreshMessages, refreshConsultationStatus])
 
   // True realtime consultation/message sync via socket events.
   useEffect(() => {
@@ -252,10 +307,19 @@ export function SimpleChat({
     const handleRealtimeMessage = (payload: any) => {
       const incomingChatId = payload?.chatId || payload?.message?.chatId
       if (incomingChatId !== chat._id) return
-      if (payload?.message?._id) {
-        mergeMessages([payload.message])
-      } else {
-        refreshMessages()
+      const c = consultationRef.current
+      const paid =
+        chat?.billing_type === "paid" ||
+        c?.billing_type === "paid" ||
+        (Number(chatRate ?? 0) > 0 && chat?.billing_type !== "free")
+      const hideReceiverThread =
+        paid && c && !c.started_by_me && !!c.started_by_other
+      if (!hideReceiverThread) {
+        if (payload?.message?._id) {
+          mergeMessages([payload.message])
+        } else {
+          refreshMessages()
+        }
       }
       window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
     }
@@ -284,36 +348,114 @@ export function SimpleChat({
   }, [refreshConsultationStatus])
 
   const consultationFeatureAvailable = consultation !== null
-  const isConsultationActive = consultationFeatureAvailable
-    ? consultation?.status === "active" ||
-      (consultation?.started_by_me && consultation?.started_by_other && consultation?.status !== "ended" && consultation?.status !== "auto_ended")
-    : true
-  const isConsultationEnded = consultationFeatureAvailable
-    ? consultation?.status === "ended" || consultation?.status === "auto_ended"
-    : false
-  const isAwaitingOtherParty = consultationFeatureAvailable
-    ? !!consultation?.started_by_me && !consultation?.started_by_other && !isConsultationEnded
-    : false
-  const isAwaitingMyStart = consultationFeatureAvailable
-    ? !!consultation?.started_by_other && !consultation?.started_by_me && !isConsultationEnded
-    : false
-  const isAwaitingMyEnd = consultationFeatureAvailable
-    ? !!consultation?.ended_by_other && !consultation?.ended_by_me && !isConsultationEnded
-    : false
+  const sessionStatus = consultation?.status ?? "not_started"
+  const isConsultationEnded = sessionStatus === "ended" || sessionStatus === "auto_ended"
+  const isConsultationPaused = sessionStatus === "paused" || sessionStatus === "pause"
+  const isAwaitingOtherParty = !!consultation?.started_by_me && !consultation?.started_by_other && !isConsultationEnded
+  const isAwaitingMyStart = !!consultation?.started_by_other && !consultation?.started_by_me && !isConsultationEnded
+  const isAwaitingMyEnd = !!consultation?.ended_by_other && !consultation?.ended_by_me && !isConsultationEnded
+
+  const effectiveChatRate =
+    Number(consultation?.chat_rate ?? chatRate ?? (isLawyerUser ? (profile as any)?.chat_rate ?? (profile as any)?.charges : 0)) || 0
+  const isPaidChat = (consultation?.billing_type === "free" || chat?.billing_type === "free")
+    ? false
+    : consultation?.billing_type === "paid" 
+      ? true 
+      : chat?.billing_type === "paid" 
+        ? true 
+        : effectiveChatRate > 0
+
+  /** Both parties clicked Start — backend should only accrue billing after this. */
+  const bothPartiesStarted = !!(consultation?.started_by_me && consultation?.started_by_other)
+  /** Session is billable / live chat (after dual Start, before pause). */
+  const billingRunning =
+    bothPartiesStarted &&
+    (sessionStatus === "running" || sessionStatus === "active")
+  /** Paid chat: other user already started; this user must click Start before seeing messages or sending. */
+  const hidePaidThread =
+    isPaidChat &&
+    !!consultation &&
+    !consultation.started_by_me &&
+    !!consultation.started_by_other
 
   const consultationDurationSeconds = consultation?.duration_seconds ??
     ((consultation?.duration_minutes ?? 0) * 60)
-  const computedTokenUsage = (chatRate && consultationDurationSeconds > 0)
-    ? Math.max(0, Math.round((consultationDurationSeconds / 60) * chatRate))
+  const computedTokenUsage = (effectiveChatRate && consultationDurationSeconds > 0)
+    ? Math.max(0, Math.round((consultationDurationSeconds / 60) * effectiveChatRate))
     : undefined
   const displayTokenUsage = computedTokenUsage ?? consultation?.token_usage
 
-  const canStartConsultation = consultationFeatureAvailable && !isConsultationEnded && !consultation?.started_by_me
+  const canStartConsultation =
+    isPaidChat &&
+    !isConsultationEnded &&
+    !isConsultationPaused &&
+    consultationFeatureAvailable &&
+    !!consultation &&
+    !consultation.started_by_me
+
   const canEndConsultation =
+    isPaidChat &&
+    !isConsultationEnded &&
+    bothPartiesStarted &&
+    (sessionStatus === "running" || sessionStatus === "active" || sessionStatus === "paused")
+
+  const canPauseConsultation =
+    isPaidChat &&
     consultationFeatureAvailable &&
     !isConsultationEnded &&
-    !consultation?.ended_by_me &&
-    !!consultation?.started_by_me
+    billingRunning
+  const canResumeConsultation =
+    isPaidChat &&
+    consultationFeatureAvailable &&
+    !isConsultationEnded &&
+    isConsultationPaused
+
+  useEffect(() => {
+    if (!consultation?.started_by_me || !threadGateRef.current || !chat?._id) return
+    threadGateRef.current = false
+    getChatMessages(chat._id)
+      .then((res) => {
+        if (res.messages_hidden_until_start) setMessages([])
+        else setMessages(res.messages)
+      })
+      .catch(() => {})
+  }, [consultation?.started_by_me, chat?._id])
+
+  useEffect(() => {
+    if (!isPaidChat || isConsultationEnded || isInitializing) return
+    if (hidePaidThread) {
+      const n = initialUnreadCount > 0 ? initialUnreadCount : ""
+      setStatusNotice(
+        n
+          ? `${n} new message(s) from the other party. Click Start to view the conversation and begin billing.`
+          : "New messages are waiting. Click Start to view the conversation and begin billing."
+      )
+      return
+    }
+    if (bothPartiesStarted && billingRunning) {
+      setStatusNotice(null)
+      return
+    }
+    if (isAwaitingOtherParty) {
+      setStatusNotice("Waiting for the other party to click Start.")
+      return
+    }
+    if (!isLawyerUser && !bothPartiesStarted && consultation?.started_by_me) {
+      setStatusNotice(`Paid conversation — rate: ${effectiveChatRate}. Waiting for the other party to Start.`)
+    }
+  }, [
+    isPaidChat,
+    hidePaidThread,
+    bothPartiesStarted,
+    billingRunning,
+    isConsultationEnded,
+    isInitializing,
+    isAwaitingOtherParty,
+    isLawyerUser,
+    effectiveChatRate,
+    consultation?.started_by_me,
+    initialUnreadCount,
+  ])
 
   useEffect(() => {
     if (!consultationFeatureAvailable || !consultation) {
@@ -374,10 +516,14 @@ export function SimpleChat({
       const next = await startConsultation(chat._id)
       if (next) setConsultation(next)
       await refreshConsultationStatus()
+      threadGateRef.current = false
+      const res = await getChatMessages(chat._id)
+      if (res.messages_hidden_until_start) setMessages([])
+      else setMessages(res.messages)
       window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
       toast({
-        title: "Start request sent",
-        description: "Start status shared with the other participant.",
+        title: "Started",
+        description: "You joined this paid session.",
       })
     } catch {
       toast({
@@ -392,6 +538,8 @@ export function SimpleChat({
 
   const handleEndConsultation = async () => {
     if (!chat?._id) return
+    const ok = window.confirm("End this paid conversation now?")
+    if (!ok) return
     try {
       setIsEndingConsultation(true)
       const next = await endConsultation(chat._id, "manual")
@@ -413,13 +561,69 @@ export function SimpleChat({
     }
   }
 
+  const handlePauseConsultation = async () => {
+    if (!chat?._id) return
+    try {
+      setIsPausingConsultation(true)
+      const next = await pauseConsultation(chat._id)
+      if (next) setConsultation(next)
+      await refreshConsultationStatus()
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
+      toast({
+        title: "Conversation paused",
+        description: "Billing is paused until resumed.",
+      })
+    } catch {
+      toast({
+        title: t("pages:conv.error"),
+        description: "Failed to pause consultation",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPausingConsultation(false)
+    }
+  }
+
+  const handleResumeConsultation = async () => {
+    if (!chat?._id) return
+    try {
+      setIsResumingConsultation(true)
+      const next = await resumeConsultation(chat._id)
+      if (next) setConsultation(next)
+      await refreshConsultationStatus()
+      window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
+      toast({
+        title: "Conversation resumed",
+        description: "Billing resumed for this paid session.",
+      })
+    } catch {
+      toast({
+        title: t("pages:conv.error"),
+        description: "Failed to resume consultation",
+        variant: "destructive",
+      })
+    } finally {
+      setIsResumingConsultation(false)
+    }
+  }
+
   const handleSendMessage = async (data: MessageFormData) => {
     if (!chat || !data.content.trim()) return
 
-    if (consultationFeatureAvailable && !isConsultationActive && !isConsultationEnded) {
+    // Paid receiver: other party started, this user has not clicked Start — cannot send yet.
+    if (hidePaidThread) {
       toast({
-        title: "Start Chat required",
-        description: "Please click Start Chat before sending messages.",
+        title: "Click Start first",
+        description: "Join this paid conversation to send messages.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (isPaidChat && isConsultationPaused && !isConsultationEnded) {
+      toast({
+        title: "Conversation paused",
+        description: "The paid session is paused. Resume to continue messaging.",
         variant: "destructive",
       })
       return
@@ -430,10 +634,13 @@ export function SimpleChat({
       const newMessage = await sendChatMessage(chat._id, data.content.trim())
       mergeMessages([newMessage])
       messageForm.reset()
-      // Notify chat list to refresh previews immediately
       window.dispatchEvent(new CustomEvent("chatMessagesUpdated"))
-      // Pull server state after send to keep both sides in sync quickly
       refreshMessages()
+
+      // Backend applies paid start on send; refresh status for started_by_* / billing state.
+      if (isPaidChat) {
+        await refreshConsultationStatus()
+      }
     } catch (error) {
       const message =
         (error as any)?.response?.data?.message ||
@@ -624,36 +831,62 @@ export function SimpleChat({
             </div>
           </div>
 
-          {/* Chat Rate Display for Clients */}
-          {profile?.account_type === 'client' && chatRate ?
+          {/* Paid notice (client) */}
+          {profile?.account_type === 'client' && isPaidChat ?
             (
               <div className="px-4 pb-3">
                 <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-2 rounded-md">
                   <MessageCircle className="w-3 h-3" />
-                  <span className="font-medium">{t('pages:chat.chatRate')}: {chatRate} {t('pages:consultation.tokensPerMinute')}</span>
+                  <span className="font-medium">{t('pages:chat.chatRate')}: {effectiveChatRate} {t('pages:consultation.tokensPerMinute')}</span>
                 </div>
               </div>
             ) : null}
         </div>
 
         <div className="px-4 py-3 border-b bg-white">
-          <div className="rounded-md border bg-amber-50 text-amber-900 px-3 py-2 text-xs">
-            When there is no conversation for 5 minutes and the session ends automatically.
-          </div>
+          {isPaidChat ? (
+            <div className="rounded-md border bg-amber-50 text-amber-900 px-3 py-2 text-xs">
+              When there is no conversation for 5 minutes and the session ends automatically.
+            </div>
+          ) : null}
           {statusNotice ? (
             <div className="mt-2 rounded-md border bg-slate-50 text-slate-700 px-3 py-2 text-xs">
               {statusNotice}
             </div>
           ) : null}
-          <div className="flex items-center gap-2 mt-2">
+          {isPaidChat ? (
+            <div className="flex items-center gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleStartConsultation}
-                disabled={!canStartConsultation || isStartingConsultation}
+                onClick={
+                  isConsultationPaused
+                    ? handleResumeConsultation
+                    : billingRunning
+                      ? handlePauseConsultation
+                      : handleStartConsultation
+                }
+                disabled={
+                  isStartingConsultation ||
+                  isPausingConsultation ||
+                  isResumingConsultation ||
+                  (isConsultationPaused
+                    ? false
+                    : billingRunning
+                      ? false
+                      : consultation?.started_by_me && !bothPartiesStarted
+                        ? true
+                        : !canStartConsultation)
+                }
               >
-                {isStartingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
-                Start Chat
+                {isStartingConsultation || isPausingConsultation || isResumingConsultation ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : billingRunning ? (
+                  <Pause className="h-4 w-4 mr-2" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                {billingRunning ? "Pause" : isConsultationPaused ? "Resume" : consultation?.started_by_me && !bothPartiesStarted ? "Waiting…" : "Start"}
               </Button>
               <Button
                 variant="outline"
@@ -662,26 +895,33 @@ export function SimpleChat({
                 disabled={!canEndConsultation || isEndingConsultation}
               >
                 {isEndingConsultation ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Square className="h-4 w-4 mr-2" />}
-                End Chat
+                End
               </Button>
               <span className="text-xs text-muted-foreground">
                 {isConsultationEnded
                   ? `Consultation ended${consultation?.duration_minutes !== undefined || consultation?.duration_seconds !== undefined
-                    ? ` • Duration: ${consultation?.duration_minutes ?? Math.floor((consultation?.duration_seconds ?? 0) / 60)}m ${consultation?.duration_seconds !== undefined ? consultation.duration_seconds % 60 : 0}s`
-                    : ""}${displayTokenUsage !== undefined ? ` • Tokens: ${displayTokenUsage}` : ""}`
+                      ? ` • Duration: ${consultation?.duration_minutes ?? Math.floor((consultation?.duration_seconds ?? 0) / 60)}m ${
+                          consultation?.duration_seconds !== undefined ? consultation.duration_seconds % 60 : 0
+                        }s`
+                      : ""}${displayTokenUsage !== undefined ? ` • Tokens: ${displayTokenUsage}` : ""}`
+                  : isConsultationPaused
+                    ? "Session paused"
                   : isAwaitingMyEnd
-                      ? "Other party requested End Chat. Click End Chat to finish consultation."
+                      ? "Other party requested End. Click End to finish."
                       : isAwaitingMyStart
-                        ? "Other party requested Start Chat. Click Start Chat to activate."
-                    : isAwaitingOtherParty
-                      ? "Waiting for other party to start chat"
-                    : isConsultationActive
-                      ? "Consultation active"
-                      : consultationFeatureAvailable
-                        ? "Consultation not started"
-                        : "Consultation controls available after backend deployment"}
+                        ? "Other party requested Start. Click Start to activate."
+                        : isAwaitingOtherParty
+                          ? "Waiting for other party to start"
+                          : billingRunning
+                            ? "Session active — billing on"
+                            : bothPartiesStarted
+                              ? "Session joined — waiting for live status"
+                            : isConsultationPaused
+                              ? "Session paused"
+                            : "Session not started"}
               </span>
-          </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Messages */}
@@ -690,6 +930,15 @@ export function SimpleChat({
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
                 <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : hidePaidThread ? (
+              <div className="flex flex-col items-center justify-center h-40 text-center text-gray-600 px-4">
+                <MessageSquare className="h-12 w-12 mb-3 text-amber-500" />
+                <p className="text-sm font-medium">
+                  {initialUnreadCount > 0
+                    ? `${initialUnreadCount} new message(s) — click Start above to view.`
+                    : "New messages — click Start above to view the conversation."}
+                </p>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-gray-500">
@@ -756,7 +1005,8 @@ export function SimpleChat({
                   !messageForm.watch("content")?.trim() ||
                   isSending ||
                   isConsultationEnded ||
-                  (consultationFeatureAvailable && !isConsultationActive && !isConsultationEnded)
+                  hidePaidThread ||
+                  (isPaidChat && isConsultationPaused && !isConsultationEnded)
                 }
               >
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

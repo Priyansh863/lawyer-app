@@ -393,8 +393,12 @@ export default function DocumentsTable({
       } else {
         toast.info(t('pages:documentT.documents.noViewUrl') || 'No viewable URL available for this document.')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error opening document:', error)
+      if (error?.code === 'ACCESS_DENIED') {
+        toast.error(error?.message || 'Access denied. The owner may have revoked your permission.')
+        return
+      }
       toast.error(t('pages:documentT.documents.viewError') || 'Failed to open document.')
     }
   }
@@ -623,7 +627,7 @@ export default function DocumentsTable({
                                 : t('pages:documentT.table.actions.downloadDocument')}
                             </DropdownMenuItem>
 
-                            {(doc.privacy === 'private') && (
+                            {(doc.privacy === 'private' || doc.privacy === 'fully_private') && (
                               <DropdownMenuItem
                                 onClick={() => handleShareWithLawyer(doc)}
                                 className="flex items-center gap-2"

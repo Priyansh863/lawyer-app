@@ -46,15 +46,17 @@ import {
     Square,
     Volume2,
     Briefcase,
+    Share2,
 } from 'lucide-react'
 import { useTranslation } from "@/hooks/useTranslation"
-import { getDocuments, updateDocumentStorageType, removeFromCloud, removeFromApp, buildRemoveAppPayload, bulkDeleteDocuments, bulkAssignCaseToDocuments, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document, type RemoveFromAppResponse } from '@/lib/api/documents-api'
+import { getDocuments, getSharedDocuments, updateDocumentStorageType, removeFromCloud, removeFromApp, buildRemoveAppPayload, bulkDeleteDocuments, bulkAssignCaseToDocuments, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document, type RemoveFromAppResponse } from '@/lib/api/documents-api'
 import { getCases } from '@/lib/api/cases-api'
 import type { Case } from '@/types/case'
 import { uploadFileOnS3 } from '@/lib/helpers/fileupload'
 import { toast } from 'sonner'
 import { AddDocumentsDialog } from './add-documents-dialog'
 import SecureLinkGenerator from './secure-link-generator'
+import { ShareDocumentDialog } from './share-with-lawyer-dialog'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/lib/store'
 import { getClientsAndLawyers } from '@/lib/api/users-api'
@@ -63,6 +65,7 @@ export default function DocumentManager() {
     const { t } = useTranslation()
     const [searchTerm, setSearchTerm] = useState('')
     const [sortBy, setSortBy] = useState('newest')
+    const [viewMode, setViewMode] = useState<'owned' | 'shared'>('owned')
     const [isAddDocumentsOpen, setIsAddDocumentsOpen] = useState(false)
     const [documents, setDocuments] = useState<Document[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -104,6 +107,10 @@ export default function DocumentManager() {
     const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null)
     const [isLoadingCases, setIsLoadingCases] = useState(false)
 
+    // Per-document permission dialog (grant/revoke access)
+    const [shareDialogOpen, setShareDialogOpen] = useState(false)
+    const [shareDialogDoc, setShareDialogDoc] = useState<Document | null>(null)
+
     const languages = [
         { value: 'en-US', label: 'English' },
         { value: 'ko-KR', label: '한국어' },
@@ -118,7 +125,7 @@ export default function DocumentManager() {
         if (user?.account_type === 'lawyer') {
             fetchClients()
         }
-    }, [user])
+    }, [user, viewMode])
 
     // If user clicked "Open Folder" from a case dialog, pre-open that folder here.
     useEffect(() => {
@@ -200,7 +207,9 @@ export default function DocumentManager() {
     const loadDocuments = async () => {
         setIsLoading(true)
         try {
-            const response = await getDocuments()
+            const response = viewMode === 'shared'
+                ? await getSharedDocuments()
+                : await getDocuments()
             if (response.success && response.documents) {
                 setDocuments(response.documents)
             }
@@ -209,6 +218,18 @@ export default function DocumentManager() {
         } finally {
             setIsLoading(false)
         }
+    }
+
+    const openShareDialog = (doc: Document) => {
+        // Accept both "private" and "fully_private" as private-level docs.
+        const privacy = (doc.privacy || 'public').toLowerCase()
+        const isPrivateLevel = privacy === 'private' || privacy === 'fully_private'
+        if (!isPrivateLevel) {
+            toast.error(t('pages:shar.privateDocumentRequired') || 'Only private documents can be shared.')
+            return
+        }
+        setShareDialogDoc(doc)
+        setShareDialogOpen(true)
     }
 
     const fetchClients = async () => {
@@ -227,17 +248,39 @@ export default function DocumentManager() {
         return (kb / 1024).toFixed(1) + 'MB'
     }
 
+    const getDocumentSizeBytes = (doc: Document): number | undefined => {
+        const fromKnown = doc.file_size as unknown
+        if (typeof fromKnown === 'number' && Number.isFinite(fromKnown)) return fromKnown
+        if (typeof fromKnown === 'string') {
+            const n = Number(fromKnown)
+            if (Number.isFinite(n)) return n
+        }
+
+        const row = doc as unknown as Record<string, unknown>
+        const candidates = [row.fileSize, row.size]
+        for (const c of candidates) {
+            if (typeof c === 'number' && Number.isFinite(c)) return c
+            if (typeof c === 'string') {
+                const n = Number(c)
+                if (Number.isFinite(n)) return n
+            }
+        }
+        return undefined
+    }
+
     const formatLastModified = (dateString: string | undefined) => {
         if (!dateString) return ''
         try {
             const date = new Date(dateString)
             const now = new Date()
             const diffMs = now.getTime() - date.getTime()
+            const diffMinutes = Math.floor(diffMs / (1000 * 60))
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
             const diffMonths = Math.floor(diffDays / 30)
 
-            if (diffHours < 1) return t('pages:documentManager.justNow')
+            if (diffMinutes < 1) return t('pages:documentManager.justNow')
+            if (diffMinutes < 60) return t('pages:documentManager.minutesAgo', { minutes: diffMinutes })
             if (diffHours < 24) return t('pages:documentManager.hoursAgo', { hours: diffHours })
             if (diffDays < 30) return t('pages:documentManager.daysAgo', { days: diffDays })
             if (diffMonths < 12) return t('pages:documentManager.monthsAgo', { months: diffMonths })
@@ -400,8 +443,12 @@ export default function DocumentManager() {
             } else {
                 toast.info(t('pages:documentManager.toastInfoView'))
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error opening document:', error)
+            if (error?.code === 'ACCESS_DENIED') {
+                toast.error(error?.message || 'Access denied. The owner may have revoked your permission.')
+                return
+            }
             toast.error(t('pages:documentManager.toastInfoView'))
         }
     }
@@ -561,14 +608,18 @@ export default function DocumentManager() {
             {/* Action Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <div className="flex flex-wrap items-center gap-4">
-                    <input
-                        type="checkbox"
-                        checked={selectedDocs.size === filteredDocs.length && filteredDocs.length > 0}
-                        onChange={toggleSelectAll}
-                        className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
-                    />
-                    <span className="text-[15px] font-medium text-[#1e293b] dark:text-slate-100">{t('pages:documentManager.selected')} {selectedDocs.size}</span>
-                    {selectedDocs.size > 0 && (
+                    {viewMode === 'owned' && (
+                        <>
+                            <input
+                                type="checkbox"
+                                checked={selectedDocs.size === filteredDocs.length && filteredDocs.length > 0}
+                                onChange={toggleSelectAll}
+                                className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
+                            />
+                            <span className="text-[15px] font-medium text-[#1e293b] dark:text-slate-100">{t('pages:documentManager.selected')} {selectedDocs.size}</span>
+                        </>
+                    )}
+                    {viewMode === 'owned' && selectedDocs.size > 0 && (
                         <>
                             <Button
                                 type="button"
@@ -638,6 +689,26 @@ export default function DocumentManager() {
                         <Folder className="h-5 w-5" />
                         {t('pages:documentManager.addDocuments')}
                     </Button>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-md p-1 ml-1">
+                                <Button
+                                    type="button"
+                                    variant={viewMode === 'owned' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    className="h-8 px-3"
+                                    onClick={() => setViewMode('owned')}
+                                >
+                                    My Docs
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={viewMode === 'shared' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    className="h-8 px-3"
+                                    onClick={() => setViewMode('shared')}
+                                >
+                                    Shared With Me
+                                </Button>
+                            </div>
                 </div>
             </div>
 
@@ -681,12 +752,14 @@ export default function DocumentManager() {
                                         className="grid grid-cols-[60px_1.5fr_1fr_1.2fr_1.2fr_100px_80px] items-center px-6 py-2.5 bg-white border border-[#e2e8f0] rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:border-[#cbd5e1] transition-all"
                                     >
                                         <div className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedDocs.has(doc._id)}
-                                                onChange={() => toggleSelect(doc._id)}
-                                                className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
-                                            />
+                                            {viewMode === 'owned' && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDocs.has(doc._id)}
+                                                    onChange={() => toggleSelect(doc._id)}
+                                                    className="h-5 w-5 rounded border-slate-300 text-slate-900 focus:ring-slate-900 transition-colors cursor-pointer"
+                                                />
+                                            )}
                                         </div>
 
                                         <div className="flex items-center gap-4 pr-4 overflow-hidden">
@@ -712,7 +785,7 @@ export default function DocumentManager() {
                                         </div>
 
                                         <div className="text-right pr-8 text-[14px] font-bold text-slate-800">
-                                            {!isFolder && formatFileSize(doc.file_size)}
+                                            {!isFolder && formatFileSize(getDocumentSizeBytes(doc))}
                                         </div>
 
                                         <div className="text-center text-[14px] font-medium text-slate-500">
@@ -782,38 +855,49 @@ export default function DocumentManager() {
                                                                 <Mic className="h-4 w-4 text-slate-500" />
                                                                 {t('pages:documentManager.aiAudioSummary')}
                                                             </DropdownMenuItem>
+                                                            {viewMode === 'owned' && (
+                                                                <>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => openShareDialog(doc)}
+                                                                        className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold cursor-pointer rounded-md hover:bg-slate-50"
+                                                                    >
+                                                                        <Share2 className="h-4 w-4 text-slate-500" />
+                                                                        {t('pages:documentT.table.actions.shareDocument') || 'Manage Access'}
+                                                                    </DropdownMenuItem>
         
-                                                            {/* If app-only, show "Upload to Cloud" */}
-                                                            {hasApp && !hasCloud && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => handleUploadToCloud(doc)}
-                                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#0ea5e9] cursor-pointer rounded-md hover:bg-sky-50"
-                                                                >
-                                                                    <CloudUpload className="h-4 w-4" />
-                                                                    {t('pages:documentManager.uploadToCloud')}
-                                                                </DropdownMenuItem>
-                                                            )}
+                                                                    {/* If app-only, show "Upload to Cloud" */}
+                                                                    {hasApp && !hasCloud && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleUploadToCloud(doc)}
+                                                                            className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#0ea5e9] cursor-pointer rounded-md hover:bg-sky-50"
+                                                                        >
+                                                                            <CloudUpload className="h-4 w-4" />
+                                                                            {t('pages:documentManager.uploadToCloud')}
+                                                                        </DropdownMenuItem>
+                                                                    )}
         
-                                                            {/* If has cloud, show delete cloud */}
-                                                            {hasCloud && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => setRemoveCloudDialog({ open: true, doc })}
-                                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#ef4444] cursor-pointer rounded-md hover:bg-red-50"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                    {t('pages:documentManager.removeFromCloud')}
-                                                                </DropdownMenuItem>
-                                                            )}
+                                                                    {/* If has cloud, show delete cloud */}
+                                                                    {hasCloud && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => setRemoveCloudDialog({ open: true, doc })}
+                                                                            className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#ef4444] cursor-pointer rounded-md hover:bg-red-50"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                            {t('pages:documentManager.removeFromCloud')}
+                                                                        </DropdownMenuItem>
+                                                                    )}
         
-                                                            {/* If has app, show delete PC */}
-                                                            {hasApp && (
-                                                                <DropdownMenuItem
-                                                                    onClick={() => setRemoveAppDialog({ open: true, doc })}
-                                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#ef4444] cursor-pointer rounded-md hover:bg-red-50"
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                    {t('pages:documentManager.removeFromApp')}
-                                                                </DropdownMenuItem>
+                                                                    {/* If has app, show delete PC */}
+                                                                    {hasApp && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => setRemoveAppDialog({ open: true, doc })}
+                                                                            className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold text-[#ef4444] cursor-pointer rounded-md hover:bg-red-50"
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                            {t('pages:documentManager.removeFromApp')}
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </>
                                                     )}
@@ -857,6 +941,35 @@ export default function DocumentManager() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Manage Access (Share / Revoke) */}
+            {shareDialogDoc && (
+                <ShareDocumentDialog
+                    open={shareDialogOpen}
+                    onOpenChange={(open) => {
+                        setShareDialogOpen(open)
+                        if (!open) setShareDialogDoc(null)
+                    }}
+                    document={{
+                        id: shareDialogDoc._id,
+                        document_name: shareDialogDoc.document_name,
+                        privacy: shareDialogDoc.privacy || 'public',
+                        shared_with: shareDialogDoc.shared_with || [],
+                    }}
+                    onShareUpdate={(updated: any) => {
+                        // Update only the shared_with field for the row we edited.
+                        const nextSharedWith = updated?.shared_with
+                        if (!shareDialogDoc?._id) return
+                        setDocuments((prev) =>
+                            prev.map((d) =>
+                                d._id === shareDialogDoc._id
+                                    ? ({ ...d, shared_with: Array.isArray(nextSharedWith) ? nextSharedWith : d.shared_with } as Document)
+                                    : d
+                            )
+                        )
+                    }}
+                />
+            )}
 
             {/* Remove from App Confirmation Dialog */}
             <Dialog open={removeAppDialog.open} onOpenChange={(open) => setRemoveAppDialog({ open, doc: open ? removeAppDialog.doc : null })}>
@@ -1236,7 +1349,7 @@ export default function DocumentManager() {
                                 cases.map(c => (
                                     <div 
                                         key={c._id} 
-                                        onClick={() => setSelectedCaseId(c._id)}
+                                        onClick={() => setSelectedCaseId(c._id ?? null)}
                                         className={`p-3 rounded-md cursor-pointer border hover:border-slate-400 transition-colors ${selectedCaseId === c._id ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
                                     >
                                         <div className="font-bold text-[14px] text-slate-800">{c.title || c.case_number || 'Unnamed Case'}</div>

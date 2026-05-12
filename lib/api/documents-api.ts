@@ -65,7 +65,7 @@ export interface Document {
   ai_summary?: string
   summary_text?: string
   document_summary?: string
-  privacy?: 'public' | 'private'
+  privacy?: 'public' | 'private' | 'fully_private'
   file_size?: number
   file_type?: string
   storage_type?: 'app' | 'cloud' | 'app_cloud'
@@ -91,6 +91,15 @@ export interface Document {
 }
 
 const normalizeDocumentSummary = (doc: any) => {
+  const parseFileSize = (value: unknown): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string') {
+      const n = Number(value)
+      if (Number.isFinite(n)) return n
+    }
+    return undefined
+  }
+
   const resolvedSummary =
     doc?.summary ||
     doc?.ai_summary ||
@@ -98,9 +107,17 @@ const normalizeDocumentSummary = (doc: any) => {
     doc?.document_summary ||
     ''
 
+  const normalizedFileSize =
+    parseFileSize(doc?.file_size) ??
+    parseFileSize(doc?.fileSize) ??
+    parseFileSize(doc?.size) ??
+    parseFileSize(doc?.file?.size) ??
+    parseFileSize(doc?.metadata?.file_size)
+
   return {
     ...doc,
     summary: resolvedSummary,
+    ...(normalizedFileSize !== undefined ? { file_size: normalizedFileSize } : {}),
   } as Document
 }
 
@@ -231,6 +248,42 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
     return {
       success: false,
       message: error.response?.data?.message || error.message || 'Failed to get documents',
+      documents: []
+    }
+  }
+}
+
+// Get documents shared with current user
+export const getSharedDocuments = async (): Promise<DocumentResponse> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/document/shared-with-me`, {
+      headers: getAuthHeaders()
+    })
+    const data = response.data
+    if (data.success !== undefined) {
+      return {
+        ...data,
+        documents: (data.documents || []).map(normalizeDocumentSummary),
+        document: data.document ? normalizeDocumentSummary(data.document) : data.document
+      }
+    }
+    if (data.documents || Array.isArray(data)) {
+      const normalizedDocs = (data.documents || data || []).map(normalizeDocumentSummary)
+      return {
+        success: true,
+        documents: normalizedDocs
+      }
+    }
+    return {
+      success: false,
+      message: 'Invalid response format',
+      documents: []
+    }
+  } catch (error: any) {
+    console.error('❌ Get shared documents error:', error)
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message || 'Failed to get shared documents',
       documents: []
     }
   }
@@ -674,7 +727,14 @@ export const getDocumentViewUrl = async (documentId: string, fallbackLink?: stri
           ? await axios.post(candidate.url, candidate.body || {}, axiosConfig)
           : await axios.get(candidate.url, axiosConfig)
       return extractFromResponse(response?.data || {})
-    } catch {
+    } catch (e: any) {
+      const status = e?.response?.status
+      // Surface permission errors so the UI can show a correct message ("access revoked").
+      if (status === 401 || status === 403) {
+        const err = new Error(e?.response?.data?.message || 'Access denied')
+        ;(err as any).code = 'ACCESS_DENIED'
+        throw err
+      }
       return null
     }
   }

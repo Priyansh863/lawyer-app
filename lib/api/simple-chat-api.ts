@@ -50,11 +50,24 @@ export interface Chat {
   unreadCount: number
   createdAt: string
   updatedAt: string
+  billing_type?: 'free' | 'paid'
+  chat_rate?: number
+  currency?: string
+}
+
+/** GET /chat/:id/messages — includes gate flag for paid dual-start flow */
+export interface ChatMessagesResult {
+  messages: Message[]
+  messages_hidden_until_start?: boolean
 }
 
 export interface ConsultationSessionStatus {
   chat_id: string
-  status: "pending" | "active" | "ended" | "auto_ended"
+  billing_type?: "free" | "paid"
+  chat_rate?: number
+  currency?: string
+  status: "pending" | "not_started" | "active" | "running" | "paused" | "ended" | "auto_ended"
+  status_legacy?: "active" | "paused" | "ended" | "auto_ended" | "not_started" | "pending"
   started_by_me: boolean
   started_by_other: boolean
   ended_by_me: boolean
@@ -62,9 +75,18 @@ export interface ConsultationSessionStatus {
   started_at?: string
   ended_at?: string
   auto_end_at?: string
+  expires_at?: string
   duration_minutes?: number
   duration_seconds?: number
   token_usage?: number
+  total_billed_seconds?: number
+  total_amount?: number
+  paused_by?: {
+    lawyer?: boolean
+    client?: boolean
+  }
+  show_payment_warning?: boolean
+  session_state?: "not_started" | "running" | "paused" | "ended" | "auto_ended"
 }
 
 // API Response interfaces
@@ -75,11 +97,11 @@ interface ApiResponse<T> {
 }
 
 // 1. Create or Get Chat
-export const createOrGetChat = async (participantId: string): Promise<any> => {
+export const createOrGetChat = async (participantId: string, billingType?: 'free' | 'paid'): Promise<any> => {
   try {
     const response = await axios.post<ApiResponse<Chat>>(
       `${API_BASE_URL}/chat/create`,
-      { participantId },
+      { participantId, billingType },
       { headers: getAuthHeaders() }
     )
     console.log(response.data, "responseresponseresponseresponseresponseresponse")
@@ -108,19 +130,26 @@ export const getUserChats = async (): Promise<Chat[]> => {
 }
 
 // 3. Get Chat Messages
-export const getChatMessages = async (chatId: string, page = 1, limit = 50): Promise<Message[]> => {
+export const getChatMessages = async (
+  chatId: string,
+  page = 1,
+  limit = 50
+): Promise<ChatMessagesResult> => {
   try {
-    const response = await axios.get<ApiResponse<{ messages: Message[] }>>(
-      `${API_BASE_URL}/chat/${chatId}/messages`,
-      {
-        headers: getAuthHeaders(),
-        params: { page, limit }
-      }
-    )
-    return response.data.data.messages || []
+    const response = await axios.get<
+      ApiResponse<{ messages: Message[]; messages_hidden_until_start?: boolean }>
+    >(`${API_BASE_URL}/chat/${chatId}/messages`, {
+      headers: getAuthHeaders(),
+      params: { page, limit },
+    })
+    const data = response.data.data
+    return {
+      messages: data?.messages || [],
+      messages_hidden_until_start: data?.messages_hidden_until_start === true,
+    }
   } catch (error) {
     console.error('Error fetching messages:', error)
-    return []
+    return { messages: [] }
   }
 }
 
@@ -195,7 +224,39 @@ export const endConsultation = async (
   try {
     const response = await axios.post<ApiResponse<ConsultationSessionStatus>>(
       `${API_BASE_URL}/chat/${chatId}/consultation/end`,
-      { reason },
+      { reason, confirm: true },
+      { headers: getAuthHeaders() }
+    )
+    return response.data?.data || null
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null
+    console.error('Error ending consultation:', error)
+    throw error
+  }
+}
+
+// 9. Pause consultation (either participant in paid session)
+export const pauseConsultation = async (chatId: string): Promise<ConsultationSessionStatus | null> => {
+  try {
+    const response = await axios.post<ApiResponse<ConsultationSessionStatus>>(
+      `${API_BASE_URL}/chat/${chatId}/consultation/pause`,
+      {},
+      { headers: getAuthHeaders() }
+    )
+    return response.data?.data || null
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null
+    console.error('Error pausing consultation:', error)
+    throw error
+  }
+}
+
+// 10. Resume consultation (either participant in paid session)
+export const resumeConsultation = async (chatId: string): Promise<ConsultationSessionStatus | null> => {
+  try {
+    const response = await axios.post<ApiResponse<ConsultationSessionStatus>>(
+      `${API_BASE_URL}/chat/${chatId}/consultation/resume`,
+      {},
       { headers: getAuthHeaders() }
     )
     return response.data?.data || null
