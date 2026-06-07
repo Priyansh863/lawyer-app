@@ -62,7 +62,10 @@ export function DocumentsHeader({
         if (response.success && response.documents) {
           const docs = response.documents
           const publicDocs = docs.filter(d => !d.privacy || d.privacy === 'public').length
-          const privateDocs = docs.filter(d => (d.privacy as any) === 'private').length + docs.filter(d => (d.privacy as any) === 'fully_private').length
+          const privateDocs = docs.filter(d => {
+            const p = String((d.privacy as string) ?? '').toLowerCase()
+            return p !== 'public'
+          }).length
           const processedDocs = docs.filter(d => (d.status as any) === 'Completed' || (d.status as any) === 'Approved' || (d.status as any) === 'Processing').length
 
           setDocumentStats({

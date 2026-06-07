@@ -207,9 +207,6 @@ export default function CaseDocuments({ caseId, caseTitle }: CaseDocumentsProps)
       case 'private':
         colorClasses = "bg-purple-50 text-purple-600 border-purple-200"
         break
-      case 'fully_private':
-        colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
-        break
       default:
         colorClasses = "bg-gray-50 text-gray-600 border-gray-200"
     }

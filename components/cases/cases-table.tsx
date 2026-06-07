@@ -107,9 +107,9 @@ export default function CasesTable({ initialCases, onCaseCreated }: CasesTablePr
         let filtered = fetchedCases.cases || [];
         // Apply tab filtering logic locally if not handled by API
         if (activeTab === "in_progress") {
-          filtered = filtered.filter((c: Case) => c.status === "in_progress" || c.status === "pending");
+          filtered = filtered.filter((c: Case) => c.status === "in_progress" || c.status === "pending" || c.status === "open");
         } else {
-          filtered = filtered.filter((c: Case) => c.status !== "in_progress" && c.status !== "pending");
+          filtered = filtered.filter((c: Case) => c.status !== "in_progress" && c.status !== "pending" && c.status !== "open");
         }
 
         setCases(filtered)

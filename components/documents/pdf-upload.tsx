@@ -78,7 +78,7 @@ const FILE_TYPES: Record<string, FileTypeConfig> = {
 export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: PDFUploadEnhancedProps) {
   const { t } = useTranslation()
   const [file, setFile] = useState<File | null>(null)
-  const [privacy, setPrivacy] = useState<'public' | 'private' | 'fully_private'>('public')
+  const [privacy, setPrivacy] = useState<'public' | 'private'>('private')
   const [processWithAI, setProcessWithAI] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -339,18 +339,18 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
             {/* Privacy Settings - Always visible but compact */}
             <div className="space-y-3">
               <Label className="text-base font-medium flex items-center gap-2">
-                {privacy === 'private' || privacy === 'fully_private' ? <Lock className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
+                {privacy === 'private' ? <Lock className="h-5 w-5" /> : <Globe className="h-5 w-5" />}
                 {t("pages:upload.privacySettings")}
               </Label>
               <RadioGroup
                 value={privacy}
-                onValueChange={(value: 'public' | 'private' | 'fully_private') => {
+                onValueChange={(value: 'public' | 'private') => {
                   setPrivacy(value)
                   if (value !== 'private') {
                     setSelectedCaseId('')
                   }
                 }}
-                className="grid grid-cols-3 gap-3"
+                className="grid grid-cols-2 gap-3"
               >
                 <div className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
                   <RadioGroupItem value="public" id="public" className="mt-1 scale-110" />
@@ -364,13 +364,6 @@ export default function PDFUpload({ isOpen, onClose, onUploadSuccess, caseId }: 
                   <Label htmlFor="private" className="text-sm text-center flex flex-col items-center">
                     <Lock className="h-4 w-4 mb-1" />
                     {t("pages:upload.privacy.private")}
-                  </Label>
-                </div>
-                <div className="flex flex-col items-center space-y-2 p-3 border rounded-lg">
-                  <RadioGroupItem value="fully_private" id="fully_private" className="mt-1 scale-110" />
-                  <Label htmlFor="fully_private" className="text-sm text-center flex flex-col items-center">
-                    <Lock className="h-4 w-4 mb-1" />
-                    {t("pages:upload.privacy.fullyPrivate")}
                   </Label>
                 </div>
               </RadioGroup>

@@ -47,7 +47,10 @@ import {
     Volume2,
     Briefcase,
     Share2,
+    Globe,
 } from 'lucide-react'
+import { normalizeDocumentPrivacy } from '@/lib/document-privacy'
+import { resolveCurrentUserId } from '@/lib/resolve-current-user-id'
 import { useTranslation } from "@/hooks/useTranslation"
 import { getDocuments, getSharedDocuments, updateDocumentStorageType, removeFromCloud, removeFromApp, buildRemoveAppPayload, bulkDeleteDocuments, bulkAssignCaseToDocuments, deleteDocument, downloadDocument, createFolder, getDocumentViewUrl, type Document, type RemoveFromAppResponse } from '@/lib/api/documents-api'
 import { getCases } from '@/lib/api/cases-api'
@@ -121,6 +124,9 @@ export default function DocumentManager() {
     const user = useSelector((state: RootState) => state.auth.user)
 
     useEffect(() => {
+        if (viewMode === 'shared') {
+            setOpenFolder(null)
+        }
         loadDocuments()
         if (user?.account_type === 'lawyer') {
             fetchClients()
@@ -208,26 +214,22 @@ export default function DocumentManager() {
         setIsLoading(true)
         try {
             const response = viewMode === 'shared'
-                ? await getSharedDocuments()
+                ? await getSharedDocuments(resolveCurrentUserId(user?._id))
                 : await getDocuments()
-            if (response.success && response.documents) {
-                setDocuments(response.documents)
+            setDocuments(response.documents ?? [])
+            if (viewMode === 'shared' && response.message && !(response.documents?.length)) {
+                toast.info(response.message)
             }
         } catch (error) {
             console.error('Error loading documents:', error)
+            setDocuments([])
+            toast.error('Failed to load documents')
         } finally {
             setIsLoading(false)
         }
     }
 
     const openShareDialog = (doc: Document) => {
-        // Accept both "private" and "fully_private" as private-level docs.
-        const privacy = (doc.privacy || 'public').toLowerCase()
-        const isPrivateLevel = privacy === 'private' || privacy === 'fully_private'
-        if (!isPrivateLevel) {
-            toast.error(t('pages:shar.privateDocumentRequired') || 'Only private documents can be shared.')
-            return
-        }
         setShareDialogDoc(doc)
         setShareDialogOpen(true)
     }
@@ -301,8 +303,11 @@ export default function DocumentManager() {
     }
 
     const filteredDocs = documents
-        .filter(doc => doc.document_name.toLowerCase().includes(searchTerm.toLowerCase()))
+        .filter(doc => (doc.document_name || '').toLowerCase().includes(searchTerm.toLowerCase()))
         .filter(doc => {
+            // Shared & Public: show every document from API (no folder path hiding)
+            if (viewMode === 'shared') return true
+
             const loc = normalizePath((doc.storage_location || '').toString())
             const isFolderDoc = isFolderDocument(doc)
 
@@ -697,7 +702,7 @@ export default function DocumentManager() {
                                     className="h-8 px-3"
                                     onClick={() => setViewMode('owned')}
                                 >
-                                    My Docs
+                                    {t('pages:documentManager.tabMyDocs')}
                                 </Button>
                                 <Button
                                     type="button"
@@ -706,11 +711,17 @@ export default function DocumentManager() {
                                     className="h-8 px-3"
                                     onClick={() => setViewMode('shared')}
                                 >
-                                    Shared With Me
+                                    {t('pages:documentManager.tabSharedPublic')}
                                 </Button>
                             </div>
                 </div>
             </div>
+
+            {viewMode === 'shared' && (
+                <p className="text-sm text-slate-500 px-1 pb-2">
+                    {t('pages:documentManager.sharedTabHint')}
+                </p>
+            )}
 
             {/* Documents List */}
             <div className="flex-1">
@@ -778,8 +789,18 @@ export default function DocumentManager() {
                                                     {doc.document_name}
                                                 </button>
                                             ) : (
-                                                <span className="text-[15px] font-bold text-slate-800 truncate">
-                                                    {doc.document_name}
+                                                <span className="text-[15px] font-bold text-slate-800 truncate flex items-center gap-2 min-w-0">
+                                                    <span className="truncate">{doc.document_name}</span>
+                                                    {viewMode === 'shared' &&
+                                                        normalizeDocumentPrivacy(doc.privacy) === 'public' && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="shrink-0 text-[10px] px-1.5 py-0 h-5 bg-green-50 text-green-700 border-green-200 gap-0.5"
+                                                            >
+                                                                <Globe className="h-3 w-3" />
+                                                                {t('pages:documentManager.badgePublic')}
+                                                            </Badge>
+                                                        )}
                                                 </span>
                                             )}
                                         </div>
@@ -953,20 +974,26 @@ export default function DocumentManager() {
                     document={{
                         id: shareDialogDoc._id,
                         document_name: shareDialogDoc.document_name,
-                        privacy: shareDialogDoc.privacy || 'public',
+                        privacy: shareDialogDoc.privacy || 'private',
                         shared_with: shareDialogDoc.shared_with || [],
+                        uploaded_by: shareDialogDoc.uploaded_by,
                     }}
                     onShareUpdate={(updated: any) => {
-                        // Update only the shared_with field for the row we edited.
                         const nextSharedWith = updated?.shared_with
+                        const nextPrivacy = updated?.privacy
                         if (!shareDialogDoc?._id) return
                         setDocuments((prev) =>
                             prev.map((d) =>
                                 d._id === shareDialogDoc._id
-                                    ? ({ ...d, shared_with: Array.isArray(nextSharedWith) ? nextSharedWith : d.shared_with } as Document)
+                                    ? ({
+                                        ...d,
+                                        ...(nextPrivacy ? { privacy: nextPrivacy } : {}),
+                                        shared_with: Array.isArray(nextSharedWith) ? nextSharedWith : d.shared_with,
+                                      } as Document)
                                     : d
                             )
                         )
+                        void loadDocuments()
                     }}
                 />
             )}

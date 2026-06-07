@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { normalizeDocumentPrivacy } from '@/lib/document-privacy'
 import {
   FileText,
   MoreVertical,
@@ -66,7 +67,7 @@ interface Document {
   } | string
   link: string
   summary?: string
-  privacy?: 'public' | 'private' | 'fully_private'
+  privacy?: 'public' | 'private'
   file_size?: number
   file_type?: string
   document_type?: 'case_related' | 'general'
@@ -96,7 +97,7 @@ export default function DocumentsTable({
   const [allDocuments, setAllDocuments] = useState<Document[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private' | 'fully_private'>('all')
+  const [privacyFilter, setPrivacyFilter] = useState<'all' | 'public' | 'private'>('all')
   const [fileTypeFilter, setFileTypeFilter] = useState<'all' | 'PDF' | 'DOCX' | 'TXT' | 'Image' | 'Video'>('all')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [downloadingSummaryId, setDownloadingSummaryId] = useState<string | null>(null)
@@ -174,7 +175,9 @@ export default function DocumentsTable({
 
     // Apply privacy filter
     if (privacyFilter !== 'all') {
-      filteredDocs = filteredDocs.filter(doc => doc.privacy === privacyFilter)
+      filteredDocs = filteredDocs.filter(
+        (doc) => normalizeDocumentPrivacy(doc.privacy) === privacyFilter
+      )
     }
 
     // Apply file type filter
@@ -304,14 +307,8 @@ export default function DocumentsTable({
   // Privacy badge with enhanced privacy levels
   // Privacy badge with better layout
   const getPrivacyBadge = (privacy: string | undefined, isShared: boolean) => {
-    switch (privacy) {
-      case 'fully_private':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 min-w-[100px] justify-center">
-            <Lock className="h-3 w-3" />
-            <span className="text-xs">{t('pages:documentT.table.privacy.fullyPrivate')}</span>
-          </Badge>
-        )
+    const level = normalizeDocumentPrivacy(privacy)
+    switch (level) {
       case 'private':
         return (
           <Badge variant="secondary" className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-1 py-1 min-w-[80px] justify-center">
@@ -627,15 +624,13 @@ export default function DocumentsTable({
                                 : t('pages:documentT.table.actions.downloadDocument')}
                             </DropdownMenuItem>
 
-                            {(doc.privacy === 'private' || doc.privacy === 'fully_private') && (
-                              <DropdownMenuItem
-                                onClick={() => handleShareWithLawyer(doc)}
-                                className="flex items-center gap-2"
-                              >
-                                <Share2 className="h-4 w-4" />
-                                {t('pages:documentT.table.actions.shareDocument')}
-                              </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                              onClick={() => handleShareWithLawyer(doc)}
+                              className="flex items-center gap-2"
+                            >
+                              <Share2 className="h-4 w-4" />
+                              {t('pages:documentT.table.actions.manageAccess')}
+                            </DropdownMenuItem>
 
                             <DropdownMenuSeparator />
 

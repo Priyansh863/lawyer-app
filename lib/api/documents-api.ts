@@ -1,6 +1,11 @@
 import axios from 'axios'
+import { normalizeDocumentPrivacy } from '@/lib/document-privacy'
+import { resolveCurrentUserId } from '@/lib/resolve-current-user-id'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+
+/** Match backend default/max for shared & public list endpoints */
+const SHARED_DOCUMENTS_LIST_LIMIT = 100
 
 // Get auth headers with improved token handling
 const getAuthHeaders = () => {
@@ -9,10 +14,10 @@ const getAuthHeaders = () => {
 
     // Try to get token from Redux state first, then localStorage
     try {
-      const token = getToken()
+      const token = getBearerToken()
       return {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'Content-Type': 'application/json',
       }
     } catch (error) {
       console.error('Error parsing auth user:', error)
@@ -25,28 +30,182 @@ const getAuthHeaders = () => {
 
 
 
-const getToken = () => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user).token : null;
+function getBearerToken(): string | null {
+  if (typeof window === 'undefined') return null
+  const direct = localStorage.getItem('token')
+  if (direct) return direct
+  try {
+    const raw = localStorage.getItem('user')
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const fromRoot = parsed.token ?? parsed.access_token
+    if (typeof fromRoot === 'string') return fromRoot
+    const ud = parsed.userData
+    if (ud && typeof ud === 'object' && !Array.isArray(ud)) {
+      const t = (ud as Record<string, unknown>).token
+      if (typeof t === 'string') return t
+    }
+    const data = parsed.data
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const d = data as Record<string, unknown>
+      if (typeof d.token === 'string') return d.token
+      const inner = d.userData
+      if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+        const t = (inner as Record<string, unknown>).token
+        if (typeof t === 'string') return t
+      }
+    }
+    return null
+  } catch {
+    return null
   }
-  return null;
-};
+}
 
-// Get user ID from localStorage
-const getUserId = () => {
-  if (typeof window !== 'undefined') {
+/** Current user id from localStorage (authUser or nested `user` blob). */
+const getUserId = (): string | null => {
+  if (typeof window === 'undefined') return null
+  try {
     const authData = localStorage.getItem('authUser')
     if (authData) {
-      try {
-        const user = JSON.parse(authData)
-        return user._id
-      } catch (error) {
-        console.error('Error parsing auth user:', error)
+      const user = JSON.parse(authData) as { _id?: string }
+      if (user._id) return String(user._id)
+    }
+    const raw = localStorage.getItem('user')
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    if (parsed._id) return String(parsed._id)
+    const ud = parsed.userData
+    if (ud && typeof ud === 'object' && !Array.isArray(ud)) {
+      const id = (ud as Record<string, unknown>)._id
+      if (id) return String(id)
+    }
+    const data = parsed.data
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      const d = data as Record<string, unknown>
+      if (d._id) return String(d._id)
+      const inner = d.userData
+      if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+        const id = (inner as Record<string, unknown>)._id
+        if (id) return String(id)
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing auth user:', error)
+  }
+  return null
+}
+
+function getDocumentOwnerId(doc: Document): string | null {
+  const raw = doc as Document & Record<string, unknown>
+  const u =
+    raw.uploaded_by_user ??
+    raw.uploaded_by ??
+    raw.uploadedBy ??
+    raw.user_id ??
+    raw.userId ??
+    raw.created_by ??
+    raw.owner
+  if (!u) return null
+  if (typeof u === 'string') return u.trim()
+  if (typeof u === 'object' && !Array.isArray(u)) {
+    const row = u as Record<string, unknown>
+    const id = row._id ?? row.id
+    if (id != null) return String(id).trim()
+  }
+  return null
+}
+
+function idsEqual(a: string, b: string): boolean {
+  return String(a).trim() === String(b).trim()
+}
+
+/** Exclude only when we can prove the row is the current user's upload (backend also post-filters). */
+function shouldAppearInSharedTab(doc: Document, currentUserId: string | null): boolean {
+  if (!currentUserId) return true
+  const ownerId = getDocumentOwnerId(doc)
+  if (!ownerId) return true
+  return !idsEqual(ownerId, currentUserId)
+}
+
+function extractRawDocumentList(data: unknown): unknown[] {
+  if (!data) return []
+  if (Array.isArray(data)) return data
+  if (typeof data !== 'object') return []
+
+  const body = data as Record<string, unknown>
+  if (body.success === false) return []
+
+  const arrayKeys = [
+    'documents',
+    'document',
+    'list',
+    'files',
+    'items',
+    'results',
+    'rows',
+    'docs',
+    'records',
+    'payload',
+    'userDocuments',
+    'user_documents',
+    'data',
+  ]
+
+  for (const key of arrayKeys) {
+    const candidate = body[key]
+    if (Array.isArray(candidate)) return candidate
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      const nested = candidate as Record<string, unknown>
+      for (const nestedKey of arrayKeys) {
+        const inner = nested[nestedKey]
+        if (Array.isArray(inner)) return inner
       }
     }
   }
-  return null
+
+  return []
+}
+
+function parseDocumentsFromApiPayload(data: unknown): Document[] {
+  return extractRawDocumentList(data).map((d) => normalizeDocumentSummary(d))
+}
+
+function getDocumentId(doc: Document | Record<string, unknown>): string | null {
+  const raw = doc as Record<string, unknown>
+  const id = raw._id ?? raw.id ?? raw.documentId ?? raw.document_id
+  return id != null && String(id).trim() ? String(id).trim() : null
+}
+
+function mergeDocumentsById(...lists: Document[][]): Document[] {
+  const byId = new Map<string, Document>()
+  for (const list of lists) {
+    for (const doc of list) {
+      const id = getDocumentId(doc)
+      if (id) byId.set(id, { ...doc, _id: id })
+    }
+  }
+  return Array.from(byId.values())
+}
+
+/** GET /document/public — global set of other users' public docs (same for every logged-in user). */
+async function fetchPublicDocumentsFromOthers(
+  currentUserId: string | null,
+  headers: ReturnType<typeof getAuthHeaders>
+): Promise<Document[]> {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/document/public?limit=${SHARED_DOCUMENTS_LIST_LIMIT}`,
+      { headers }
+    )
+    const docs = parseDocumentsFromApiPayload(response.data)
+    return docs.filter(
+      (doc) =>
+        normalizeDocumentPrivacy(doc.privacy) === 'public' &&
+        isDocumentFromOtherUser(doc, currentUserId)
+    )
+  } catch {
+    return []
+  }
 }
 
 export interface Document {
@@ -60,12 +219,20 @@ export interface Document {
     email: string
     account_type: 'client' | 'lawyer' | 'admin'
   } | string
+  /** Populated owner from API (preferred for Shared & Public owner checks) */
+  uploaded_by_user?: {
+    _id: string
+    first_name?: string
+    last_name?: string
+    email?: string
+    account_type?: string
+  }
   link: string
   summary?: string
   ai_summary?: string
   summary_text?: string
   document_summary?: string
-  privacy?: 'public' | 'private' | 'fully_private'
+  privacy?: 'public' | 'private'
   file_size?: number
   file_type?: string
   storage_type?: 'app' | 'cloud' | 'app_cloud'
@@ -114,9 +281,21 @@ const normalizeDocumentSummary = (doc: any) => {
     parseFileSize(doc?.file?.size) ??
     parseFileSize(doc?.metadata?.file_size)
 
+  const uploadedByUser = doc?.uploaded_by_user ?? doc?.uploadedByUser
+  const uploadedBy = doc?.uploaded_by ?? doc?.uploadedBy ?? uploadedByUser
+  const id = doc?._id ?? doc?.id ?? doc?.documentId ?? doc?.document_id
+
   return {
     ...doc,
+    _id: id != null ? String(id) : '',
+    document_name:
+      doc?.document_name ?? doc?.name ?? doc?.fileName ?? doc?.filename ?? 'Untitled',
+    link: doc?.link ?? doc?.url ?? doc?.file_url ?? doc?.fileUrl ?? '#',
+    createdAt: doc?.createdAt ?? doc?.created_at ?? new Date().toISOString(),
+    updatedAt: doc?.updatedAt ?? doc?.updated_at ?? new Date().toISOString(),
     summary: resolvedSummary,
+    privacy: normalizeDocumentPrivacy(doc?.privacy ?? doc?.privacy_level),
+    ...(uploadedBy ? { uploaded_by: uploadedBy } : {}),
     ...(normalizedFileSize !== undefined ? { file_size: normalizedFileSize } : {}),
   } as Document
 }
@@ -253,39 +432,63 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
   }
 }
 
-// Get documents shared with current user
-export const getSharedDocuments = async (): Promise<DocumentResponse> => {
+// Get documents shared with current user (explicit shares + other users' public docs)
+export const getSharedDocuments = async (
+  explicitUserId?: string | null
+): Promise<DocumentResponse> => {
+  const headers = getAuthHeaders()
+  const currentUserId = resolveCurrentUserId(explicitUserId ?? getUserId())
+
+  let explicitShared: Document[] = []
+  let apiMessage: string | undefined
+
   try {
-    const response = await axios.get(`${API_BASE_URL}/document/shared-with-me`, {
-      headers: getAuthHeaders()
-    })
+    const response = await axios.get(
+      `${API_BASE_URL}/document/shared-with-me?includePublic=true&limit=${SHARED_DOCUMENTS_LIST_LIMIT}`,
+      { headers }
+    )
     const data = response.data
-    if (data.success !== undefined) {
-      return {
-        ...data,
-        documents: (data.documents || []).map(normalizeDocumentSummary),
-        document: data.document ? normalizeDocumentSummary(data.document) : data.document
-      }
-    }
-    if (data.documents || Array.isArray(data)) {
-      const normalizedDocs = (data.documents || data || []).map(normalizeDocumentSummary)
-      return {
-        success: true,
-        documents: normalizedDocs
-      }
-    }
-    return {
-      success: false,
-      message: 'Invalid response format',
-      documents: []
+    if (data?.success === false) {
+      apiMessage = String(data.message || 'Failed to get shared documents')
+    } else {
+      explicitShared = parseDocumentsFromApiPayload(data)
     }
   } catch (error: any) {
     console.error('❌ Get shared documents error:', error)
-    return {
-      success: false,
-      message: error.response?.data?.message || error.message || 'Failed to get shared documents',
-      documents: []
+    if (error.response?.status === 401) {
+      apiMessage = 'Not authenticated. Please log in again.'
+    } else {
+      apiMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to get shared documents'
     }
+  }
+
+  // Supplement with GET /document/public (same global public set; deduped by id)
+  const publicFromOthers = await fetchPublicDocumentsFromOthers(currentUserId, headers)
+
+  const merged = mergeDocumentsById(explicitShared, publicFromOthers).filter(
+    (doc) => getDocumentId(doc) && (doc.document_name || '').trim()
+  )
+
+  // Trust API list; only drop rows we can prove are the current user's upload
+  const documents = merged
+    .filter((doc) => shouldAppearInSharedTab(doc, currentUserId))
+    .map((doc) => ({
+      ...doc,
+      is_shared: true,
+    }))
+
+  return {
+    success: !apiMessage,
+    documents,
+    message:
+      documents.length === 0 && apiMessage
+        ? apiMessage
+        : documents.length === 0
+          ? 'No shared or public documents from other users yet.'
+          : undefined,
   }
 }
 
@@ -374,7 +577,7 @@ export const uploadDocumentEnhanced = async (data: {
   userId: string
   fileUrl: string
   fileName: string
-  privacy: 'public' | 'private' | 'fully_private'
+  privacy: 'public' | 'private'
   processWithAI: boolean
   fileSize: number
   fileType: string
